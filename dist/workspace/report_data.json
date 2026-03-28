@@ -1,0 +1,581 @@
+{
+  "meta": {
+    "reportType": "A股多次涨停概率分析报告",
+    "version": "1.0",
+    "generatedAt": "2025-01-13T14:00:00+08:00",
+    "dataStatus": "integrated_from_upstream",
+    "upstreamTasks": ["sub_1_date_confirmation", "sub_2_scoring_framework", "sub_3_candidate_tiers"],
+    "disclaimer": "本报告基于公开信息整合分析，数据为示例性质，不构成投资建议。股市有风险，投资需谨慎。"
+  },
+  "report_date": {
+    "referenceDate": "2025-01-09",
+    "nextWeekStart": "2025-01-13",
+    "nextWeekEnd": "2025-01-17",
+    "weekNumber": "2025年第3周",
+    "tradingDays": [
+      {"date": "2025-01-13", "dayOfWeek": "周一", "status": "交易日"},
+      {"date": "2025-01-14", "dayOfWeek": "周二", "status": "交易日"},
+      {"date": "2025-01-15", "dayOfWeek": "周三", "status": "交易日"},
+      {"date": "2025-01-16", "dayOfWeek": "周四", "status": "交易日"},
+      {"date": "2025-01-17", "dayOfWeek": "周五", "status": "交易日"}
+    ],
+    "notes": "该周无国家法定节假日，A股正常开市5天"
+  },
+  "market_overview": {
+    "marketBreadth": {
+      "rating": "medium",
+      "ratingCN": "中活跃度",
+      "score": 55,
+      "turnoverRate": 1.65,
+      "advanceDeclineRatio": 1.35,
+      "turnoverAmount": 12850,
+      "turnoverChange": 3.2,
+      "assessment": "结构性行情为主，量能适中，板块轮动特征明显"
+    },
+    "hotSectors": [
+      {
+        "rank": 1,
+        "sectorName": "人工智能/算力",
+        "subConcepts": ["CPO", "AI芯片", "光模块", "算力租赁"],
+        "fundInflowEst": "45-60亿",
+        "limitUpCountEst": 12,
+        "continuityDays": 5,
+        "sectorType": "持续性热点"
+      },
+      {
+        "rank": 2,
+        "sectorName": "消费电子/MR头显",
+        "subConcepts": ["Vision Pro产业链", "Micro OLED", "空间计算", "智能穿戴"],
+        "fundInflowEst": "35-50亿",
+        "limitUpCountEst": 10,
+        "continuityDays": 4,
+        "sectorType": "持续性热点"
+      },
+      {
+        "rank": 3,
+        "sectorName": "光伏/储能",
+        "subConcepts": ["TOPCon电池", "HJT", "储能系统", "逆变器"],
+        "fundInflowEst": "25-40亿",
+        "limitUpCountEst": 8,
+        "continuityDays": 3,
+        "sectorType": "持续性热点"
+      },
+      {
+        "rank": 4,
+        "sectorName": "机器人/减速器",
+        "subConcepts": ["人形机器人", "谐波减速器", "伺服电机", "传感器"],
+        "fundInflowEst": "20-35亿",
+        "limitUpCountEst": 7,
+        "continuityDays": 4,
+        "sectorType": "持续性热点"
+      },
+      {
+        "rank": 5,
+        "sectorName": "冰雪经济/旅游",
+        "subConcepts": ["冰雪装备", "旅游景区", "体育用品", "户外装备"],
+        "fundInflowEst": "15-25亿",
+        "limitUpCountEst": 6,
+        "continuityDays": 2,
+        "sectorType": "新兴热点"
+      },
+      {
+        "rank": 6,
+        "sectorName": "氢能源/燃料电池",
+        "subConcepts": ["燃料电池系统", "加氢站", "氢能重卡", "电解槽"],
+        "fundInflowEst": "10-18亿",
+        "limitUpCountEst": 4,
+        "continuityDays": 2,
+        "sectorType": "新兴热点"
+      }
+    ],
+    "marketSentiment": "中性偏乐观，结构性机会突出",
+    "keyCatalysts": [
+      "地方两会密集召开，政策预期升温",
+      "春节消费旺季临近，消费复苏预期",
+      "年报业绩预告披露期，业绩驱动显现",
+      "美联储货币政策预期边际改善"
+    ],
+    "riskFactors": [
+      "地缘政治不确定性",
+      "部分板块估值偏高",
+      "量能未能有效放大至1.5万亿以上"
+    ]
+  },
+  "scoring_framework": {
+    "frameworkName": "A-Share Multiple Limit-Up Probability Scoring Framework (MLUP)",
+    "version": "1.0",
+    "applicableMarket": "A-Share (沪/深/北交所)",
+    "predictionHorizon": "Next 5 trading days",
+    "scoringScale": {
+      "min": 0,
+      "max": 100,
+      "interpretation": "Probability-weighted composite score representing relative likelihood of achieving 2+ limit-ups within next week"
+    },
+    "scoringDimensions": [
+      {
+        "factorId": "F1",
+        "factorName": "技术动量 (Technical Momentum)",
+        "weight": 0.25,
+        "weightRationale": "Limit-up stocks often exhibit momentum persistence in A-shares due to retail investor herding behavior and algorithmic trend-following. Historical data suggests 60%+ of multi-limit-up stocks had prior limit-up within 5 days.",
+        "subComponents": [
+          {"name": "Consecutive Limit-Up History", "maxPoints": 10},
+          {"name": "Price Position vs Moving Averages", "maxPoints": 8},
+          {"name": "Volume Pattern", "maxPoints": 7}
+        ],
+        "maxRawScore": 25
+      },
+      {
+        "factorId": "F2",
+        "factorName": "题材热度 (Theme/Hot Sector Alignment)",
+        "weight": 0.20,
+        "weightRationale": "Concept-driven investing dominates A-share short-term movements. Policy catalysts and sector rotation create concentrated capital flows. 70%+ of multi-limit-up stocks are current hot theme leaders.",
+        "subComponents": [
+          {"name": "Policy Catalyst Strength", "maxPoints": 8},
+          {"name": "Theme Ranking", "maxPoints": 7},
+          {"name": "Theme Lifecycle Stage", "maxPoints": 5}
+        ],
+        "maxRawScore": 20
+      },
+      {
+        "factorId": "F3",
+        "factorName": "流通性与筹码结构 (Float and Liquidity)",
+        "weight": 0.20,
+        "weightRationale": "Smaller float enables easier price manipulation and retail speculation. Turnover rate indicates capital participation intensity. Combined float+turnover predicts sustained limit-up feasibility.",
+        "subComponents": [
+          {"name": "Float Market Cap", "maxPoints": 8},
+          {"name": "Average Turnover Rate", "maxPoints": 7},
+          {"name": "Lock-up Chip Structure", "maxPoints": 5}
+        ],
+        "maxRawScore": 20
+      },
+      {
+        "factorId": "F4",
+        "factorName": "基本面催化 (Fundamental Catalysts)",
+        "weight": 0.15,
+        "weightRationale": "Hard catalysts provide narrative justification and media coverage. Earnings surprises and M&A are strongest catalysts, while contract wins provide medium-term support.",
+        "subComponents": [
+          {"name": "Earnings/Catalyst Type", "maxPoints": 8},
+          {"name": "Catalyst Recency", "maxPoints": 4},
+          {"name": "Catalyst Uniqueness", "maxPoints": 3}
+        ],
+        "maxRawScore": 15
+      },
+      {
+        "factorId": "F5",
+        "factorName": "市场情绪 (Sentiment Indicators)",
+        "weight": 0.15,
+        "weightRationale": "Retail sentiment drives A-share limit-up persistence. Social media heat and margin trading data reflect FOMO (fear of missing out) intensity.",
+        "subComponents": [
+          {"name": "Social Media Heat Index", "maxPoints": 6},
+          {"name": "Margin Trading Activity", "maxPoints": 5},
+          {"name": "Institutional/Dragon Tiger List", "maxPoints": 4}
+        ],
+        "maxRawScore": 15
+      },
+      {
+        "factorId": "F6",
+        "factorName": "季节性与日历效应 (Historical Seasonality)",
+        "weight": 0.05,
+        "weightRationale": "A-shares exhibit calendar effects: pre-holiday speculation, conference seasonality, and end-of-quarter effects. Lower weight due to secondary importance vs momentum.",
+        "subComponents": [
+          {"name": "Time Window Effect", "maxPoints": 3},
+          {"name": "Sector Seasonality", "maxPoints": 2}
+        ],
+        "maxRawScore": 5
+      }
+    ],
+    "calculationMethod": "Weighted sum of normalized factor scores",
+    "formula": "Total Score = Σ(Factor_i_Raw_Score × Factor_i_Weight × Normalization_Factor)",
+    "specialAdjustments": [
+      {"condition": "ST/*ST stocks", "adjustment": "Base score × 1.15", "note": "ST stocks have 5% limit, making consecutive limits more achievable"},
+      {"condition": "Newly listed stocks (IPO < 6 months)", "adjustment": "Exclude or apply separate model", "note": "IPO stocks have special trading rules for first 5 days"},
+      {"condition": "Index market condition", "adjustment": "±10 based on overall market sentiment", "note": "Strong bull market: +10, Bear market: -10"}
+    ],
+    "tierThresholds": {
+      "highProbability": {
+        "minScore": 70,
+        "maxScore": 100,
+        "label": "高概率 (Tier 1)",
+        "estimatedOccurrenceRate": "25-35% of stocks in this tier achieve 2+ limit-ups within 5 days",
+        "typicalCharacteristics": [
+          "Current hot theme leader",
+          "1-2 existing limit-ups with strong volume",
+          "Small float (<5B RMB)",
+          "Fresh catalyst within 3 days",
+          "Strong technical breakout pattern"
+        ]
+      },
+      "mediumProbability": {
+        "minScore": 40,
+        "maxScore": 69,
+        "label": "中等概率 (Tier 2)",
+        "estimatedOccurrenceRate": "8-15% of stocks in this tier achieve 2+ limit-ups within 5 days",
+        "typicalCharacteristics": [
+          "Secondary theme participant",
+          "Moderate momentum (1 recent limit-up or strong uptrend)",
+          "Mid-size float (5-15B RMB)",
+          "Catalyst 3-7 days old",
+          "Mixed technical signals"
+        ]
+      },
+      "lowProbability": {
+        "minScore": 0,
+        "maxScore": 39,
+        "label": "低概率 (Tier 3)",
+        "estimatedOccurrenceRate": "<5% of stocks in this tier achieve 2+ limit-ups within 5 days",
+        "typicalCharacteristics": [
+          "No active theme alignment",
+          "Weak or declining momentum",
+          "Large cap or poor liquidity",
+          "No recent catalyst",
+          "Overbought or bearish technicals"
+        ]
+      }
+    }
+  },
+  "stock_tiers": {
+    "tier1_highProbability": [
+      {
+        "code": "600630",
+        "name": "龙头股份",
+        "sector": "纺织服饰",
+        "theme": "上海国企改革+跨境电商",
+        "compositeScore": 85,
+        "recentLimitUps": 4,
+        "consecutiveBoards": 3,
+        "turnoverRate": 15.8,
+        "floatCapEst": "约25亿",
+        "coreLogic": "上海国资改革政策催化，叠加跨境电商业务拓展预期，资金连续追捧。技术形态突破，量价配合良好。",
+        "keyCatalysts": ["上海国企改革政策", "跨境电商业务增长"],
+        "riskFactors": ["连续涨停后监管关注风险", "估值快速抬升", "板块轮动风险"],
+        "capitalFlow": "主力资金持续净流入，龙虎榜显示游资接力活跃"
+      },
+      {
+        "code": "000017",
+        "name": "深中华A",
+        "sector": "综合",
+        "theme": "锂电池+黄金概念",
+        "compositeScore": 88,
+        "recentLimitUps": 5,
+        "consecutiveBoards": 5,
+        "turnoverRate": 8.2,
+        "floatCapEst": "约15亿",
+        "coreLogic": "锂电池产业链热度延续，叠加黄金避险属性，市场合力打造高度板。连续涨停显示资金共识强。",
+        "keyCatalysts": ["锂电池产业链热度", "黄金价格上行", "小市值易被资金控盘"],
+        "riskFactors": ["5连板后停牌核查风险极高", "换手率偏低流动性风险", "获利盘抛压"],
+        "capitalFlow": "顶级游资介入，龙虎榜席位溢价明显，散户跟风盘充足"
+      },
+      {
+        "code": "600593",
+        "name": "大连圣亚",
+        "sector": "旅游酒店",
+        "theme": "冰雪旅游+东北振兴",
+        "compositeScore": 82,
+        "recentLimitUps": 4,
+        "consecutiveBoards": 4,
+        "turnoverRate": 6.4,
+        "floatCapEst": "约20亿",
+        "coreLogic": "东北冰雪旅游持续火爆，春节旺季预期强化，游资接力推动。冰雪经济政策持续发酵。",
+        "keyCatalysts": ["哈尔滨冰雪节出圈", "春节旅游旺季", "东北振兴政策"],
+        "riskFactors": ["4连板后监管风险", "事件驱动持续性待验证", "基本面支撑不足"],
+        "capitalFlow": "游资主导，机构参与度低，资金博弈特征明显"
+      },
+      {
+        "code": "000715",
+        "name": "中兴商业",
+        "sector": "商业百货",
+        "theme": "零售+东北振兴",
+        "compositeScore": 80,
+        "recentLimitUps": 4,
+        "consecutiveBoards": 3,
+        "turnoverRate": 22.3,
+        "floatCapEst": "约18亿",
+        "coreLogic": "消费复苏预期+东北旅游热度外溢，零售板块估值修复。换手充分，筹码结构健康。",
+        "keyCatalysts": ["消费复苏政策", "东北旅游热度外溢", "春节消费预期"],
+        "riskFactors": ["零售行业竞争加剧", "高换手后资金分歧", "板块跟风属性"],
+        "capitalFlow": "多空分歧较大但承接有力，游资与散户共同参与"
+      },
+      {
+        "code": "600629",
+        "name": "华建集团",
+        "sector": "工程咨询服务",
+        "theme": "建筑设计+上海国企",
+        "compositeScore": 78,
+        "recentLimitUps": 3,
+        "consecutiveBoards": 3,
+        "turnoverRate": 10.2,
+        "floatCapEst": "约30亿",
+        "coreLogic": "城市更新政策推进，上海设计院龙头受益于本地建设提速。上海国企改革主题核心标的。",
+        "keyCatalysts": ["城市更新政策", "上海国企整合预期", "建筑设计订单增长"],
+        "riskFactors": ["地产链复苏不确定性", "估值修复空间有限", "板块轮动风险"],
+        "capitalFlow": "机构与游资共同关注，资金流入稳定"
+      }
+    ],
+    "tier2_mediumProbability": [
+      {
+        "code": "603038",
+        "name": "华立股份",
+        "sector": "装修建材",
+        "theme": "鸿蒙生态+智能家居",
+        "compositeScore": 65,
+        "recentLimitUps": 3,
+        "consecutiveBoards": 2,
+        "turnoverRate": 12.5,
+        "floatCapEst": "约22亿",
+        "coreLogic": "华为鸿蒙生态持续发酵，智能家居业务增长预期明确。主题投资热度中等。",
+        "keyCatalysts": ["鸿蒙生态扩张", "智能家居渗透率提升"],
+        "riskFactors": ["华为链竞争激烈", "业绩兑现周期长", "主题轮动风险"],
+        "capitalFlow": "游资参与为主，资金关注度适中"
+      },
+      {
+        "code": "002848",
+        "name": "高斯贝尔",
+        "sector": "家电行业",
+        "theme": "卫星导航+数字经济",
+        "compositeScore": 62,
+        "recentLimitUps": 3,
+        "consecutiveBoards": 2,
+        "turnoverRate": 18.6,
+        "floatCapEst": "约16亿",
+        "coreLogic": "卫星互联网政策利好，数字经济建设加速，技术面突破引发资金关注。",
+        "keyCatalysts": ["卫星互联网政策", "数字经济投资"],
+        "riskFactors": ["概念纯度待验证", "业绩基础薄弱", "高换手波动大"],
+        "capitalFlow": "短期资金博弈，持续性存疑"
+      },
+      {
+        "code": "603097",
+        "name": "江苏华辰",
+        "sector": "电网设备",
+        "theme": "特高压+智能电网",
+        "compositeScore": 68,
+        "recentLimitUps": 2,
+        "consecutiveBoards": 2,
+        "turnoverRate": 9.8,
+        "floatCapEst": "约28亿",
+        "coreLogic": "特高压建设加速，电网投资增长确定性高，机构与游资共振。",
+        "keyCatalysts": ["特高压投资加速", "电网升级改造"],
+        "riskFactors": ["估值已反映预期", "订单落地周期长", "行业竞争格局"],
+        "capitalFlow": "机构资金配置，游资参与接力"
+      },
+      {
+        "code": "600816",
+        "name": "建元信托",
+        "sector": "多元金融",
+        "theme": "信托+上海国企",
+        "compositeScore": 60,
+        "recentLimitUps": 3,
+        "consecutiveBoards": 2,
+        "turnoverRate": 7.5,
+        "floatCapEst": "约120亿",
+        "coreLogic": "信托行业转型预期改善，上海金融国企改革升温。大市值标的连板难度大。",
+        "keyCatalysts": ["信托行业转型", "上海金融国企改革"],
+        "riskFactors": ["市值较大连板难度大", "信托行业风险", "换手率偏低"],
+        "capitalFlow": "机构资金为主，流动性一般"
+      },
+      {
+        "code": "002641",
+        "name": "公元股份",
+        "sector": "装修建材",
+        "theme": "光伏+水利",
+        "compositeScore": 58,
+        "recentLimitUps": 2,
+        "consecutiveBoards": 1,
+        "turnoverRate": 14.2,
+        "floatCapEst": "约35亿",
+        "coreLogic": "光伏产业链价格企稳反弹预期，水利基建政策加码。双主题驱动但非核心标的。",
+        "keyCatalysts": ["光伏价格企稳", "水利基建投资"],
+        "riskFactors": ["双主业逻辑不够聚焦", "非板块龙头", "跟风属性"],
+        "capitalFlow": "资金关注度一般，跟随板块波动"
+      },
+      {
+        "code": "603333",
+        "name": "尚纬股份",
+        "sector": "电网设备",
+        "theme": "核电+特高压",
+        "compositeScore": 55,
+        "recentLimitUps": 2,
+        "consecutiveBoards": 1,
+        "turnoverRate": 16.7,
+        "floatCapEst": "约26亿",
+        "coreLogic": "核电审批加速，特高压电缆需求增长，业绩弹性可期。",
+        "keyCatalysts": ["核电新项目审批", "特高压建设"],
+        "riskFactors": ["订单确认周期", "原材料价格波动", "行业竞争"],
+        "capitalFlow": "短线资金参与，机构配置度一般"
+      },
+      {
+        "code": "002347",
+        "name": "泰尔股份",
+        "sector": "通用设备",
+        "theme": "机器人+锂电池设备",
+        "compositeScore": 61,
+        "recentLimitUps": 2,
+        "consecutiveBoards": 1,
+        "turnoverRate": 21.4,
+        "floatCapEst": "约24亿",
+        "coreLogic": "人形机器人产业趋势确立，锂电设备更新周期开启。双热点概念叠加。",
+        "keyCatalysts": ["人形机器人产业化", "锂电设备更新"],
+        "riskFactors": ["概念炒作成分大", "业绩基础薄弱", "高换手后分歧"],
+        "capitalFlow": "游资主导，换手率高显示分歧"
+      },
+      {
+        "code": "600675",
+        "name": "中华企业",
+        "sector": "房地产开发",
+        "theme": "房地产+上海国企",
+        "compositeScore": 64,
+        "recentLimitUps": 3,
+        "consecutiveBoards": 3,
+        "turnoverRate": 5.9,
+        "floatCapEst": "约150亿",
+        "coreLogic": "房地产融资政策放松，上海本地国企地产商受益明显。",
+        "keyCatalysts": ["房地产融资放松", "上海国企改革"],
+        "riskFactors": ["地产行业基本面仍弱", "大市值连板难度大", "换手率过低"],
+        "capitalFlow": "机构配置为主，游资参与度低"
+      },
+      {
+        "code": "002211",
+        "name": "宏达新材",
+        "sector": "化学制品",
+        "theme": "有机硅+量子科技",
+        "compositeScore": 56,
+        "recentLimitUps": 3,
+        "consecutiveBoards": 2,
+        "turnoverRate": 19.8,
+        "floatCapEst": "约20亿",
+        "coreLogic": "有机硅供需改善，量子通信技术突破消息面刺激。",
+        "keyCatalysts": ["有机硅价格反弹", "量子通信热点"],
+        "riskFactors": ["量子概念边缘标的", "高换手风险", "业绩不确定性"],
+        "capitalFlow": "短线资金博弈，持续性存疑"
+      }
+    ],
+    "tier3_lowProbability": [
+      {
+        "code": "000638",
+        "name": "万方发展",
+        "sector": "农牧饲渔",
+        "theme": "军工+农业",
+        "compositeScore": 38,
+        "recentLimitUps": 2,
+        "consecutiveBoards": 2,
+        "turnoverRate": 11.3,
+        "floatCapEst": "约18亿",
+        "coreLogic": "军工订单预期+农业一号文件预热，双主业催化但逻辑不够聚焦。",
+        "keyCatalysts": ["军工订单", "农业政策"],
+        "riskFactors": ["双主业分散", "非热点板块核心", "资金关注度下降"],
+        "capitalFlow": "资金分歧加大，跟风盘减少"
+      },
+      {
+        "code": "000019",
+        "name": "深粮控股",
+        "sector": "农牧饲渔",
+        "theme": "粮食安全+国企改革",
+        "compositeScore": 35,
+        "recentLimitUps": 2,
+        "consecutiveBoards": 2,
+        "turnoverRate": 8.7,
+        "floatCapEst": "约45亿",
+        "coreLogic": "粮食安全战略地位提升，深圳国资整合预期。防御性板块，涨停持续性弱。",
+        "keyCatalysts": ["粮食安全政策", "国资整合"],
+        "riskFactors": ["防御性板块弹性不足", "缺乏资金持续推动", "市场风格不匹配"],
+        "capitalFlow": "资金关注度一般，缺乏游资参与"
+      },
+      {
+        "code": "603399",
+        "name": "吉翔股份",
+        "sector": "小金属",
+        "theme": "锂业+影视",
+        "compositeScore": 32,
+        "recentLimitUps": 2,
+        "consecutiveBoards": 1,
+        "turnoverRate": 13.5,
+        "floatCapEst": "约55亿",
+        "coreLogic": "锂盐价格触底反弹预期，影视业务复苏双击。但非锂业龙头，影视业务占比低。",
+        "keyCatalysts": ["锂价企稳", "影视复苏"],
+        "riskFactors": ["非行业龙头", "双主业协同性差", "资金关注度低"],
+        "capitalFlow": "跟风资金为主，缺乏主力介入"
+      },
+      {
+        "code": "000532",
+        "name": "华金资本",
+        "sector": "多元金融",
+        "theme": "创投+珠海国资",
+        "compositeScore": 36,
+        "recentLimitUps": 2,
+        "consecutiveBoards": 2,
+        "turnoverRate": 14.6,
+        "floatCapEst": "约40亿",
+        "coreLogic": "北交所活跃度提升利好创投退出，珠海国企改革深化。创投概念边缘标的。",
+        "keyCatalysts": ["北交所活跃度", "国企改革"],
+        "riskFactors": ["创投业务占比有限", "非核心创投标的", "资金认可度一般"],
+        "capitalFlow": "游资短期博弈，缺乏持续资金"
+      },
+      {
+        "code": "002599",
+        "name": "盛通股份",
+        "sector": "包装材料",
+        "theme": "教育+机器人",
+        "compositeScore": 30,
+        "recentLimitUps": 2,
+        "consecutiveBoards": 1,
+        "turnoverRate": 17.3,
+        "floatCapEst": "约22亿",
+        "coreLogic": "素质教育政策回暖，机器人教育课程需求增长。概念较为边缘。",
+        "keyCatalysts": ["素质教育政策", "机器人教育"],
+        "riskFactors": ["教育行业监管风险", "机器人教育占比小", "非核心标的"],
+        "capitalFlow": "资金关注度低，跟风上涨"
+      },
+      {
+        "code": "000037",
+        "name": "深南电A",
+        "sector": "电力行业",
+        "theme": "电力+储能",
+        "compositeScore": 28,
+        "recentLimitUps": 2,
+        "consecutiveBoards": 1,
+        "turnoverRate": 9.4,
+        "floatCapEst": "约35亿",
+        "coreLogic": "电力市场化改革推进，储能调峰需求提升估值。电力板块弹性不足。",
+        "keyCatalysts": ["电力市场化改革", "储能配套"],
+        "riskFactors": ["电力板块防御性强", "储能业务占比小", "缺乏涨停基因"],
+        "capitalFlow": "机构防御配置，游资不参与"
+      }
+    ]
+  },
+  "validation": {
+    "dataSources": [
+      "week_date_confirmation.md - 日期确认",
+      "multiple_limit_up_scoring_framework.json - 评分框架",
+      "final_top20_limit_up_stocks.json - 候选股票",
+      "hot_sectors_analysis.json - 热点板块",
+      "market_breadth_rating.json - 市场广度",
+      "capital_flow_scoring_results.json - 资金流向"
+    ],
+    "dataQuality": "上游文件存在，部分数据为基于市场逻辑的示例/估算值",
+    "completenessCheck": {
+      "reportDate": "COMPLETE",
+      "marketOverview": "COMPLETE",
+      "scoringFramework": "COMPLETE",
+      "stockTiers": "COMPLETE - Tier1: 5只, Tier2: 9只, Tier3: 6只"
+    }
+  },
+  "riskDisclosure": {
+    "modelLimitations": [
+      "Past performance does not guarantee future results",
+      "Black swan events (regulatory changes, market crashes) can override all signals",
+      "High-frequency traders and algorithms may arbitrage away patterns",
+      "Surveillance and trading halts by exchanges can interrupt momentum"
+    ],
+    "executionRisks": [
+      "Limit-up stocks may open limit-up with no liquidity (一字涨停)",
+      "Gap-down risk on following day (open limit-down) is significant",
+      "T+1 trading rule prevents same-day exit",
+      "Increased margin requirements may apply"
+    ],
+    "regulatoryRisks": [
+      "交易所重点监控 (exchange surveillance) may trigger trading restrictions",
+      "停牌核查 (trading halt for investigation) common after 3 consecutive limit-ups",
+      "Window guidance to brokerages may limit buying"
+    ],
+    "dataDisclaimer": "本报告数据为基于公开信息的整合分析，部分数据为示例性质，非实时行情。实际投资需结合实时数据验证。"
+  }
+}

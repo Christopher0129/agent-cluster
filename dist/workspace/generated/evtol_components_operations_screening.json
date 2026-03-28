@@ -1,0 +1,203 @@
+{
+  "metadata": {
+    "task": "eVTOL核心零部件与低空运营服务标的筛选",
+    "filterCriteria": {
+      "businessScope": [
+        "eVTOL核心零部件：电池系统、驱动电机、电控系统、飞控系统",
+        "低空运营服务：通航运营、低空物流、飞行培训"
+      ],
+      "marketCapRange": "50-300亿人民币（严格排除宁德时代、亿纬锂能、国轩高科等超300亿标的）",
+      "priority": "与eVTOL主机厂有实质合作的供应商",
+      "dataTimestamp": "2024年（市值数据需实时验证）",
+      "disclaimer": "本分析基于公开历史信息，不构成投资建议"
+    }
+  },
+  "screeningResults": {
+    "selectedTargets": [
+      {
+        "rank": 1,
+        "stockCode": "600580.SH",
+        "companyFullName": "卧龙电气驱动集团股份有限公司",
+        "abbreviation": "卧龙电驱",
+        "businessCategory": "核心零部件-驱动电机/电控系统",
+        "associationLogic": {
+          "coreProducts": "航空高功率密度电机及驱动系统、航空电驱一体化产品",
+          "cooperationPartners": [
+            "吉利沃飞长空（AE200 eVTOL项目电机供应商）",
+            "商飞北研中心（电动航空电驱系统合作）",
+            "山河星航（轻型飞机及eVTOL电机配套）"
+          ],
+          "certificationProgress": "航空电机产品已完成多轮样机测试，部分型号进入适航认证流程",
+          "differentiation": "国内少数具备航空级电机量产能力的供应商，功率密度达到国际先进水平"
+        },
+        "estimatedMarketCap": {
+          "value": "约140-180亿元",
+          "note": "符合50-300亿区间，需实时行情验证",
+          "asOfDate": "2024年数据"
+        },
+        "recentPerformance": {
+          "fiveDayChange": "需通过同花顺/东方财富获取实时数据",
+          "volatility": "作为低空经济电机龙头，股价弹性较高",
+          "technicalNote": "电机是eVTOL核心零部件中技术壁垒最高的环节之一，资金关注度高"
+        },
+        "multipleLimitUpProbability": {
+          "score": 8,
+          "maxScore": 10,
+          "rationale": [
+            "与吉利沃飞长空等头部主机厂有实质合作",
+            "电机占eVTOL BOM成本约15-20%，价值量高",
+            "技术壁垒高，国产替代稀缺标的",
+            "市值适中（约150亿），利于资金推动",
+            "低空经济政策持续催化"
+          ]
+        },
+        "riskFactors": [
+          "航空电机业务占公司整体营收比例仍较低",
+          "eVTOL适航认证进度不确定影响订单释放",
+          "面临国际电机巨头（如赛峰、罗罗）竞争",
+          "传统工业电机业务增长放缓"
+        ]
+      },
+      {
+        "rank": 2,
+        "stockCode": "000099.SZ",
+        "companyFullName": "中信海洋直升机股份有限公司",
+        "abbreviation": "中信海直",
+        "businessCategory": "低空运营服务-通航运营/低空物流",
+        "associationLogic": {
+          "coreServices": [
+            "海上石油直升机运输服务（核心业务）",
+            "通用航空维修服务",
+            "低空旅游及短途运输",
+            "eVTOL未来城市空中交通(UAM)运营"
+          ],
+          "cooperationPartners": [
+            "亿航智能（战略合作，探索eVTOL运营）",
+            "腾讯（低空出行数字化合作）",
+            "深圳市政府（低空经济示范运营）"
+          ],
+          "strategicPositioning": "国内通航运营龙头，积极布局eVTOL运营服务，参与低空经济基础设施建设",
+          "differentiation": "拥有完整的通航运营资质和经验，是eVTOL商业化后最直接的运营端受益者"
+        },
+        "estimatedMarketCap": {
+          "value": "约120-160亿元",
+          "note": "符合50-300亿区间，需实时行情验证",
+          "asOfDate": "2024年数据"
+        },
+        "recentPerformance": {
+          "fiveDayChange": "需通过同花顺/东方财富获取实时数据",
+          "volatility": "低空经济运营端龙头，政策敏感度高",
+          "technicalNote": "作为运营服务端稀缺标的，受益于低空经济商业化落地预期"
+        },
+        "multipleLimitUpProbability": {
+          "score": 7,
+          "maxScore": 10,
+          "rationale": [
+            "国内通航运营绝对龙头，运营端稀缺标的",
+            "与亿航智能等eVTOL主机厂战略合作",
+            "深圳低空经济示范区核心受益企业",
+            "业绩相对稳定，运营服务模式清晰",
+            "市值适中（约140亿），流动性好"
+          ]
+        },
+        "riskFactors": [
+          "传统海上石油业务受油价波动影响",
+          "eVTOL运营业务短期难以贡献实质业绩",
+          "低空开放进度不确定影响业务拓展",
+          "运营成本（飞行员、维护）较高"
+        ]
+      }
+    ],
+    "rejectedCandidates": [
+      {
+        "stockCode": "300750.SZ",
+        "name": "宁德时代",
+        "business": "动力电池",
+        "reason": "市值超8000亿，远超300亿上限，排除"
+      },
+      {
+        "stockCode": "300014.SZ",
+        "name": "亿纬锂能",
+        "business": "动力电池",
+        "reason": "市值超800亿，远超300亿上限，排除"
+      },
+      {
+        "stockCode": "002074.SZ",
+        "name": "国轩高科",
+        "business": "动力电池",
+        "reason": "市值超400亿，超300亿上限，排除"
+      },
+      {
+        "stockCode": "002245.SZ",
+        "name": "蔚蓝锂芯",
+        "business": "小动力电池",
+        "reason": "市值约100亿，符合条件但电机环节价值量更高，优先级略低"
+      },
+      {
+        "stockCode": "688819.SH",
+        "name": "天能股份",
+        "business": "动力电池",
+        "reason": "市值超200亿，但eVTOL领域布局较少"
+      },
+      {
+        "stockCode": "688006.SH",
+        "name": "杭可科技",
+        "business": "锂电设备",
+        "reason": "非零部件供应商，属于设备环节"
+      },
+      {
+        "stockCode": "300900.SZ",
+        "name": "广联航空",
+        "business": "航空零部件",
+        "reason": "主营航空结构件，非核心系统级零部件"
+      },
+      {
+        "stockCode": "688070.SH",
+        "name": "纵横股份",
+        "business": "工业无人机/飞控",
+        "reason": "市值通常低于50亿，且主营工业无人机非eVTOL"
+      }
+    ]
+  },
+  "sectorAnalysis": {
+    "componentsSegment": {
+      "batterySystem": {
+        "comment": "宁德时代/亿纬锂能/国轩高科等龙头被排除后，二线电池厂在eVTOL领域布局尚浅",
+        "priority": "中",
+        "alternative": "可关注孚能科技（软包电池，与主机厂合作）"
+      },
+      "driveMotor": {
+        "comment": "电机是eVTOL核心零部件中价值量最高、技术壁垒最强的环节",
+        "priority": "高",
+        "leader": "卧龙电驱为国内航空电机龙头"
+      },
+      "flightControl": {
+        "comment": "飞控系统以海外厂商为主，A股稀缺纯正标的",
+        "priority": "中",
+        "note": "航天电子等有相关技术但市值偏大"
+      }
+    },
+    "operationsSegment": {
+      "generalAviation": {
+        "comment": "通航运营是eVTOL商业化后最直接的受益环节",
+        "priority": "高",
+        "leader": "中信海直为国内通航运营绝对龙头"
+      },
+      "lowAltitudeLogistics": {
+        "comment": "无人机物流处于早期，A股纯正标的稀缺",
+        "priority": "中"
+      }
+    }
+  },
+  "investmentLogic": {
+    "components": "eVTOL零部件中，电机系统价值量高（约占BOM成本15-20%）、技术壁垒强，卧龙电驱与头部主机厂合作深入，是最具确定性的零部件标的",
+    "operations": "中信海直作为通航运营龙头，具备运营资质、飞行员队伍、维修能力等核心资源，是eVTOL商业化后运营端的直接受益者"
+  },
+  "dataVerificationChecklist": [
+    "卧龙电驱市值需通过同花顺/东方财富验证当前是否在50-300亿区间",
+    "中信海直市值需通过同花顺/东方财富验证当前是否在50-300亿区间",
+    "近5日涨跌幅需通过行情软件获取实时数据",
+    "合作关系（卧龙-吉利、中信海直-亿航）需通过公司公告验证最新进展"
+  ],
+  "complianceNote": "本文件仅供研究参考，不构成任何投资建议。股市有风险，投资需谨慎。所有市值数据、股价数据需通过官方行情软件实时验证。"
+}

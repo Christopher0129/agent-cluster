@@ -1,0 +1,138 @@
+{
+  "disclaimer": "本分析基于地缘政治周期性风险框架与公开信息推演，非实时新闻验证结果。所有概率评估为基于历史模式的定性判断，不构成投资依据。具体事件需以具备联网能力的模型或实时新闻源确认为准。",
+  "analysisDate": "2025-01-20",
+  "targetWeek": "2025年1月20日-1月24日（假设下周交易周）",
+  "geopoliticalFactors": [
+    {
+      "eventDesc": "中美贸易与技术博弈持续-商务部例行记者会可能释放关税/出口管制信号",
+      "probability": "高(>70%)",
+      "timeWindow": "全周持续，周四商务部记者会关注度高",
+      "affectedSectors": ["半导体设备", "稀土永磁", "出口型制造业", "跨境电商"],
+      "sentimentImpact": "中性偏避险",
+      "logicType": "中期产业逻辑为主，短期脉冲为辅",
+      "rationale": "美国新一届政府政策方向尚待明确，市场处于观望期。若释放缓和信号利好出口链；若升级管制则稀土/自主可控方向受益。"
+    },
+    {
+      "eventDesc": "台海军事动态-例行演训或外媒报道引发关注",
+      "probability": "中(40-60%)",
+      "timeWindow": "随机分布，周末前后敏感",
+      "affectedSectors": ["国防军工(船舶/航空/导弹)", "黄金", "国产替代软件"],
+      "sentimentImpact": "恐慌后转避险",
+      "logicType": "短期情绪冲击",
+      "rationale": "偶发事件驱动型脉冲，持续性差。军工板块通常半日-1日行情，黄金避险属性当日体现。"
+    },
+    {
+      "eventDesc": "中东局势-红海航运/巴以冲突外溢风险",
+      "probability": "中(40-60%)",
+      "timeWindow": "全周，晚间国际时段更易引发次日A股开盘波动",
+      "affectedSectors": ["航运港口(油运)", "油气开采", "黄金", "军工无人机"],
+      "sentimentImpact": "避险",
+      "logicType": "中期产业逻辑(能源价格)+短期情绪",
+      "rationale": "若冲突升级推升油价，利好三桶油、油服、煤化工；航运绕行逻辑利好油运。黄金同步受益。"
+    },
+    {
+      "eventDesc": "朝鲜半岛局势-导弹试射或联合军演动态",
+      "probability": "中低(30-40%)",
+      "timeWindow": "周一/周五敏感时段",
+      "affectedSectors": ["东北边境贸易", "防空反导", "黄金"],
+      "sentimentImpact": "恐慌",
+      "logicType": "短期情绪冲击",
+      "rationale": "对A股整体影响有限，主要冲击东北亚相关预期，行情持续时间短。"
+    },
+    {
+      "eventDesc": "俄乌冲突-停火谈判预期或战况重大变化",
+      "probability": "低(20-30%)",
+      "timeWindow": "随机，关注特朗普相关表态",
+      "affectedSectors": ["黄金", "粮食(小麦)", "天然气", "军工"],
+      "sentimentImpact": "中性",
+      "logicType": "中期产业逻辑",
+      "rationale": "若停火预期升温，黄金承压、粮食回落；若冲突升级则反向。当前市场预期偏向停滞状态。"
+    },
+    {
+      "eventDesc": "美联储官员密集讲话-影响美元/人民币汇率",
+      "probability": "高(>70%)",
+      "timeWindow": "周二/周四海外时段",
+      "affectedSectors": ["银行", "保险", "高股息", "北向资金重仓股"],
+      "sentimentImpact": "中性",
+      "logicType": "中期产业逻辑(外资流向)",
+      "rationale": "若释放鹰派信号，美元走强北向流出压力，A股白马承压；若偏鸽则反向。"
+    },
+    {
+      "eventDesc": "重要国际会议预期-WEF达沃斯年会中国代表团表态",
+      "probability": "高(>70%)",
+      "timeWindow": "周一-周三",
+      "affectedSectors": ["跨境支付(CIPS)", "新能源出口", "数字经济"],
+      "sentimentImpact": "中性偏积极",
+      "logicType": "中期产业逻辑",
+      "rationale": "中国在国际场合释放开放信号，利好人民币国际化相关、出口链情绪修复。"
+    },
+    {
+      "eventDesc": "关键资源国政策风险-锂矿/铜矿资源国国有化动向",
+      "probability": "中(40-60%)",
+      "timeWindow": "全周",
+      "affectedSectors": ["锂矿", "铜矿", "资源回收", "盐湖提锂"],
+      "sentimentImpact": "中性偏避险",
+      "logicType": "中期产业逻辑(供给收缩)",
+      "rationale": "若资源国收紧政策，利好国内自有资源标的和回收技术企业。"
+    }
+  ],
+  "sectorSentimentMatrix": {
+    "国防军工": {
+      "primaryTrigger": "台海/南海/半岛局势",
+      "sentimentDirection": "事件驱动上涨",
+      "duration": "1-3日短脉冲",
+      "representativeSubsectors": ["船舶", "航空装备", "导弹", "军工电子"]
+    },
+    "黄金/贵金属": {
+      "primaryTrigger": "地缘冲突升级/美元避险需求",
+      "sentimentDirection": "同步上涨",
+      "duration": "事件持续期内有效",
+      "representativeSubsectors": ["黄金采选", "黄金珠宝", "白银"]
+    },
+    "能源安全": {
+      "primaryTrigger": "中东局势/制裁升级",
+      "sentimentDirection": "供给风险溢价上涨",
+      "duration": "中期趋势",
+      "representativeSubsectors": ["油气开采", "油服工程", "煤化工", "油气储运"]
+    },
+    "战略资源": {
+      "primaryTrigger": "中美博弈/出口管制反制",
+      "sentimentDirection": "管制预期上涨",
+      "duration": "政策窗口期",
+      "representativeSubsectors": ["稀土永磁", "锑", "镓", "锗"]
+    },
+    "自主可控": {
+      "primaryTrigger": "技术封锁升级",
+      "sentimentDirection": "国产替代加速预期",
+      "duration": "中长期主题",
+      "representativeSubsectors": ["半导体设备", "光刻胶", "EDA", "CPU/GPU"]
+    }
+  },
+  "timeHorizonClassification": {
+    "shortTermEmotional": [
+      "台海军事动态",
+      "朝鲜半岛局势",
+      "突发袭击事件"
+    ],
+    "midTermIndustrial": [
+      "中美贸易博弈",
+      "中东能源安全",
+      "关键资源国政策",
+      "美联储政策信号"
+    ]
+  },
+  "riskDisclosure": [
+    "地缘政治事件具有高度不可预测性，概率评估基于历史模式而非确定性预测",
+    "短期情绪冲击通常在1-2个交易日内消化，追高容易套牢",
+    "军工等板块利好出尽即利空，事件兑现后常伴随回调",
+    "黄金与地缘风险的关联度受美元指数同时影响，存在背离可能",
+    "本分析未整合实时新闻流，实际事件请以官方报道为准"
+  ],
+  "dataLimitations": [
+    "当前模型(kimi2.5 2)不具备实时联网搜索能力",
+    "无法获取未来一周确切的外交日程安排",
+    "无法验证正在进行的谈判/冲突最新进展",
+    "所有事件时间窗口为基于常规模式的推演"
+  ],
+  "modelRecommendation": "建议由具备联网能力的worker搜索以下关键词验证并更新：'商务部例行记者会 1月'、'达沃斯论坛 中国'、'红海航运 最新'、'美联储 讲话日程'、'台海 军事动态'"
+}

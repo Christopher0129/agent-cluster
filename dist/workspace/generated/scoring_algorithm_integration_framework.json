@@ -1,0 +1,549 @@
+{
+  "meta": {
+    "title": "A股多次涨停概率评分算法整合框架 (MLUP-Integrated)",
+    "version": "1.0.0",
+    "generatedAt": "2025-01-13T12:00:00Z",
+    "frameworkType": "Multi-Dimensional Scoring System",
+    "dimensions": ["情绪面", "技术面", "催化剂面", "筹码面"],
+    "totalScoreRange": "0-100",
+    "applicableScope": "A股主板/创业板/科创板短期多次涨停概率预测",
+    "predictionHorizon": "未来5个交易日",
+    "disclaimer": "本框架仅供研究参考，不构成投资建议。股市有风险，投资需谨慎。"
+  },
+  "scoringArchitecture": {
+    "dimensionWeights": {
+      "emotion": {
+        "weight": 0.30,
+        "weightRationale": "情绪面反映市场整体风险偏好和资金接力意愿，占30%权重。A股涨停生态高度依赖市场情绪周期，情绪高涨期多次涨停概率显著提升。",
+        "maxScore": 100
+      },
+      "technical": {
+        "weight": 0.25,
+        "weightRationale": "技术面反映个股趋势强度和筹码稳定性，占25%权重。动量效应在A股短期交易中具有统计显著性。",
+        "maxScore": 100
+      },
+      "catalyst": {
+        "weight": 0.25,
+        "weightRationale": "催化剂面反映题材热度和事件驱动强度，占25%权重。政策/产业催化是涨停持续性的核心叙事支撑。",
+        "maxScore": 100
+      },
+      "capital": {
+        "weight": 0.20,
+        "weightRationale": "筹码/资金面反映主力资金介入程度，占20%权重。龙虎榜质量和封单强度直接决定连板可行性。",
+        "maxScore": 100
+      }
+    },
+    "totalScoreFormula": {
+      "description": "加权求和计算总分",
+      "formula": "TotalScore = (EmotionScore × 0.30) + (TechScore × 0.25) + (CatalystScore × 0.25) + (CapitalScore × 0.20)",
+      "excelFormula": "=ROUND(B2*0.3+C2*0.25+D2*0.25+E2*0.2,2)",
+      "pythonFormula": "total_score = emotion_score * 0.30 + tech_score * 0.25 + catalyst_score * 0.25 + capital_score * 0.20"
+    }
+  },
+  "dimensionDetails": {
+    "emotionDimension": {
+      "id": "D1_Emotion",
+      "name": "市场情绪面",
+      "weight": 0.30,
+      "subIndicators": [
+        {
+          "id": "E01",
+          "name": "连板高度空间",
+          "description": "当前市场最高连板股票的高度，反映资金风险偏好",
+          "subWeight": 0.25,
+          "scoringRules": [
+            {"condition": "≥6连板", "score": 100, "description": "情绪亢奋"},
+            {"condition": "4-5连板", "score": 80, "description": "情绪积极"},
+            {"condition": "2-3连板", "score": 60, "description": "情绪温和"},
+            {"condition": "1连板或无", "score": 30, "description": "情绪低迷"}
+          ],
+          "dataSource": "交易所行情数据",
+          "updateFrequency": "每日收盘"
+        },
+        {
+          "id": "E02",
+          "name": "涨停家数趋势",
+          "description": "近3日涨停家数移动平均变化率",
+          "subWeight": 0.25,
+          "scoringRules": [
+            {"condition": "趋势增长>30%", "score": 100},
+            {"condition": "趋势增长10%-30%", "score": 80},
+            {"condition": "趋势变动±10%", "score": 60},
+            {"condition": "趋势下降10%-30%", "score": 40},
+            {"condition": "趋势下降>30%", "score": 20}
+          ]
+        },
+        {
+          "id": "E03",
+          "name": "封板率",
+          "description": "成功封涨停股票占触及涨停股票的比例",
+          "subWeight": 0.20,
+          "scoringRules": [
+            {"condition": "≥85%", "score": 100},
+            {"condition": "70%-85%", "score": 80},
+            {"condition": "55%-70%", "score": 60},
+            {"condition": "40%-55%", "score": 40},
+            {"condition": "<40%", "score": 20}
+          ]
+        },
+        {
+          "id": "E04",
+          "name": "昨日涨停溢价率",
+          "description": "昨日涨停股票今日平均开盘价溢价",
+          "subWeight": 0.20,
+          "scoringRules": [
+            {"condition": "≥+5%", "score": 100},
+            {"condition": "+2%~+5%", "score": 80},
+            {"condition": "0%~+2%", "score": 60},
+            {"condition": "-2%~0%", "score": 40},
+            {"condition": "<-2%", "score": 20}
+          ]
+        },
+        {
+          "id": "E05",
+          "name": "跌停家数",
+          "description": "当日跌停股票数量反映恐慌程度",
+          "subWeight": 0.10,
+          "scoringRules": [
+            {"condition": "0-5家", "score": 100},
+            {"condition": "6-15家", "score": 80},
+            {"condition": "16-30家", "score": 60},
+            {"condition": "31-50家", "score": 40},
+            {"condition": ">50家", "score": 20}
+          ]
+        }
+      ],
+      "cycleModifiers": {
+        "description": "情绪周期修正系数",
+        "phases": {
+          "启动期": 0.9,
+          "发酵期": 1.0,
+          "高潮期": 1.1,
+          "退潮期": 0.7
+        }
+      },
+      "calculationExample": {
+        "python": "emotion_score = (e1*0.25 + e2*0.25 + e3*0.20 + e4*0.20 + e5*0.10) * cycle_modifier"
+      }
+    },
+    "technicalDimension": {
+      "id": "D2_Technical",
+      "name": "技术动量面",
+      "weight": 0.25,
+      "subIndicators": [
+        {
+          "id": "T01",
+          "name": "近期涨停历史",
+          "description": "过去5个交易日内涨停次数",
+          "subWeight": 0.40,
+          "scoringRules": [
+            {"condition": "3+次涨停", "score": 100, "logic": "强动量确认"},
+            {"condition": "2次涨停", "score": 70, "logic": "动量形成"},
+            {"condition": "1次涨停(3日内)", "score": 40, "logic": "动量初显"},
+            {"condition": "无 recent", "score": 0, "logic": "缺乏动量"}
+          ]
+        },
+        {
+          "id": "T02",
+          "name": "均线价格位置",
+          "description": "股价与各周期均线关系",
+          "subWeight": 0.35,
+          "scoringRules": [
+            {"condition": "Price>MA5>MA10>MA20", "score": 100, "label": "强上升趋势"},
+            {"condition": "Price>MA5>MA10", "score": 60, "label": "中上升趋势"},
+            {"condition": "Price>MA5 only", "score": 30, "label": "弱上升趋势"},
+            {"condition": "Below key MAs", "score": 0, "label": "下降趋势"}
+          ]
+        },
+        {
+          "id": "T03",
+          "name": "量能形态",
+          "description": "涨停当日成交量相对于近期均量",
+          "subWeight": 0.25,
+          "scoringRules": [
+            {"condition": "≥3倍均量", "score": 100, "label": "放量突破"},
+            {"condition": "1.5-3倍", "score": 60, "label": "温和放量"},
+            {"condition": "1-1.5倍", "score": 30, "label": "缩量涨停(警惕)"},
+            {"condition": "<1倍", "score": 10, "label": "无量涨停(一字板)"}
+          ]
+        }
+      ]
+    },
+    "catalystDimension": {
+      "id": "D3_Catalyst",
+      "name": "事件催化剂面",
+      "weight": 0.25,
+      "subIndicators": [
+        {
+          "id": "C01",
+          "name": "政策催化强度",
+          "description": "政策层级和时效性",
+          "subWeight": 0.40,
+          "scoringRules": [
+            {"condition": "国家级政策<7天", "score": 100},
+            {"condition": "部委级政策<7天", "score": 75},
+            {"condition": "地方政策<7天", "score": 50},
+            {"condition": "行业新闻<3天", "score": 30},
+            {"condition": "无明确催化", "score": 0}
+          ]
+        },
+        {
+          "id": "C02",
+          "name": "题材热度排名",
+          "description": "所属题材在当日涨停分布中的排名",
+          "subWeight": 0.30,
+          "scoringRules": [
+            {"condition": "Top 3热点", "score": 100},
+            {"condition": "Top 10热点", "score": 60},
+            {"condition": "次级题材", "score": 30},
+            {"condition": "无题材关联", "score": 0}
+          ]
+        },
+        {
+          "id": "C03",
+          "name": "催化剂时效性",
+          "description": "距催化事件发生的时间",
+          "subWeight": 0.20,
+          "scoringRules": [
+            {"condition": "<3天(新鲜)", "score": 100},
+            {"condition": "3-7天", "score": 60},
+            {"condition": "7-14天", "score": 30},
+            {"condition": ">14天", "score": 0}
+          ]
+        },
+        {
+          "id": "C04",
+          "name": "题材生命周期",
+          "description": "题材所处发展阶段",
+          "subWeight": 0.10,
+          "scoringRules": [
+            {"condition": "启动期(1-3天)", "score": 100},
+            {"condition": "发酵期(4-10天)", "score": 60},
+            {"condition": "高潮期(>10天)", "score": 30},
+            {"condition": "衰退期", "score": 0}
+          ]
+        }
+      ]
+    },
+    "capitalDimension": {
+      "id": "D4_Capital",
+      "name": "资金面/筹码面",
+      "weight": 0.20,
+      "subIndicators": [
+        {
+          "id": "P01",
+          "name": "主力净流入占比",
+          "description": "近5日主力净流入/流通市值",
+          "subWeight": 0.40,
+          "scoringRules": [
+            {"condition": ">15%", "score": 100},
+            {"condition": "8%-15%", "score": 80},
+            {"condition": "3%-8%", "score": 60},
+            {"condition": "0%-3%", "score": 30},
+            {"condition": "<0%", "score": 0}
+          ]
+        },
+        {
+          "id": "P02",
+          "name": "龙虎榜质量",
+          "description": "上榜营业部性质",
+          "subWeight": 0.30,
+          "scoringRules": [
+            {"condition": "机构+顶级游资合力", "score": 100},
+            {"condition": "单一顶级游资", "score": 75},
+            {"condition": "机构单一买入", "score": 60},
+            {"condition": "多游资混战", "score": 40},
+            {"condition": "散户席位主导", "score": 10},
+            {"condition": "无龙虎榜", "score": 30}
+          ]
+        },
+        {
+          "id": "P03",
+          "name": "涨停封单质量",
+          "description": "收盘封单金额/流通市值",
+          "subWeight": 0.20,
+          "scoringRules": [
+            {"condition": ">5%", "score": 100},
+            {"condition": "3%-5%", "score": 80},
+            {"condition": "1%-3%", "score": 60},
+            {"condition": "<1%", "score": 30},
+            {"condition": "烂板/尾盘封", "score": 10}
+          ]
+        },
+        {
+          "id": "P04",
+          "name": "流通市值规模",
+          "description": "小市值更易涨停",
+          "subWeight": 0.10,
+          "scoringRules": [
+            {"condition": "<30亿", "score": 100},
+            {"condition": "30-100亿", "score": 70},
+            {"condition": "100-300亿", "score": 40},
+            {"condition": ">300亿", "score": 10}
+          ]
+        }
+      ]
+    }
+  },
+  "batchScoringWorkflow": {
+    "workflowName": "候选股批量评分流程",
+    "steps": [
+      {
+        "step": 1,
+        "name": "数据获取",
+        "description": "获取原始行情和基本面数据",
+        "dataPoints": [
+          "日线行情(开高低收、成交量)",
+          "涨停日历(近5日涨停标记)",
+          "龙虎榜数据(营业部、买卖金额)",
+          "资金流向(主力净流入)",
+          "融资融券余额",
+          "北向资金持股",
+          "公告/新闻事件",
+          "所属概念板块"
+        ],
+        "pythonPseudocode": "# 数据获取模块\ndef fetch_raw_data(stock_list, date):\n    data = {}\n    for code in stock_list:\n        data[code] = {\n            'price': get_daily_quote(code, date),\n            'limit_up_history': get_limit_up_calendar(code, 5),\n            'dragon_tiger': get_dragon_tiger(code, date),\n            'capital_flow': get_capital_flow(code, 5),\n            'margin': get_margin_data(code),\n            'northbound': get_northbound_holding(code),\n            'announcements': get_announcements(code, 7),\n            'concepts': get_concept_sectors(code)\n        }\n    return data"
+      },
+      {
+        "step": 2,
+        "name": "指标计算",
+        "description": "计算各维度底层指标",
+        "calculationLogic": {
+          "情绪指标": "基于全市场数据计算E01-E05",
+          "技术指标": "计算均线位置、量能比、连板数",
+          "催化剂": "NLP处理公告提取事件类型和日期",
+          "资金指标": "计算净流入占比、龙虎榜评分"
+        },
+        "pythonPseudocode": "# 指标计算模块\ndef calculate_indicators(raw_data):\n    indicators = {}\n    for code, data in raw_data.items():\n        indicators[code] = {\n            'emotion': calc_emotion_indicators(data),\n            'technical': calc_technical_indicators(data),\n            'catalyst': calc_catalyst_score(data),\n            'capital': calc_capital_score(data)\n        }\n    return indicators"
+      },
+      {
+        "step": 3,
+        "name": "维度评分",
+        "description": "将指标映射为0-100维度得分",
+        "mappingMethod": "查表法或分段线性函数",
+        "pythonPseudocode": "# 维度评分模块\ndef score_dimensions(indicators):\n    scores = {}\n    for code, ind in indicators.items():\n        scores[code] = {\n            'emotion_score': map_to_score(ind['emotion'], emotion_rules),\n            'tech_score': map_to_score(ind['technical'], tech_rules),\n            'catalyst_score': map_to_score(ind['catalyst'], catalyst_rules),\n            'capital_score': map_to_score(ind['capital'], capital_rules)\n        }\n    return scores"
+      },
+      {
+        "step": 4,
+        "name": "总分计算与排序",
+        "description": "加权求和并排序",
+        "pythonPseudocode": "# 总分计算\ndef calculate_total_scores(dimension_scores):\n    results = []\n    for code, scores in dimension_scores.items():\n        total = (scores['emotion_score'] * 0.30 +\n                scores['tech_score'] * 0.25 +\n                scores['catalyst_score'] * 0.25 +\n                scores['capital_score'] * 0.20)\n        results.append({\n            'code': code,\n            'total_score': round(total, 2),\n            'breakdown': scores\n        })\n    return sorted(results, key=lambda x: x['total_score'], reverse=True)"
+      },
+      {
+        "step": 5,
+        "name": "风险标签标注",
+        "description": "基于风险规则库添加标签",
+        "pythonPseudocode": "# 风险标签模块\ndef add_risk_labels(stock_data, scores):\n    for item in scores:\n        code = item['code']\n        item['risk_labels'] = detect_risks(stock_data[code])\n    return scores"
+      }
+    ]
+  },
+  "riskLabels": {
+    "description": "风险提示标签体系",
+    "categories": [
+      {
+        "code": "R01",
+        "label": "高波动",
+        "condition": "近20日振幅>50% 或 历史波动率>60%",
+        "riskLevel": "High",
+        "description": "股价波动剧烈，短期回撤风险大"
+      },
+      {
+        "code": "R02",
+        "label": "解禁风险",
+        "condition": "限售股解禁<30天 或 解禁市值>流通市值20%",
+        "riskLevel": "High",
+        "description": "即将迎来大额解禁，抛压风险"
+      },
+      {
+        "code": "R03",
+        "label": "业绩预减",
+        "condition": "预告净利润同比<-20% 或 扣非亏损",
+        "riskLevel": "Medium",
+        "description": "基本面恶化，涨停缺乏业绩支撑"
+      },
+      {
+        "code": "R04",
+        "label": "估值过高",
+        "condition": "PE(TTM)>100(非成长股) 或 PB>10",
+        "riskLevel": "Medium",
+        "description": "估值脱离基本面，泡沫风险"
+      },
+      {
+        "code": "R05",
+        "label": "散户扎堆",
+        "condition": "东方财富拉萨席位占比>30% 或 股东户数环比>20%",
+        "riskLevel": "Medium",
+        "description": "筹码分散，机构参与度低"
+      },
+      {
+        "code": "R06",
+        "label": "监管关注",
+        "condition": "近10日收到问询函 或 被交易所重点监控",
+        "riskLevel": "High",
+        "description": "监管风险，可能停牌核查"
+      },
+      {
+        "code": "R07",
+        "label": "流动性风险",
+        "condition": "日均成交额<5000万 或 涨停封单<1000万",
+        "riskLevel": "High",
+        "description": "进出困难，易涨停也易跌停"
+      },
+      {
+        "code": "R08",
+        "label": "高位滞涨",
+        "condition": "股价创90日新高且连板数>5",
+        "riskLevel": "Medium",
+        "description": "获利盘沉重，随时可能回调"
+      }
+    ],
+    "scoringImpact": {
+      "description": "风险标签对总分的影响规则",
+      "rules": [
+        {"condition": "存在High级别风险", "adjustment": "总分×0.85", "maxDeduction": 15},
+        {"condition": "存在2个及以上Medium风险", "adjustment": "总分×0.90", "maxDeduction": 10},
+        {"condition": "仅存在1个Medium风险", "adjustment": "总分×0.95", "maxDeduction": 5}
+      ]
+    }
+  },
+  "outputSchema": {
+    "description": "标准化输出格式规范",
+    "jsonSchema": {
+      "type": "object",
+      "required": ["code", "name", "totalScore", "breakdown", "riskLabels", "timestamp"],
+      "properties": {
+        "code": {"type": "string", "pattern": "^[0-9]{6}\\.(SH|SZ|BJ)$", "description": "股票代码(带交易所后缀)"},
+        "name": {"type": "string", "description": "股票名称"},
+        "totalScore": {"type": "number", "minimum": 0, "maximum": 100, "description": "总分(加权后)"},
+        "probabilityTier": {"type": "string", "enum": ["High", "Medium", "Low"], "description": "概率分层"},
+        "breakdown": {
+          "type": "object",
+          "properties": {
+            "emotionScore": {"type": "number", "minimum": 0, "maximum": 100},
+            "techScore": {"type": "number", "minimum": 0, "maximum": 100},
+            "catalystScore": {"type": "number", "minimum": 0, "maximum": 100},
+            "chipScore": {"type": "number", "minimum": 0, "maximum": 100}
+          },
+          "required": ["emotionScore", "techScore", "catalystScore", "chipScore"]
+        },
+        "riskLabels": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "风险标签列表"
+        },
+        "keyDrivers": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "核心上涨驱动因素"
+        },
+        "dataTimestamp": {"type": "string", "format": "date-time"}
+      }
+    },
+    "csvFormat": "code,name,totalScore,emotionScore,techScore,catalystScore,chipScore,riskLabels,keyDrivers",
+    "exampleRecord": {
+      "code": "002371.SZ",
+      "name": "北方华创",
+      "totalScore": 82.5,
+      "probabilityTier": "High",
+      "breakdown": {
+        "emotionScore": 78,
+        "techScore": 85,
+        "catalystScore": 88,
+        "chipScore": 80
+      },
+      "riskLabels": ["估值过高"],
+      "keyDrivers": ["大基金三期投资", "国产替代加速", "订单饱满"],
+      "dataTimestamp": "2025-01-13T15:00:00Z"
+    }
+  },
+  "probabilityTiers": {
+    "description": "总分区间与多次涨停概率映射",
+    "tiers": [
+      {
+        "tier": "S级(极高概率)",
+        "scoreRange": "85-100",
+        "estimatedProbability": "60-80%",
+        "characteristics": "四维度均强势，机构游资共振，题材龙头",
+        "action": "重点关注，但需警惕一致性过强风险"
+      },
+      {
+        "tier": "A级(高概率)",
+        "scoreRange": "70-84",
+        "estimatedProbability": "40-60%",
+        "characteristics": "三维度强一维度弱，或双强双平",
+        "action": "积极关注，结合盘口决策"
+      },
+      {
+        "tier": "B级(中等概率)",
+        "scoreRange": "55-69",
+        "estimatedProbability": "20-40%",
+        "characteristics": "存在明显短板，依赖单一维度驱动",
+        "action": "谨慎参与，严格止损"
+      },
+      {
+        "tier": "C级(低概率)",
+        "scoreRange": "40-54",
+        "estimatedProbability": "10-20%",
+        "characteristics": "多维度平庸，偶然性涨停",
+        "action": "不建议追涨"
+      },
+      {
+        "tier": "D级(极低概率)",
+        "scoreRange": "0-39",
+        "estimatedProbability": "<10%",
+        "characteristics": "无明显优势，或存在重大风险",
+        "action": "回避"
+      }
+    ]
+  },
+  "excelImplementation": {
+    "description": "Excel公式实现示例",
+    "formulas": [
+      {
+        "cell": "G2",
+        "description": "情绪面得分",
+        "formula": "=B2*0.25+C2*0.25+D2*0.2+E2*0.2+F2*0.1"
+      },
+      {
+        "cell": "H2",
+        "description": "技术面得分",
+        "formula": "=IF(H2>=3,100,IF(H2=2,70,IF(H2=1,40,0)))*0.4 + IF(AND(I2>J2,J2>K2),100,IF(AND(I2>J2),60,30))*0.35 + IF(L2>=3,100,IF(L2>=1.5,60,30))*0.25"
+      },
+      {
+        "cell": "M2",
+        "description": "催化剂得分",
+        "formula": "=VLOOKUP(N2,policy_table,2,FALSE)*0.4 + VLOOKUP(O2,theme_rank_table,2,FALSE)*0.3 + IF(P2<=3,100,IF(P2<=7,60,30))*0.2 + VLOOKUP(Q2,lifecycle_table,2,FALSE)*0.1"
+      },
+      {
+        "cell": "R2",
+        "description": "资金面得分",
+        "formula": "=IF(S2>0.15,100,IF(S2>0.08,80,IF(S2>0.03,60,30)))*0.4 + VLOOKUP(T2,dragon_tiger_table,2,FALSE)*0.3 + IF(U2>0.05,100,IF(U2>0.03,80,60))*0.2 + IF(V2<30,100,IF(V2<100,70,40))*0.1"
+      },
+      {
+        "cell": "W2",
+        "description": "总分计算",
+        "formula": "=ROUND(G2*0.3+H2*0.25+M2*0.25+R2*0.2,2)"
+      },
+      {
+        "cell": "X2",
+        "description": "概率分层",
+        "formula": "=IF(W2>=85,\"S级\",IF(W2>=70,\"A级\",IF(W2>=55,\"B级\",IF(W2>=40,\"C级\",\"D级\"))))"
+      }
+    ]
+  },
+  "dataValidation": {
+    "rules": [
+      {"field": "code", "rule": "正则匹配^[0-9]{6}\\.(SH|SZ|BJ)$", "errorMsg": "代码格式错误"},
+      {"field": "totalScore", "rule": "0<=score<=100", "errorMsg": "分数超出有效范围"},
+      {"field": "breakdown", "rule": "sum_of_dimensions == 4", "errorMsg": "维度数量不匹配"}
+    ]
+  },
+  "sources": [
+    "generated/emotion_dimension_indicators_framework.json",
+    "generated/multiple_limit_up_scoring_framework.json",
+    "generated/capital_flow_scoring_results.json",
+    "generated/dragon_tiger_list_scoring_framework.md",
+    "generated/catalyst_analysis_for_candidate_stocks.json",
+    "generated/industry_catalysts_next_week.json"
+  ]
+}

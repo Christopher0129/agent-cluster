@@ -1,0 +1,282 @@
+{
+  "meta": {
+    "title": "国防军工与船舶领域央企重组动态研究报告",
+    "generatedBy": "kimi2.5 2 (research worker)",
+    "dataSource": "模型训练数据公开信息（截至2024年初）",
+    "disclaimer": "本报告基于历史公开信息整理，不具备实时联网能力。不构成投资建议，股市有风险，投资需谨慎。",
+    "scope": "2024-2025年已公告及预期重组事项",
+    "lastUpdate": "2024年（基于模型知识截止）"
+  },
+  "executiveSummary": {
+    "keyTheme": "央企专业化整合加速，军工船舶领域进入重组深化期",
+    "mainDrivers": [
+      "国资委'提高核心竞争力'要求",
+      "军工资产证券化率提升目标",
+      "船舶集团内部整合深化",
+      "同业竞争解决承诺期临近"
+    ],
+    "riskReminder": "重组进度存在不确定性，需以交易所公告为准"
+  },
+  "sector1_defense_aerospace": {
+    "sectorName": "航天科技/科工集团",
+    "reorganizationCases": [
+      {
+        "date": "2023-2024年",
+        "stockCode": "600118",
+        "stockName": "中国卫星",
+        "group": "航天科技集团",
+        "reorgType": "资产证券化/资产注入预期",
+        "details": "五院资产注入预期，小卫星制造龙头",
+        "progress": "持续整合中，关注科研院所转制进展",
+        "catalyst": "卫星互联网星座建设加速"
+      },
+      {
+        "date": "2023-2024年",
+        "stockCode": "000901",
+        "stockName": "航天科技",
+        "group": "航天科工集团",
+        "reorgType": "混改/资产整合",
+        "details": "航天科工三院资产平台，车联网与航天应用",
+        "progress": "内部资源整合",
+        "catalyst": "军工电子资产证券化"
+      },
+      {
+        "date": "2023年",
+        "stockCode": "600343",
+        "stockName": "航天动力",
+        "group": "航天科技集团",
+        "reorgType": "资产注入预期",
+        "details": "六院液体动力资产平台",
+        "progress": "关注液体火箭发动机资产注入",
+        "catalyst": "商业航天发展带动液体动力需求"
+      }
+    ],
+    "capitalPlatforms": {
+      "航天科技集团": [
+        {"platform": "中国卫星(600118)", "affiliation": "五院", "assetType": "小卫星总装"},
+        {"platform": "航天动力(600343)", "affiliation": "六院", "assetType": "液体动力"},
+        {"platform": "航天电子(600879)", "affiliation": "九院", "assetType": "航天电子"},
+        {"platform": "航天工程(603698)", "affiliation": "一院", "assetType": "煤化工/特种车辆"},
+        {"platform": "中天火箭(003009)", "affiliation": "四院", "assetType": "固体火箭/火工品"}
+      ],
+      "航天科工集团": [
+        {"platform": "航天晨光(600501)", "affiliation": "科工四院", "assetType": "特种车辆/压力容器"},
+        {"platform": "航天长峰(600855)", "affiliation": "科工二院", "assetType": "安保科技/医疗器械"},
+        {"platform": "航天科技(000901)", "affiliation": "科工三院", "assetType": "航天应用"},
+        {"platform": "航天电器(002025)", "affiliation": "科工十院", "assetType": "连接器/微特电机"}
+      ]
+    },
+    "reorgOutlook": {
+      "priorityAreas": [
+        "卫星互联网相关资产整合",
+        "导弹武器系统资产证券化",
+        "商业航天发射服务能力整合"
+      ],
+      "keyStocks": ["600118", "600879", "003009"]
+    }
+  },
+  "sector2_aviation": {
+    "sectorName": "航空工业集团",
+    "reorganizationCases": [
+      {
+        "date": "2023年",
+        "stockCode": "000768",
+        "stockName": "中航西飞",
+        "group": "航空工业集团",
+        "reorgType": "重大资产重组完成",
+        "details": "西飞、陕飞、沈飞民机等整机资产注入",
+        "progress": "已完成，打造大中型军民用飞机平台",
+        "catalyst": "运-20等战略运输机放量"
+      },
+      {
+        "date": "2023-2024年",
+        "stockCode": "600372",
+        "stockName": "中航电子",
+        "group": "航空工业集团",
+        "reorgType": "吸收合并",
+        "details": "吸收合并中航机电，机载系统平台整合",
+        "progress": "已完成换股吸收合并",
+        "catalyst": "机载系统专业化整合"
+      },
+      {
+        "date": "2023年",
+        "stockCode": "600760",
+        "stockName": "中航沈飞",
+        "group": "航空工业集团",
+        "reorgType": "整体上市",
+        "details": "歼击机整机资产已整体上市",
+        "progress": "持续整合配套资源",
+        "catalyst": "新型舰载机/战斗机列装"
+      }
+    ],
+    "capitalPlatforms": {
+      "航空工业集团": [
+        {"platform": "中航沈飞(600760)", "affiliation": "沈飞", "assetType": "歼击机整机"},
+        {"platform": "中航西飞(000768)", "affiliation": "西飞/陕飞", "assetType": "大中型飞机整机"},
+        {"platform": "中航电子(600372)", "affiliation": "机载系统", "assetType": "航电/机电系统"},
+        {"platform": "洪都航空(600316)", "affiliation": "洪都", "assetType": "教练机/导弹"},
+        {"platform": "中直股份(600038)", "affiliation": "哈飞/昌飞", "assetType": "直升机整机"},
+        {"platform": "中航光电(002179)", "affiliation": "光电所", "assetType": "连接器/光电器件"},
+        {"platform": "中航重机(600765)", "affiliation": "力源", "assetType": "锻铸造/液压"}
+      ]
+    },
+    "reorgOutlook": {
+      "priorityAreas": [
+        "机载系统剩余资产整合",
+        "无人机资产证券化",
+        "航空发动机相关资产（已划转航发集团）"
+      ],
+      "keyStocks": ["600372", "600760", "000768"]
+    }
+  },
+  "sector3_ordnance": {
+    "sectorName": "兵器工业/装备集团",
+    "reorganizationCases": [
+      {
+        "date": "2023-2024年",
+        "stockCode": "600967",
+        "stockName": "内蒙一机",
+        "group": "兵器工业集团",
+        "reorgType": "资产整合预期",
+        "details": "坦克装甲车辆龙头，关注无人作战装备注入",
+        "progress": "持续关注",
+        "catalyst": "陆军机械化/信息化装备升级"
+      },
+      {
+        "date": "2023年",
+        "stockCode": "000519",
+        "stockName": "中兵红箭",
+        "group": "兵器工业集团",
+        "reorgType": "专业化整合",
+        "details": "智能弹药+培育钻石双主业",
+        "progress": "内部资源整合优化",
+        "catalyst": "精确制导武器需求增长"
+      },
+      {
+        "date": "2024年预期",
+        "stockCode": "600262",
+        "stockName": "北方股份",
+        "group": "兵器工业集团",
+        "reorgType": "资产注入预期",
+        "details": "矿用车平台，关注兵器工业旗下其他资产",
+        "progress": "关注同业竞争解决",
+        "catalyst": "矿山智能化设备需求"
+      }
+    ],
+    "capitalPlatforms": {
+      "兵器工业集团": [
+        {"platform": "内蒙一机(600967)", "affiliation": "一机集团", "assetType": "坦克装甲车辆"},
+        {"platform": "中兵红箭(000519)", "affiliation": "豫西工业", "assetType": "智能弹药/超硬材料"},
+        {"platform": "北方导航(600435)", "affiliation": "导航集团", "assetType": "导航控制/制导火箭"},
+        {"platform": "光电股份(600184)", "affiliation": "光电集团", "assetType": "光学精密仪器"},
+        {"platform": "北方股份(600262)", "affiliation": "矿用车", "assetType": "重型矿用汽车"}
+      ],
+      "兵器装备集团": [
+        {"platform": "长安汽车(000625)", "affiliation": "整车", "assetType": "乘用车/新能源"},
+        {"platform": "保变电气(600550)", "affiliation": "输变电", "assetType": "变压器/互感器"},
+        {"platform": "东安动力(600178)", "affiliation": "发动机", "assetType": "汽车发动机/变速器"},
+        {"platform": "湖南天雁(600698)", "affiliation": "涡轮增压", "assetType": "涡轮增压器"}
+      ]
+    },
+    "reorgOutlook": {
+      "priorityAreas": [
+        "无人作战装备资产证券化",
+        "信息化弹药整合",
+        "兵器装备集团汽车业务混改"
+      ],
+      "keyStocks": ["600967", "000519", "600435"]
+    }
+  },
+  "sector4_shipbuilding": {
+    "sectorName": "船舶集团（南北船合并后续）",
+    "reorganizationCases": [
+      {
+        "date": "2024年",
+        "stockCode": "600150",
+        "stockName": "中国船舶",
+        "group": "中国船舶集团",
+        "reorgType": "重大资产重组",
+        "details": "拟吸收合并中国重工(601989)，南北船合并后最大整合",
+        "progress": "2024年已公告重组预案，正在进行中",
+        "catalyst": "船舶周期上行，军舰民船协同"
+      },
+      {
+        "date": "2019-2022年",
+        "stockCode": "600685",
+        "stockName": "中船防务",
+        "group": "中国船舶集团",
+        "reorgType": "股权划转/平台整合",
+        "details": "华南地区造船平台，军辅船及特种船",
+        "progress": "已完成资产整合",
+        "catalyst": "南海舰队保障需求"
+      },
+      {
+        "date": "2019-2022年",
+        "stockCode": "600482",
+        "stockName": "中国动力",
+        "group": "中国船舶集团",
+        "reorgType": "专业化整合",
+        "details": "船舶动力平台整合（柴油机/燃气轮机/电力推进）",
+        "progress": "已完成重大资产重组",
+        "catalyst": "绿色船舶动力升级"
+      },
+      {
+        "date": "2019-2021年",
+        "stockCode": "600764",
+        "stockName": "中国海防",
+        "group": "中国船舶集团",
+        "reorgType": "资产注入",
+        "details": "船舶电子信息平台，整合水声/雷达/通信资产",
+        "progress": "已完成",
+        "catalyst": "舰艇信息化升级"
+      }
+    ],
+    "capitalPlatforms": {
+      "中国船舶集团": [
+        {"platform": "中国船舶(600150)", "affiliation": "江南/沪东/外高桥", "assetType": "造船总装"},
+        {"platform": "中国重工(601989)", "affiliation": "大船/武船/渤船", "assetType": "造船总装/军舰", "note": "拟被合并"},
+        {"platform": "中船防务(600685)", "affiliation": "广船国际", "assetType": "华南造船平台"},
+        {"platform": "中国动力(600482)", "affiliation": "动力板块", "assetType": "船舶动力系统"},
+        {"platform": "中国海防(600764)", "affiliation": "电子信息", "assetType": "水声/雷达/通信"},
+        {"platform": "中船科技(600072)", "affiliation": "中船九院", "assetType": "工程设计/新能源", "note": "风电竞速资产注入"},
+        {"platform": "中船应急(300527)", "affiliation": "应急装备", "assetType": "应急交通装备"}
+      ]
+    },
+    "reorgOutlook": {
+      "priorityAreas": [
+        "中国船舶吸收合并中国重工（进行中）",
+        "船舶动力板块进一步整合",
+        "风电/海工装备资产证券化",
+        "船舶电子剩余资产整合"
+      ],
+      "keyStocks": ["600150", "601989", "600482", "600072"],
+      "consolidationMap": "船舶总装(中国船舶)+船舶动力(中国动力)+船舶电子(中国海防)+工程设计(中船科技)四大平台格局"
+    }
+  },
+  "screeningCriteria": {
+    "highProbabilityIndicators": [
+      "同一集团旗下存在业务重叠",
+      "有明确同业竞争解决承诺",
+      "资产证券化率低于50%",
+      "近期有高管变动/审计机构变更",
+      "所属行业处于高景气周期"
+    ],
+    "riskFactors": [
+      "重组方案被监管否决",
+      "资产评估值分歧",
+      "行业周期下行",
+      "军工订单波动",
+      "股东减持计划"
+    ]
+  },
+  "appendix": {
+    "acronymReference": {
+      "航天科技": "中国航天科技集团(CASC)",
+      "航天科工": "中国航天科工集团(CASIC)",
+      "航空工业": "中国航空工业集团(AVIC)",
+      "兵器工业": "中国兵器工业集团(NORINCO)",
+      "兵器装备": "中国兵器装备集团(CSGC)",
+      "船舶集团": "中国船舶集团(CSSC)"
+    }
+  }
+}

@@ -1,0 +1,247 @@
+{
+  "metadata": {
+    "data_period": "2024年9-10月",
+    "data_source": "国务院、各部委及地方政府公开政策文件",
+    "update_date": "2024-10",
+    "disclaimer": "本数据基于公开政策信息整理，不构成投资建议"
+  },
+  "policy_summary": {
+    "national_policies": [
+      {
+        "policy_name": "设备更新和以旧换新",
+        "issuing_body": "国务院/发改委/财政部",
+        "key_content": "超长期特别国债支持设备更新，汽车家电以旧换新补贴",
+        "implementation_period": "2024年全年延续"
+      },
+      {
+        "policy_name": "新质生产力推进",
+        "issuing_body": "国务院/工信部",
+        "key_content": "人工智能、量子科技、生物技术、低空经济等未来产业",
+        "implementation_period": "中长期战略"
+      },
+      {
+        "policy_name": "数据要素市场化改革",
+        "issuing_body": "国家数据局/发改委",
+        "key_content": "数据要素X行动计划，公共数据开放，数据资产入表",
+        "implementation_period": "2024-2026"
+      },
+      {
+        "policy_name": "低空经济发展",
+        "issuing_body": "工信部/民航局/发改委",
+        "key_content": "低空飞行服务保障体系建设，eVTOL适航认证",
+        "implementation_period": "2024-2027"
+      },
+      {
+        "policy_name": "半导体产业扶持",
+        "issuing_body": "工信部/科技部/大基金",
+        "key_content": "先进制程、存储芯片、AI芯片国产替代",
+        "implementation_period": "持续"
+      },
+      {
+        "policy_name": "新能源储能发展",
+        "issuing_body": "能源局/发改委",
+        "key_content": "新型储能发展实施方案，储能电站建设目标",
+        "implementation_period": "2024-2025"
+      },
+      {
+        "policy_name": "房地产市场稳定",
+        "issuing_body": "住建部/央行/金融监管总局",
+        "key_content": "一线城市限购放松，房贷利率下调，白名单支持",
+        "implementation_period": "2024年9月起"
+      }
+    ],
+    "local_policy_highlights": [
+      {
+        "region": "广东省",
+        "policy": "低空经济高质量发展行动方案，无人机及eVTOL产业扶持"
+      },
+      {
+        "region": "江苏省",
+        "policy": "先进制造业集群培育，半导体及新能源产业专项"
+      },
+      {
+        "region": "浙江省",
+        "policy": "数字经济创新提质，数据要素市场化配置改革"
+      },
+      {
+        "region": "北京市",
+        "policy": "自动驾驶示范区扩区，人工智能大模型产业"
+      },
+      {
+        "region": "上海市",
+        "policy": "智能网联汽车及燃料电池汽车示范应用"
+      }
+    ]
+  },
+  "policy_data": [
+    {
+      "code": "002085",
+      "name": "万丰奥威",
+      "national_policy_tags": ["低空经济", "新质生产力", "高端制造"],
+      "benefit_level": "核心受益",
+      "benefit_analysis": "旗下万丰钻石航空为低空经济核心标的，eVTOL业务直接受益政策",
+      "local_policy_support": ["浙江省低空经济发展规划", "绍兴市通航产业扶持"]
+    },
+    {
+      "code": "603019",
+      "name": "中科曙光",
+      "national_policy_tags": ["新质生产力", "人工智能", "算力基础设施", "半导体"],
+      "benefit_level": "核心受益",
+      "benefit_analysis": "国产AI服务器龙头，液冷数据中心，直接受益AI产业政策",
+      "local_policy_support": ["天津市信创产业支持政策", "京津冀算力枢纽规划"]
+    },
+    {
+      "code": "000725",
+      "name": "京东方A",
+      "national_policy_tags": ["设备更新", "新质生产力", "半导体显示"],
+      "benefit_level": "间接受益",
+      "benefit_analysis": "显示面板龙头，间接受益消费电子以旧换新及设备更新政策",
+      "local_policy_support": ["北京市高精尖产业支持", "重庆/合肥显示产业配套"]
+    },
+    {
+      "code": "002230",
+      "name": "科大讯飞",
+      "national_policy_tags": ["数据要素", "人工智能", "新质生产力"],
+      "benefit_level": "核心受益",
+      "benefit_analysis": "大模型+教育医疗AI，数据要素X行动计划核心标的",
+      "local_policy_support": ["安徽省人工智能产业规划", "合肥市数据要素市场建设"]
+    },
+    {
+      "code": "300750",
+      "name": "宁德时代",
+      "national_policy_tags": ["新能源", "设备更新", "储能"],
+      "benefit_level": "核心受益",
+      "benefit_analysis": "动力电池+储能双龙头，直接受益新能源汽车及储能政策",
+      "local_policy_support": ["福建省新能源汽车产业规划", "宁德市锂电产业配套"]
+    },
+    {
+      "code": "002050",
+      "name": "三花智控",
+      "national_policy_tags": ["设备更新", "新能源汽车", "储能"],
+      "benefit_level": "间接受益",
+      "benefit_analysis": "热管理龙头，受益于新能源汽车渗透率提升及储能温控需求",
+      "local_policy_support": ["浙江省制造业高质量发展", "绍兴市新能源产业扶持"]
+    },
+    {
+      "code": "601127",
+      "name": "赛力斯",
+      "national_policy_tags": ["设备更新", "以旧换新", "新能源汽车"],
+      "benefit_level": "核心受益",
+      "benefit_analysis": "问界系列车型直接受益于汽车以旧换新补贴及消费刺激政策",
+      "local_policy_support": ["重庆市智能网联汽车产业政策", "两江新区汽车产业升级"]
+    },
+    {
+      "code": "300033",
+      "name": "同花顺",
+      "national_policy_tags": ["数据要素", "金融科技"],
+      "benefit_level": "间接受益",
+      "benefit_analysis": "金融数据服务龙头，间接受益数据要素市场化改革",
+      "local_policy_support": ["浙江省数字经济促进条例", "杭州市金融科技政策"]
+    },
+    {
+      "code": "688981",
+      "name": "中芯国际",
+      "national_policy_tags": ["半导体", "新质生产力", "设备更新"],
+      "benefit_level": "核心受益",
+      "benefit_analysis": "晶圆代工龙头，国产替代核心标的，大基金重点支持",
+      "local_policy_support": ["上海市集成电路产业政策", "浦东新区芯片产业配套"]
+    },
+    {
+      "code": "002371",
+      "name": "北方华创",
+      "national_policy_tags": ["半导体", "新质生产力", "设备更新"],
+      "benefit_level": "核心受益",
+      "benefit_analysis": "半导体设备龙头，直接受益于晶圆厂扩产及设备国产替代",
+      "local_policy_support": ["北京市高精尖产业发展资金", "经开区集成电路支持"]
+    },
+    {
+      "code": "601766",
+      "name": "中国中车",
+      "national_policy_tags": ["设备更新", "新质生产力", "高端装备"],
+      "benefit_level": "核心受益",
+      "benefit_analysis": "轨道交通装备龙头，直接受益于铁路设备更新及城市轨交建设",
+      "local_policy_support": ["湖南省装备制造业规划", "株洲市轨道交通产业配套"]
+    },
+    {
+      "code": "300014",
+      "name": "亿纬锂能",
+      "national_policy_tags": ["新能源", "储能", "设备更新"],
+      "benefit_level": "核心受益",
+      "benefit_analysis": "储能电池+动力电池双轮驱动，直接受益于储能政策目标",
+      "local_policy_support": ["广东省新能源产业规划", "惠州市储能产业扶持"]
+    },
+    {
+      "code": "603993",
+      "name": "洛阳钼业",
+      "national_policy_tags": ["新能源", "储能"],
+      "benefit_level": "间接受益",
+      "benefit_analysis": "钴镍铜资源龙头，间接受益于新能源汽车及储能产业链需求",
+      "local_policy_support": ["河南省新材料产业规划", "洛阳市有色产业转型"]
+    },
+    {
+      "code": "000002",
+      "name": "万科A",
+      "national_policy_tags": ["房地产稳定", "以旧换新"],
+      "benefit_level": "间接受益",
+      "benefit_analysis": "龙头房企受益于一线城市限购放松及融资白名单政策",
+      "local_policy_support": ["深圳市房地产市场政策优化", "广州市限购政策调整"]
+    },
+    {
+      "code": "300274",
+      "name": "阳光电源",
+      "national_policy_tags": ["新能源", "储能", "设备更新"],
+      "benefit_level": "核心受益",
+      "benefit_analysis": "光伏逆变器+储能系统龙头，直接受益于新能源装机及储能建设目标",
+      "local_policy_support": ["安徽省光伏储能产业规划", "合肥市新能源产业支持"]
+    },
+    {
+      "code": "688111",
+      "name": "金山办公",
+      "national_policy_tags": ["数据要素", "人工智能", "信创"],
+      "benefit_level": "核心受益",
+      "benefit_analysis": "办公软件龙头，AI办公助手+信创替代双重受益",
+      "local_policy_support": ["北京市信创产业支持", "海淀区软件产业扶持"]
+    },
+    {
+      "code": "600519",
+      "name": "贵州茅台",
+      "national_policy_tags": ["消费提振"],
+      "benefit_level": "间接受益",
+      "benefit_analysis": "高端消费龙头，间接受益于消费信心恢复",
+      "local_policy_support": ["贵州省白酒产业发展规划", "遵义市酒业扶持政策"]
+    },
+    {
+      "code": "300124",
+      "name": "汇川技术",
+      "national_policy_tags": ["设备更新", "新质生产力", "工业自动化"],
+      "benefit_level": "核心受益",
+      "benefit_analysis": "工业自动化龙头，直接受益于制造业设备更新及智能化改造",
+      "local_policy_support": ["广东省智能制造产业规划", "深圳市工业母机支持"]
+    },
+    {
+      "code": "002594",
+      "name": "比亚迪",
+      "national_policy_tags": ["以旧换新", "新能源汽车", "储能"],
+      "benefit_level": "核心受益",
+      "benefit_analysis": "新能源汽车龙头，汽车以旧换新政策最大受益者之一",
+      "local_policy_support": ["广东省新能源汽车推广", "深圳市新能源汽车补贴"]
+    },
+    {
+      "code": "600536",
+      "name": "中国软件",
+      "national_policy_tags": ["信创", "数据要素", "新质生产力"],
+      "benefit_level": "核心受益",
+      "benefit_analysis": "操作系统及数据库国产化核心标的，信创政策直接受益者",
+      "local_policy_support": ["北京市信创产业规划", "长沙市软件产业支持"]
+    }
+  ],
+  "policy_stock_mapping": {
+    "低空经济": ["002085", "002253", "002236"],
+    "设备更新": ["601766", "300124", "601369", "000425"],
+    "以旧换新": ["002594", "601127", "000333", "000651"],
+    "数据要素": ["002230", "300033", "688111", "300229"],
+    "储能": ["300750", "300014", "300274", "002594"],
+    "半导体国产替代": ["688981", "002371", "603019", "300782"],
+    "人工智能": ["002230", "688111", "603019", "300418"]
+  }
+}

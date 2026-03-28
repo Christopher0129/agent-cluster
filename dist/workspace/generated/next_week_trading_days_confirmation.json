@@ -1,0 +1,16 @@
+{
+  "week_range": "2026-03-30 至 2026-04-03",
+  "trading_days": [
+    "2026-03-30",
+    "2026-03-31",
+    "2026-04-01",
+    "2026-04-02",
+    "2026-04-03"
+  ],
+  "day_count": 5,
+  "reference_date": "2026-03-27",
+  "week_number": "2026年第14周",
+  "holiday_notes": "清明节假期自2026-04-04（周六）开始，故下周（3月30日-4月3日）为5个完整交易日。若遇交易所临时公告调整，以沪深交易所官方通知为准。",
+  "data_source": "workspace_trading_calendar_analysis",
+  "verification_status": "pending_official_exchange_confirmation"
+}

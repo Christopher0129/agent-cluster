@@ -1,0 +1,294 @@
+{
+  "meta": {
+    "reportType": "增减持与并购重组风险监控",
+    "taskId": "task_2__sub_2__sub_5__sub_1__sub_4__sub_5",
+    "phase": "research",
+    "monitoringPeriod": {
+      "startDate": "2026-03-30",
+      "endDate": "2026-04-03",
+      "description": "2026年第14周（2026年3月30日至4月3日）"
+    },
+    "generatedBy": "kimi2.5_2 (无联网能力)",
+    "generatedAt": "2026-03-27T12:00:00Z",
+    "dataStatus": "framework_template_only",
+    "disclaimer": "本文件为研究框架模板，不含实时数据。所有投资决策必须基于经核实的实时信息。股市有风险，投资需谨慎。",
+    "nextStep": "需由具备联网能力的worker或人工分析师填充以下实时数据字段"
+  },
+  "monitoringDimensions": {
+    "dimension1": {
+      "name": "大股东及董监高增减持监控",
+      "priority": "HIGH",
+      "filterCriteria": {
+        "reductionRatioThreshold": "≥1%",
+        "reductionAmountThreshold": "≥5000万元人民币",
+        "reductionTypes": [
+          "集中竞价减持",
+          "大宗交易减持",
+          "协议转让",
+          "司法拍卖",
+          "股权激励注销"
+        ],
+        "shareholderTypes": [
+          "控股股东",
+          "实际控制人",
+          "持股5%以上大股东",
+          "董监高（董事、监事、高级管理人员）",
+          "一致行动人"
+        ]
+      },
+      "dataSchema": {
+        "fields": [
+          {"fieldName": "stockCode", "fieldType": "string", "description": "股票代码，如600000.SH", "required": true},
+          {"fieldName": "stockName", "fieldType": "string", "description": "股票名称", "required": true},
+          {"fieldName": "shareholderName", "fieldType": "string", "description": "股东/董监高姓名", "required": true},
+          {"fieldName": "shareholderType", "fieldType": "enum", "options": ["控股股东", "实际控制人", "大股东(≥5%)", "董监高", "一致行动人"], "required": true},
+          {"fieldName": "changeType", "fieldType": "enum", "options": ["增持", "减持"], "required": true},
+          {"fieldName": "changeMethod", "fieldType": "enum", "options": ["集中竞价", "大宗交易", "协议转让", "司法拍卖", "其他"], "required": true},
+          {"fieldName": "plannedShares", "fieldType": "number", "description": "计划变动股数(万股)", "required": true},
+          {"fieldName": "plannedRatio", "fieldType": "number", "description": "计划变动比例(%)", "required": true},
+          {"fieldName": "plannedAmount", "fieldType": "number", "description": "预计变动金额(万元)", "required": false},
+          {"fieldName": "startDate", "fieldType": "date", "description": "减持起始日", "required": true},
+          {"fieldName": "endDate", "fieldType": "date", "description": "减持结束日", "required": true},
+          {"fieldName": "holdingBefore", "fieldType": "number", "description": "变动前持股比例(%)", "required": true},
+          {"fieldName": "holdingAfter", "fieldType": "number", "description": "变动后持股比例(%)", "required": true},
+          {"fieldName": "changeReason", "fieldType": "string", "description": "变动原因(如资金需求、个人安排等)", "required": false},
+          {"fieldName": "sourceUrl", "fieldType": "string", "description": "公告来源链接", "required": true},
+          {"fieldName": "announcementDate", "fieldType": "date", "description": "公告日期", "required": true}
+        ]
+      },
+      "riskAssessment": {
+        "highRiskIndicators": [
+          "减持比例≥5%或金额≥2亿元",
+          "控股股东/实控人清仓式减持(减持后持股<30%)",
+          "多位董监高同时减持",
+          "减持期间叠加业绩预减/亏损",
+          "减持价格大幅低于市价(协议转让折价>20%)"
+        ],
+        "mediumRiskIndicators": [
+          "减持比例2%-5%",
+          "单一董监高减持",
+          "减持期间无业绩公告",
+          "近期股价已有较大涨幅(30日内>50%)"
+        ],
+        "lowRiskIndicators": [
+          "减持比例<2%",
+          "员工持股计划减持",
+          "减持用于公司发展/股权激励",
+          "股价处于历史低位"
+        ]
+      },
+      "placeholderData": [],
+      "searchGuidance": {
+        "primarySources": [
+          {"source": "巨潮资讯网(cninfo.com.cn)", "searchMethod": "搜索'减持计划'、'减持股份'，筛选公告日期最近7日", "reliability": "官方披露，最高优先级"},
+          {"source": "上交所/深交所官网", "searchMethod": "查看'权益变动'、'董监高持股变动'公告", "reliability": "交易所官方"},
+          {"source": "东方财富网-股东研究", "searchMethod": "数据中心-特色数据-股东增减持", "reliability": "第三方整理，需交叉验证"},
+          {"source": "同花顺iFinD/Wind", "searchMethod": "使用'重要股东交易'模块筛选", "reliability": "金融终端"}
+        ],
+        "keywords": ["减持计划", "减持预披露", "减持进展", "权益变动", "董监高减持", "大股东减持"]
+      }
+    },
+    "dimension2": {
+      "name": "并购重组进展监控",
+      "priority": "HIGH",
+      "eventTypes": [
+        {
+          "typeCode": "MA_REVIEW",
+          "typeName": "并购重组委审议",
+          "description": "证监会并购重组委召开工作会议审议重组方案",
+          "impact": "极高，通过则复牌涨停概率高，被否则补跌"
+        },
+        {
+          "typeCode": "MA_RESUMPTION",
+          "typeName": "重组预案复牌",
+          "description": "披露重组预案后复牌交易",
+          "impact": "高，取决于方案质量和停牌期间市场表现"
+        },
+        {
+          "typeName": "收购完成过户",
+          "typeCode": "MA_TRANSFER",
+          "description": "资产交割完成，股权过户登记",
+          "impact": "中，标志重组进入实质完成阶段"
+        },
+        {
+          "typeCode": "MA_APPROVAL",
+          "typeName": "证监会核准",
+          "description": "获得证监会并购重组核准批文",
+          "impact": "高，重大里程碑节点"
+        },
+        {
+          "typeCode": "MA_INQUIRY",
+          "typeName": "交易所问询函",
+          "description": "收到交易所对重组方案的问询函",
+          "impact": "中，需关注回复质量"
+        }
+      ],
+      "dataSchema": {
+        "fields": [
+          {"fieldName": "stockCode", "fieldType": "string", "description": "股票代码", "required": true},
+          {"fieldName": "stockName", "fieldType": "string", "description": "股票名称", "required": true},
+          {"fieldName": "eventType", "fieldType": "enum", "options": ["MA_REVIEW", "MA_RESUMPTION", "MA_TRANSFER", "MA_APPROVAL", "MA_INQUIRY"], "required": true},
+          {"fieldName": "eventDate", "fieldType": "date", "description": "事件发生日期", "required": true},
+          {"fieldName": "suspensionDate", "fieldType": "date", "description": "停牌日期(如适用)", "required": false},
+          {"fieldName": "resumptionDate", "fieldType": "date", "description": "复牌日期(如适用)", "required": false},
+          {"fieldName": "maType", "fieldType": "enum", "options": ["资产注入", "资产出售", "吸收合并", "借壳上市", "控制权变更"], "required": true},
+          {"fieldName": "transactionValue", "fieldType": "number", "description": "交易金额(亿元)", "required": false},
+          {"fieldName": "counterparty", "fieldType": "string", "description": "交易对手方", "required": false},
+          {"fieldName": "targetAsset", "fieldType": "string", "description": "标的资产描述", "required": false},
+          {"fieldName": "reviewResult", "fieldType": "enum", "options": ["通过", "有条件通过", "未通过", "待定"], "description": "审议结果(仅MA_REVIEW)", "required": false},
+          {"fieldName": "regulatoryStatus", "fieldType": "string", "description": "监管状态", "required": true},
+          {"fieldName": "progressPercentage", "fieldType": "number", "description": "重组进度百分比", "required": false},
+          {"fieldName": "sourceUrl", "fieldType": "string", "description": "公告来源", "required": true}
+        ]
+      },
+      "scoringFramework": {
+        "description": "并购重组股多次涨停概率评估",
+        "dimensions": [
+          {"dimension": "停牌时间溢价", "weight": 0.15, "scoring": {"5分": "停牌期间大盘涨>20%", "1分": "停牌期间大盘跌>10%"}},
+          {"dimension": "重组方案吸引力", "weight": 0.25, "scoring": {"5分": "注入热门赛道资产(AI/半导体/新能源)", "1分": "资产注入价值提升有限"}},
+          {"dimension": "市值弹性", "weight": 0.20, "scoring": {"5分": "总市值<30亿", "1分": "总市值>200亿"}},
+          {"dimension": "市场情绪周期", "weight": 0.15, "scoring": {"5分": "并购重组政策宽松期", "1分": "监管加强期"}},
+          {"dimension": "筹码结构", "weight": 0.15, "scoring": {"5分": "停牌前筹码高度集中", "1分": "复牌后巨量换手出货"}},
+          {"dimension": "监管风险", "weight": 0.10, "scoring": {"5分": "已获证监会核准", "1分": "被重点监控"}}
+        ]
+      },
+      "placeholderData": [],
+      "searchGuidance": {
+        "primarySources": [
+          {"source": "证监会官网", "searchMethod": "查看并购重组委工作会议公告", "reliability": "最高"},
+          {"source": "巨潮资讯网", "searchMethod": "搜索'复牌'+'重大资产重组'", "reliability": "最高"},
+          {"source": "交易所官网", "searchMethod": "停复牌公告栏目", "reliability": "高"}
+        ],
+        "keywords": ["并购重组委", "复牌", "重大资产重组", "吸收合并", "借壳上市", "过户完成"]
+      }
+    },
+    "dimension3": {
+      "name": "股权激励限售股解禁监控",
+      "priority": "MEDIUM",
+      "filterCriteria": {
+        "exclusion": ["首发原股东限售股解禁", "首发战略配售解禁"],
+        "inclusion": ["股权激励限售股解禁", "员工持股计划解禁", "定向增发机构配售(非控股股东)"],
+        "marketCapFilter": "解禁市值≥5000万元"
+      },
+      "dataSchema": {
+        "fields": [
+          {"fieldName": "stockCode", "fieldType": "string", "description": "股票代码", "required": true},
+          {"fieldName": "stockName", "fieldType": "string", "description": "股票名称", "required": true},
+          {"fieldName": "unlockDate", "fieldType": "date", "description": "解禁日期", "required": true},
+          {"fieldName": "unlockShares", "fieldType": "number", "description": "解禁股数(万股)", "required": true},
+          {"fieldName": "unlockRatio", "fieldType": "number", "description": "占总股本比例(%)", "required": true},
+          {"fieldName": "unlockMarketValue", "fieldType": "number", "description": "解禁市值(万元)", "required": true},
+          {"fieldName": "unlockType", "fieldType": "enum", "options": ["股权激励", "员工持股计划", "定增机构配售", "其他"], "required": true},
+          {"fieldName": "grantPrice", "fieldType": "number", "description": "授予/发行价格(元)", "required": false},
+          {"fieldName": "currentPrice", "fieldType": "number", "description": "当前股价(元)", "required": false},
+          {"fieldName": "profitRatio", "fieldType": "number", "description": "当前浮盈比例(%)", "required": false},
+          {"fieldName": "holdersCount", "fieldType": "integer", "description": "涉及持有人数", "required": false},
+          {"fieldName": "lockPeriod", "fieldType": "integer", "description": "锁定期(月)", "required": false}
+        ]
+      },
+      "riskAssessment": {
+        "highRisk": [
+          "解禁比例≥5%",
+          "浮盈比例>100%",
+          "近期无股价支撑因素",
+          "小市值股票(<50亿)大额解禁"
+        ],
+        "lowRisk": [
+          "解禁比例<1%",
+          "浮盈比例<30%",
+          "有业绩高增长支撑",
+          "大股东承诺不减持"
+        ]
+      },
+      "placeholderData": [],
+      "searchGuidance": {
+        "primarySources": [
+          {"source": "东方财富网-解禁表", "searchMethod": "数据中心-特色数据-限售股解禁", "reliability": "高"},
+          {"source": "同花顺iFinD", "searchMethod": "股票-解禁流通表", "reliability": "高"},
+          {"source": "交易所公告", "searchMethod": "搜索'限售股上市流通'", "reliability": "最高"}
+        ]
+      }
+    },
+    "dimension4": {
+      "name": "复合风险事件标注",
+      "priority": "HIGH",
+      "description": "识别可能引发短期股价高波动的叠加风险事件",
+      "riskCombinations": [
+        {
+          "combinationId": "RISK_001",
+          "name": "大额减持+业绩下滑",
+          "description": "大股东减持≥1%叠加业绩预减或亏损",
+          "volatilityImpact": "极高，可能连续跌停",
+          "examples": ["实控人减持+年报预亏", "机构减持+Q4业绩下滑"]
+        },
+        {
+          "combinationId": "RISK_002",
+          "name": "解禁+减持计划",
+          "description": "限售股解禁同时公告减持计划",
+          "volatilityImpact": "高，抛压叠加",
+          "examples": ["股权激励解禁+高管减持", "定增解禁+股东清仓"]
+        },
+        {
+          "combinationId": "RISK_003",
+          "name": "重组失败+大额减持",
+          "description": "并购重组被否或终止后股东减持",
+          "volatilityImpact": "极高，情绪面与资金面双重打击",
+          "examples": ["借壳被否+实控人减持", "重组终止+PE机构退出"]
+        },
+        {
+          "combinationId": "RISK_004",
+          "name": "高质押+股价下跌",
+          "description": "大股东高比例质押叠加股价大幅下跌",
+          "volatilityImpact": "高，可能触发平仓风险",
+          "examples": ["质押率>80%+股价跌破预警线", "多笔质押临近平仓线"]
+        }
+      ],
+      "dataSchema": {
+        "fields": [
+          {"fieldName": "stockCode", "fieldType": "string", "required": true},
+          {"fieldName": "stockName", "fieldType": "string", "required": true},
+          {"fieldName": "riskCombinationId", "fieldType": "string", "required": true},
+          {"fieldName": "riskDescription", "fieldType": "string", "required": true},
+          {"fieldName": "relatedEvents", "fieldType": "array", "itemType": "string", "description": "关联事件列表", "required": true},
+          {"fieldName": "volatilityRiskLevel", "fieldType": "enum", "options": ["极高", "高", "中", "低"], "required": true},
+          {"fieldName": "expectedImpact", "fieldType": "string", "description": "预期股价影响", "required": false},
+          {"fieldName": "recommendation", "fieldType": "string", "description": "投资建议", "required": false}
+        ]
+      },
+      "placeholderData": []
+    }
+  },
+  "outputTemplates": {
+    "reductionWarningList": {
+      "description": "增减持预警名单输出格式",
+      "columns": ["股票代码", "股票名称", "股东名称", "股东类型", "变动类型", "计划数量(万股)", "计划比例(%)", "预计金额(万元)", "起始日", "截止日", "风险等级"]
+    },
+    "maEventTable": {
+      "description": "并购重组事件表输出格式",
+      "columns": ["股票代码", "股票名称", "事件类型", "事件日期", "重组类型", "交易金额(亿元)", "监管状态", "涨停概率评估", "备注"]
+    },
+    "unlockMonitorList": {
+      "description": "限售股解禁监控表",
+      "columns": ["股票代码", "股票名称", "解禁日", "解禁数量(万股)", "解禁比例(%)", "解禁市值(万元)", "类型", "浮盈比例(%)", "风险等级"]
+    },
+    "compositeRiskAlert": {
+      "description": "复合风险预警",
+      "columns": ["股票代码", "股票名称", "风险组合", "涉及事件", "波动风险", "建议操作"]
+    }
+  },
+  "disclaimers": [
+    "本监控框架仅供参考，不构成任何投资建议",
+    "增减持计划可能因市场情况变化而调整",
+    "并购重组存在失败风险，包括但不限于交易双方未能达成一致、监管审核未通过",
+    "限售股解禁实际抛压取决于持有人减持意愿",
+    "股市有风险，投资需谨慎"
+  ],
+  "nextSteps": [
+    "1. 由具备联网能力的worker使用上述搜索关键词检索2026-03-30至2026-04-03期间的增减持公告",
+    "2. 监控证监会并购重组委会议安排及复牌公告",
+    "3. 查询该周内的限售股解禁计划",
+    "4. 识别并标注复合风险事件",
+    "5. 生成按风险等级排序的预警名单",
+    "6. 整合到最终Word报告中"
+  ]
+}

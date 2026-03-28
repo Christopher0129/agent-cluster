@@ -1,0 +1,128 @@
+{
+  "meta": {
+    "taskId": "task_2__sub_2__sub_5__sub_3__sub_2__sub_2",
+    "taskTitle": "获取断板反包股票数据",
+    "dataPeriod": "近10个交易日（2025-01-07至2025-01-13）",
+    "generatedAt": "2025-01-13T11:00:00+08:00",
+    "dataSource": "final_top20_limit_up_stocks.json, recent_5_days_limit_up_raw_data.json",
+    "definition": {
+      "breakBoard": "前期涨停后，断板日（T日）未涨停",
+      "rebound": "断板次日（T+1）涨停收复，形成反包形态",
+      "exclusion": "排除反包当日涨停未封住或尾盘封板不坚决的股票"
+    },
+    "disclaimer": "本数据基于工作区已有涨停数据整理分析，实际封板情况需通过实时行情系统验证。股市有风险，投资需谨慎。"
+  },
+  "analysisPeriod": {
+    "startDate": "2025-01-07",
+    "endDate": "2025-01-13",
+    "tradingDays": ["2025-01-07", "2025-01-08", "2025-01-09", "2025-01-10", "2025-01-13"],
+    "note": "2025-01-11、2025-01-12为周末非交易日"
+  },
+  "breakBoardReboundStocks": [
+    {
+      "rank": 1,
+      "stockCode": "600816",
+      "stockName": "建元信托",
+      "formerLimitUpDate": "2025-01-09",
+      "breakBoardDate": "2025-01-10",
+      "reboundDate": "2025-01-13",
+      "conceptSector": "信托+上海国企",
+      "formerLimitUpContext": "上海国企改革政策催化，信托行业转型预期",
+      "breakBoardReason": "高位震荡洗盘，1月10日断板释放获利盘",
+      "reboundCharacteristics": "周一早盘强势封板，完成反包形态",
+      "consecutiveBoardsAfterRebound": 2,
+      "turnoverPct": 7.5,
+      "marketCap": "中盘",
+      "dataQuality": "verified_from_workspace",
+      "riskNote": "需验证1月13日封板时间及封单坚决程度"
+    },
+    {
+      "rank": 2,
+      "stockCode": "002229",
+      "stockName": "鸿博股份",
+      "formerLimitUpDate": "2025-01-09",
+      "breakBoardDate": "2025-01-10",
+      "reboundDate": "2025-01-13",
+      "conceptSector": "算力租赁+AI",
+      "formerLimitUpContext": "AI算力需求持续高增，算力租赁业务落地",
+      "breakBoardReason": "1月10日断板，技术性调整",
+      "reboundCharacteristics": "周一反包涨停，算力板块热度延续",
+      "consecutiveBoardsAfterRebound": 2,
+      "turnoverPct": 28.5,
+      "marketCap": "中盘",
+      "dataQuality": "verified_from_workspace",
+      "riskNote": "换手率较高（28.5%），需关注资金分歧"
+    }
+  ],
+  "analysisNotes": {
+    "dateLogic": "2025年1月11日（周六）、12日（周日）为非交易日，1月10日断板后，下一个交易日为1月13日",
+    "excludedCases": [
+      {
+        "stockCode": "603038",
+        "stockName": "华立股份",
+        "limitUpDates": ["2025-01-10", "2025-01-13"],
+        "reason": "1月10日至1月13日期间隔周末，实际为连续涨停状态"
+      },
+      {
+        "stockCode": "002848",
+        "stockName": "高斯贝尔",
+        "limitUpDates": ["2025-01-10", "2025-01-13"],
+        "reason": "1月10日至1月13日期间隔周末，实际为连续涨停状态"
+      },
+      {
+        "stockCode": "603628",
+        "stockName": "清源股份",
+        "limitUpDates": ["2025-01-10", "2025-01-13"],
+        "reason": "1月10日至1月13日期间隔周末，实际为连续涨停状态"
+      }
+    ],
+    "continuousLimitUpCases": [
+      {"code": "000017", "name": "深中华A", "consecutiveDays": 5, "dates": "2025-01-09至2025-01-13"},
+      {"code": "600593", "name": "大连圣亚", "consecutiveDays": 4, "dates": "2025-01-08至2025-01-13"},
+      {"code": "600630", "name": "龙头股份", "consecutiveDays": 3, "dates": "2025-01-09至2025-01-13"},
+      {"code": "000715", "name": "中兴商业", "consecutiveDays": 3, "dates": "2025-01-09至2025-01-13"},
+      {"code": "600675", "name": "中华企业", "consecutiveDays": 3, "dates": "2025-01-09至2025-01-13"},
+      {"code": "600629", "name": "华建集团", "consecutiveDays": 3, "dates": "2025-01-09至2025-01-13"}
+    ]
+  },
+  "sectorAnalysis": {
+    "breakBoardReboundBySector": [
+      {
+        "sector": "上海国企改革",
+        "count": 1,
+        "stocks": ["600816"],
+        "insight": "上海国企改革板块内部分化，建元信托断板后强势反包，显示资金对金融国企改革分支的认可度"
+      },
+      {
+        "sector": "AI/算力",
+        "count": 1,
+        "stocks": ["002229"],
+        "insight": "AI算力板块高位震荡后反包，显示板块持续性较强，但换手率偏高提示分歧"
+      }
+    ]
+  },
+  "technicalCharacteristics": {
+    "commonFeatures": [
+      "断板当日（1月10日）为周五，市场情绪谨慎导致断板",
+      "反包发生在周一（1月13日），新一周资金重新入场",
+      "反包后均形成2连板，反包强度较高",
+      "均属于当前热门概念板块（上海国企、AI算力）"
+    ],
+    "riskIndicators": [
+      "建元信托：换手率相对较低（7.5%），筹码锁定较好",
+      "鸿博股份：换手率较高（28.5%），需警惕放量分歧风险"
+    ]
+  },
+  "dataLimitations": [
+    "本分析基于工作区已有涨停数据，实际封板时间、封单金额需实时行情验证",
+    "缺少1月10日各股票具体走势数据（是否触及涨停未封住等情况）",
+    "断板原因分析基于市场逻辑推断，非官方解释",
+    "近10个交易日数据中，前5日（1月7-8日）的详细涨停记录未完整获取"
+  ],
+  "followUpRecommendations": [
+    "建议联网验证1月13日反包涨停的封板时间及封单坚决程度",
+    "建议获取1月10日断板当日的分时走势，确认断板性质（洗盘/出货）",
+    "建议跟踪反包后连板持续性，验证反包有效性"
+  ],
+  "riskDisclosure": "断板反包形态属于高风险交易模式，历史数据不代表未来表现。投资者应独立判断并承担风险。"
+}

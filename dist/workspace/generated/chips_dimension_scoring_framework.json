@@ -1,0 +1,347 @@
+{
+  "dimension_metadata": {
+    "dimension_id": "D3",
+    "dimension_name": "Chips Structure (筹码维度)",
+    "dimension_name_cn": "筹码结构维度",
+    "total_weight_in_framework": 0.20,
+    "scoring_scale": {
+      "min": 0,
+      "max": 100,
+      "unit": "points"
+    },
+    "rationale": "筹码结构直接影响涨停板的抛压强度和资金拉升成本。小市值、筹码集中、优质资金主导的标的更容易实现多次涨停。本维度从流通市值可操纵性、股东稳定性、主力资金质量三个角度量化评估。",
+    "version": "1.0",
+    "last_updated": "2025-01-13",
+    "applicable_markets": ["沪主板", "深主板", "创业板", "科创板", "北交所"]
+  },
+  "sub_indicators": [
+    {
+      "indicator_id": "C3.1",
+      "indicator_name": "Float Market Cap Tier (流通市值分层)",
+      "indicator_name_cn": "流通市值分层",
+      "weight": 0.30,
+      "weight_rationale": "流通市值决定拉升难度和资金门槛。小盘股更易被资金操控形成连续涨停，大盘股涨停需要巨额资金且抛压沉重。本指标占30%权重反映市值对多次涨停概率的显著影响。",
+      "scoring_criteria": {
+        "type": "tiered",
+        "max_score": 30,
+        "tiers": [
+          {
+            "tier_name": "Micro Cap (微盘)",
+            "criteria": "流通市值 < 30亿人民币",
+            "score": 30,
+            "rationale": "微盘股拉升成本最低，游资控盘容易，连续涨停阻力最小。典型多次涨停标的集中在该区间。"
+          },
+          {
+            "tier_name": "Small Cap (小盘)",
+            "criteria": "30亿 ≤ 流通市值 < 50亿人民币",
+            "score": 25,
+            "rationale": "小盘股仍具备较好操纵性，资金需求适中，多次涨停概率较高。"
+          },
+          {
+            "tier_name": "Small-Mid Cap (中小盘)",
+            "criteria": "50亿 ≤ 流通市值 < 100亿人民币",
+            "score": 18,
+            "rationale": "中小盘股需要较大资金量推动，但仍有实现2-3连板的可能。"
+          },
+          {
+            "tier_name": "Mid Cap (中盘)",
+            "criteria": "100亿 ≤ 流通市值 < 200亿人民币",
+            "score": 10,
+            "rationale": "中盘股涨停需要强催化配合，连续涨停难度明显增加。"
+          },
+          {
+            "tier_name": "Large Cap (大盘)",
+            "criteria": "200亿 ≤ 流通市值 < 500亿人民币",
+            "score": 4,
+            "rationale": "大盘股涨停多为机构主导的趋势性行情，多次涨停概率较低。"
+          },
+          {
+            "tier_name": "Mega Cap (超级大盘)",
+            "criteria": "流通市值 ≥ 500亿人民币",
+            "score": 0,
+            "rationale": "超级大盘股连续涨停需要极端重大利好，不属于多次涨停策略的目标范围。"
+          }
+        ],
+        "special_adjustments": [
+          {
+            "condition": "北交所标的",
+            "adjustment": "市值评分 × 0.9",
+            "reason": "北交所流动性较低，30%涨跌幅限制，评分需适度下调"
+          },
+          {
+            "condition": "科创板标的",
+            "adjustment": "流通市值标准放宽20%",
+            "reason": "科创板20%涨跌幅，资金效率不同，同等市值下难度略低"
+          }
+        ]
+      },
+      "data_sources": ["F10流通市值", "同花顺/东方财富市值数据", "Wind AShare数据"],
+      "calculation_example": "标的流通市值45亿 → 落在Small Cap区间 → 得分25分"
+    },
+    {
+      "indicator_id": "C3.2",
+      "indicator_name": "Shareholder Structure (股东结构)",
+      "indicator_name_cn": "股东结构",
+      "weight": 0.35,
+      "weight_rationale": "股东结构决定筹码稳定性和抛压来源。机构占比过高可能导致提前兑现，散户过多容易在涨停时恐慌抛售，近期解禁更是直接威胁。本指标占35%权重是筹码维度的核心。",
+      "sub_components": [
+        {
+          "component_name": "散户占比 (Retail Holder Ratio)",
+          "component_name_cn": "散户股东户数变化",
+          "max_points": 10,
+          "scoring_logic": "逆向评分，散户越少越好",
+          "tiers": [
+            {"condition": "股东户数环比减少 > 20%", "score": 10, "description": "筹码快速集中，主力吸筹明显"},
+            {"condition": "股东户数环比减少 10-20%", "score": 8, "description": "筹码持续集中"},
+            {"condition": "股东户数环比减少 5-10%", "score": 6, "description": "筹码缓慢集中"},
+            {"condition": "股东户数变动 ±5%以内", "score": 4, "description": "筹码结构稳定"},
+            {"condition": "股东户数环比增加 5-15%", "score": 2, "description": "筹码分散，散户进场"},
+            {"condition": "股东户数环比增加 > 15%", "score": 0, "description": "严重分散，主力派发"}
+          ]
+        },
+        {
+          "component_name": "机构持仓变化 (Institutional Holding Change)",
+          "component_name_cn": "机构持仓季度变化",
+          "max_points": 12,
+          "scoring_logic": "正向评分，机构增持且锁定为佳",
+          "tiers": [
+            {"condition": "机构持仓比例 > 30% 且季度增持 > 5%", "score": 12, "description": "机构重仓增持，强烈看好"},
+            {"condition": "机构持仓比例 > 20% 且季度增持 2-5%", "score": 10, "description": "机构持续加仓"},
+            {"condition": "机构持仓比例 10-20% 且季度增持", "score": 8, "description": "机构开始关注"},
+            {"condition": "机构持仓比例 > 15% 且变动 ±2%以内", "score": 6, "description": "机构持仓稳定"},
+            {"condition": "机构持仓比例 < 10%", "score": 4, "description": "机构关注度低"},
+            {"condition": "机构季度减持 > 3%", "score": 0, "description": "机构撤离信号"}
+          ]
+        },
+        {
+          "component_name": "解禁压力 (Unlock Pressure)",
+          "component_name_cn": "近期解禁及减持压力",
+          "max_points": 8,
+          "scoring_logic": "逆向评分，解禁压力越小越好",
+          "scoring_rules": {
+            "base_scenarios": [
+              {"condition": "7日内有大额解禁（>10%流通盘）", "score": -5, "penalty": true, "description": "解禁抛压迫在眉睫，一票否决项"},
+              {"condition": "30日内有大额解禁", "score": 0, "description": "解禁阴影压制上涨空间"},
+              {"condition": "90日内有解禁", "score": 3, "description": "中期解禁压力存在"},
+              {"condition": "180日内无解禁", "score": 6, "description": "解禁真空期，安全窗口"},
+              {"condition": "360日内无解禁", "score": 8, "description": "长期无解禁压力，最佳环境"}
+            ],
+            "additional_checks": [
+              {"condition": "近期有减持计划公告", "adjustment": -3, "description": "减持公告直接扣分"},
+              {"condition": "大股东质押率 > 70%", "adjustment": -2, "description": "高质押存在被动减持风险"},
+              {"condition": "近30日实际减持金额 > 5000万", "adjustment": -4, "description": "实际减持行为已发生"}
+            ]
+          }
+        },
+        {
+          "component_name": "前十大集中度 (Top10 Concentration)",
+          "component_name_cn": "前十大流通股东集中度",
+          "max_points": 5,
+          "scoring_logic": "适度集中为佳，过度集中警惕庄股",
+          "tiers": [
+            {"condition": "前十大持仓 50-70%", "score": 5, "description": "高度集中，主力控盘明显"},
+            {"condition": "前十大持仓 40-50%", "score": 4, "description": "较为集中"},
+            {"condition": "前十大持仓 30-40%", "score": 3, "description": "适度集中"},
+            {"condition": "前十大持仓 20-30%", "score": 2, "description": "相对分散"},
+            {"condition": "前十大持仓 < 20%", "score": 1, "description": "高度分散，缺乏主导资金"},
+            {"condition": "前十大持仓 > 80%", "score": 1, "description": "过度集中，流动性风险"}
+          ]
+        }
+      ],
+      "component_weights": {
+        "散户占比": 0.30,
+        "机构持仓变化": 0.35,
+        "解禁压力": 0.25,
+        "前十大集中度": 0.10
+      },
+      "data_sources": ["F10股东研究", "季度报告十大流通股东", "巨潮资讯网解禁公告", "交易所减持预披露"],
+      "calculation_example": "散户减少15%(8分) + 机构增持3%且持仓25%(10分) + 180日无解禁(6分) + 前十大55%(5分) = 29分 → 与权重35%相乘后调整至10分制显示"
+    },
+    {
+      "indicator_id": "C3.3",
+      "indicator_name": "Dragon Tiger List Quality (龙虎榜数据质量)",
+      "indicator_name_cn": "龙虎榜数据质量",
+      "weight": 0.35,
+      "weight_rationale": "龙虎榜直接反映主力资金的质量和意图。顶级游资介入往往带来高溢价，机构与游资共振最为理想。本维度与dragon_tiger_list_scoring_framework.md保持一致但细化评分颗粒度。",
+      "sub_components": [
+        {
+          "component_name": "游资席位质量 (Hot Money Quality)",
+          "component_name_cn": "游资席位评级",
+          "max_points": 15,
+          "scoring_logic": "按游资等级和数量评分",
+          "seat_classification": {
+            "S_tier": {
+              "name": "顶级游资",
+              "examples": ["国泰君安上海江苏路(章盟主)", "兴业证券陕西分公司(方新侠)", "国泰君安南京太平南路(作手新一)", "华鑫证券上海宛平南路(炒股养家)", "中国银河证券绍兴(赵老哥)"],
+              "points_per_seat": 5,
+              "max_count": 3,
+              "max_points": 15
+            },
+            "A_tier": {
+              "name": "一线游资",
+              "examples": ["中信证券上海溧阳路", "华泰证券深圳益田路", "光大证券宁波解放南路", "国盛证券宁波桑田路"],
+              "points_per_seat": 3,
+              "max_count": 3,
+              "max_points": 9
+            },
+            "B_tier": {
+              "name": "活跃游资",
+              "examples": ["东方证券上海浦东新区源深路", "华鑫证券上海分公司", "财通证券杭州上塘路"],
+              "points_per_seat": 2,
+              "max_count": 3,
+              "max_points": 6
+            },
+            "retail_camp": {
+              "name": "散户集中营(扣分项)",
+              "examples": ["东方财富拉萨团结路第一/第二", "东方财富拉萨东环路第一/第二", "平安证券深圳分公司"],
+              "points_per_seat": -2,
+              "max_penalty": -6,
+              "description": "散户大本营席位出现表明筹码分散，次日抛压大"
+            }
+          },
+          "scoring_formula": "S_tier(min(数量×5,15)) + A_tier(min(数量×3,9)) + B_tier(min(数量×2,6)) + Retail(数量×(-2))",
+          "special_rules": [
+            {"condition": "买方出现≥2家S级游资且净买入", "bonus": 3, "description": "顶级游资合力，确定性高"},
+            {"condition": "卖方出现S级游资", "adjustment": -5, "description": "顶级游资出货需警惕"},
+            {"condition": "买方出现机构专用席位", "treatment": "计入机构维度", "description": "机构席位单独统计"}
+          ]
+        },
+        {
+          "component_name": "机构净买入占比 (Institutional Net Buy Ratio)",
+          "component_name_cn": "机构席位净买入占比",
+          "max_points": 10,
+          "scoring_logic": "正向评分，机构净买入越多越稳定",
+          "tiers": [
+            {"condition": "机构净买入占比 ≥ 40%", "score": 10, "description": "机构主导，基本面支撑强"},
+            {"condition": "机构净买入占比 30-40%", "score": 8, "description": "机构大量参与"},
+            {"condition": "机构净买入占比 20-30%", "score": 6, "description": "机构积极参与"},
+            {"condition": "机构净买入占比 10-20%", "score": 4, "description": "机构轻度参与"},
+            {"condition": "机构净买入占比 5-10%", "score": 2, "description": "机构试探性买入"},
+            {"condition": "机构净买入占比 < 5%", "score": 0, "description": "机构参与度低"},
+            {"condition": "机构净卖出", "score": -3, "description": "机构卖出为负面信号"}
+          ],
+          "additional_criteria": [
+            {"condition": "机构买入金额 > 1亿", "bonus": 2, "description": "大额机构资金锁定"},
+            {"condition": "机构买入金额 > 5000万", "bonus": 1, "description": "中等机构资金"}
+          ]
+        },
+        {
+          "component_name": "三日榜持续性 (3-Day Consistency)",
+          "component_name_cn": "连续三日龙虎榜分析",
+          "max_points": 10,
+          "scoring_logic": "正向评分，持续性越强越好",
+          "scoring_table": {
+            "连续3日登榜且资金净流入": {
+              "score": 10,
+              "description": "强势三连榜，资金接力完美",
+              "probability": "多次涨停概率>70%"
+            },
+            "连续2日登榜且资金净流入": {
+              "score": 7,
+              "description": "资金持续流入",
+              "probability": "多次涨停概率50-70%"
+            },
+            "单日登榜但前5日曾有登榜": {
+              "score": 4,
+              "description": "间歇性活跃",
+              "probability": "多次涨停概率30-50%"
+            },
+            "首次登榜": {
+              "score": 3,
+              "description": "首次进入视野",
+              "probability": "需观察持续性"
+            },
+            "登榜但资金净流出": {
+              "score": 0,
+              "description": "上榜即出货",
+              "probability": "回避"
+            }
+          },
+          "advanced_rules": [
+            {"condition": "3日榜中席位重复率 > 50%", "bonus": 2, "description": "主力锁仓，未做T"},
+            {"condition": "3日榜中每日都是净买入", "bonus": 3, "description": "连续加码，志在高远"},
+            {"condition": "第3日出现大量新席位", "penalty": -2, "description": "筹码松动，新老资金换手"}
+          ]
+        }
+      ],
+      "component_weights": {
+        "游资席位质量": 0.45,
+        "机构净买入占比": 0.30,
+        "三日榜持续性": 0.25
+      },
+      "data_sources": ["沪深交易所龙虎榜每日数据", "东方财富龙虎榜", "同花顺龙虎榜"],
+      "reference_document": "dragon_tiger_list_scoring_framework.md",
+      "calculation_example": "买方2家S级游资(10分+3分合力奖) + 机构占比25%(6分+1分金额奖) + 连续2日登榜(7分) = 27分 → 按权重调整"
+    }
+  ],
+  "dimension_scoring_rubric": {
+    "total_score_calculation": {
+      "formula": "Chips_Score = (C3.1_Score × 0.30) + (C3.2_Score × 0.35) + (C3.3_Score × 0.35)",
+      "normalization": "各子维度内部已归一化至100分，按权重加权后直接相加",
+      "decimal_handling": "保留1位小数",
+      "range": "0-100分"
+    },
+    "interpretation_guide": {
+      "90-100分": {
+        "rating": "Excellent (极佳)",
+        "description": "微盘/小盘市值，筹码高度集中，无解禁压力，顶级游资+机构共振",
+        "action": "重点关注，多次涨停概率极高",
+        "typical_profile": "流通市值<50亿，股东户数减少，顶级游资主买，机构加仓"
+      },
+      "70-89分": {
+        "rating": "Good (良好)",
+        "description": "中小盘市值，筹码较集中，解禁压力可控，优质资金介入",
+        "action": "积极关注，多次涨停概率较高",
+        "typical_profile": "流通市值50-100亿，筹码缓慢集中，一线游资参与"
+      },
+      "50-69分": {
+        "rating": "Average (一般)",
+        "description": "中等市值，筹码结构中性，资金质量参差",
+        "action": "观察为主，需其他维度补强",
+        "typical_profile": "流通市值100-200亿，机构与散户博弈，游资短线"
+      },
+      "30-49分": {
+        "rating": "Poor (较差)",
+        "description": "大盘股或筹码分散，有解禁压力，资金分歧",
+        "action": "谨慎参与",
+        "typical_profile": "流通市值>200亿，股东户数增加，散户席位为主"
+      },
+      "0-29分": {
+        "rating": "Very Poor (极差)",
+        "description": "超级大盘，严重分散，大额解禁在即，机构出货",
+        "action": "回避",
+        "typical_profile": "流通市值>500亿，近期大额解禁，龙虎榜机构净卖出"
+      }
+    }
+  },
+  "risk_penalties": {
+    "description": "出现以下情况时，在筹码维度总分基础上进行扣分",
+    "penalties": [
+      {"condition": "当日换手率 > 60%（非新股）", "penalty": -10, "reason": "筹码极端换手，主力对倒或出货"},
+      {"condition": "龙虎榜买方出现≥2家拉萨席位", "penalty": -8, "reason": "散户大本营买入，次日抛压大"},
+      {"condition": "大宗交易折价 > 5%且金额 > 5000万", "penalty": -7, "reason": "暗盘出货信号"},
+      {"condition": "融资融券余额单日激增 > 30%", "penalty": -5, "reason": "杠杆资金过度涌入，调整风险"},
+      {"condition": "股东质押触及平仓线", "penalty": -10, "reason": "被动减持风险"},
+      {"condition": "ST/*ST股票", "penalty": -5, "reason": "基本面风险，涨停为投机性质"}
+    ],
+    "floor_rule": "扣分后总分不低于0分"
+  },
+  "integration_with_master_framework": {
+    "master_framework": "multiple_limit_up_scoring_framework.json",
+    "replaces_factor": "F3 (Float and Liquidity)",
+    "enhancement": "本维度在原F3基础上大幅扩展，增加股东结构和龙虎榜质量细节",
+    "weight_in_master": 0.20,
+    "mapping": "Chips_Score / 100 × 20 = 在总框架中的贡献分"
+  },
+  "usage_guidelines": {
+    "data_update_frequency": "每日收盘后更新龙虎榜，每季度更新股东结构",
+    "calculation_timing": "T日收盘后计算，用于T+1日决策",
+    "best_practice": [
+      "筹码维度分数应与情绪维度、题材维度结合使用",
+      "单一维度高分不足以支撑交易决策",
+      "关注分数变化趋势而非绝对值",
+      "解禁时间窗口需提前30日关注"
+    ]
+  },
+  "disclaimer": "本评分体系基于历史数据回测构建，仅供研究参考，不构成任何投资建议。股票交易存在本金损失风险，筹码结构分析仅为概率估算工具。过往表现不代表未来收益，投资者应独立决策并承担全部责任。"
+}

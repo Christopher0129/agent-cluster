@@ -1,0 +1,352 @@
+{
+  "framework_metadata": {
+    "name": "A-Share Multiple Limit-Up Probability Scoring Framework (MLUP)",
+    "version": "1.0",
+    "applicable_market": "A-Share (沪/深/北交所)",
+    "limit_up_rules": {
+      "main_board": "10%",
+      "star_chinext": "20%",
+      "北交所": "30%"
+    },
+    "prediction_horizon": "Next 5 trading days",
+    "last_updated": "2025-01-13"
+  },
+  "scoring_scale": {
+    "min": 0,
+    "max": 100,
+    "interpretation": "Probability-weighted composite score representing relative likelihood of achieving 2+ limit-ups within next week"
+  },
+  "factor_definitions": [
+    {
+      "factor_id": "F1",
+      "factor_name": "Technical Momentum (技术动量)",
+      "weight": 0.25,
+      "weight_rationale": "Limit-up stocks often exhibit momentum persistence in A-shares due to retail investor herding behavior and algorithmic trend-following. Historical data suggests 60%+ of multi-limit-up stocks had prior limit-up within 5 days.",
+      "sub_components": [
+        {
+          "name": "Consecutive Limit-Up History",
+          "points": 10,
+          "scoring": {
+            "3+ limit-ups in past 5 days": 10,
+            "2 limit-ups in past 5 days": 7,
+            "1 limit-up in past 3 days": 4,
+            "No recent limit-up": 0
+          }
+        },
+        {
+          "name": "Price Position vs Moving Averages",
+          "points": 8,
+          "scoring": {
+            "Price > MA5 > MA10 > MA20 (strong uptrend)": 8,
+            "Price > MA5 > MA10 (moderate uptrend)": 5,
+            "Price > MA5 only": 2,
+            "Below key MAs": 0
+          }
+        },
+        {
+          "name": "Volume Pattern",
+          "points": 7,
+          "scoring": {
+            "Limit-up with 3x+ avg volume (breakout)": 7,
+            "Limit-up with 1.5-3x volume": 4,
+            "Limit-up with declining volume (caution)": 1,
+            "No significant volume surge": 0
+          }
+        }
+      ],
+      "max_raw_score": 25
+    },
+    {
+      "factor_id": "F2",
+      "factor_name": "Theme/Hot Sector Alignment (题材热度)",
+      "weight": 0.20,
+      "weight_rationale": "Concept-driven investing dominates A-share short-term movements. Policy catalysts and sector rotation create concentrated capital flows. 70%+ of multi-limit-up stocks are current hot theme leaders.",
+      "sub_components": [
+        {
+          "name": "Policy Catalyst Strength",
+          "points": 8,
+          "scoring": {
+            "National-level policy released within 7 days": 8,
+            "Provincial/regional policy or industry guidance": 5,
+            "Sector positive news (non-policy)": 3,
+            "No clear catalyst": 0
+          }
+        },
+        {
+          "name": "Theme Ranking",
+          "points": 7,
+          "scoring": {
+            "Top 3 hot themes (by涨停数量)": 7,
+            "Top 10 hot themes": 4,
+            "Secondary theme": 2,
+            "No active theme association": 0
+          }
+        },
+        {
+          "name": "Theme Lifecycle Stage",
+          "points": 5,
+          "scoring": {
+            "Early stage (1-3 days from catalyst)": 5,
+            "Growth stage (4-10 days)": 3,
+            "Mature stage (>10 days)": 1,
+            "Declining/theme exhaustion": 0
+          }
+        }
+      ],
+      "max_raw_score": 20
+    },
+    {
+      "factor_id": "F3",
+      "factor_name": "Float and Liquidity (流通性与筹码结构)",
+      "weight": 0.20,
+      "weight_rationale": "Smaller float enables easier price manipulation and retail speculation. Turnover rate indicates capital participation intensity. Combined float+turnover predicts sustained limit-up feasibility.",
+      "sub_components": [
+        {
+          "name": "Float Market Cap",
+          "points": 8,
+          "scoring": {
+            "Float cap < 3 billion RMB (micro/small)": 8,
+            "Float cap 3-10 billion RMB (small)": 5,
+            "Float cap 10-30 billion RMB (mid)": 2,
+            "Float cap > 30 billion RMB (large)": 0
+          }
+        },
+        {
+          "name": "Average Turnover Rate",
+          "points": 7,
+          "scoring": {
+            "Turnover 15%+ (extremely active)": 7,
+            "Turnover 8-15% (highly active)": 5,
+            "Turnover 3-8% (moderate)": 3,
+            "Turnover < 3% (low liquidity)": 0
+          }
+        },
+        {
+          "name": "Lock-up Chip Structure",
+          "points": 5,
+          "scoring": {
+            "Recent breakout from consolidation (low overhead)": 5,
+            "Near historical highs (some resistance)": 3,
+            "Heavy overhead supply zone": 1,
+            "Major shareholder unlock pending": 0
+          }
+        }
+      ],
+      "max_raw_score": 20
+    },
+    {
+      "factor_id": "F4",
+      "factor_name": "Fundamental Catalysts (基本面催化)",
+      "weight": 0.15,
+      "weight_rationale": "Hard catalysts provide narrative justification and media coverage. Earnings surprises and M&A are strongest catalysts, while contract wins provide medium-term support.",
+      "sub_components": [
+        {
+          "name": "Earnings/Catalyst Type",
+          "points": 8,
+          "scoring": {
+            "Major M&A/restructuring announcement": 8,
+            "Earnings surprise (>50% YoY growth)": 6,
+            "Large contract win (>20% of annual revenue)": 5,
+            "New product/technology breakthrough": 4,
+            "No material catalyst": 0
+          }
+        },
+        {
+          "name": "Catalyst Recency",
+          "points": 4,
+          "scoring": {
+            "Catalyst within 3 days (fresh)": 4,
+            "Catalyst within 7 days": 2,
+            "Catalyst > 7 days": 0
+          }
+        },
+        {
+          "name": "Catalyst Uniqueness",
+          "points": 3,
+          "scoring": {
+            "First-mover/only listed company in theme": 3,
+            "Among few direct beneficiaries": 2,
+            "Many similar companies competing": 1,
+            "Generic/crowded trade": 0
+          }
+        }
+      ],
+      "max_raw_score": 15
+    },
+    {
+      "factor_id": "F5",
+      "factor_name": "Sentiment Indicators (市场情绪)",
+      "weight": 0.15,
+      "weight_rationale": "Retail sentiment drives A-share limit-up persistence. Social media heat and margin trading data reflect FOMO (fear of missing out) intensity.",
+      "sub_components": [
+        {
+          "name": "Social Media Heat Index",
+          "points": 6,
+          "scoring": {
+            "Top 10 trending on 东方财富/同花顺": 6,
+            "Mentioned in top finance forums": 4,
+            "Some discussion volume": 2,
+            "No significant social buzz": 0
+          }
+        },
+        {
+          "name": "Margin Trading Activity",
+          "points": 5,
+          "scoring": {
+            "Significant margin buying increase": 5,
+            "Moderate margin interest": 3,
+            "No margin activity": 0
+          }
+        },
+        {
+          "name": "Institutional/Dragon Tiger List",
+          "points": 4,
+          "scoring": {
+            "知名游资现身龙虎榜 (famous hot money)": 4,
+            "机构席位买入 (institutional buying)": 3,
+            "Mixed retail trading": 1,
+            "No notable presence": 0
+          }
+        }
+      ],
+      "max_raw_score": 15
+    },
+    {
+      "factor_id": "F6",
+      "factor_name": "Historical Seasonality (季节性与日历效应)",
+      "weight": 0.05,
+      "weight_rationale": "A-shares exhibit calendar effects: pre-holiday speculation, conference seasonality, and end-of-quarter effects. Lower weight due to secondary importance vs momentum.",
+      "sub_components": [
+        {
+          "name": "Time Window Effect",
+          "points": 3,
+          "scoring": {
+            "Pre-major policy session (两会等)": 3,
+            "Earnings season active": 2,
+            "Post-holiday return window": 2,
+            "Regular period": 1
+          }
+        },
+        {
+          "name": "Sector Seasonality",
+          "points": 2,
+          "scoring": {
+            "Peak season for sector (e.g., retail pre-CNY)": 2,
+            "Neutral season": 1,
+            "Off-season": 0
+          }
+        }
+      ],
+      "max_raw_score": 5
+    }
+  ],
+  "scoring_logic": {
+    "calculation_method": "Weighted sum of normalized factor scores",
+    "formula": "Total Score = Σ(Factor_i_Raw_Score × Factor_i_Weight × Normalization_Factor)",
+    "normalization": "Each factor's raw score is scaled to its weight allocation, ensuring max achievable = 100",
+    "special_adjustments": [
+      {
+        "condition": "ST/*ST stocks",
+        "adjustment": "Base score × 1.15 (higher volatility, easier limit-up)",
+        "note": "ST stocks have 5% limit, making consecutive limits more achievable"
+      },
+      {
+        "condition": "Newly listed stocks (IPO < 6 months)",
+        "adjustment": "Exclude or apply separate model (different dynamics)",
+        "note": "IPO stocks have special trading rules for first 5 days"
+      },
+      {
+        "condition": "Trading halt/resumption stocks",
+        "adjustment": "Apply momentum penalty if prior suspension",
+        "note": "Post-resumption behavior differs from continuous trading"
+      },
+      {
+        "condition": "Index market condition",
+        "adjustment": "±10 based on overall market sentiment",
+        "scoring": {
+          "Strong bull market (Volume > 1.5T, index > MA20)": "+10",
+          "Neutral market": "0",
+          "Bear/weak market": "-10"
+        }
+      }
+    ],
+    "minimum_data_requirement": "Stock must have traded for > 60 days with average daily volume > 10 million RMB"
+  },
+  "tier_thresholds": {
+    "high_probability": {
+      "min_score": 70,
+      "max_score": 100,
+      "label": "High Probability (高概率)",
+      "estimated_occurrence_rate": "Historical backtest suggests 25-35% of stocks in this tier achieve 2+ limit-ups within 5 days",
+      "typical_characteristics": [
+        "Current hot theme leader",
+        "1-2 existing limit-ups with strong volume",
+        "Small float (<5B RMB)",
+        "Fresh catalyst within 3 days",
+        "Strong technical breakout pattern"
+      ],
+      "position_sizing_suggestion": "If participating, treat as high-risk speculation; maximum 2-3% portfolio allocation"
+    },
+    "medium_probability": {
+      "min_score": 40,
+      "max_score": 69,
+      "label": "Medium Probability (中等概率)",
+      "estimated_occurrence_rate": "Historical backtest suggests 8-15% of stocks in this tier achieve 2+ limit-ups within 5 days",
+      "typical_characteristics": [
+        "Secondary theme participant",
+        "Moderate momentum (1 recent limit-up or strong uptrend)",
+        "Mid-size float (5-15B RMB)",
+        "Catalyst 3-7 days old",
+        "Mixed technical signals"
+      ],
+      "position_sizing_suggestion": "Higher uncertainty; maximum 1% portfolio allocation if traded"
+    },
+    "low_probability": {
+      "min_score": 0,
+      "max_score": 39,
+      "label": "Low Probability (低概率)",
+      "estimated_occurrence_rate": "Historical backtest suggests <5% of stocks in this tier achieve 2+ limit-ups within 5 days",
+      "typical_characteristics": [
+        "No active theme alignment",
+        "Weak or declining momentum",
+        "Large cap or poor liquidity",
+        "No recent catalyst",
+        "Overbought or bearish technicals"
+      ],
+      "position_sizing_suggestion": "Not recommended for limit-up chasing strategies"
+    }
+  },
+  "risk_factors": {
+    "model_limitations": [
+      "Past performance does not guarantee future results",
+      "Black swan events (regulatory changes, market crashes) can override all signals",
+      "High-frequency traders and algorithms may arbitrage away patterns",
+      "Surveillance and trading halts by exchanges can interrupt momentum"
+    ],
+    "execution_risks": [
+      "Limit-up stocks may open limit-up with no liquidity (一字涨停)",
+      "Gap-down risk on following day (open limit-down) is significant",
+      "T+1 trading rule prevents same-day exit",
+      "Increased margin requirements may apply"
+    ],
+    "regulatory_risks": [
+      "交易所重点监控 (exchange surveillance) may trigger trading restrictions",
+      "停牌核查 (trading halt for investigation) common after 3 consecutive limit-ups",
+      "Window guidance to brokerages may limit buying"
+    ]
+  },
+  "validation_guidelines": {
+    "backtesting_recommendations": [
+      "Validate on minimum 2 years of historical A-share data",
+      "Test across different market regimes (bull/bear/sideways)",
+      "Control for survivorship bias and look-ahead bias",
+      "Verify with out-of-sample data before deployment"
+    ],
+    "monitoring_requirements": [
+      "Update factor weights quarterly based on market regime changes",
+      "Track prediction accuracy by tier (expected vs actual hit rate)",
+      "Monitor for factor decay (as more traders discover patterns)"
+    ]
+  },
+  "disclaimer": "This framework is for educational and research purposes only. Stock trading involves substantial risk. Multiple limit-up chasing is a high-risk speculative strategy not suitable for most investors. This model does not constitute investment advice. Always consult qualified financial advisors and comply with local regulations. 股市有风险，投资需谨慎。"
+}

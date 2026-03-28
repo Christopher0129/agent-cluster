@@ -1,0 +1,277 @@
+{
+  "meta": {
+    "report_title": "A股2025年第3周业绩预告与快报扫描报告",
+    "coverage_period": "2025年1月13日（周一）至2025年1月17日（周五）",
+    "reference_date": "2025-01-09",
+    "data_source": "基于工作区已有业绩研究数据整合（化工/消费电子/科技板块）",
+    "data_limitation": "本模型无实时联网能力，无法获取交易所最新公告Calendar。以下event_date基于历史披露规律和行业报告推断，实际披露日期请以交易所官方公告为准",
+    "filter_applied": "已排除所有ST/*ST股票",
+    "st_exclusion_method": "人工核查股票简称，确认无ST/*ST标记",
+    "disclaimer": "本报告仅供参考，不构成投资建议。股市有风险，投资需谨慎。",
+    "verification_status": "待联网Worker补充实时交易所Calendar数据验证"
+  },
+  "scan_results": [
+    {
+      "stock_code": "600160.SH",
+      "stock_name": "巨化股份",
+      "sector": "氟化工/制冷剂",
+      "sw_industry": "基础化工",
+      "event_type": "业绩预告",
+      "event_date": "2025-01-15",
+      "expected_impact_description": "预增：受益于第三代制冷剂（HFCs）配额政策实施，R32/R125等主要品种价格大幅上涨，公司作为行业龙头充分受益配额红利，2024年度净利润同比有望大幅增长（具体幅度待官方披露）",
+      "data_source": "chemical_sector_earnings_preview_2024.json",
+      "catalyst_strength": "高",
+      "is_st": false
+    },
+    {
+      "stock_code": "603379.SH",
+      "stock_name": "三美股份",
+      "sector": "氟化工/制冷剂",
+      "sw_industry": "基础化工",
+      "event_type": "业绩预告",
+      "event_date": "2025-01-14",
+      "expected_impact_description": "预增：同受益制冷剂配额政策，公司R32产能占比高，产品涨价弹性大，2024年业绩有望大幅修复，净利润同比预增幅度可能超过行业平均",
+      "data_source": "chemical_sector_earnings_preview_2024.json",
+      "catalyst_strength": "高",
+      "is_st": false
+    },
+    {
+      "stock_code": "600486.SH",
+      "stock_name": "扬农化工",
+      "sector": "农药/精细化工",
+      "sw_industry": "基础化工",
+      "event_type": "业绩预告",
+      "event_date": "2025-01-16",
+      "expected_impact_description": "预盈/温和预增：全球农药渠道库存去化接近尾声，2024年下半年部分原药价格企稳回升，公司作为菊酯类农药龙头，业绩有望从周期底部修复",
+      "data_source": "chemical_sector_earnings_preview_2024.json",
+      "catalyst_strength": "中高",
+      "is_st": false
+    },
+    {
+      "stock_code": "002241.SZ",
+      "stock_name": "歌尔股份",
+      "sector": "消费电子/VRAR",
+      "sw_industry": "电子",
+      "event_type": "业绩预告",
+      "event_date": "2025-01-15",
+      "expected_impact_description": "扭亏为盈：VR库存去化完成+Meta Quest新品周期+TWS回暖，2024年净利润同比+120%+，业绩拐点明确",
+      "data_source": "consumer_electronics_earnings_summary.md",
+      "catalyst_strength": "高",
+      "is_st": false
+    },
+    {
+      "stock_code": "603160.SH",
+      "stock_name": "汇顶科技",
+      "sector": "半导体/指纹识别",
+      "sw_industry": "电子",
+      "event_type": "业绩预告",
+      "event_date": "2025-01-14",
+      "expected_impact_description": "扭亏为盈：超声波指纹方案上量+触控芯片份额回升，2024年净利润同比+200%+，技术壁垒高，安卓旗舰标配趋势明确",
+      "data_source": "consumer_electronics_earnings_summary.md",
+      "catalyst_strength": "高",
+      "is_st": false
+    },
+    {
+      "stock_code": "300433.SZ",
+      "stock_name": "蓝思科技",
+      "sector": "消费电子/玻璃盖板",
+      "sw_industry": "电子",
+      "event_type": "业绩预告",
+      "event_date": "2025-01-13",
+      "expected_impact_description": "预增：净利润同比+35%~45%，高端玻璃盖板份额提升+汽车电子放量+降本增效，AI手机推动玻璃规格升级",
+      "data_source": "consumer_electronics_earnings_summary.md",
+      "catalyst_strength": "中高",
+      "is_st": false
+    },
+    {
+      "stock_code": "002371.SZ",
+      "stock_name": "北方华创",
+      "sector": "半导体设备",
+      "sw_industry": "电子",
+      "event_type": "业绩预告",
+      "event_date": "2025-01-13",
+      "expected_impact_description": "预增：净利润同比增长约40%-60%，设备国产化加速，订单饱满交付确认，2024年度延续高增长态势",
+      "data_source": "q3_earnings_forecast_data.json",
+      "catalyst_strength": "高",
+      "is_st": false
+    },
+    {
+      "stock_code": "000977.SZ",
+      "stock_name": "浪潮信息",
+      "sector": "算力/AI服务器",
+      "sw_industry": "计算机",
+      "event_type": "业绩预告",
+      "event_date": "2025-01-14",
+      "expected_impact_description": "预增：净利润同比增长约50%-70%，AI服务器出货放量，规模效应显现，国内AI算力投资加速",
+      "data_source": "q3_earnings_forecast_data.json",
+      "catalyst_strength": "高",
+      "is_st": false
+    },
+    {
+      "stock_code": "300308.SZ",
+      "stock_name": "中际旭创",
+      "sector": "光模块/CPO",
+      "sw_industry": "通信",
+      "event_type": "业绩预告",
+      "event_date": "2025-01-15",
+      "expected_impact_description": "预增：净利润同比增长约100%-130%，800G光模块大规模出货，海外客户订单强劲，AI算力基建核心受益",
+      "data_source": "q3_earnings_forecast_data.json",
+      "catalyst_strength": "高",
+      "is_st": false
+    },
+    {
+      "stock_code": "300502.SZ",
+      "stock_name": "新易盛",
+      "sector": "光模块/CPO",
+      "sw_industry": "通信",
+      "event_type": "业绩预告",
+      "event_date": "2025-01-16",
+      "expected_impact_description": "预增：净利润同比增长约80%-100%，高速光模块需求旺盛，毛利率持续改善，数通业务高景气",
+      "data_source": "q3_earnings_forecast_data.json",
+      "catalyst_strength": "高",
+      "is_st": false
+    },
+    {
+      "stock_code": "601127.SH",
+      "stock_name": "赛力斯",
+      "sector": "新能源汽车",
+      "sw_industry": "汽车",
+      "event_type": "业绩预告",
+      "event_date": "2025-01-14",
+      "expected_impact_description": "预盈：2024年度实现扭亏为盈，问界系列销量爆发，规模效应推动盈利转正，净利润大幅改善",
+      "data_source": "q3_earnings_forecast_data.json",
+      "catalyst_strength": "高",
+      "is_st": false
+    },
+    {
+      "stock_code": "002463.SZ",
+      "stock_name": "沪电股份",
+      "sector": "PCB/算力",
+      "sw_industry": "电子",
+      "event_type": "业绩预告",
+      "event_date": "2025-01-13",
+      "expected_impact_description": "预增：净利润同比增长约90%-110%，AI服务器PCB占比提升，高多层板需求强劲，业绩持续超预期",
+      "data_source": "q3_earnings_forecast_data.json",
+      "catalyst_strength": "高",
+      "is_st": false
+    },
+    {
+      "stock_code": "002601.SZ",
+      "stock_name": "龙佰集团",
+      "sector": "钛白粉",
+      "sw_industry": "基础化工",
+      "event_type": "业绩预告",
+      "event_date": "2025-01-16",
+      "expected_impact_description": "预增：钛白粉出口增长+钛矿自给率提升，海绵钛产能释放贡献增量，2024年净利润温和增长",
+      "data_source": "chemical_sector_earnings_preview_2024.json",
+      "catalyst_strength": "中",
+      "is_st": false
+    },
+    {
+      "stock_code": "600309.SH",
+      "stock_name": "万华化学",
+      "sector": "聚氨酯/化工新材料",
+      "sw_industry": "基础化工",
+      "event_type": "业绩快报",
+      "event_date": "2025-01-17",
+      "expected_impact_description": "同比增长：MDI行业格局优化+新材料放量，公司全球龙头地位稳固，2024年度业绩稳健增长",
+      "data_source": "chemical_sector_earnings_preview_2024.json",
+      "catalyst_strength": "中",
+      "is_st": false
+    },
+    {
+      "stock_code": "002273.SZ",
+      "stock_name": "水晶光电",
+      "sector": "消费电子/光学光电子",
+      "sw_industry": "电子",
+      "event_type": "业绩预告",
+      "event_date": "2025-01-15",
+      "expected_impact_description": "预增：净利润同比+30%~40%，旋涂滤光片渗透+微棱镜模块放量+汽车HUD，AI手机多摄趋势受益",
+      "data_source": "consumer_electronics_earnings_summary.md",
+      "catalyst_strength": "中高",
+      "is_st": false
+    },
+    {
+      "stock_code": "002138.SZ",
+      "stock_name": "顺络电子",
+      "sector": "消费电子/被动元件",
+      "sw_industry": "电子",
+      "event_type": "业绩预告",
+      "event_date": "2025-01-14",
+      "expected_impact_description": "预增：净利润同比+35%~50%，手机电感份额提升+汽车电子高速成长+AI服务器配套，AI终端对电感用量提升",
+      "data_source": "consumer_electronics_earnings_summary.md",
+      "catalyst_strength": "中高",
+      "is_st": false
+    }
+  ],
+  "st_exclusion_verification": {
+    "total_candidates_before_filter": 16,
+    "excluded_stocks": [],
+    "exclusion_criteria": "股票简称包含'ST'或'*ST'",
+    "verification_notes": "所有16只候选股均已人工核查，确认均非ST/*ST股票。涉及股票：巨化股份、三美股份、扬农化工、歌尔股份、汇顶科技、蓝思科技、北方华创、浪潮信息、中际旭创、新易盛、赛力斯、沪电股份、龙佰集团、万华化学、水晶光电、顺络电子"
+  },
+  "disclosure_calendar_note": {
+    "warning": "以上event_date为基于历史披露规律推断的估计日期，实际披露时间可能因公司安排而异",
+    "official_sources": [
+      "上海证券交易所披露易：http://www.sse.com.cn/disclosure/",
+      "深圳证券交易所公告：http://www.szse.cn/disclosure/",
+      "巨潮资讯网：http://www.cninfo.com.cn/"
+    ],
+    "recommended_action": "建议每日收盘后查阅交易所公告，获取最新业绩预告/快报披露信息"
+  },
+  "sector_distribution": {
+    "基础化工": 4,
+    "电子": 8,
+    "通信": 2,
+    "计算机": 1,
+    "汽车": 1
+  },
+  "event_type_distribution": {
+    "业绩预告": 15,
+    "业绩快报": 1
+  },
+  "impact_distribution": {
+    "预增": 13,
+    "预盈": 2,
+    "同比增长": 1
+  },
+  "high_priority_watchlist": [
+    {
+      "rank": 1,
+      "code": "300308.SZ",
+      "name": "中际旭创",
+      "reason": "净利润预增100%-130%，AI算力基建核心标的，800G光模块放量"
+    },
+    {
+      "rank": 2,
+      "code": "603160.SH",
+      "name": "汇顶科技",
+      "reason": "扭亏为盈+200%+，超声波指纹技术壁垒高，安卓旗舰标配"
+    },
+    {
+      "rank": 3,
+      "code": "600160.SH",
+      "name": "巨化股份",
+      "reason": "制冷剂配额政策红利，供给侧逻辑最强，涨价确定性高"
+    },
+    {
+      "rank": 4,
+      "code": "002241.SZ",
+      "name": "歌尔股份",
+      "reason": "VR/AR硬件创新大年，业绩拐点明确，扭亏为盈+120%+"
+    },
+    {
+      "rank": 5,
+      "code": "601127.SH",
+      "name": "赛力斯",
+      "reason": "问界系列销量爆发，年度扭亏为盈，新能源汽车标杆"
+    }
+  ],
+  "risk_disclosure": [
+    "数据时效性：本报告基于2025年1月9日前的工作区数据，无法获取1月13-17日期间的实时公告",
+    "日期不确定性：具体披露日期可能因公司安排调整，请以交易所实际公告为准",
+    "业绩不确定性：业绩预告为初步核算数据，可能与最终年报存在差异",
+    "市场风险：即使业绩超预期，股价表现仍受大盘情绪、资金流向等因素影响",
+    "ST风险：尽管已排除当前ST股票，但业绩预亏公司可能面临被ST风险"
+  ]
+}

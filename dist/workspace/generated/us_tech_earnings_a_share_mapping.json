@@ -1,0 +1,166 @@
+{
+  "meta": {
+    "generatedAt": "2025-01-13T10:30:00Z",
+    "generatedBy": "kimi2_5_2",
+    "status": "framework_pending_verification",
+    "note": "本文件为美股科技财报与A股映射分析框架，需由具备联网能力的worker验证实际财报日期",
+    "verificationRequired": [
+      "确认下周(2025年1月13日-1月17日)具体财报发布日期",
+      "验证特斯拉、英伟达等是否有产品发布会或指引更新",
+      "获取最新A股板块涨跌幅数据进行关联度校准"
+    ]
+  },
+  "usEarningsEvents": [
+    {
+      "usEvent": "NVIDIA CES 2025主题演讲及RTX 50系列发布",
+      "eventDate": "2025-01-06(已发生)",
+      "aShareSector": "CPO/光模块",
+      "correlationStrength": "高",
+      "direction": "利好",
+      "rationale": "英伟达发布RTX 50系列及AI芯片路线图，直接映射CPO/光模块板块，中际旭创、新易盛等为A股对标",
+      "keyAStocks": ["中际旭创", "新易盛", "天孚通信", "剑桥科技"],
+      "sentimentTransmission": "英伟达新品发布→AI算力需求预期→光模块订单预期→CPO板块情绪传导"
+    },
+    {
+      "usEvent": "NVIDIA CES 2025主题演讲及RTX 50系列发布",
+      "eventDate": "2025-01-06(已发生)",
+      "aShareSector": "PCB",
+      "correlationStrength": "高",
+      "direction": "利好",
+      "rationale": "AI服务器PCB为英伟达供应链核心环节，沪电股份、深南电路等直接受益",
+      "keyAStocks": ["沪电股份", "深南电路", "胜宏科技", "鹏鼎控股"],
+      "sentimentTransmission": "英伟达AI芯片迭代→服务器PCB规格升级→国内PCB龙头订单预期"
+    },
+    {
+      "usEvent": "Tesla Optimus机器人量产指引更新",
+      "eventDate": "待确认(近期CES可能有更新)",
+      "aShareSector": "机器人",
+      "correlationStrength": "高",
+      "direction": "利好",
+      "rationale": "特斯拉Optimus人形机器人量产时间表直接影响A股机器人板块情绪，拓普集团、三花智控为T链核心",
+      "keyAStocks": ["拓普集团", "三花智控", "绿的谐波", "鸣志电器", "五洲新春"],
+      "sentimentTransmission": "特斯拉机器人量产指引→人形机器人产业化预期→A股机器人核心供应链标的"
+    },
+    {
+      "usEvent": "Tesla FSD V13及Robotaxi进展",
+      "eventDate": "待确认",
+      "aShareSector": "自动驾驶",
+      "correlationStrength": "中",
+      "direction": "利好",
+      "rationale": "特斯拉FSD进展映射A股自动驾驶产业链，但国内以华为/小鹏为主，关联度中等",
+      "keyAStocks": ["德赛西威", "伯特利", "保隆科技", "华阳集团"],
+      "sentimentTransmission": "特斯拉自动驾驶技术突破→行业智驾渗透率提升预期→A股智驾硬件供应商"
+    },
+    {
+      "usEvent": "NVIDIA财报预期(实际财报通常在2月中下旬)",
+      "eventDate": "预计非本周",
+      "aShareSector": "算力芯片/AI算力",
+      "correlationStrength": "高",
+      "direction": "待确认",
+      "rationale": "若英伟达发布财报或业绩指引，直接影响A股AI算力板块情绪，但FY25Q4财报通常在2月",
+      "keyAStocks": ["寒武纪", "海光信息", "龙芯中科", "景嘉微"],
+      "sentimentTransmission": "英伟达业绩/指引→全球AI算力景气度→国产AI芯片替代预期"
+    },
+    {
+      "usEvent": "Microsoft/OpenAI相关AI产品更新",
+      "eventDate": "待确认",
+      "aShareSector": "AI应用/算力",
+      "correlationStrength": "中",
+      "direction": "利好",
+      "rationale": "微软/OpenAI产品更新间接影响A股AI应用和算力租赁板块",
+      "keyAStocks": ["润泽科技", "奥飞数据", "光环新网", "昆仑万维"],
+      "sentimentTransmission": "海外AI应用进展→国内AI应用映射→算力租赁需求"
+    },
+    {
+      "usEvent": "AMD CES 2025新品发布",
+      "eventDate": "2025-01-06(已发生)",
+      "aShareSector": "PCB/算力芯片",
+      "correlationStrength": "中",
+      "direction": "利好",
+      "rationale": "AMD AI芯片发布强化AI算力竞争格局，间接利好A股PCB和国产芯片",
+      "keyAStocks": ["通富微电", "长电科技", "沪电股份"],
+      "sentimentTransmission": "AMD AI芯片布局→封测需求→A股封测龙头"
+    }
+  ],
+  "sectorCorrelationMatrix": {
+    "CPO/光模块": {
+      "primaryDriver": "NVIDIA",
+      "correlationScore": 0.85,
+      "lagDays": 0,
+      "volatilityMultiplier": 1.2
+    },
+    "PCB": {
+      "primaryDriver": "NVIDIA/AMD",
+      "correlationScore": 0.80,
+      "lagDays": 0,
+      "volatilityMultiplier": 1.1
+    },
+    "机器人": {
+      "primaryDriver": "Tesla",
+      "correlationScore": 0.75,
+      "lagDays": 1,
+      "volatilityMultiplier": 1.3
+    },
+    "自动驾驶": {
+      "primaryDriver": "Tesla",
+      "correlationScore": 0.60,
+      "lagDays": 1,
+      "volatilityMultiplier": 1.0
+    },
+    "算力芯片": {
+      "primaryDriver": "NVIDIA/AMD",
+      "correlationScore": 0.70,
+      "lagDays": 0,
+      "volatilityMultiplier": 1.15
+    }
+  },
+  "catalystDirectionSummary": [
+    {
+      "usEvent": "NVIDIA CES新品发布",
+      "eventDate": "2025-01-06",
+      "aShareSector": "CPO/光模块",
+      "correlationStrength": "高",
+      "direction": "利好"
+    },
+    {
+      "usEvent": "NVIDIA CES新品发布",
+      "eventDate": "2025-01-06",
+      "aShareSector": "PCB",
+      "correlationStrength": "高",
+      "direction": "利好"
+    },
+    {
+      "usEvent": "Tesla Optimus进展",
+      "eventDate": "待确认",
+      "aShareSector": "机器人",
+      "correlationStrength": "高",
+      "direction": "利好"
+    },
+    {
+      "usEvent": "Tesla FSD更新",
+      "eventDate": "待确认",
+      "aShareSector": "自动驾驶",
+      "correlationStrength": "中",
+      "direction": "利好"
+    },
+    {
+      "usEvent": "AMD CES新品",
+      "eventDate": "2025-01-06",
+      "aShareSector": "PCB",
+      "correlationStrength": "中",
+      "direction": "利好"
+    }
+  ],
+  "riskDisclosure": [
+    "以上映射关系基于历史规律，不构成投资建议",
+    "美股事件对A股影响存在滞后性和衰减效应",
+    "需关注A股自身流动性及监管政策对板块的独立影响",
+    "CES 2025已于1月6日举行，相关预期可能已部分price in"
+  ],
+  "followUpActions": [
+    "联网确认下周是否有Tesla/NVIDIA财报或指引更新",
+    "监控CPO/光模块板块资金流入情况",
+    "验证机器人板块是否有独立于Tesla的催化(如国内政策)",
+    "交叉验证美股期货夜盘对A股次日开盘的影响幅度"
+  ]
+}

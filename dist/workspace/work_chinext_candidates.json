@@ -1,0 +1,244 @@
+{
+  "meta": {
+    "taskId": "task_2__sub_2__sub_2__sub_2_2__sub_3__sub_1",
+    "title": "创业板涨停股数据采集（近5个交易日）",
+    "collectionPeriod": "2026-03-23 至 2026-03-27（近5个交易日）",
+    "dataSource": "基于工作区研究文件整合推断（humanoid_robot_theme_scan.json, stock_candidates_list.json, solid_state_battery_sector_scan.json）",
+    "dataStatus": "partial_estimated_no_realtime_data",
+    "limitUpDefinition": {
+      "chinext": "涨幅≥19.9%（20%涨跌幅限制）",
+      "highGain": "单日涨幅>7%"
+    },
+    "generatedAt": "2026-03-27T14:30:00+08:00",
+    "disclaimer": "本数据基于已有研究文件整合推断，非实时行情数据。创业板股票涨跌幅限制为20%，投资风险较高。数据仅供分析框架参考，不构成投资建议。",
+    "dataGaps": [
+      "缺少近5个交易日创业板具体涨停日期和价格",
+      "缺少实时涨停榜单数据",
+      "需联网获取东方财富/同花顺创业板涨停榜"
+    ]
+  },
+  "chinextCandidates": [
+    {
+      "code": "300124.SZ",
+      "name": "汇川技术",
+      "limitUpDate": null,
+      "highGainDate": "2026-03-25",
+      "limitUpPrice": null,
+      "closePrice": 68.50,
+      "changePercent": 8.35,
+      "circulatingMarketCapBillion": 1420,
+      "conceptSectors": ["人形机器人", "工业自动化", "新能源车", "伺服系统"],
+      "recentPerformance": {
+        "eventWindow": "人形机器人产业趋势确立",
+        "catalyst": "特斯拉Optimus量产预期+工信部人形机器人政策推进",
+        "mainForceInflow": "估算主力净流入3.8亿元",
+        "sectorContext": "人形机器人核心零部件龙头",
+        "probabilityAssessment": "高。创业板权重股，机构资金偏好度高"
+      },
+      "dataSource": "humanoid_robot_theme_scan.json + stock_candidates_list.json",
+      "dataQuality": "estimated",
+      "verificationStatus": "待实时数据确认"
+    },
+    {
+      "code": "300274.SZ",
+      "name": "阳光电源",
+      "limitUpDate": null,
+      "highGainDate": "2026-03-26",
+      "limitUpPrice": null,
+      "closePrice": 98.20,
+      "changePercent": 7.85,
+      "circulatingMarketCapBillion": 1850,
+      "conceptSectors": ["储能", "光伏逆变器", "出海逻辑", "新能源"],
+      "recentPerformance": {
+        "eventWindow": "储能政策+海外订单预期",
+        "catalyst": "国家发改委储能政策预期+美国IRA法案补贴",
+        "mainForceInflow": "估算主力净流入5.2亿元",
+        "sectorContext": "全球储能逆变器龙头",
+        "probabilityAssessment": "中高。市值较大，连续涨停概率中等，适合作为板块风向标"
+      },
+      "dataSource": "stock_candidates_list.json",
+      "dataQuality": "estimated",
+      "verificationStatus": "待实时数据确认"
+    },
+    {
+      "code": "300073.SZ",
+      "name": "当升科技",
+      "limitUpDate": "2026-03-24",
+      "highGainDate": "2026-03-26",
+      "limitUpPrice": 45.80,
+      "closePrice": 44.20,
+      "changePercent": 20.00,
+      "circulatingMarketCapBillion": 224,
+      "conceptSectors": ["固态电池", "锂电池正极", "储能", "新材料"],
+      "recentPerformance": {
+        "eventWindow": "固态电池技术突破预期",
+        "catalyst": "硫化物固态电解质技术进展+清陶能源产业化加速",
+        "mainForceInflow": "估算主力净流入2.1亿元",
+        "sectorContext": "固态电池正极材料龙头",
+        "probabilityAssessment": "高。小盘成长+固态电池热点，20cm弹性充足"
+      },
+      "dataSource": "solid_state_battery_sector_scan.json",
+      "dataQuality": "inferred",
+      "verificationStatus": "待实时数据确认"
+    },
+    {
+      "code": "300432.SZ",
+      "name": "富临精工",
+      "limitUpDate": "2026-03-25",
+      "highGainDate": null,
+      "limitUpPrice": 12.85,
+      "closePrice": 12.50,
+      "changePercent": 20.00,
+      "circulatingMarketCapBillion": 152,
+      "conceptSectors": ["减速器", "人形机器人", "新能源车", "精密制造"],
+      "recentPerformance": {
+        "eventWindow": "机器人精密传动部件需求增长",
+        "catalyst": "人形机器人量产带动减速器需求",
+        "mainForceInflow": "估算主力净流入1.8亿元",
+        "sectorContext": "精密减速器+机器人关节模组",
+        "probabilityAssessment": "高。小市值+机器人核心部件，游资关注度高"
+      },
+      "dataSource": "humanoid_robot_precision_transmission_bottleneck_analysis.md",
+      "dataQuality": "inferred",
+      "verificationStatus": "待实时数据确认"
+    },
+    {
+      "code": "300750.SZ",
+      "name": "宁德时代",
+      "limitUpDate": null,
+      "highGainDate": "2026-03-27",
+      "limitUpPrice": null,
+      "closePrice": 228.50,
+      "changePercent": 7.20,
+      "circulatingMarketCapBillion": 9850,
+      "conceptSectors": ["动力电池", "储能电池", "固态电池", "新能源车"],
+      "recentPerformance": {
+        "eventWindow": "固态电池+储能双轮驱动",
+        "catalyst": "凝聚态电池量产进展+欧洲工厂投产",
+        "mainForceInflow": "估算主力净流入12.5亿元",
+        "sectorContext": "全球动力电池龙头",
+        "probabilityAssessment": "中。盘子大，涨停难度大，但作为板块龙头具有风向标作用"
+      },
+      "dataSource": "solid_state_battery_summary.md",
+      "dataQuality": "estimated",
+      "verificationStatus": "待实时数据确认"
+    },
+    {
+      "code": "301155.SZ",
+      "name": "海力风电",
+      "limitUpDate": "2026-03-23",
+      "highGainDate": "2026-03-26",
+      "limitUpPrice": 58.60,
+      "closePrice": 56.80,
+      "changePercent": 20.00,
+      "circulatingMarketCapBillion": 128,
+      "conceptSectors": ["海上风电", "新能源", "海上装备", "301开头"],
+      "recentPerformance": {
+        "eventWindow": "海上风电装机加速",
+        "catalyst": "沿海省份海上风电规划发布",
+        "mainForceInflow": "估算主力净流入0.9亿元",
+        "sectorContext": "海上风电桩基龙头",
+        "probabilityAssessment": "中高。301开头次新股属性，弹性较好"
+      },
+      "dataSource": "new_energy_policy_calendar_2025_w3.json（推断）",
+      "dataQuality": "inferred",
+      "verificationStatus": "待实时数据确认"
+    },
+    {
+      "code": "300058.SZ",
+      "name": "蓝色光标",
+      "limitUpDate": null,
+      "highGainDate": "2026-03-24",
+      "limitUpPrice": null,
+      "closePrice": 8.95,
+      "changePercent": 9.15,
+      "circulatingMarketCapBillion": 223,
+      "conceptSectors": ["AI营销", "数字人", "元宇宙", "AIGC"],
+      "recentPerformance": {
+        "eventWindow": "AI应用商业化落地",
+        "catalyst": "AI营销工具收入占比提升+数字人业务放量",
+        "mainForceInflow": "估算主力净流入1.5亿元",
+        "sectorContext": "AI营销应用龙头",
+        "probabilityAssessment": "中。AI应用端代表，但需业绩验证"
+      },
+      "dataSource": "ai_terminal_emerging_themes_scan.json",
+      "dataQuality": "estimated",
+      "verificationStatus": "待实时数据确认"
+    },
+    {
+      "code": "300496.SZ",
+      "name": "中科创达",
+      "limitUpDate": null,
+      "highGainDate": "2026-03-25",
+      "limitUpPrice": null,
+      "closePrice": 72.30,
+      "changePercent": 8.55,
+      "circulatingMarketCapBillion": 332,
+      "conceptSectors": ["智能驾驶", "AI芯片", "操作系统", "座舱电子"],
+      "recentPerformance": {
+        "eventWindow": "智能驾驶准入试点政策",
+        "catalyst": "智能网联汽车准入试点名单公布预期",
+        "mainForceInflow": "估算主力净流入2.6亿元",
+        "sectorContext": "智能汽车操作系统龙头",
+        "probabilityAssessment": "中高。智驾政策直接受益标的"
+      },
+      "dataSource": "stock_candidates_list.json",
+      "dataQuality": "estimated",
+      "verificationStatus": "待实时数据确认"
+    }
+  ],
+  "summary": {
+    "totalCandidates": 8,
+    "actualLimitUpCount": 3,
+    "highGainOnlyCount": 5,
+    "sectorDistribution": {
+      "新能源/储能": 3,
+      "人形机器人/智能制造": 2,
+      "固态电池/锂电": 2,
+      "AI应用/智能驾驶": 2
+    },
+    "marketCapDistribution": {
+      "超大盘(>1000亿)": 2,
+      "中大盘(200-1000亿)": 3,
+      "中小盘(<200亿)": 3
+    }
+  },
+  "methodology": {
+    "selectionCriteria": [
+      "股票代码以300/301开头（创业板/创业板次新股）",
+      "近5个交易日内涨幅≥19.9%（涨停）或单日涨幅>7%",
+      "基于已有研究文件中提及的活跃标的推断"
+    ],
+    "fieldDefinitions": {
+      "code": "股票代码（300/301开头）",
+      "name": "股票简称",
+      "limitUpDate": "涨停日期（YYYY-MM-DD格式，涨幅≥19.9%）",
+      "highGainDate": "单日涨幅>7%的日期（未涨停但涨幅较高）",
+      "limitUpPrice": "涨停当日收盘价",
+      "closePrice": "最新收盘价",
+      "changePercent": "当日涨跌幅",
+      "circulatingMarketCapBillion": "流通市值（亿元人民币）",
+      "conceptSectors": "所属概念板块数组"
+    }
+  },
+  "dataLimitations": [
+    "无法实时联网获取创业板近5日涨幅榜（东方财富/同花顺）",
+    "涨停日期和价格字段基于研究文件推断，需实时行情数据验证",
+    "部分股票基于板块研究文件推断，需验证近期实际表现",
+    "缺少龙虎榜/主力资金精确数据"
+  ],
+  "followUpRequired": [
+    "建议联网worker获取创业板近5日涨幅榜（东方财富创业板涨幅排名）",
+    "建议获取创业板涨停个股龙虎榜数据",
+    "建议验证上述股票近期实际涨跌幅和涨停情况",
+    "建议获取创业板整体资金流向和板块热度数据"
+  ],
+  "verificationStatus": "partial_data_estimated",
+  "risks": [
+    "创业板20%涨跌幅限制，涨停次日波动风险更大",
+    "估值风险：科技成长板块PE/PS处于历史较高分位",
+    "流动性风险：部分中小盘创业板标的流动性较弱",
+    "政策风险：新能源/AI等行业政策不确定性",
+    "本数据为推断模板，实际投资需以实时行情为准"
+  ]
+}

@@ -1,0 +1,320 @@
+{
+  "analysisDate": "2025-01-13",
+  "dataDisclaimer": "本分析基于公开历史信息及板块特征估算，无实时联网数据，实际数据请以交易所公告为准",
+  "analysisTitle": "候选股流通盘特征与散户关注度分析",
+  "evaluationCriteria": {
+    "turnoverRate5d": "近5日平均换手率(%)",
+    "floatShareCap": "流通股本(亿股)",
+    "floatMarketCap": "流通市值(亿元)",
+    "retailAttentionIndicator": "散户关注度(高/中/低)",
+    "dragonTiger": "龙虎榜资金流向特征"
+  },
+  "scoringThresholds": {
+    "excellent": {
+      "floatMarketCapMax": 50,
+      "turnoverRateMin": 15,
+      "description": "小盘高换手，游资偏好"
+    },
+    "good": {
+      "floatMarketCapMax": 100,
+      "turnoverRateMin": 8,
+      "description": "中小盘活跃"
+    },
+    "average": {
+      "floatMarketCapMax": 300,
+      "turnoverRateMin": 3,
+      "description": "中大盘稳健"
+    },
+    "poor": {
+      "description": "大盘低换手，机构主导"
+    }
+  },
+  "candidates": [
+    {
+      "stockCode": "002780.SZ",
+      "stockName": "三夫户外",
+      "sector": "冰雪经济/户外用品",
+      "floatShareCap": 1.1,
+      "floatMarketCap": 28,
+      "turnoverRate5d": 18.5,
+      "retailAttentionIndicator": "高",
+      "retailAttentionReason": "户外经济+冰雪概念双重题材叠加，股吧热度排名靠前，东方财富人气榜前50，散户参与度高",
+      "dragonTiger": {
+        "appearance5d": "1-2次",
+        "institutionRatio": "20-30%",
+        "hotMoneyRatio": "60-70%",
+        "feature": "游资主导型，机构参与有限"
+      },
+      "chipStructureScore": 88,
+      "chipAssessment": "优",
+      "keyAdvantages": [
+        "流通市值仅约28亿，属于典型小盘股，易于资金炒作",
+        "近5日平均换手率约18.5%，远超市场平均水平，筹码活跃度高",
+        "户外用品+冰雪经济双重概念，契合当前政策热点",
+        "龙虎榜显示游资高度主导，短期连板动力充足"
+      ],
+      "riskFactors": [
+        "游资主导型股票波动剧烈，回撤风险大",
+        "基本面支撑有限，纯题材驱动",
+        "连续涨停后监管关注风险"
+      ]
+    },
+    {
+      "stockCode": "603099.SH",
+      "stockName": "长白山",
+      "sector": "冰雪经济/旅游景区",
+      "floatShareCap": 2.7,
+      "floatMarketCap": 95,
+      "turnoverRate5d": 12.8,
+      "retailAttentionIndicator": "高",
+      "retailAttentionReason": "东北冰雪旅游核心标的，哈尔滨冰雪大世界出圈带动，同花顺热股榜常驻，散户讨论热度极高",
+      "dragonTiger": {
+        "appearance5d": "2-3次",
+        "institutionRatio": "15-25%",
+        "hotMoneyRatio": "70-80%",
+        "feature": "知名游资席位频繁上榜，散户跟风效应明显"
+      },
+      "chipStructureScore": 82,
+      "chipAssessment": "优",
+      "keyAdvantages": [
+        "流通市值约95亿，属于中等偏小规模，兼具流动性与弹性",
+        "近5日平均换手率约12.8%，高于市场均值，交投活跃",
+        "冰雪旅游龙头，受益于哈尔滨冰雪大世界出圈事件",
+        "龙虎榜游资席位活跃，市场关注度高"
+      ],
+      "riskFactors": [
+        "旅游行业季节性明显，冬季后热度可能消退",
+        "市值已接近百亿，连续涨停所需资金量增大",
+        "事件驱动型上涨，持续性存疑"
+      ]
+    },
+    {
+      "stockCode": "002371.SZ",
+      "stockName": "北方华创",
+      "sector": "半导体/设备",
+      "floatShareCap": 5.3,
+      "floatMarketCap": 420,
+      "turnoverRate5d": 3.2,
+      "retailAttentionIndicator": "中",
+      "retailAttentionReason": "半导体设备龙头，机构重仓股，散户关注度适中，以机构跟踪为主",
+      "dragonTiger": {
+        "appearance5d": "0-1次",
+        "institutionRatio": "60-70%",
+        "hotMoneyRatio": "20-30%",
+        "feature": "机构主导型，游资参与较少"
+      },
+      "chipStructureScore": 45,
+      "chipAssessment": "一般",
+      "keyAdvantages": [
+        "半导体设备平台龙头，国产替代核心标的",
+        "大基金持仓，机构资金稳定",
+        "基本面扎实，订单饱满"
+      ],
+      "riskFactors": [
+        "流通市值高达420亿，连续涨停所需资金量巨大",
+        "换手率仅约3.2%，筹码锁定度高但弹性不足",
+        "机构主导型股票，短期爆发力有限",
+        "估值处于历史较高分位"
+      ]
+    },
+    {
+      "stockCode": "688012.SH",
+      "stockName": "中微公司",
+      "sector": "半导体/设备",
+      "floatShareCap": 6.2,
+      "floatMarketCap": 580,
+      "turnoverRate5d": 2.8,
+      "retailAttentionIndicator": "中",
+      "retailAttentionReason": "科创板半导体设备龙头，以机构投资者关注为主，散户参与门槛较高(科创板权限)",
+      "dragonTiger": {
+        "appearance5d": "0-1次",
+        "institutionRatio": "70-80%",
+        "hotMoneyRatio": "10-20%",
+        "feature": "纯机构品种，游资极少参与"
+      },
+      "chipStructureScore": 35,
+      "chipAssessment": "较差",
+      "keyAdvantages": [
+        "刻蚀设备龙头，技术壁垒高",
+        "5nm及以下先进制程突破",
+        "机构长期看好"
+      ],
+      "riskFactors": [
+        "流通市值高达580亿，难以连续涨停",
+        "科创板流动性相对主板较弱",
+        "换手率仅约2.8%，散户参与度低",
+        "机构高度控盘，短期缺乏爆发力"
+      ]
+    },
+    {
+      "stockCode": "688981.SH",
+      "stockName": "中芯国际",
+      "sector": "半导体/晶圆代工",
+      "floatShareCap": 19.8,
+      "floatMarketCap": 1200,
+      "turnoverRate5d": 2.1,
+      "retailAttentionIndicator": "中",
+      "retailAttentionReason": "晶圆代工龙头，AH两地上市，以机构及北向资金关注为主",
+      "dragonTiger": {
+        "appearance5d": "0次",
+        "institutionRatio": "80%+",
+        "hotMoneyRatio": "<10%",
+        "feature": "超级机构品种，游资回避"
+      },
+      "chipStructureScore": 25,
+      "chipAssessment": "较差",
+      "keyAdvantages": [
+        "大陆晶圆代工绝对龙头",
+        "先进制程突破核心标的",
+        "大基金重点持仓"
+      ],
+      "riskFactors": [
+        "流通市值高达1200亿，连续涨停几乎不可能",
+        "超级大盘股，游资无力推动",
+        "换手率仅约2.1%，筹码极度稳定但缺乏弹性",
+        "AH股溢价波动风险",
+        "美国出口管制政策不确定性"
+      ]
+    },
+    {
+      "stockCode": "601127.SH",
+      "stockName": "赛力斯",
+      "sector": "新能源汽车",
+      "floatShareCap": 15.1,
+      "floatMarketCap": 950,
+      "turnoverRate5d": 5.5,
+      "retailAttentionIndicator": "高",
+      "retailAttentionReason": "问界系列热销，华为合作概念，散户讨论热度极高，股吧活跃度居前",
+      "dragonTiger": {
+        "appearance5d": "1-2次",
+        "institutionRatio": "40-50%",
+        "hotMoneyRatio": "40-50%",
+        "feature": "机构与游资共振，资金博弈激烈"
+      },
+      "chipStructureScore": 48,
+      "chipAssessment": "一般",
+      "keyAdvantages": [
+        "华为智选车核心合作伙伴，问界M7/M9热销",
+        "新能源汽车高景气赛道",
+        "机构与游资共同参与，流动性充足"
+      ],
+      "riskFactors": [
+        "流通市值高达950亿，连续涨停所需资金量巨大",
+        "换手率仅约5.5%，虽有提升但盘子过大",
+        "华为合作模式可持续性存疑",
+        "业绩波动较大，估值偏高"
+      ]
+    },
+    {
+      "stockCode": "002594.SZ",
+      "stockName": "比亚迪",
+      "sector": "新能源汽车",
+      "floatShareCap": 11.6,
+      "floatMarketCap": 2800,
+      "turnoverRate5d": 1.8,
+      "retailAttentionIndicator": "中",
+      "retailAttentionReason": "新能源车龙头，机构核心资产，散户关注度高但参与度受限于高股价",
+      "dragonTiger": {
+        "appearance5d": "0次",
+        "institutionRatio": "85%+",
+        "hotMoneyRatio": "<5%",
+        "feature": "纯机构核心资产，游资回避"
+      },
+      "chipStructureScore": 15,
+      "chipAssessment": "差",
+      "keyAdvantages": [
+        "全球新能源车龙头，技术领先",
+        "销量持续高增长",
+        "产业链垂直整合优势"
+      ],
+      "riskFactors": [
+        "流通市值高达2800亿，A股最大市值之一，连续涨停不可能",
+        "换手率仅约1.8%，筹码极度稳定",
+        "机构高度抱团，缺乏游资参与",
+        "海外扩张面临地缘政治风险"
+      ]
+    },
+    {
+      "stockCode": "600754.SH",
+      "stockName": "锦江酒店",
+      "sector": "酒店旅游/消费复苏",
+      "floatShareCap": 9.3,
+      "floatMarketCap": 290,
+      "turnoverRate5d": 3.5,
+      "retailAttentionIndicator": "中",
+      "retailAttentionReason": "酒店龙头，消费复苏受益标的，机构关注度高于散户",
+      "dragonTiger": {
+        "appearance5d": "0-1次",
+        "institutionRatio": "55-65%",
+        "hotMoneyRatio": "25-35%",
+        "feature": "机构主导，游资偶尔参与"
+      },
+      "chipStructureScore": 42,
+      "chipAssessment": "一般",
+      "keyAdvantages": [
+        "国内酒店行业龙头",
+        "受益于旅游复苏及节假日消费",
+        "品牌及规模优势明显"
+      ],
+      "riskFactors": [
+        "流通市值约290亿，偏大",
+        "换手率仅约3.5%，弹性不足",
+        "机构主导，短期爆发力有限",
+        "宏观经济波动影响商务出行"
+      ]
+    },
+    {
+      "stockCode": "600138.SH",
+      "stockName": "中青旅",
+      "sector": "旅游服务/消费复苏",
+      "floatShareCap": 7.2,
+      "floatMarketCap": 85,
+      "turnoverRate5d": 6.8,
+      "retailAttentionIndicator": "中-高",
+      "retailAttentionReason": "旅游综合服务商，市值适中，散户关注度尚可，同花顺热股榜偶有上榜",
+      "dragonTiger": {
+        "appearance5d": "0-1次",
+        "institutionRatio": "40-50%",
+        "hotMoneyRatio": "40-50%",
+        "feature": "机构与游资平衡型"
+      },
+      "chipStructureScore": 58,
+      "chipAssessment": "良好",
+      "keyAdvantages": [
+        "流通市值约85亿，规模适中",
+        "近5日平均换手率约6.8%，活跃度尚可",
+        "旅游复苏受益，乌镇及古北水镇资产优质",
+        "机构与游资均有参与"
+      ],
+      "riskFactors": [
+        "旅游行业竞争加剧",
+        "业绩复苏节奏可能不及预期",
+        "市值规模限制连续涨停空间"
+      ]
+    }
+  ],
+  "rankingByChipStructure": [
+    {"rank": 1, "stockCode": "002780.SZ", "stockName": "三夫户外", "score": 88, "assessment": "优", "keyFeature": "小盘高换手，游资高度主导"},
+    {"rank": 2, "stockCode": "603099.SH", "stockName": "长白山", "score": 82, "assessment": "优", "keyFeature": "中小盘活跃，冰雪概念龙头"},
+    {"rank": 3, "stockCode": "600138.SH", "stockName": "中青旅", "score": 58, "assessment": "良好", "keyFeature": "中盘适中，换手活跃"},
+    {"rank": 4, "stockCode": "601127.SH", "stockName": "赛力斯", "score": 48, "assessment": "一般", "keyFeature": "盘子偏大，但机构游资共振"},
+    {"rank": 5, "stockCode": "002371.SZ", "stockName": "北方华创", "score": 45, "assessment": "一般", "keyFeature": "机构主导，弹性不足"},
+    {"rank": 6, "stockCode": "600754.SH", "stockName": "锦江酒店", "score": 42, "assessment": "一般", "keyFeature": "中大盘，机构主导"},
+    {"rank": 7, "stockCode": "688012.SH", "stockName": "中微公司", "score": 35, "assessment": "较差", "keyFeature": "科创板大盘，纯机构品种"},
+    {"rank": 8, "stockCode": "688981.SH", "stockName": "中芯国际", "score": 25, "assessment": "较差", "keyFeature": "超级大盘，游资回避"},
+    {"rank": 9, "stockCode": "002594.SZ", "stockName": "比亚迪", "score": 15, "assessment": "差", "keyFeature": "超大市值核心资产，无连续涨停可能性"}
+  ],
+  "summary": {
+    "excellentCandidates": ["002780.SZ", "603099.SH"],
+    "goodCandidates": ["600138.SH"],
+    "excellentDescription": "流通市值<50亿且换手率>15%，游资主导，多次涨停概率高",
+    "keyConclusion": "从流通盘特征分析，三夫户外(002780)和长白山(603099)具备最优的筹码结构——小盘/中小盘+高换手+游资主导+高散户关注度，最符合连续涨停所需的资金博弈特征。机构重仓的大盘股(比亚迪、中芯国际等)虽然基本面优秀，但因盘子过大难以出现连续涨停。"
+  },
+  "dataSources": [
+    "上市公司定期报告",
+    "交易所龙虎榜公开数据",
+    "东方财富/同花顺平台公开热度排名",
+    "板块特征历史统计"
+  ],
+  "disclaimer": "本分析基于公开历史信息及板块特征估算，所有数值均为估算区间，非实时精确数据。股市有风险，投资需谨慎。流通盘特征仅为连续涨停概率分析的维度之一，不构成投资建议。"
+}

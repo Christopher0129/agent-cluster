@@ -1,0 +1,56 @@
+{
+  "taskId": "task_2__sub_2__sub_5__sub_3__sub_1__sub_1",
+  "phase": "research",
+  "title": "下周交易日期范围计算",
+  "referenceDate": "2026-03-27",
+  "generatedAt": "2026-03-27",
+  "nextWeek": {
+    "dateRange": "2026年03月30日至2026年04月03日",
+    "weekNumber": "2026年第14周",
+    "totalDays": 5
+  },
+  "tradingCalendar": [
+    {
+      "date": "2026-03-30",
+      "weekday": "周一",
+      "isTradingDay": true,
+      "note": "正常交易日"
+    },
+    {
+      "date": "2026-03-31",
+      "weekday": "周二",
+      "isTradingDay": true,
+      "note": "正常交易日"
+    },
+    {
+      "date": "2026-04-01",
+      "weekday": "周三",
+      "isTradingDay": true,
+      "note": "正常交易日"
+    },
+    {
+      "date": "2026-04-02",
+      "weekday": "周四",
+      "isTradingDay": true,
+      "note": "正常交易日"
+    },
+    {
+      "date": "2026-04-03",
+      "weekday": "周五",
+      "isTradingDay": true,
+      "note": "正常交易日，清明节前最后一个交易日"
+    }
+  ],
+  "tradingDaysCount": 5,
+  "holidayNotice": {
+    "upcomingHoliday": "清明节",
+    "holidayDates": "2026-04-04至2026-04-06",
+    "impactOnNextWeek": "无影响，清明节假期从4月4日（周六）开始",
+    "specialNote": "2026年清明节为4月4日（周六），4月5日（周日）为正常周末，预计放假安排为4月4日-6日，不涉及下周调休"
+  },
+  "verification": {
+    "source": "基于中国A股交易日历规则计算",
+    "confidence": "高",
+    "warning": "以上为基于标准交易日历的预测，实际交易安排以沪深交易所官方公告为准"
+  }
+}

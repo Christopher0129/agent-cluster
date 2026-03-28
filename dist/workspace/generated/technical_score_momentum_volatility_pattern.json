@@ -1,0 +1,832 @@
+{
+  "meta": {
+    "generatedAt": "2025-01-13T10:45:00+08:00",
+    "taskId": "task_2__sub_1__sub_1_5__sub_1_4__sub_4__sub_2_tech",
+    "scoringFramework": "技术分计算-动量波动率形态",
+    "maxTotalScore": 35,
+    "subScores": {
+      "momentum": 15,
+      "volatility": 10,
+      "pattern": 10
+    },
+    "disclaimer": "本技术分为基于公开信息的历史数据分析，非实时行情数据。股市有风险，投资需谨慎。",
+    "dataSource": "final_top20_limit_up_stocks.json 候选池"
+  },
+  "scoringCriteria": {
+    "momentumScore": {
+      "maxPoints": 15,
+      "components": {
+        "recentLimitUpMomentum": {
+          "description": "近期涨停动能",
+          "points": 6,
+          "criteria": {
+            "5日内3次及以上涨停": 6,
+            "5日内2次涨停": 4,
+            "10日内2-3次涨停": 3,
+            "10日内1次涨停": 1,
+            "无近期涨停": 0
+          }
+        },
+        "consecutiveBoardsStrength": {
+          "description": "连板强度",
+          "points": 5,
+          "criteria": {
+            "当前4连板及以上": 5,
+            "当前3连板": 4,
+            "当前2连板": 3,
+            "近期有3连板历史": 2,
+            "近期无连板": 0
+          }
+        },
+        "pricePositionVsMA": {
+          "description": "价格相对均线位置",
+          "points": 4,
+          "criteria": {
+            "强势多头排列(价>MA5>MA10>MA20)": 4,
+            "多头排列(价>MA5>MA10)": 3,
+            "突破短期均线": 2,
+            "均线纠缠": 0
+          }
+        }
+      }
+    },
+    "volatilityScore": {
+      "maxPoints": 10,
+      "components": {
+        "limitUpGene": {
+          "description": "涨停基因(近60日涨停次数)",
+          "points": 5,
+          "criteria": {
+            "近60日5次及以上涨停": 5,
+            "近60日4次涨停": 4,
+            "近60日3次涨停": 3,
+            "近60日2次涨停": 2,
+            "近60日1次及以下": 0
+          }
+        },
+        "consecutiveBoardsHistory": {
+          "description": "连板历史",
+          "points": 3,
+          "criteria": {
+            "近期5连板历史": 3,
+            "近期4连板历史": 2,
+            "近期3连板历史": 1,
+            "无连板历史": 0
+          }
+        },
+        "turnoverRate": {
+          "description": "换手率活跃度",
+          "points": 2,
+          "criteria": {
+            "换手率15-30%(高活跃)": 2,
+            "换手率8-15%(活跃)": 1,
+            "换手率<8%或>30%": 0
+          }
+        }
+      }
+    },
+    "patternScore": {
+      "maxPoints": 10,
+      "components": {
+        "breakoutPattern": {
+          "description": "突破形态",
+          "points": 5,
+          "criteria": {
+            "平台突破+创新高": 5,
+            "突破前高": 4,
+            "突破整理平台": 3,
+            "反弹形态": 1,
+            "无明显形态": 0
+          }
+        },
+        "volumeCooperation": {
+          "description": "量能配合",
+          "points": 3,
+          "criteria": {
+            "涨停放量3倍以上": 3,
+            "涨停放量2-3倍": 2,
+            "涨停放量1-2倍": 1,
+            "缩量涨停": 0
+          }
+        },
+        "consolidationQuality": {
+          "description": "整理质量",
+          "points": 2,
+          "criteria": {
+            "横盘整理充分(20日+)": 2,
+            "短暂整理(10-20日)": 1,
+            "V型反转或无整理": 0
+          }
+        }
+      }
+    }
+  },
+  "stocks": [
+    {
+      "rank": 1,
+      "code": "000017",
+      "name": "深中华A",
+      "momentumScore": {
+        "recentLimitUpMomentum": 6,
+        "consecutiveBoardsStrength": 5,
+        "pricePositionVsMA": 4,
+        "subtotal": 15
+      },
+      "volatilityScore": {
+        "limitUpGene": 5,
+        "consecutiveBoardsHistory": 3,
+        "turnoverRate": 2,
+        "subtotal": 10
+      },
+      "patternScore": {
+        "breakoutPattern": 4,
+        "volumeCooperation": 3,
+        "consolidationQuality": 2,
+        "subtotal": 9
+      },
+      "totalScore": 34,
+      "scoreComment": "高度龙头，5连板强势，涨停基因优异，技术形态完美",
+      "keyMetrics": {
+        "limitUpCount": 5,
+        "consecutiveBoards": 5,
+        "turnover": 8.2,
+        "concept": "锂电池+黄金概念"
+      }
+    },
+    {
+      "rank": 2,
+      "code": "600593",
+      "name": "大连圣亚",
+      "momentumScore": {
+        "recentLimitUpMomentum": 6,
+        "consecutiveBoardsStrength": 4,
+        "pricePositionVsMA": 4,
+        "subtotal": 14
+      },
+      "volatilityScore": {
+        "limitUpGene": 4,
+        "consecutiveBoardsHistory": 2,
+        "turnoverRate": 1,
+        "subtotal": 7
+      },
+      "patternScore": {
+        "breakoutPattern": 5,
+        "volumeCooperation": 2,
+        "consolidationQuality": 1,
+        "subtotal": 8
+      },
+      "totalScore": 29,
+      "scoreComment": "冰雪旅游龙头，4连板但换手偏低，突破创新高形态",
+      "keyMetrics": {
+        "limitUpCount": 4,
+        "consecutiveBoards": 4,
+        "turnover": 6.4,
+        "concept": "冰雪旅游+东北振兴"
+      }
+    },
+    {
+      "rank": 3,
+      "code": "600630",
+      "name": "龙头股份",
+      "momentumScore": {
+        "recentLimitUpMomentum": 6,
+        "consecutiveBoardsStrength": 4,
+        "pricePositionVsMA": 3,
+        "subtotal": 13
+      },
+      "volatilityScore": {
+        "limitUpGene": 4,
+        "consecutiveBoardsHistory": 2,
+        "turnoverRate": 2,
+        "subtotal": 8
+      },
+      "patternScore": {
+        "breakoutPattern": 4,
+        "volumeCooperation": 2,
+        "consolidationQuality": 2,
+        "subtotal": 8
+      },
+      "totalScore": 29,
+      "scoreComment": "国企改革先锋，3连板活跃换手，平台突破",
+      "keyMetrics": {
+        "limitUpCount": 4,
+        "consecutiveBoards": 3,
+        "turnover": 15.8,
+        "concept": "上海国企改革+跨境电商"
+      }
+    },
+    {
+      "rank": 4,
+      "code": "000715",
+      "name": "中兴商业",
+      "momentumScore": {
+        "recentLimitUpMomentum": 6,
+        "consecutiveBoardsStrength": 4,
+        "pricePositionVsMA": 3,
+        "subtotal": 13
+      },
+      "volatilityScore": {
+        "limitUpGene": 4,
+        "consecutiveBoardsHistory": 2,
+        "turnoverRate": 2,
+        "subtotal": 8
+      },
+      "patternScore": {
+        "breakoutPattern": 3,
+        "volumeCooperation": 3,
+        "consolidationQuality": 2,
+        "subtotal": 8
+      },
+      "totalScore": 29,
+      "scoreComment": "零售龙头，3连板，换手率健康，政策催化的估值修复",
+      "keyMetrics": {
+        "limitUpCount": 4,
+        "consecutiveBoards": 3,
+        "turnover": 22.3,
+        "concept": "零售+东北振兴"
+      }
+    },
+    {
+      "rank": 5,
+      "code": "603097",
+      "name": "鸿博股份",
+      "momentumScore": {
+        "recentLimitUpMomentum": 6,
+        "consecutiveBoardsStrength": 3,
+        "pricePositionVsMA": 4,
+        "subtotal": 13
+      },
+      "volatilityScore": {
+        "limitUpGene": 4,
+        "consecutiveBoardsHistory": 2,
+        "turnoverRate": 1,
+        "subtotal": 7
+      },
+      "patternScore": {
+        "breakoutPattern": 4,
+        "volumeCooperation": 3,
+        "consolidationQuality": 2,
+        "subtotal": 9
+      },
+      "totalScore": 29,
+      "scoreComment": "AI算力核心标的，4次涨停，换手过高需警惕",
+      "keyMetrics": {
+        "limitUpCount": 4,
+        "consecutiveBoards": 2,
+        "turnover": 28.5,
+        "concept": "算力租赁+AI"
+      }
+    },
+    {
+      "rank": 6,
+      "code": "600675",
+      "name": "中华企业",
+      "momentumScore": {
+        "recentLimitUpMomentum": 5,
+        "consecutiveBoardsStrength": 4,
+        "pricePositionVsMA": 3,
+        "subtotal": 12
+      },
+      "volatilityScore": {
+        "limitUpGene": 3,
+        "consecutiveBoardsHistory": 2,
+        "turnoverRate": 0,
+        "subtotal": 5
+      },
+      "patternScore": {
+        "breakoutPattern": 4,
+        "volumeCooperation": 2,
+        "consolidationQuality": 2,
+        "subtotal": 8
+      },
+      "totalScore": 25,
+      "scoreComment": "地产国企龙头，3连板但换手偏低，地产政策催化",
+      "keyMetrics": {
+        "limitUpCount": 3,
+        "consecutiveBoards": 3,
+        "turnover": 5.9,
+        "concept": "房地产+上海国企"
+      }
+    },
+    {
+      "rank": 7,
+      "code": "600629",
+      "name": "华建集团",
+      "momentumScore": {
+        "recentLimitUpMomentum": 5,
+        "consecutiveBoardsStrength": 4,
+        "pricePositionVsMA": 3,
+        "subtotal": 12
+      },
+      "volatilityScore": {
+        "limitUpGene": 3,
+        "consecutiveBoardsHistory": 2,
+        "turnoverRate": 1,
+        "subtotal": 6
+      },
+      "patternScore": {
+        "breakoutPattern": 3,
+        "volumeCooperation": 2,
+        "consolidationQuality": 2,
+        "subtotal": 7
+      },
+      "totalScore": 25,
+      "scoreComment": "建筑设计龙头，3连板，城市更新政策受益",
+      "keyMetrics": {
+        "limitUpCount": 3,
+        "consecutiveBoards": 3,
+        "turnover": 10.2,
+        "concept": "建筑设计+上海国企"
+      }
+    },
+    {
+      "rank": 8,
+      "code": "002211",
+      "name": "宏达新材",
+      "momentumScore": {
+        "recentLimitUpMomentum": 5,
+        "consecutiveBoardsStrength": 3,
+        "pricePositionVsMA": 3,
+        "subtotal": 11
+      },
+      "volatilityScore": {
+        "limitUpGene": 3,
+        "consecutiveBoardsHistory": 2,
+        "turnoverRate": 2,
+        "subtotal": 7
+      },
+      "patternScore": {
+        "breakoutPattern": 4,
+        "volumeCooperation": 3,
+        "consolidationQuality": 1,
+        "subtotal": 8
+      },
+      "totalScore": 26,
+      "scoreComment": "有机硅+量子科技双重概念，3次涨停，换手充分",
+      "keyMetrics": {
+        "limitUpCount": 3,
+        "consecutiveBoards": 2,
+        "turnover": 19.8,
+        "concept": "有机硅+量子科技"
+      }
+    },
+    {
+      "rank": 9,
+      "code": "603038",
+      "name": "华立股份",
+      "momentumScore": {
+        "recentLimitUpMomentum": 5,
+        "consecutiveBoardsStrength": 3,
+        "pricePositionVsMA": 3,
+        "subtotal": 11
+      },
+      "volatilityScore": {
+        "limitUpGene": 3,
+        "consecutiveBoardsHistory": 2,
+        "turnoverRate": 2,
+        "subtotal": 7
+      },
+      "patternScore": {
+        "breakoutPattern": 3,
+        "volumeCooperation": 2,
+        "consolidationQuality": 2,
+        "subtotal": 7
+      },
+      "totalScore": 25,
+      "scoreComment": "鸿蒙生态标的，3次涨停，智能家居业务增长预期",
+      "keyMetrics": {
+        "limitUpCount": 3,
+        "consecutiveBoards": 2,
+        "turnover": 12.5,
+        "concept": "鸿蒙生态+智能家居"
+      }
+    },
+    {
+      "rank": 10,
+      "code": "002848",
+      "name": "高斯贝尔",
+      "momentumScore": {
+        "recentLimitUpMomentum": 5,
+        "consecutiveBoardsStrength": 3,
+        "pricePositionVsMA": 3,
+        "subtotal": 11
+      },
+      "volatilityScore": {
+        "limitUpGene": 3,
+        "consecutiveBoardsHistory": 2,
+        "turnoverRate": 2,
+        "subtotal": 7
+      },
+      "patternScore": {
+        "breakoutPattern": 4,
+        "volumeCooperation": 3,
+        "consolidationQuality": 1,
+        "subtotal": 8
+      },
+      "totalScore": 26,
+      "scoreComment": "卫星导航+数字经济，3次涨停，技术突破形态",
+      "keyMetrics": {
+        "limitUpCount": 3,
+        "consecutiveBoards": 2,
+        "turnover": 18.6,
+        "concept": "卫星导航+数字经济"
+      }
+    },
+    {
+      "rank": 11,
+      "code": "600816",
+      "name": "建元信托",
+      "momentumScore": {
+        "recentLimitUpMomentum": 5,
+        "consecutiveBoardsStrength": 3,
+        "pricePositionVsMA": 3,
+        "subtotal": 11
+      },
+      "volatilityScore": {
+        "limitUpGene": 3,
+        "consecutiveBoardsHistory": 2,
+        "turnoverRate": 1,
+        "subtotal": 6
+      },
+      "patternScore": {
+        "breakoutPattern": 3,
+        "volumeCooperation": 2,
+        "consolidationQuality": 2,
+        "subtotal": 7
+      },
+      "totalScore": 24,
+      "scoreComment": "信托转型+上海金融国企，3次涨停，换手适中",
+      "keyMetrics": {
+        "limitUpCount": 3,
+        "consecutiveBoards": 2,
+        "turnover": 7.5,
+        "concept": "信托+上海国企"
+      }
+    },
+    {
+      "rank": 12,
+      "code": "603038",
+      "name": "清源股份",
+      "momentumScore": {
+        "recentLimitUpMomentum": 5,
+        "consecutiveBoardsStrength": 3,
+        "pricePositionVsMA": 3,
+        "subtotal": 11
+      },
+      "volatilityScore": {
+        "limitUpGene": 3,
+        "consecutiveBoardsHistory": 2,
+        "turnoverRate": 2,
+        "subtotal": 7
+      },
+      "patternScore": {
+        "breakoutPattern": 4,
+        "volumeCooperation": 3,
+        "consolidationQuality": 2,
+        "subtotal": 9
+      },
+      "totalScore": 27,
+      "scoreComment": "光伏支架+储能，海外装机超预期，形态良好",
+      "keyMetrics": {
+        "limitUpCount": 3,
+        "consecutiveBoards": 2,
+        "turnover": 20.1,
+        "concept": "光伏支架+储能"
+      }
+    },
+    {
+      "rank": 13,
+      "code": "603097",
+      "name": "江苏华辰",
+      "momentumScore": {
+        "recentLimitUpMomentum": 4,
+        "consecutiveBoardsStrength": 3,
+        "pricePositionVsMA": 3,
+        "subtotal": 10
+      },
+      "volatilityScore": {
+        "limitUpGene": 2,
+        "consecutiveBoardsHistory": 2,
+        "turnoverRate": 1,
+        "subtotal": 5
+      },
+      "patternScore": {
+        "breakoutPattern": 3,
+        "volumeCooperation": 2,
+        "consolidationQuality": 2,
+        "subtotal": 7
+      },
+      "totalScore": 22,
+      "scoreComment": "特高压+智能电网，2连板启动，机构游资共振",
+      "keyMetrics": {
+        "limitUpCount": 2,
+        "consecutiveBoards": 2,
+        "turnover": 9.8,
+        "concept": "特高压+智能电网"
+      }
+    },
+    {
+      "rank": 14,
+      "code": "000638",
+      "name": "万方发展",
+      "momentumScore": {
+        "recentLimitUpMomentum": 4,
+        "consecutiveBoardsStrength": 3,
+        "pricePositionVsMA": 3,
+        "subtotal": 10
+      },
+      "volatilityScore": {
+        "limitUpGene": 2,
+        "consecutiveBoardsHistory": 2,
+        "turnoverRate": 2,
+        "subtotal": 6
+      },
+      "patternScore": {
+        "breakoutPattern": 3,
+        "volumeCooperation": 2,
+        "consolidationQuality": 1,
+        "subtotal": 6
+      },
+      "totalScore": 22,
+      "scoreComment": "军工+农业双主业，2连板，农业一号文件预热",
+      "keyMetrics": {
+        "limitUpCount": 2,
+        "consecutiveBoards": 2,
+        "turnover": 11.3,
+        "concept": "军工+农业"
+      }
+    },
+    {
+      "rank": 15,
+      "code": "000019",
+      "name": "深粮控股",
+      "momentumScore": {
+        "recentLimitUpMomentum": 4,
+        "consecutiveBoardsStrength": 3,
+        "pricePositionVsMA": 2,
+        "subtotal": 9
+      },
+      "volatilityScore": {
+        "limitUpGene": 2,
+        "consecutiveBoardsHistory": 2,
+        "turnoverRate": 1,
+        "subtotal": 5
+      },
+      "patternScore": {
+        "breakoutPattern": 3,
+        "volumeCooperation": 2,
+        "consolidationQuality": 2,
+        "subtotal": 7
+      },
+      "totalScore": 21,
+      "scoreComment": "粮食安全+国企改革，2连板，防御属性",
+      "keyMetrics": {
+        "limitUpCount": 2,
+        "consecutiveBoards": 2,
+        "turnover": 8.7,
+        "concept": "粮食安全+国企改革"
+      }
+    },
+    {
+      "rank": 16,
+      "code": "000532",
+      "name": "华金资本",
+      "momentumScore": {
+        "recentLimitUpMomentum": 4,
+        "consecutiveBoardsStrength": 3,
+        "pricePositionVsMA": 3,
+        "subtotal": 10
+      },
+      "volatilityScore": {
+        "limitUpGene": 2,
+        "consecutiveBoardsHistory": 2,
+        "turnoverRate": 2,
+        "subtotal": 6
+      },
+      "patternScore": {
+        "breakoutPattern": 3,
+        "volumeCooperation": 2,
+        "consolidationQuality": 2,
+        "subtotal": 7
+      },
+      "totalScore": 23,
+      "scoreComment": "创投+珠海国资，北交所受益标的，2连板",
+      "keyMetrics": {
+        "limitUpCount": 2,
+        "consecutiveBoards": 2,
+        "turnover": 14.6,
+        "concept": "创投+珠海国资"
+      }
+    },
+    {
+      "rank": 17,
+      "code": "002641",
+      "name": "公元股份",
+      "momentumScore": {
+        "recentLimitUpMomentum": 4,
+        "consecutiveBoardsStrength": 1,
+        "pricePositionVsMA": 3,
+        "subtotal": 8
+      },
+      "volatilityScore": {
+        "limitUpGene": 2,
+        "consecutiveBoardsHistory": 1,
+        "turnoverRate": 2,
+        "subtotal": 5
+      },
+      "patternScore": {
+        "breakoutPattern": 3,
+        "volumeCooperation": 2,
+        "consolidationQuality": 2,
+        "subtotal": 7
+      },
+      "totalScore": 20,
+      "scoreComment": "光伏+水利，首板后跟进，产业链价格企稳预期",
+      "keyMetrics": {
+        "limitUpCount": 2,
+        "consecutiveBoards": 1,
+        "turnover": 14.2,
+        "concept": "光伏+水利"
+      }
+    },
+    {
+      "rank": 18,
+      "code": "603333",
+      "name": "尚纬股份",
+      "momentumScore": {
+        "recentLimitUpMomentum": 4,
+        "consecutiveBoardsStrength": 1,
+        "pricePositionVsMA": 3,
+        "subtotal": 8
+      },
+      "volatilityScore": {
+        "limitUpGene": 2,
+        "consecutiveBoardsHistory": 1,
+        "turnoverRate": 2,
+        "subtotal": 5
+      },
+      "patternScore": {
+        "breakoutPattern": 3,
+        "volumeCooperation": 2,
+        "consolidationQuality": 1,
+        "subtotal": 6
+      },
+      "totalScore": 19,
+      "scoreComment": "核电+特高压电缆，首板启动，核电审批加速",
+      "keyMetrics": {
+        "limitUpCount": 2,
+        "consecutiveBoards": 1,
+        "turnover": 16.7,
+        "concept": "核电+特高压"
+      }
+    },
+    {
+      "rank": 19,
+      "code": "002347",
+      "name": "泰尔股份",
+      "momentumScore": {
+        "recentLimitUpMomentum": 4,
+        "consecutiveBoardsStrength": 1,
+        "pricePositionVsMA": 3,
+        "subtotal": 8
+      },
+      "volatilityScore": {
+        "limitUpGene": 2,
+        "consecutiveBoardsHistory": 1,
+        "turnoverRate": 2,
+        "subtotal": 5
+      },
+      "patternScore": {
+        "breakoutPattern": 3,
+        "volumeCooperation": 3,
+        "consolidationQuality": 1,
+        "subtotal": 7
+      },
+      "totalScore": 20,
+      "scoreComment": "机器人+锂电设备，人形机器人产业趋势，换手充分",
+      "keyMetrics": {
+        "limitUpCount": 2,
+        "consecutiveBoards": 1,
+        "turnover": 21.4,
+        "concept": "机器人+锂电池设备"
+      }
+    },
+    {
+      "rank": 20,
+      "code": "603399",
+      "name": "吉翔股份",
+      "momentumScore": {
+        "recentLimitUpMomentum": 4,
+        "consecutiveBoardsStrength": 1,
+        "pricePositionVsMA": 3,
+        "subtotal": 8
+      },
+      "volatilityScore": {
+        "limitUpGene": 2,
+        "consecutiveBoardsHistory": 1,
+        "turnoverRate": 2,
+        "subtotal": 5
+      },
+      "patternScore": {
+        "breakoutPattern": 3,
+        "volumeCooperation": 2,
+        "consolidationQuality": 1,
+        "subtotal": 6
+      },
+      "totalScore": 19,
+      "scoreComment": "锂业+影视，锂盐价格触底反弹预期",
+      "keyMetrics": {
+        "limitUpCount": 2,
+        "consecutiveBoards": 1,
+        "turnover": 13.5,
+        "concept": "锂业+影视"
+      }
+    },
+    {
+      "rank": 21,
+      "code": "002599",
+      "name": "盛通股份",
+      "momentumScore": {
+        "recentLimitUpMomentum": 4,
+        "consecutiveBoardsStrength": 1,
+        "pricePositionVsMA": 2,
+        "subtotal": 7
+      },
+      "volatilityScore": {
+        "limitUpGene": 2,
+        "consecutiveBoardsHistory": 1,
+        "turnoverRate": 2,
+        "subtotal": 5
+      },
+      "patternScore": {
+        "breakoutPattern": 3,
+        "volumeCooperation": 2,
+        "consolidationQuality": 1,
+        "subtotal": 6
+      },
+      "totalScore": 18,
+      "scoreComment": "教育+机器人，素质教育政策回暖",
+      "keyMetrics": {
+        "limitUpCount": 2,
+        "consecutiveBoards": 1,
+        "turnover": 17.3,
+        "concept": "教育+机器人"
+      }
+    },
+    {
+      "rank": 22,
+      "code": "000037",
+      "name": "深南电A",
+      "momentumScore": {
+        "recentLimitUpMomentum": 4,
+        "consecutiveBoardsStrength": 1,
+        "pricePositionVsMA": 2,
+        "subtotal": 7
+      },
+      "volatilityScore": {
+        "limitUpGene": 2,
+        "consecutiveBoardsHistory": 1,
+        "turnoverRate": 1,
+        "subtotal": 4
+      },
+      "patternScore": {
+        "breakoutPattern": 2,
+        "volumeCooperation": 2,
+        "consolidationQuality": 1,
+        "subtotal": 5
+      },
+      "totalScore": 16,
+      "scoreComment": "电力+储能，电力市场化改革，启动阶段",
+      "keyMetrics": {
+        "limitUpCount": 2,
+        "consecutiveBoards": 1,
+        "turnover": 9.4,
+        "concept": "电力+储能"
+      }
+    }
+  ],
+  "summary": {
+    "totalStocks": 22,
+    "avgTotalScore": 24.1,
+    "highScoreCount": {
+      "30-35分(极强)": 1,
+      "25-29分(强势)": 11,
+      "20-24分(中等)": 8,
+      "15-19分(弱势)": 2
+    },
+    "top5ByTechScore": [
+      {"rank": 1, "code": "000017", "name": "深中华A", "score": 34, "concept": "锂电池+黄金"},
+      {"rank": 2, "code": "600593", "name": "大连圣亚", "score": 29, "concept": "冰雪旅游"},
+      {"rank": 3, "code": "600630", "name": "龙头股份", "score": 29, "concept": "国企改革"},
+      {"rank": 4, "code": "000715", "name": "中兴商业", "score": 29, "concept": "零售"},
+      {"rank": 5, "code": "603097", "name": "鸿博股份", "score": 29, "concept": "AI算力"}
+    ]
+  },
+  "riskDisclaimer": [
+    "技术分基于历史涨停数据和换手等公开信息计算，非实时行情",
+    "高分股票往往处于高位，存在回调风险",
+    "技术分仅反映历史动量，不能预测未来走势",
+    "连板高度受监管政策影响，存在停牌核查风险",
+    "股市有风险，投资需谨慎"
+  ]
+}

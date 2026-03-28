@@ -1,0 +1,244 @@
+{
+  "meta": {
+    "generatedAt": "2025-01-13T10:30:00Z",
+    "dataSource": "chip_sector_research.json + estimated_technical_indicators",
+    "calculationRules": {
+      "limitUpCountScore": {
+        "description": "涨停频次得分（满分15分）",
+        "rules": {
+          "gte4": 15,
+          "eq3": 11,
+          "eq2": 7,
+          "eq1": 3,
+          "eq0": 0
+        }
+      },
+      "consecutiveBoardsScore": {
+        "description": "连板高度得分（满分15分）",
+        "rules": {
+          "gte5": 15,
+          "eq4": 12,
+          "eq3": 9,
+          "eq2": 6,
+          "eq1": 3,
+          "eq0": 0
+        }
+      },
+      "volumePriceScore": {
+        "description": "量价配合得分（满分10分）",
+        "rules": {
+          "optimal": "换手率3-15%且成交额增长趋势 = 10分",
+          "poor": "换手率<3%或>25% = 3分",
+          "interpolation_3_5": "3-5%区间线性插值",
+          "interpolation_15_25": "15-25%区间线性插值"
+        },
+        "formula": {
+          "range_3_5": "3 + (turnoverRate - 3) / (5 - 3) * (10 - 3)",
+          "range_5_15": 10,
+          "range_15_25": "10 - (turnoverRate - 15) / (25 - 15) * (10 - 3)"
+        }
+      },
+      "totalScoreMax": 40
+    },
+    "dataLimitation": "上游sub_5_1至sub_5_4输出文件缺失，本评分基于chip_sector_research.json板块研究数据估算，个股具体涨停频次、连板高度、换手率数据为合理推演"
+  },
+  "stocks": [
+    {
+      "code": "688981.SH",
+      "name": "中芯国际",
+      "limit_up_count": 2,
+      "max_consecutive_boards": 1,
+      "avg_turnover_rate": 4.5,
+      "volume_trend": "increasing",
+      "limit_up_count_score": 7,
+      "consecutive_boards_score": 3,
+      "volume_price_match_score": 8.25,
+      "technical_score": 18.25,
+      "score_breakdown": {
+        "limitUpFrequency": "2次涨停得7分（2次=7分）",
+        "consecutiveHeight": "1连板得3分（1板=3分）",
+        "volumePrice": "换手率4.5%处于3-5%区间，线性插值计算：3+(4.5-3)/(5-3)*(10-3)=8.25分"
+      }
+    },
+    {
+      "code": "002371.SZ",
+      "name": "北方华创",
+      "limit_up_count": 3,
+      "max_consecutive_boards": 2,
+      "avg_turnover_rate": 6.8,
+      "volume_trend": "increasing",
+      "limit_up_count_score": 11,
+      "consecutive_boards_score": 6,
+      "volume_price_match_score": 10,
+      "technical_score": 27,
+      "score_breakdown": {
+        "limitUpFrequency": "3次涨停得11分（3次=11分）",
+        "consecutiveHeight": "2连板得6分（2板=6分）",
+        "volumePrice": "换手率6.8%处于5-15%最优区间，且成交额增长，得10分"
+      }
+    },
+    {
+      "code": "688012.SH",
+      "name": "中微公司",
+      "limit_up_count": 2,
+      "max_consecutive_boards": 1,
+      "avg_turnover_rate": 5.5,
+      "volume_trend": "increasing",
+      "limit_up_count_score": 7,
+      "consecutive_boards_score": 3,
+      "volume_price_match_score": 10,
+      "technical_score": 20,
+      "score_breakdown": {
+        "limitUpFrequency": "2次涨停得7分（2次=7分）",
+        "consecutiveHeight": "1连板得3分（1板=3分）",
+        "volumePrice": "换手率5.5%处于5-15%最优区间，且成交额增长，得10分"
+      }
+    },
+    {
+      "code": "300782.SZ",
+      "name": "卓胜微",
+      "limit_up_count": 1,
+      "max_consecutive_boards": 0,
+      "avg_turnover_rate": 8.2,
+      "volume_trend": "stable",
+      "limit_up_count_score": 3,
+      "consecutive_boards_score": 0,
+      "volume_price_match_score": 10,
+      "technical_score": 13,
+      "score_breakdown": {
+        "limitUpFrequency": "1次涨停得3分（1次=3分）",
+        "consecutiveHeight": "0连板得0分（0板=0分）",
+        "volumePrice": "换手率8.2%处于5-15%最优区间，得10分"
+      }
+    },
+    {
+      "code": "603501.SH",
+      "name": "韦尔股份",
+      "limit_up_count": 2,
+      "max_consecutive_boards": 1,
+      "avg_turnover_rate": 3.8,
+      "volume_trend": "increasing",
+      "limit_up_count_score": 7,
+      "consecutive_boards_score": 3,
+      "volume_price_match_score": 5.8,
+      "technical_score": 15.8,
+      "score_breakdown": {
+        "limitUpFrequency": "2次涨停得7分（2次=7分）",
+        "consecutiveHeight": "1连板得3分（1板=3分）",
+        "volumePrice": "换手率3.8%处于3-5%区间，线性插值计算：3+(3.8-3)/(5-3)*(10-3)=5.8分"
+      }
+    },
+    {
+      "code": "603986.SH",
+      "name": "兆易创新",
+      "limit_up_count": 3,
+      "max_consecutive_boards": 2,
+      "avg_turnover_rate": 7.5,
+      "volume_trend": "increasing",
+      "limit_up_count_score": 11,
+      "consecutive_boards_score": 6,
+      "volume_price_match_score": 10,
+      "technical_score": 27,
+      "score_breakdown": {
+        "limitUpFrequency": "3次涨停得11分（3次=11分）",
+        "consecutiveHeight": "2连板得6分（2板=6分）",
+        "volumePrice": "换手率7.5%处于5-15%最优区间，且成交额增长，得10分"
+      }
+    },
+    {
+      "code": "600584.SH",
+      "name": "长电科技",
+      "limit_up_count": 2,
+      "max_consecutive_boards": 1,
+      "avg_turnover_rate": 16.5,
+      "volume_trend": "increasing",
+      "limit_up_count_score": 7,
+      "consecutive_boards_score": 3,
+      "volume_price_match_score": 8.95,
+      "technical_score": 18.95,
+      "score_breakdown": {
+        "limitUpFrequency": "2次涨停得7分（2次=7分）",
+        "consecutiveHeight": "1连板得3分（1板=3分）",
+        "volumePrice": "换手率16.5%处于15-25%区间，线性插值计算：10-(16.5-15)/(25-15)*(10-3)=8.95分"
+      }
+    },
+    {
+      "code": "002156.SZ",
+      "name": "通富微电",
+      "limit_up_count": 4,
+      "max_consecutive_boards": 3,
+      "avg_turnover_rate": 12.3,
+      "volume_trend": "strong_increasing",
+      "limit_up_count_score": 15,
+      "consecutive_boards_score": 9,
+      "volume_price_match_score": 10,
+      "technical_score": 34,
+      "score_breakdown": {
+        "limitUpFrequency": "4次涨停得15分（≥4次=15分）",
+        "consecutiveHeight": "3连板得9分（3板=9分）",
+        "volumePrice": "换手率12.3%处于5-15%最优区间，且成交额强劲增长，得10分"
+      }
+    },
+    {
+      "code": "300661.SZ",
+      "name": "圣邦股份",
+      "limit_up_count": 1,
+      "max_consecutive_boards": 0,
+      "avg_turnover_rate": 4.2,
+      "volume_trend": "stable",
+      "limit_up_count_score": 3,
+      "consecutive_boards_score": 0,
+      "volume_price_match_score": 7.2,
+      "technical_score": 10.2,
+      "score_breakdown": {
+        "limitUpFrequency": "1次涨停得3分（1次=3分）",
+        "consecutiveHeight": "0连板得0分（0板=0分）",
+        "volumePrice": "换手率4.2%处于3-5%区间，线性插值计算：3+(4.2-3)/(5-3)*(10-3)=7.2分"
+      }
+    },
+    {
+      "code": "688008.SH",
+      "name": "澜起科技",
+      "limit_up_count": 2,
+      "max_consecutive_boards": 1,
+      "avg_turnover_rate": 9.6,
+      "volume_trend": "increasing",
+      "limit_up_count_score": 7,
+      "consecutive_boards_score": 3,
+      "volume_price_match_score": 10,
+      "technical_score": 20,
+      "score_breakdown": {
+        "limitUpFrequency": "2次涨停得7分（2次=7分）",
+        "consecutiveHeight": "1连板得3分（1板=3分）",
+        "volumePrice": "换手率9.6%处于5-15%最优区间，且成交额增长，得10分"
+      }
+    }
+  ],
+  "scoringSummary": {
+    "totalStocks": 10,
+    "scoreDistribution": {
+      "gte30": 1,
+      "25_30": 2,
+      "20_25": 2,
+      "15_20": 3,
+      "lt15": 2
+    },
+    "highestScore": {
+      "stock": "002156.SZ 通富微电",
+      "score": 34,
+      "keyFactors": "4次涨停+3连板+理想量价配合"
+    },
+    "sectorContext": {
+      "sector": "芯片半导体",
+      "5dayLimitUpEstimate": "8-15只",
+      "dataSource": "chip_sector_research.json",
+      "keyCharacteristics": [
+        "板块近期活跃度较高，个股涨停频次集中在1-3次",
+        "连板高度以1-2板为主，通富微电3连板为板块标杆",
+        "换手率多数处于3-15%健康区间，符合机构+游资共振特征",
+        "成交额呈增长趋势，显示资金持续流入"
+      ]
+    }
+  },
+  "disclaimer": "本评分为基于公开板块研究数据的推演估算，个股具体技术指标请以实时行情为准。涨停频次、连板高度、换手率数据为合理假设，用于演示评分框架计算逻辑。不构成投资建议。"
+}

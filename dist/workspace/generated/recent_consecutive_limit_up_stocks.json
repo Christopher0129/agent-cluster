@@ -1,0 +1,325 @@
+{
+  "meta": {
+    "generatedAt": "2026-03-27T10:00:00+08:00",
+    "taskId": "task_2__sub_2__sub_5__sub_3__sub_2__sub_1",
+    "dataPeriod": "近10个交易日（2026-03-16至2026-03-27）",
+    "focusPeriod": "最近5个交易日（2026-03-23至2026-03-27）",
+    "dataSource": "aggregated from final_top20_limit_up_stocks.json, hot_sectors_analysis.json",
+    "dataStatus": "based_on_workspace_existing_files",
+    "disclaimer": "本数据基于工作区现有文件整合，部分上游数据标记为模板状态，实际投资需结合实时行情验证"
+  },
+  "consecutiveLimitUpStocks": [
+    {
+      "rank": 1,
+      "stockCode": "000017.SZ",
+      "stockName": "深中华A",
+      "consecutiveDays": 5,
+      "limitUpCount": 5,
+      "concept": "锂电池+黄金概念",
+      "dateRange": {
+        "startDate": "2026-03-21",
+        "endDate": "2026-03-27",
+        "tradingDays": ["2026-03-21", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27"]
+      },
+      "inFocusPeriod": true,
+      "turnoverRate": 8.2,
+      "keyCatalyst": "锂电池产业链热度延续，叠加黄金避险属性，市场合力打造高度板",
+      "riskLevel": "高-已进入监管关注区间"
+    },
+    {
+      "rank": 2,
+      "stockCode": "600593.SH",
+      "stockName": "大连圣亚",
+      "consecutiveDays": 4,
+      "limitUpCount": 4,
+      "concept": "冰雪旅游+东北振兴",
+      "dateRange": {
+        "startDate": "2026-03-24",
+        "endDate": "2026-03-27",
+        "tradingDays": ["2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27"]
+      },
+      "inFocusPeriod": true,
+      "turnoverRate": 6.4,
+      "keyCatalyst": "东北冰雪旅游持续火爆，春节旺季预期强化，游资接力推动",
+      "riskLevel": "中高-4板后分歧加大"
+    },
+    {
+      "rank": 3,
+      "stockCode": "600630.SH",
+      "stockName": "龙头股份",
+      "consecutiveDays": 3,
+      "limitUpCount": 4,
+      "concept": "上海国企改革+跨境电商",
+      "dateRange": {
+        "startDate": "2026-03-25",
+        "endDate": "2026-03-27",
+        "tradingDays": ["2026-03-25", "2026-03-26", "2026-03-27"]
+      },
+      "inFocusPeriod": true,
+      "turnoverRate": 15.8,
+      "keyCatalyst": "上海国资改革政策催化，叠加跨境电商业务拓展预期",
+      "riskLevel": "中等"
+    },
+    {
+      "rank": 4,
+      "stockCode": "000715.SZ",
+      "stockName": "中兴商业",
+      "consecutiveDays": 3,
+      "limitUpCount": 4,
+      "concept": "零售+东北振兴",
+      "dateRange": {
+        "startDate": "2026-03-25",
+        "endDate": "2026-03-27",
+        "tradingDays": ["2026-03-25", "2026-03-26", "2026-03-27"]
+      },
+      "inFocusPeriod": true,
+      "turnoverRate": 22.3,
+      "keyCatalyst": "消费复苏预期+东北旅游热度外溢，零售板块估值修复",
+      "riskLevel": "中等-换手率偏高需注意"
+    },
+    {
+      "rank": 5,
+      "stockCode": "600629.SH",
+      "stockName": "华建集团",
+      "consecutiveDays": 3,
+      "limitUpCount": 3,
+      "concept": "建筑设计+上海国企",
+      "dateRange": {
+        "startDate": "2026-03-25",
+        "endDate": "2026-03-27",
+        "tradingDays": ["2026-03-25", "2026-03-26", "2026-03-27"]
+      },
+      "inFocusPeriod": true,
+      "turnoverRate": 10.2,
+      "keyCatalyst": "城市更新政策推进，上海设计院龙头受益于本地建设提速",
+      "riskLevel": "中等"
+    },
+    {
+      "rank": 6,
+      "stockCode": "600675.SH",
+      "stockName": "中华企业",
+      "consecutiveDays": 3,
+      "limitUpCount": 3,
+      "concept": "房地产+上海国企",
+      "dateRange": {
+        "startDate": "2026-03-25",
+        "endDate": "2026-03-27",
+        "tradingDays": ["2026-03-25", "2026-03-26", "2026-03-27"]
+      },
+      "inFocusPeriod": true,
+      "turnoverRate": 5.9,
+      "keyCatalyst": "房地产融资政策放松，上海本地国企地产商受益明显",
+      "riskLevel": "中等-换手率较低筹码锁定较好"
+    },
+    {
+      "rank": 7,
+      "stockCode": "603038.SH",
+      "stockName": "华立股份",
+      "consecutiveDays": 2,
+      "limitUpCount": 3,
+      "concept": "鸿蒙生态+智能家居",
+      "dateRange": {
+        "startDate": "2026-03-26",
+        "endDate": "2026-03-27",
+        "tradingDays": ["2026-03-26", "2026-03-27"]
+      },
+      "inFocusPeriod": true,
+      "turnoverRate": 12.5,
+      "keyCatalyst": "华为鸿蒙生态持续发酵，智能家居业务增长预期明确",
+      "riskLevel": "低-中"
+    },
+    {
+      "rank": 8,
+      "stockCode": "002848.SZ",
+      "stockName": "高斯贝尔",
+      "consecutiveDays": 2,
+      "limitUpCount": 3,
+      "concept": "卫星导航+数字经济",
+      "dateRange": {
+        "startDate": "2026-03-26",
+        "endDate": "2026-03-27",
+        "tradingDays": ["2026-03-26", "2026-03-27"]
+      },
+      "inFocusPeriod": true,
+      "turnoverRate": 18.6,
+      "keyCatalyst": "卫星互联网政策利好，数字经济建设加速，技术面突破",
+      "riskLevel": "中等"
+    },
+    {
+      "rank": 9,
+      "stockCode": "600816.SH",
+      "stockName": "建元信托",
+      "consecutiveDays": 2,
+      "limitUpCount": 3,
+      "concept": "信托+上海国企",
+      "dateRange": {
+        "startDate": "2026-03-26",
+        "endDate": "2026-03-27",
+        "tradingDays": ["2026-03-26", "2026-03-27"]
+      },
+      "inFocusPeriod": true,
+      "turnoverRate": 7.5,
+      "keyCatalyst": "信托行业转型预期改善，上海金融国企改革升温",
+      "riskLevel": "低-中"
+    },
+    {
+      "rank": 10,
+      "stockCode": "603097.SH",
+      "stockName": "江苏华辰",
+      "consecutiveDays": 2,
+      "limitUpCount": 2,
+      "concept": "特高压+智能电网",
+      "dateRange": {
+        "startDate": "2026-03-26",
+        "endDate": "2026-03-27",
+        "tradingDays": ["2026-03-26", "2026-03-27"]
+      },
+      "inFocusPeriod": true,
+      "turnoverRate": 9.8,
+      "keyCatalyst": "特高压建设加速，电网投资增长确定性高，机构与游资共振",
+      "riskLevel": "低-中"
+    },
+    {
+      "rank": 11,
+      "stockCode": "000638.SZ",
+      "stockName": "万方发展",
+      "consecutiveDays": 2,
+      "limitUpCount": 2,
+      "concept": "军工+农业",
+      "dateRange": {
+        "startDate": "2026-03-26",
+        "endDate": "2026-03-27",
+        "tradingDays": ["2026-03-26", "2026-03-27"]
+      },
+      "inFocusPeriod": true,
+      "turnoverRate": 11.3,
+      "keyCatalyst": "军工订单预期+农业一号文件预热，双主业催化",
+      "riskLevel": "低-中"
+    },
+    {
+      "rank": 12,
+      "stockCode": "000019.SZ",
+      "stockName": "深粮控股",
+      "consecutiveDays": 2,
+      "limitUpCount": 2,
+      "concept": "粮食安全+国企改革",
+      "dateRange": {
+        "startDate": "2026-03-26",
+        "endDate": "2026-03-27",
+        "tradingDays": ["2026-03-26", "2026-03-27"]
+      },
+      "inFocusPeriod": true,
+      "turnoverRate": 8.7,
+      "keyCatalyst": "粮食安全战略地位提升，深圳国资整合预期",
+      "riskLevel": "低-中"
+    },
+    {
+      "rank": 13,
+      "stockCode": "000532.SZ",
+      "stockName": "华金资本",
+      "consecutiveDays": 2,
+      "limitUpCount": 2,
+      "concept": "创投+珠海国资",
+      "dateRange": {
+        "startDate": "2026-03-26",
+        "endDate": "2026-03-27",
+        "tradingDays": ["2026-03-26", "2026-03-27"]
+      },
+      "inFocusPeriod": true,
+      "turnoverRate": 14.6,
+      "keyCatalyst": "北交所活跃度提升利好创投退出，珠海国企改革深化",
+      "riskLevel": "低-中"
+    },
+    {
+      "rank": 14,
+      "stockCode": "002211.SZ",
+      "stockName": "宏达新材",
+      "consecutiveDays": 2,
+      "limitUpCount": 3,
+      "concept": "有机硅+量子科技",
+      "dateRange": {
+        "startDate": "2026-03-25",
+        "endDate": "2026-03-27",
+        "tradingDays": ["2026-03-25", "2026-03-26", "2026-03-27"]
+      },
+      "inFocusPeriod": true,
+      "turnoverRate": 19.8,
+      "keyCatalyst": "有机硅供需改善，量子通信技术突破消息面刺激",
+      "riskLevel": "中等-概念偏题材"
+    }
+  ],
+  "statistics": {
+    "totalConsecutiveStocks": 14,
+    "byConsecutiveDays": {
+      "5连板": 1,
+      "4连板": 1,
+      "3连板": 4,
+      "2连板": 8
+    },
+    "inFocusPeriod5Days": 14,
+    "inFocusPeriodRatio": "100%",
+    "avgTurnoverRate": 12.34,
+    "topConcepts": [
+      {"concept": "上海国企改革", "count": 4},
+      {"concept": "东北振兴", "count": 2},
+      {"concept": "鸿蒙生态", "count": 1},
+      {"concept": "卫星导航", "count": 1},
+      {"concept": "特高压", "count": 1}
+    ]
+  },
+  "priorityWatchlist": {
+    "description": "最近5个交易日内发生连板且值得重点关注的股票",
+    "criteria": "连板天数≥3天且处于最近5日内的股票",
+    "stocks": [
+      {
+        "code": "000017.SZ",
+        "name": "深中华A",
+        "priority": "观察-已5板高风险",
+        "reason": "市场高度板，但已进入高风险区间"
+      },
+      {
+        "code": "600593.SH",
+        "name": "大连圣亚",
+        "priority": "重点关注",
+        "reason": "冰雪旅游持续发酵，4板后仍有资金接力"
+      },
+      {
+        "code": "600630.SH",
+        "name": "龙头股份",
+        "priority": "重点关注",
+        "reason": "上海国企改革核心标的，3板换手充分"
+      },
+      {
+        "code": "000715.SZ",
+        "name": "中兴商业",
+        "priority": "关注",
+        "reason": "消费复苏预期，但换手率偏高需警惕"
+      },
+      {
+        "code": "600629.SH",
+        "name": "华建集团",
+        "priority": "关注",
+        "reason": "城市更新政策受益，上海本地股联动"
+      },
+      {
+        "code": "600675.SH",
+        "name": "中华企业",
+        "priority": "关注",
+        "reason": "地产政策放松+上海国企，换手率低位"
+      }
+    ]
+  },
+  "dataQuality": {
+    "upstreamStatus": "partial_template_data",
+    "limitations": [
+      "上游数据文件(sub_5_1至sub_5_4)部分缺失",
+      "final_top20_limit_up_stocks.json标记为simulated_template",
+      "实际连板日期为估算值，基于文件生成时间推算"
+    ],
+    "recommendations": [
+      "建议通过实时行情系统验证具体连板日期",
+      "实际投资决策需结合当日龙虎榜数据",
+      "连板股票波动性极高，需严格风险控制"
+    ]
+  }
+}

@@ -1,0 +1,321 @@
+{
+  "meta": {
+    "reportTitle": "A股商业航天板块主题深度研究报告",
+    "taskId": "task_2__sub_2__sub_3__sub_5__sub_4",
+    "generatedAt": "2025-01-13T10:45:00Z",
+    "dataSource": "公开信息整理/行业研究/公司公告/发射计划",
+    "dataLimitation": "本报告基于公开行业信息整理，股票代码、市值、PE等数据需结合实时行情二次验证",
+    "disclaimer": "本报告仅供研究参考，不构成投资建议。股市有风险，投资需谨慎。",
+    "verificationStatus": "需人工二次验证实时数据"
+  },
+  "themeStatus": {
+    "overallRating": "高热度-上升期",
+    "sectorHeatScore": 8.5,
+    "maxScore": 10,
+    "trend": "上升",
+    "keyDrivers": [
+      "GW星座（中国星网）进入规模化部署阶段",
+      "G60星链（千帆星座）加速组网",
+      "海南商业航天发射场投入使用",
+      "商业航天纳入多地政府工作报告"
+    ],
+    "launchDensity": {
+      "description": "2024年中国航天发射68次，2025年规划发射次数预计超70次",
+      "commercialLaunchShare": "商业发射占比提升至30%以上",
+      "recentHighlights": [
+        {
+          "date": "2024-12月",
+          "mission": "捷龙三号/朱雀二号改进型",
+          "significance": "商业火箭技术迭代加速"
+        },
+        {
+          "date": "2025年1月",
+          "mission": "预计有GW/G60组网星发射",
+          "significance": "星座建设持续推进"
+        }
+      ],
+      "upcomingDensity": "2025年1-2月预计有3-4次涉及星座组网的发射任务"
+    },
+    "constellationProgress": {
+      "description": "三大星座（GW/G60/鸿雁）建设全面推进",
+      "milestones": [
+        {
+          "constellation": "GW星座",
+          "status": "首批卫星已发射，2025年进入规模化组网",
+          "target": "规划发射约1.3万颗卫星"
+        },
+        {
+          "constellation": "G60星链（千帆）",
+          "status": "已发射多批次，2025年计划发射108颗",
+          "target": "一期规划1296颗卫星"
+        },
+        {
+          "constellation": "低轨卫星互联网",
+          "status": "正式商用进程启动",
+          "target": "2025年实现区域覆盖"
+        }
+      ]
+    },
+    "policySupport": {
+      "description": "商业航天作为新质生产力获得政策强力支持",
+      "nationalLevel": [
+        "商业航天纳入'新基建'范畴",
+        "卫星互联网被列为战略性新兴产业"
+      ],
+      "localLevel": [
+        {
+          "region": "北京",
+          "policy": "商业航天产业基地建设",
+          "support": "资金+土地+税收优惠"
+        },
+        {
+          "region": "上海",
+          "policy": "G60星链产业配套",
+          "support": "产业链集群发展"
+        },
+        {
+          "region": "海南",
+          "policy": "商业航天发射场运营",
+          "support": "发射服务商业化"
+        },
+        {
+          "region": "湖北",
+          "policy": "航天产业基地",
+          "support": "火箭制造集群"
+        }
+      ]
+    }
+  },
+  "selectedStocks": [
+    {
+      "rank": 1,
+      "stockCode": "003009.SZ",
+      "stockName": "中天火箭",
+      "subSector": "火箭制造/固体火箭",
+      "marketCapEstimate": "约60-80亿元",
+      "marketCapRange": "50-300亿",
+      "logic": {
+        "coreBusiness": "小型固体火箭及箭上产品，探空火箭、制导火箭、小型运载火箭",
+        "aerospaceLink": "航天科技四院下属上市公司，固体火箭技术平台",
+        "catalyst": "商业发射需求增长，人工影响天气、探空等多元化应用"
+      },
+      "valuation": {
+        "peTtm": "约35-50倍（需实时验证）",
+        "pb": "约2.5-3.5倍（需实时验证）",
+        "note": "估值偏高，反映主题溢价"
+      },
+      "technicalPosition": "需查看近期走势和成交量",
+      "multiLimitUpPotential": {
+        "score": 7.5,
+        "reason": "火箭标的稀缺性强，市值小弹性大，发射窗口期关注度高"
+      },
+      "riskLevel": "中等"
+    },
+    {
+      "rank": 2,
+      "stockCode": "300342.SZ",
+      "stockName": "天银机电",
+      "subSector": "卫星部件/星敏感器",
+      "marketCapEstimate": "约70-90亿元",
+      "marketCapRange": "50-300亿",
+      "logic": {
+        "coreBusiness": "星敏感器、卫星姿控系统部件，用于卫星姿态确定",
+        "aerospaceLink": "子公司天银星际是国产星敏感器核心供应商，已配套多颗卫星",
+        "catalyst": "低轨星座批量发射带动星敏感器需求爆发，单星价值量约50-100万"
+      },
+      "valuation": {
+        "peTtm": "约40-60倍（需实时验证）",
+        "note": "航天业务占比提升中，估值弹性大"
+      },
+      "technicalPosition": "需查看近期走势和成交量",
+      "multiLimitUpPotential": {
+        "score": 8.0,
+        "reason": "星敏感器是低轨卫星必备部件，星座组网加速直接受益，标的稀缺"
+      },
+      "riskLevel": "中等"
+    },
+    {
+      "rank": 3,
+      "stockCode": "300053.SZ",
+      "stockName": "欧比特（现更名：航宇微）",
+      "subSector": "卫星载荷/Soc芯片/遥感",
+      "marketCapEstimate": "约50-70亿元",
+      "marketCapRange": "50-300亿",
+      "logic": {
+        "coreBusiness": "宇航电子、卫星大数据、人工智能芯片",
+        "aerospaceLink": "自主可控的宇航SOC芯片供应商，遥感卫星数据处理",
+        "catalyst": "卫星载荷芯片国产替代，珠海国资委控股，国企改革预期"
+      },
+      "valuation": {
+        "peTtm": "亏损或高PE（需实时验证）",
+        "note": "业绩波动大，主题属性强"
+      },
+      "technicalPosition": "需查看近期走势和成交量",
+      "multiLimitUpPotential": {
+        "score": 7.0,
+        "reason": "市值小、芯片+卫星双主题，波动大但需关注基本面风险"
+      },
+      "riskLevel": "中高"
+    }
+  ],
+  "catalystSchedule": {
+    "description": "未来1-2周（2025年1月13日-1月24日）潜在催化剂",
+    "catalysts": [
+      {
+        "type": "发射窗口",
+        "name": "GW/G60组网星发射",
+        "probability": "高",
+        "expectedTime": "1月中下旬",
+        "description": "长征火箭或商业火箭发射星座组网卫星",
+        "impact": "主题热度催化，卫星产业链公司关注度提升",
+        "relevantStocks": ["天银机电", "中天火箭"]
+      },
+      {
+        "type": "政策事件",
+        "name": "地方两会",
+        "probability": "高",
+        "expectedTime": "1月中下旬（各地陆续召开）",
+        "description": "北京、上海、湖北等地两会可能提及商业航天产业规划",
+        "impact": "区域性板块行情，产业园相关公司受益",
+        "relevantStocks": ["中天火箭（湖北）", "航宇微（珠海）"]
+      },
+      {
+        "type": "行业会议",
+        "name": "航天产业相关会议",
+        "probability": "中",
+        "expectedTime": "持续关注",
+        "description": "商业航天产业论坛、卫星互联网大会等",
+        "impact": "行业动态曝光，订单信息释放",
+        "relevantStocks": ["全板块"]
+      },
+      {
+        "type": "订单公告",
+        "name": "配套企业大额订单",
+        "probability": "中",
+        "expectedTime": "不确定性",
+        "description": "星敏感器、火箭部件等配套企业披露订单",
+        "impact": "个股独立行情，业绩预期上修",
+        "relevantStocks": ["天银机电", "中天火箭"]
+      }
+    ]
+  },
+  "explosionPotential": {
+    "overallScore": 8.0,
+    "maxScore": 10,
+    "rating": "A-",
+    "factors": {
+      "launchFrequency": {
+        "rating": "高",
+        "score": 8.5,
+        "reason": "2025年发射规划密集，商业火箭可复用技术突破（如朱雀三号），发射成本下降提升频率"
+      },
+      "orderVisibility": {
+        "rating": "中高",
+        "score": 7.5,
+        "reason": "GW/G60星座明确组网计划，未来3-5年订单确定性高，但具体批次和节奏存在不确定性"
+      },
+      "policyMomentum": {
+        "rating": "高",
+        "score": 8.5,
+        "reason": "新质生产力+新基建+国企改革三重政策加持，类比2020-2021年新能源汽车和光伏"
+      },
+      "sectorScarcity": {
+        "rating": "高",
+        "score": 9.0,
+        "reason": "纯商业航天标的稀缺，小市值标的弹性大，资金关注度高"
+      }
+    },
+    "sustainabilityRating": {
+      "shortTerm1_2Weeks": "A",
+      "reasonShort": "发射窗口密集+政策会议催化，事件驱动机会多",
+      "mediumTerm1_3Months": "A-",
+      "reasonMedium": "星座组网持续推进，订单逐步兑现",
+      "longTerm6_12Months": "B+",
+      "reasonLong": "需看业绩兑现和竞争格局变化，警惕估值泡沫"
+    }
+  },
+  "risks": [
+    {
+      "riskType": "发射失败风险",
+      "probability": "低-中",
+      "impact": "高",
+      "description": "新型商业火箭技术验证阶段存在发射失败可能，可能导致短期板块情绪受挫",
+      "affectedStocks": ["中天火箭"],
+      "mitigation": "选择技术成熟、有成功发射记录的标的"
+    },
+    {
+      "riskType": "业绩兑现周期长",
+      "probability": "高",
+      "impact": "中高",
+      "description": "多数商业航天公司当前PE偏高或业绩亏损，业绩释放需2-3年，存在估值回调风险",
+      "affectedStocks": ["航宇微", "天银机电"],
+      "mitigation": "关注有实质收入和订单的企业，避免纯概念炒作"
+    },
+    {
+      "riskType": "主题炒作过热",
+      "probability": "中",
+      "impact": "高",
+      "description": "板块情绪高涨时容易脱离基本面，连续涨停后追高风险极大",
+      "affectedStocks": ["全板块"],
+      "mitigation": "关注回调后的布局机会，设置止损，避免追高"
+    },
+    {
+      "riskType": "订单交付延迟",
+      "probability": "中",
+      "impact": "中",
+      "description": "星座组网进度可能因技术、资金或审批问题延后，影响订单确认节奏",
+      "affectedStocks": ["天银机电", "配套企业"],
+      "mitigation": "分散配置，关注多客户、多业务企业"
+    },
+    {
+      "riskType": "竞争加剧",
+      "probability": "中高",
+      "impact": "中",
+      "description": "更多企业进入商业航天领域，军品定价改革和民品竞争可能压缩毛利率",
+      "affectedStocks": ["全板块"],
+      "mitigation": "优选技术壁垒高、客户粘性强的细分领域龙头"
+    },
+    {
+      "riskType": "数据时效性风险",
+      "probability": "高",
+      "impact": "高",
+      "description": "本报告无法获取实时行情数据，股票代码、市值、PE、股价走势等关键信息需人工二次验证",
+      "affectedStocks": ["全部标的"],
+      "mitigation": "强烈建议结合实时行情软件、公司最新公告交叉验证，确认市值是否在50-300亿区间"
+    },
+    {
+      "riskType": "市场系统性风险",
+      "probability": "不确定",
+      "impact": "高",
+      "description": "大盘调整、流动性收紧可能冲击高估值成长股",
+      "affectedStocks": ["全板块"],
+      "mitigation": "控制仓位，关注市场整体环境"
+    }
+  ],
+  "investmentSuggestions": {
+    "suitableFor": [
+      "高风险偏好投资者",
+      "有主题投资经验",
+      "能承受30%以上回撤",
+      "具备实时盯盘条件"
+    ],
+    "notSuitableFor": [
+      "稳健型/保守型投资者",
+      "长期价值投资风格",
+      "无法承受本金大幅亏损"
+    ],
+    "strategy": {
+      "entryTiming": "发射窗口前3-5天开始关注，板块回调时逢低布局",
+      "positionSizing": "单标的仓位不超过总资金5%，板块总仓位不超过20%",
+      "exitStrategy": "发射落地或涨停开板后分批获利了结，设置-7%硬性止损",
+      "stockSelection": "优先选择火箭/卫星核心部件（星敏感器、固体火箭）标的，避免纯概念"
+    }
+  },
+  "conclusion": {
+    "themeOutlook": "商业航天是2025年高确定性主题，发射密度提升+星座组网加速提供持续催化，类比2020-2021年的新能源汽车",
+    "stockSelection": "优选火箭/卫星核心部件供应商，市值适中（50-300亿），弹性较大。中天火箭（火箭）、天银机电（星敏感器）为核心关注标的",
+    "timing": "1月中下旬发射窗口+地方两会政策窗口双重催化，关注回调后的布局机会",
+    "confidence": "中高（基于行业趋势判断），但个股选择必须结合实时数据验证",
+    "disclaimer": "本报告基于公开信息分析，不构成投资建议。股票投资有风险，入市需谨慎。"
+  }
+}

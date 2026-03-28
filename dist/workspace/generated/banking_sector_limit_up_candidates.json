@@ -1,0 +1,102 @@
+{
+  "meta": {
+    "taskId": "task_2__sub_1__sub_1_3__sub_1_3_a__sub_1_3_a_2__sub_2",
+    "generatedBy": "kimi2_5_2",
+    "generatedAt": "2025-01-13T10:15:00Z",
+    "dataStatus": "template_awaiting_realtime_data",
+    "disclaimer": "以下数据为基于A股历史规律的示例结构，非实时交易数据。银行股因市值大、波动率低，历史上极少出现多次涨停，投资需谨慎。"
+  },
+  "filterCriteria": {
+    "market": "A股主板",
+    "codePrefix": ["600", "601", "603", "000", "001", "002"],
+    "exclude": ["688", "300", "ST", "*ST"],
+    "sector": "银行",
+    "limitUpThreshold": 10,
+    "timeWindow": "近5个交易日",
+    "criteria": [
+      "近5日涨停次数 ≥ 2次",
+      "或连续2天涨停",
+      "成交量较20日均量显著放大"
+    ]
+  },
+  "bankingSubSectors": [
+    {"code": "A", "name": "国有大型商业银行"},
+    {"code": "B", "name": "股份制商业银行"},
+    {"code": "C", "name": "城市商业银行"},
+    {"code": "D", "name": "农村商业银行"}
+  ],
+  "candidates": [
+    {
+      "rank": 1,
+      "stock_code": "600036",
+      "stock_name": "招商银行",
+      "sub_sector": "股份制商业银行",
+      "limit_up_count_past_5d": 2,
+      "is_consecutive_limit_up": true,
+      "consecutive_days": 2,
+      "avg_volume_increase_pct": 145.8,
+      "key_catalyst_tag": ["LPR降息预期", "零售业务复苏", "高股息策略"],
+      "marketCap_billion": 8500,
+      "pb_ratio": 0.95,
+      "dividend_yield_pct": 5.2,
+      "momentumScore": 78.5,
+      "riskNotes": ["市值较大，连续涨停压力大", "需关注资金持续性"]
+    },
+    {
+      "rank": 2,
+      "stock_code": "601838",
+      "stock_name": "成都银行",
+      "sub_sector": "城市商业银行",
+      "limit_up_count_past_5d": 2,
+      "is_consecutive_limit_up": false,
+      "consecutive_days": 0,
+      "avg_volume_increase_pct": 128.3,
+      "key_catalyst_tag": ["区域经济复苏", "资产质量改善", "小盘股弹性"],
+      "marketCap_billion": 520,
+      "pb_ratio": 0.78,
+      "dividend_yield_pct": 4.8,
+      "momentumScore": 72.3,
+      "riskNotes": ["城商行地域集中风险", "流动性相对较弱"]
+    }
+  ],
+  "sectorAnalysis": {
+    "historicalContext": {
+      "bankLimitUpFrequency": "极低",
+      "typicalTriggers": [
+        "重大降息降准政策",
+        "存量房贷利率调整",
+        "地产风险化解政策",
+        "高股息/中特估概念轮动"
+      ],
+      "averageBankLimitUpsPerYear": "全板块年度涨停次数通常<5次"
+    },
+    "currentCatalysts": [
+      {"tag": "LPR降息", "probability": "中", "impact": "利好息差收窄预期"},
+      {"tag": "存量房贷调整", "probability": "中", "impact": "短期利空，长期稳定资产质量"},
+      {"tag": "高股息策略", "probability": "高", "impact": "防御性资金流入"},
+      {"tag": "中特估", "probability": "中", "impact": "估值修复预期"}
+    ]
+  },
+  "methodology": {
+    "volumeCalculation": "近5日日均成交量 / 前20日日均成交量 - 1",
+    "momentumScoreFormula": "涨停次数*30 + 连续涨停天数*20 + 成交量增幅标准化*30 + 市值倒数加权*20",
+    "dataSourcesExpected": [
+      "东方财富Choice数据",
+      "同花顺iFinD",
+      "交易所龙虎榜"
+    ]
+  },
+  "limitations": [
+    "本模型无实时联网能力，无法获取当日交易数据",
+    "上游数据文件sub_5_1至sub_5_4未在工作区发现",
+    "银行股历史上极少出现多次涨停，本候选列表为示例结构",
+    "实际投资需以实时行情与公告为准"
+  ],
+  "verificationChecklist": [
+    "□ 确认股票代码为主板（非688/300）",
+    "□ 确认非ST/*ST状态",
+    "□ 核实近5日涨停次数（10%限制）",
+    "□ 核实成交量数据",
+    "□ 交叉验证政策催化因素"
+  ]
+}

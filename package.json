@@ -1,0 +1,16 @@
+{
+  "name": "agent-cluster-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Zero-dependency multi-model agent cluster orchestrator",
+  "scripts": {
+    "start": "node src/server.mjs",
+    "dev": "node --watch src/server.mjs",
+    "test": "node test/run-tests.mjs",
+    "build:win-exe": "node scripts/build-win-exe.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

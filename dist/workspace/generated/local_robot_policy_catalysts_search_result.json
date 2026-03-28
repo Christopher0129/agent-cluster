@@ -1,0 +1,187 @@
+{
+  "report_metadata": {
+    "title": "地方产业基金与智能制造政策催化剂搜索结果",
+    "generation_date": "2025-01-20",
+    "data_source": "基于历史政策模式推演整理（非实时搜索数据）",
+    "limitation_notice": "本报告由不具备联网能力的模型生成，内容基于历史政策发布规律推演。实时政策信息需通过官方渠道核实",
+    "search_scope": "长三角（上海、江苏、浙江）、珠三角（深圳、东莞）、京津冀",
+    "target_policy_types": ["机器人产业基金设立", "产业园开园", "智能工厂补贴政策"]
+  },
+  "key_findings": {
+    "summary": "基于历史政策发布规律，下周（2025年1月20日-1月24日）进入1月中下旬，临近春节假期，地方政策发布频率通常降低。但仍需关注以下潜在催化剂",
+    "high_probability_events": [
+      {
+        "region": "上海市",
+        "policy_type": "智能工厂标杆企业认定（Q1申报窗口开启预告）",
+        "estimated_release_time": "2025-01-20 至 2025-01-24",
+        "scale_amount": "单个项目500-1000万元补贴",
+        "benefit_chain_segment": "工业机器人集成应用、智能仓储",
+        "source_basis": "历史模式：上海市每季度末集中发布智能工厂认定通知",
+        "verification_status": "需联网核实",
+        "reliability": "中等"
+      },
+      {
+        "region": "深圳市",
+        "policy_type": "首台套重大技术装备认定（2025年度申报预告）",
+        "estimated_release_time": "2025-01-20 至 2025-02-05（春节前后）",
+        "scale_amount": "最高1000万元奖励",
+        "benefit_chain_segment": "谐波减速器、驱控一体系统、人形机器人整机",
+        "source_basis": "历史模式：深圳市Q1通常发布首台套申报指南",
+        "verification_status": "需联网核实",
+        "reliability": "中高"
+      },
+      {
+        "region": "江苏省苏州市",
+        "policy_type": "苏州工业园区机器人企业入驻补贴（年度招商计划）",
+        "estimated_release_time": "2025-01-20 至 2025-01-24",
+        "scale_amount": "3年租金减免+最高500万落地奖励",
+        "benefit_chain_segment": "协作机器人、AGV/AMR",
+        "source_basis": "历史模式：园区全年受理，年初发布年度招商重点",
+        "verification_status": "需联网核实",
+        "reliability": "中等"
+      }
+    ],
+    "medium_probability_events": [
+      {
+        "region": "浙江省宁波市",
+        "policy_type": "宁波市"机器换人"专项补贴（2025年度预算预告）",
+        "estimated_release_time": "2025-01-20 至 2025-02-15",
+        "scale_amount": "按投资额20%补助",
+        "benefit_chain_segment": "注塑机器人、SCARA机器人",
+        "source_basis": "历史模式：宁波市通常于年初发布智能制造专项资金安排",
+        "verification_status": "需联网核实",
+        "reliability": "中低"
+      },
+      {
+        "region": "东莞市",
+        "policy_type": "智能制造示范车间认定（季度评审预告）",
+        "estimated_release_time": "2025-01-20 至 2025-01-24",
+        "scale_amount": "50-200万元奖励",
+        "benefit_chain_segment": "工业机器人本体、自动化产线",
+        "source_basis": "历史模式：东莞市每季度评审，1月为Q1申报窗口",
+        "verification_status": "需联网核实",
+        "reliability": "中等"
+      },
+      {
+        "region": "北京市",
+        "policy_type": "中关村高精尖产业基金（机器人方向投资动态）",
+        "estimated_release_time": "持续跟踪",
+        "scale_amount": "单项目500万-3000万元",
+        "benefit_chain_segment": "人形机器人、医疗机器人",
+        "source_basis": "历史模式：中关村基金全年持续投资，年初通常为投资规划发布期",
+        "verification_status": "需联网核实",
+        "reliability": "中低"
+      }
+    ],
+    "low_probability_but_high_impact": [
+      {
+        "region": "广东省（省级）",
+        "policy_type": "广东省机器人产业基金二期",
+        "estimated_release_time": "待定（需实时跟踪）",
+        "scale_amount": "目标规模待确认",
+        "benefit_chain_segment": "全产业链",
+        "source_basis": "历史模式：广东省产业基金通常于重大会议后发布",
+        "verification_status": "需联网核实",
+        "reliability": "低"
+      },
+      {
+        "region": "深圳坪山区",
+        "policy_type": "坪山机器人产业园新园区开园",
+        "estimated_release_time": "待定（需实时跟踪）",
+        "scale_amount": "场地+资金+订单对接",
+        "benefit_chain_segment": "人形机器人整机、核心零部件",
+        "source_basis": "产业规划文件提及扩园计划，具体时间未定",
+        "verification_status": "需联网核实",
+        "reliability": "低"
+      }
+    ]
+  },
+  "regional_breakdown": {
+    "yangtze_river_delta": {
+      "regions": ["上海市", "江苏省（苏州/南京/无锡）", "浙江省（宁波/杭州）"],
+      "policy_focus": "智能工厂认定、首台套奖励、机器换人补贴",
+      "expected_catalysts": 5,
+      "funding_scale_estimate": "年度预算数亿元级别",
+      "key_benefit_segments": ["精密减速器", "协作机器人", "AGV/AMR", "机器视觉"]
+    },
+    "pearl_river_delta": {
+      "regions": ["深圳市", "东莞市"],
+      "policy_focus": "首台套认定、产业园招商、智能制造示范",
+      "expected_catalysts": 4,
+      "funding_scale_estimate": "单个项目最高千万级",
+      "key_benefit_segments": ["谐波减速器", "驱控一体系统", "人形机器人", "工业机器人本体"]
+    },
+    "beijing_tianjin_hebei": {
+      "regions": ["北京市", "河北省（石家庄/唐山）"],
+      "policy_focus": "揭榜挂帅、高精尖基金、产业转移承接",
+      "expected_catalysts": 3,
+      "funding_scale_estimate": "单项目500万-3000万元",
+      "key_benefit_segments": ["人形机器人", "医疗机器人", "特种机器人", "重载AGV"]
+    }
+  },
+  "benefit_chain_summary": [
+    {
+      "segment": "精密减速器",
+      "related_regions": ["苏州（绿的谐波）", "宁波（中大力德）"],
+      "policy_tools": ["首台套奖励", "研发补贴"],
+      "related_a_share_sectors": ["减速器板块"]
+    },
+    {
+      "segment": "伺服电机/驱控系统",
+      "related_regions": ["深圳", "上海"],
+      "policy_tools": ["核心零部件专项补贴"],
+      "related_a_share_sectors": ["工控自动化板块"]
+    },
+    {
+      "segment": "协作机器人",
+      "related_regions": ["深圳", "东莞", "苏州"],
+      "policy_tools": ["产业园入驻优惠", "应用补贴"],
+      "related_a_share_sectors": ["机器人整机板块"]
+    },
+    {
+      "segment": "AGV/AMR",
+      "related_regions": ["杭州", "苏州", "深圳"],
+      "policy_tools": ["智能仓储补贴", "物流自动化项目"],
+      "related_a_share_sectors": ["智能物流板块"]
+    },
+    {
+      "segment": "人形机器人",
+      "related_regions": ["北京", "深圳", "上海"],
+      "policy_tools": ["揭榜挂帅", "高精尖基金"],
+      "related_a_share_sectors": ["人形机器人概念板块"]
+    }
+  ],
+  "verification_checklist": {
+    "must_verify_online": [
+      "上海市经济和信息化委员会官网-政策法规栏目最新公告",
+      "深圳市工业和信息化局官网-产业发展栏目首台套申报通知",
+      "江苏省工业和信息化厅官网-公告公示栏目",
+      "广东省政府官网-政策文件栏目",
+      "中关村管委会官网-基金投资动态"
+    ],
+    "park_development_tracking": [
+      "深圳坪山机器人产业园是否有新园区开园公告",
+      "东莞松山湖机器人产业基地是否有新批次企业入驻",
+      "苏州吴中机器人产业园是否有扩园消息",
+      "北京亦庄机器人产业园是否有新项目落地"
+    ],
+    "fund_tracking": [
+      "广东省机器人产业基金二期募资进展",
+      "上海临港新片区机器人专项基金设立公告",
+      "苏州工业园区新的机器人产业引导基金"
+    ]
+  },
+  "risk_disclaimers": [
+    "本报告基于历史政策模式推演，非实时搜索结果，实际政策发布时间、内容可能调整",
+    "春节假期临近（2025年1月底），政府部门工作效率可能降低，政策发布可能延后",
+    "政策涉及金额可能因财政状况变化而调整",
+    "政策发布不等于即时落地，执行进度存在不确定性",
+    "股价波动受多重因素影响，政策仅为其中之一"
+  ],
+  "recommended_next_steps": [
+    "由具备联网能力的worker检索上述'verification_checklist'中的官方渠道",
+    "实时跟踪各产业园区官网的最新动态",
+    "关注清科、投中网等第三方数据源的基金设立报道",
+    "监控各省政府采购网的招标预告（预示项目启动）"
+  ]
+}

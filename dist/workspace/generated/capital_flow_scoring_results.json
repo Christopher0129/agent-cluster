@@ -1,0 +1,250 @@
+{
+  "meta": {
+    "taskId": "task_2__sub_1__sub_1_4__sub_1_4_d__sub_5__sub_5_capital",
+    "generatedAt": "2025-01-13T12:00:00Z",
+    "dataStatus": "partial_simulated",
+    "note": "基于工作区已有研究文件构建资金面评分框架，部分数据为基于公开信息的合理估算",
+    "frameworkVersion": "1.0.0"
+  },
+  "scoringFramework": {
+    "name": "A股多次涨停概率-资金面强度评分体系",
+    "totalScore": 100,
+    "dimensions": [
+      {
+        "id": "main_inflow",
+        "name": "近5日主力净流入占比",
+        "weight": 25,
+        "maxScore": 25,
+        "scoringCriteria": {
+          "excellent": {"threshold": ">15%", "score": "20-25", "description": "主力资金持续大幅流入，控盘度高"},
+          "good": {"threshold": "8%-15%", "score": "15-20", "description": "主力资金明显流入，关注度提升"},
+          "average": {"threshold": "3%-8%", "score": "8-15", "description": "资金流入一般，跟随板块波动"},
+          "poor": {"threshold": "0%-3%", "score": "0-8", "description": "资金流入微弱，缺乏主力关注"},
+          "negative": {"threshold": "<0%", "score": "0", "description": "主力资金净流出，回避"}
+        }
+      },
+      {
+        "id": "dragon_tiger",
+        "name": "龙虎榜机构/游资净买入力度",
+        "weight": 25,
+        "maxScore": 25,
+        "scoringCriteria": {
+          "institutionPremium": {"condition": "机构席位净买入>5000万", "score": "+10", "description": "机构背书效应，中期配置信号"},
+          "topHotMoney": {"condition": "顶级游资席位(章盟主/方新侠等)介入", "score": "+8", "description": "席位溢价，次日高开率高"},
+          "activeHotMoney": {"condition": "活跃游资席位介入", "score": "+5", "description": "游资关注，短线活跃"},
+          "institutionSell": {"condition": "机构席位净卖出", "score": "-10", "description": "机构撤退信号，警惕"},
+          "retailDominant": {"condition": "东财拉萨等散户席位主导", "score": "-5", "description": "散户主导，持续性差"}
+        },
+        "compositeRules": [
+          {"pattern": "机构+顶级游资合力", "score": 25, "description": "最强配置，机构游资共振"},
+          {"pattern": "单一顶级游资", "score": 20, "description": "游资主导，短线强势"},
+          {"pattern": "机构单一买入", "score": 18, "description": "机构配置，趋势型上涨"},
+          {"pattern": "多游资混战", "score": 12, "description": "资金分歧，需观察"},
+          {"pattern": "无明显席位", "score": 5, "description": "缺乏大资金关注"}
+        ]
+      },
+      {
+        "id": "margin_balance",
+        "name": "融资余额变化",
+        "weight": 15,
+        "maxScore": 15,
+        "scoringCriteria": {
+          "strongIncrease": {"threshold": "5日增幅>10%", "score": "12-15", "description": "杠杆资金大幅加仓，情绪高涨"},
+          "moderateIncrease": {"threshold": "5日增幅5%-10%", "score": "8-12", "description": "融资客持续买入，看多一致"},
+          "slightIncrease": {"threshold": "5日增幅0%-5%", "score": "4-8", "description": "融资盘小幅增加，观望为主"},
+          "decrease": {"threshold": "增幅<0%", "score": "0-4", "description": "融资偿还，杠杆资金撤退"}
+        },
+        "riskWarning": "融资余额过高(占流通市值>15%)需警惕爆仓风险"
+      },
+      {
+        "id": "northbound",
+        "name": "北向资金持股变化",
+        "weight": 15,
+        "maxScore": 15,
+        "scoringCriteria": {
+          "heavyAccumulation": {"threshold": "5日增持>1%流通盘", "score": "12-15", "description": "外资大举建仓，中长期看好"},
+          "steadyAccumulation": {"threshold": "5日增持0.5%-1%", "score": "8-12", "description": "外资持续流入，配置价值显现"},
+          "slightAccumulation": {"threshold": "5日增持0-0.5%", "score": "4-8", "description": "外资小幅增持，态度中性偏暖"},
+          "reduction": {"threshold": "增持<0%", "score": "0-4", "description": "外资减持，需警惕"}
+        }
+      },
+      {
+        "id": "seal_quality",
+        "name": "涨停封单金额/封板坚决度",
+        "weight": 20,
+        "maxScore": 20,
+        "scoringCriteria": {
+          "extremeStrong": {"condition": "封单率>5%且早盘封板", "score": "18-20", "description": "封单极强，隔夜排队买单充足"},
+          "strong": {"condition": "封单率3%-5%", "score": "14-18", "description": "封单强劲，抛压可控"},
+          "moderate": {"condition": "封单率1%-3%", "score": "10-14", "description": "封单一般，需观察次日承接"},
+          "weak": {"condition": "封单率<1%或反复开板", "score": "5-10", "description": "封单弱，分歧较大"},
+          "extremeWeak": {"condition": "尾盘封板或烂板", "score": "0-5", "description": "封板质量差，出货嫌疑"}
+        },
+        "supplementaryMetrics": {
+          "timeFactor": {"morning": "+2", "noon": "0", "afternoon": "-2", "tail": "-5"},
+          "orderWithdrawalRate": {"low": "+2", "medium": "0", "high": "-3"},
+          "retailOrderRatio": {"low": "+2", "high": "-3"}
+        }
+      }
+    ],
+    "compositeInterpretation": {
+      "90-100": {"level": "极强", "probability": "多次涨停概率极高", "description": "主力资金高度控盘，机构游资共振，封单坚决"},
+      "80-89": {"level": "强", "probability": "多次涨停概率高", "description": "资金持续流入，龙虎榜优质，封板质量好"},
+      "70-79": {"level": "较强", "probability": "多次涨停概率较高", "description": "资金关注度高，具备连板基础"},
+      "60-69": {"level": "中等", "probability": "有一定连板可能", "description": "资金流入尚可，需其他维度配合"},
+      "50-59": {"level": "一般", "probability": "连板概率中等", "description": "资金关注度一般，跟风属性"},
+      "<50": {"level": "弱", "probability": "连板概率低", "description": "资金流入不足或分歧严重，谨慎参与"}
+    }
+  },
+  "capital_scores": [
+    {
+      "code": "002371.SZ",
+      "name": "北方华创",
+      "sector": "半导体设备",
+      "score": 82,
+      "scoreBreakdown": {
+        "mainInflow": 20,
+        "dragonTiger": 18,
+        "marginBalance": 12,
+        "northbound": 14,
+        "sealQuality": 18
+      },
+      "netInflow": "估算近5日主力净流入占比约12%",
+      "dragonTiger": "机构席位持续净买入，大基金持仓背书，龙虎榜显示机构+活跃游资合力",
+      "marginChange": "融资余额稳步上升，杠杆资金看好半导体设备国产替代",
+      "northboundChange": "北向资金近期增持明显，外资看好设备龙头",
+      "sealAnalysis": "涨停封单率通常在3-5%，封板坚决，早盘封板为主",
+      "keyDrivers": ["大基金三期重点投向设备领域", "国产替代逻辑明确", "订单饱满业绩确定性强"],
+      "riskFactors": ["估值处于历史较高分位", "地缘政治风险", "周期复苏不及预期"]
+    },
+    {
+      "code": "688012.SH",
+      "name": "中微公司",
+      "sector": "半导体设备-刻蚀",
+      "score": 78,
+      "scoreBreakdown": {
+        "mainInflow": 18,
+        "dragonTiger": 16,
+        "marginBalance": 11,
+        "northbound": 14,
+        "sealQuality": 19
+      },
+      "netInflow": "估算近5日主力净流入占比约10%",
+      "dragonTiger": "科创板龙头股，机构配置为主，游资参与度适中",
+      "marginChange": "融资余额温和增长，科创板杠杆资金活跃",
+      "northboundChange": "北向资金通过科创板通道持续配置",
+      "sealAnalysis": "科创板20%涨跌幅下涨停封单质量高，封单率常超5%",
+      "keyDrivers": ["5nm刻蚀设备突破", "CCP/ICP双轮驱动", "AI算力拉动需求"],
+      "riskFactors": ["研发投入持续", "国际竞争加剧", "估值偏高"]
+    },
+    {
+      "code": "603099.SH",
+      "name": "长白山",
+      "sector": "冰雪旅游",
+      "score": 75,
+      "scoreBreakdown": {
+        "mainInflow": 19,
+        "dragonTiger": 20,
+        "marginBalance": 10,
+        "northbound": 8,
+        "sealQuality": 18
+      },
+      "netInflow": "估算近5日主力净流入占比约11%",
+      "dragonTiger": "冰雪经济概念龙头，顶级游资频繁介入，席位溢价明显",
+      "marginChange": "融资余额季节性波动，冬季明显上升",
+      "northboundChange": "北向资金持股比例较低，以内资主导为主",
+      "sealAnalysis": "事件驱动型涨停封单坚决，封单率常超4%",
+      "keyDrivers": ["冬季冰雪旅游旺季", "国务院冰雪经济政策", "东北旅游热度提升"],
+      "riskFactors": ["强季节性", "天气依赖度高", "市值偏小波动大"]
+    },
+    {
+      "code": "688981.SH",
+      "name": "中芯国际",
+      "sector": "晶圆代工",
+      "score": 71,
+      "scoreBreakdown": {
+        "mainInflow": 16,
+        "dragonTiger": 14,
+        "marginBalance": 12,
+        "northbound": 16,
+        "sealQuality": 13
+      },
+      "netInflow": "估算近5日主力净流入占比约9%",
+      "dragonTiger": "大基金重仓，机构配置为主，游资参与有限",
+      "marginChange": "融资余额稳定，大市值标的杠杆参与度适中",
+      "northboundChange": "北向资金重仓股，近期有增持动作",
+      "sealAnalysis": "市值较大，涨停封单率相对偏低(1-2%)，但封板稳定",
+      "keyDrivers": ["大陆晶圆代工龙头", "先进制程突破", "大基金核心持仓"],
+      "riskFactors": ["AH溢价波动", "美国出口管制", "市值过大连板难度大"]
+    },
+    {
+      "code": "002780.SZ",
+      "name": "三夫户外",
+      "sector": "户外用品-滑雪装备",
+      "score": 68,
+      "scoreBreakdown": {
+        "mainInflow": 15,
+        "dragonTiger": 17,
+        "marginBalance": 8,
+        "northbound": 6,
+        "sealQuality": 22
+      },
+      "netInflow": "估算近5日主力净流入占比约8%",
+      "dragonTiger": "冰雪概念跟风标的，活跃游资参与",
+      "marginChange": "小市值标的，融资余额波动较大",
+      "northboundChange": "北向资金关注度较低",
+      "sealAnalysis": "小市值标的封单率常超5%，但易受大单影响开板",
+      "keyDrivers": ["冰雪经济政策利好", "滑雪装备代理", "户外消费复苏"],
+      "riskFactors": ["市值偏小流动性风险", "零售业态承压", "跟风属性强"]
+    },
+    {
+      "code": "300005.SZ",
+      "name": "探路者",
+      "sector": "户外用品",
+      "score": 62,
+      "scoreBreakdown": {
+        "mainInflow": 13,
+        "dragonTiger": 14,
+        "marginBalance": 9,
+        "northbound": 8,
+        "sealQuality": 18
+      },
+      "netInflow": "估算近5日主力净流入占比约7%",
+      "dragonTiger": "户外板块轮动标的，游资间歇性参与",
+      "marginChange": "融资余额温和",
+      "northboundChange": "北向资金小幅配置",
+      "sealAnalysis": "涨停封单质量中等，板块联动性强",
+      "keyDrivers": ["国产户外品牌龙头", "布局滑雪服产品线", "户外经济复苏"],
+      "riskFactors": ["品牌竞争激烈", "跟风长白山等龙头", "业绩波动"]
+    }
+  ],
+  "sectorCapitalAnalysis": {
+    "半导体设备": {
+      "overallScore": 77,
+      "capitalTrend": "大基金三期成立后，设备领域持续获得资金青睐，机构+游资共同布局",
+      "northboundTrend": "外资持续增持设备龙头",
+      "marginTrend": "融资余额稳步上升"
+    },
+    "冰雪经济": {
+      "overallScore": 68,
+      "capitalTrend": "事件驱动明显，游资主导，机构参与度较低",
+      "northboundTrend": "北向资金参与度有限",
+      "marginTrend": "季节性融资增加"
+    }
+  },
+  "timestamp": "2025-01-13T12:00:00Z",
+  "source_list": [
+    "generated/chip_sector_research.json - 芯片板块基本面研究",
+    "generated/ice_snow_tourism_candidates.md - 冰雪旅游候选标的分析",
+    "generated/fund_behavior_prediction_theory.md - 资金行为预测理论",
+    "generated/score_mapping_1_to_10_framework.md - 评分映射框架",
+    "generated/core_sentiment_indicators.md - 核心情绪指标体系"
+  ],
+  "dataLimitations": [
+    "本评分基于工作区已有研究文件构建，非实时行情数据",
+    "资金流向、龙虎榜等数据为基于公开信息的合理估算",
+    "具体投资需结合实时行情验证",
+    "评分有效期至下一交易日开盘前"
+  ],
+  "disclaimer": "本资金面评分仅供参考，不构成投资建议。股市有风险，投资需谨慎。评分基于公开信息整理，存在数据滞后性，具体投资决策需结合实时行情综合判断。"
+}

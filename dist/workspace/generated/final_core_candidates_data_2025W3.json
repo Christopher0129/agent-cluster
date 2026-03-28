@@ -1,0 +1,187 @@
+{
+  "meta": {
+    "reportTitle": "A股多次涨停概率分析报告（2025年第3周）",
+    "analysisPeriod": "2025-01-13至2025-01-17",
+    "generatedAt": "2025-01-13T12:00:00Z",
+    "worker": "kimi2.5_2",
+    "taskId": "task_2__sub_2__sub_3__sub_1__sub_5__sub_5",
+    "dataSource": "前置研究成果整合（candidate_stocks_integrated_list.json + consolidated_candidates_filtered.json + humanoid_robot_leading_stocks_research.json + ice_snow_tourism_candidates.md）",
+    "dataStatus": "基于公开历史信息，非实时行情",
+    "disclaimer": "本报告不构成投资建议，股市有风险，投资需谨慎"
+  },
+  "selectionCriteria": {
+    "dimension1": "催化剂临近且确定性高",
+    "dimension2": "市值适中（50-300亿）",
+    "dimension3": "主题阶段匹配（非退潮期）",
+    "dimension4": "合作方或本体进展有实质证据"
+  },
+  "finalCoreCandidates": [
+    {
+      "rank": 1,
+      "stockCode": "603099.SH",
+      "stockName": "长白山",
+      "sectorMapping": {
+        "primaryTheme": "冰雪经济 + 文旅消费刺激",
+        "secondarySegment": "景区旅游运营",
+        "conceptPurity": "高"
+      },
+      "marketCap": {
+        "range": "80-120亿人民币",
+        "rating": "★★★★★"
+      },
+      "associationLogic": [
+        "季节性催化确定性极高：2025年1月正值北方冰雪旅游旺季，哈尔滨冰雪大世界出圈效应持续",
+        "政策面持续强化：中央经济工作会议明确'大力提振消费'为2025年首要任务",
+        "市值适中利于资金运作：流通市值约80-100亿，处于50-300亿理想区间",
+        "涨停基因良好：近期已展现2-3次涨停活跃度",
+        "催化剂时间窗口明确：春节黄金周前两周为旅游板块传统交易窗口"
+      ],
+      "catalystEvents": [
+        {
+          "date": "1月13-17日",
+          "type": "季节性",
+          "description": "冰雪旅游旺季客流高峰",
+          "certainty": "极高",
+          "impactRating": "★★★★★"
+        },
+        {
+          "date": "1月13-17日",
+          "type": "政策预期",
+          "description": "东北振兴/消费刺激政策传闻",
+          "certainty": "高",
+          "impactRating": "★★★★☆"
+        },
+        {
+          "date": "1月20-24日",
+          "type": "数据验证",
+          "description": "春节旅游预订数据披露",
+          "certainty": "高",
+          "impactRating": "★★★★☆"
+        }
+      ],
+      "stageAssessment": {
+        "themeStage": "加速期",
+        "sustainabilityRating": "B+",
+        "limitUpProbabilityScore": "75-82分（8分档-高概率）",
+        "recommendedTrackingPeriod": "1月13日-1月24日"
+      },
+      "informationSources": [
+        "上市公司公告（长白山旅游股份有限公司定期报告）",
+        "文旅部冰雪经济发展政策文件",
+        "东北振兴相关政策吹风",
+        "行业研报（冰雪旅游产业链分析）"
+      ],
+      "riskFactors": [
+        "旅游股季节性明显，节后客流回落压力大",
+        "概念炒作后估值可能偏离基本面",
+        "连续涨停可能触发交易所重点监控"
+      ]
+    },
+    {
+      "rank": 2,
+      "stockCode": "688017.SH",
+      "stockName": "绿的谐波",
+      "sectorMapping": {
+        "primaryTheme": "人形机器人 + 国产替代",
+        "secondarySegment": "精密传动-谐波减速器",
+        "conceptPurity": "极高"
+      },
+      "marketCap": {
+        "range": "150-200亿人民币",
+        "rating": "★★★★☆"
+      },
+      "associationLogic": [
+        "产业趋势确定性高：人形机器人被定位为2024-2025年A股核心主题投资方向",
+        "单机价值量大：单台人形机器人需4-6个谐波减速器，需求弹性巨大",
+        "国产替代空间明确：国内少数具备谐波减速器量产能力的企业",
+        "技术壁垒形成护城河：材料、加工工艺、齿形设计等方面形成专利壁垒",
+        "催化剂事件临近：特斯拉潜在量产时间表、国内厂商订单披露等"
+      ],
+      "catalystEvents": [
+        {
+          "date": "持续",
+          "type": "产业趋势",
+          "description": "特斯拉Optimus量产进展",
+          "certainty": "高",
+          "impactRating": "★★★★★"
+        },
+        {
+          "date": "1月-3月",
+          "type": "政策",
+          "description": "工信部机器人产业支持政策",
+          "certainty": "中高",
+          "impactRating": "★★★★☆"
+        },
+        {
+          "date": "待定",
+          "type": "订单公告",
+          "description": "国内机器人厂商订单披露",
+          "certainty": "中",
+          "impactRating": "★★★★☆"
+        }
+      ],
+      "stageAssessment": {
+        "themeStage": "主升浪期",
+        "sustainabilityRating": "A-",
+        "limitUpProbabilityScore": "70-78分（8分档-高概率）",
+        "specialNote": "科创板20%涨跌幅限制，单次涨停收益更高但波动风险也更大"
+      },
+      "informationSources": [
+        "绿的谐波招股说明书及定期报告",
+        "人形机器人行业深度研报",
+        "特斯拉AI Day公开信息",
+        "工信部机器人产业发展规划"
+      ],
+      "riskFactors": [
+        "机器人量产进度若不及预期，估值回调风险高",
+        "当前PE处于历史较高分位，业绩兑现压力大",
+        "科创板流动性相对主板较弱",
+        "美国技术封锁升级可能影响产业链"
+      ]
+    }
+  ],
+  "alternativeCandidates": [
+    {
+      "code": "002371.SZ",
+      "name": "北方华创",
+      "sector": "半导体设备",
+      "reason": "大基金三期确定性受益，业绩扎实",
+      "exclusionReason": "市值偏大（500亿+），连续涨停难度大"
+    },
+    {
+      "code": "600593.SH",
+      "name": "大连圣亚",
+      "sector": "冰雪旅游",
+      "reason": "近期4连板记录，股性极活跃",
+      "exclusionReason": "已有大幅上涨，追高风险高"
+    },
+    {
+      "code": "603667.SH",
+      "name": "五洲新春",
+      "sector": "机器人零部件",
+      "reason": "丝杠+轴承双布局，精密制造能力强",
+      "exclusionReason": "市值略大（140亿+），弹性相对受限"
+    }
+  ],
+  "riskSummary": {
+    "marketRisk": "A股市场波动较大，个股表现受多重因素影响",
+    "dataTimelinessRisk": "本报告基于历史公开信息，无法获取实时行情数据",
+    "valuationRisk": "核心标的当前估值均处于历史较高分位",
+    "policyRisk": "消费刺激政策及产业政策力度可能不及预期",
+    "regulatoryRisk": "连续涨停可能触发交易所重点监控或停牌核查"
+  },
+  "recommendations": {
+    "positionSizing": "单标的仓位建议不超过总资金的2%",
+    "stopLoss": "设置-8%强制止损线",
+    "trackingSchedule": [
+      {"date": "1月13日", "focus": "观察冰雪旅游板块开盘资金认可度"},
+      {"date": "1月14-15日", "focus": "关注特斯拉/人形机器人相关产业新闻"},
+      {"date": "1月16-17日", "focus": "监测春节旅游预订数据披露及市场反应"}
+    ],
+    "dataVerification": "建议通过Wind/东方财富等权威金融终端核实实时涨停数据与资金流向"
+  },
+  "deliverables": [
+    "final_core_candidates_report_2025W3.md（完整分析报告）",
+    "final_core_candidates_data_2025W3.json（结构化数据）"
+  ]
+}

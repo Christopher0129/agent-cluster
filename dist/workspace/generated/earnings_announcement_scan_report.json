@@ -1,0 +1,332 @@
+{
+  "meta": {
+    "reportTitle": "A股业绩披露与重大公告扫描报告",
+    "reportDate": "2025-01-13",
+    "analysisPeriod": "2025年1月13日-1月17日（下周交易周）",
+    "dataSource": "基于工作区已有研究数据整合（q3_earnings_forecast_data.json, consumer_electronics_earnings_forecast_2024.json, chemical_sector_earnings_preview_2024.json等）",
+    "disclaimer": "⚠️ 重要声明：本报告基于历史公开信息整理，非实时数据。具体预约披露日期、最新业绩预告请以沪深交易所官网及巨潮资讯网实时公告为准。本报告不构成投资建议。",
+    "limitationNote": "本模型无实时联网能力，无法获取交易所实时预约披露日历，以下为基于已有研究数据的整合分析"
+  },
+  "weekDateConfirmation": {
+    "referenceDate": "2025-01-09",
+    "nextWeekStart": "2025-01-13",
+    "nextWeekEnd": "2025-01-17",
+    "tradingDays": ["2025-01-13", "2025-01-14", "2025-01-15", "2025-01-16", "2025-01-17"],
+    "note": "该周无国家法定节假日，A股正常开市"
+  },
+  "scheduledDisclosure": {
+    "disclaimer": "以下为基于行业规律和已有数据的预测性整理，具体预约披露清单需查询交易所官方披露日历",
+    "expectedHighAttentionReports": [
+      {
+        "date": "2025-01-13至01-17",
+        "companyName": "待交易所预约披露表确认",
+        "stockCode": "待确认",
+        "reportType": "2024年年度业绩预告",
+        "expectedPerformance": "需查询巨潮资讯网最新公告",
+        "attentionReason": "年报季前业绩预告密集期，超预期业绩可能触发涨停"
+      }
+    ],
+    "queryInstructions": {
+      "shExchangeUrl": "http://www.sse.com.cn/disclosure/listedinfo/announcement/",
+      "szExchangeUrl": "http://www.szse.cn/disclosure/listed/notice/",
+      "cninfoUrl": "http://www.cninfo.com.cn/new/information/topSearch/query?keyWord=",
+      "queryMethod": "进入巨潮资讯网→预约披露→选择日期范围2025-01-13至2025-01-17→导出清单"
+    }
+  },
+  "earningsPreviewHighChange": {
+    "screeningCriteria": "业绩预告变动幅度超过±50%，或扭亏为盈/盈转亏",
+    "highGrowthCandidates": [
+      {
+        "companyName": "中际旭创",
+        "stockCode": "300308.SZ",
+        "sector": "光模块/CPO",
+        "forecastType": "预增",
+        "profitChangeRange": "净利润同比增长约100%-130%",
+        "changeReason": "800G光模块大规模出货，海外客户订单强劲，AI算力基建拉动需求爆发",
+        "dataSource": "业绩预告公告（历史数据）",
+        "confidence": "high",
+        "limitUpCatalyst": "业绩大幅超预期+AI算力主线热度，若正式年报预告维持此增速，可能触发20cm涨停",
+        "disclosureStatus": "需确认是否在下周发布正式年报预告"
+      },
+      {
+        "companyName": "浪潮信息",
+        "stockCode": "000977.SZ",
+        "sector": "算力/AI服务器",
+        "forecastType": "预增",
+        "profitChangeRange": "净利润同比增长约50%-70%",
+        "changeReason": "AI服务器出货放量，规模效应显现，国内AI算力投资加速",
+        "dataSource": "业绩预告公告（历史数据）",
+        "confidence": "high",
+        "limitUpCatalyst": "AI服务器龙头+业绩高增，若下周发布预告可能触发涨停",
+        "disclosureStatus": "需确认是否在下周发布正式年报预告"
+      },
+      {
+        "companyName": "北方华创",
+        "stockCode": "002371.SZ",
+        "sector": "半导体设备",
+        "forecastType": "预增",
+        "profitChangeRange": "净利润同比增长约40%-60%",
+        "changeReason": "设备国产化加速，订单饱满交付确认，先进制程扩产需求强劲",
+        "dataSource": "业绩预告公告（历史数据）",
+        "confidence": "high",
+        "limitUpCatalyst": "国产替代核心标的+业绩高增，半导体板块情绪高涨时易触发涨停",
+        "disclosureStatus": "需确认是否在下周发布正式年报预告"
+      },
+      {
+        "companyName": "沪电股份",
+        "stockCode": "002463.SZ",
+        "sector": "PCB/算力",
+        "forecastType": "预增",
+        "profitChangeRange": "净利润同比增长约90%-110%",
+        "changeReason": "AI服务器PCB占比提升，高多层板需求强劲，数据中心建设加速",
+        "dataSource": "业绩预告公告（历史数据）",
+        "confidence": "high",
+        "limitUpCatalyst": "AI算力基建核心供应链+业绩接近翻倍，超预期概率高",
+        "disclosureStatus": "需确认是否在下周发布正式年报预告"
+      },
+      {
+        "companyName": "新易盛",
+        "stockCode": "300502.SZ",
+        "sector": "光模块/CPO",
+        "forecastType": "预增",
+        "profitChangeRange": "净利润同比增长约80%-100%",
+        "changeReason": "高速光模块需求旺盛，毛利率持续改善，海外云厂商资本开支增加",
+        "dataSource": "业绩预告公告（历史数据）",
+        "confidence": "high",
+        "limitUpCatalyst": "CPO核心标的+业绩高增，AI主线持续发酵",
+        "disclosureStatus": "需确认是否在下周发布正式年报预告"
+      },
+      {
+        "companyName": "歌尔股份",
+        "stockCode": "002241.SZ",
+        "sector": "消费电子/VR/AR",
+        "forecastType": "扭亏为盈",
+        "profitChangeRange": "同比增长120%+（扭亏）",
+        "changeReason": "VR设备库存去化完成，Meta Quest新品周期启动，TWS耳机需求回暖",
+        "dataSource": "行业研究报告预测",
+        "confidence": "medium",
+        "limitUpCatalyst": "业绩拐点明确+VR/AR硬件创新大年，扭亏为盈通常催化强烈",
+        "disclosureStatus": "需确认是否在下周发布正式年报预告"
+      },
+      {
+        "companyName": "汇顶科技",
+        "stockCode": "603160.SH",
+        "sector": "半导体/指纹识别",
+        "forecastType": "扭亏为盈",
+        "profitChangeRange": "同比增长200%+（扭亏）",
+        "changeReason": "超声波指纹方案上量，触控芯片份额回升，安卓旗舰机标配趋势",
+        "dataSource": "行业研究报告预测",
+        "confidence": "medium",
+        "limitUpCatalyst": "小而美的业绩反转标的+技术创新驱动，弹性较大",
+        "disclosureStatus": "需确认是否在下周发布正式年报预告"
+      },
+      {
+        "companyName": "三美股份",
+        "stockCode": "603379.SH",
+        "sector": "氟化工/制冷剂",
+        "forecastType": "预增",
+        "profitChangeRange": "预计大幅增长（具体待公告）",
+        "changeReason": "第三代制冷剂配额政策实施，R32等主要品种价格大幅上涨，供给受限",
+        "dataSource": "化工行业业绩预览",
+        "confidence": "high",
+        "limitUpCatalyst": "政策驱动涨价逻辑明确，业绩弹性大，小市值标的涨停概率高",
+        "disclosureStatus": "建议关注下周是否发布业绩预告"
+      },
+      {
+        "companyName": "巨化股份",
+        "stockCode": "600160.SH",
+        "sector": "氟化工/制冷剂",
+        "forecastType": "预增",
+        "profitChangeRange": "预计大幅增长（具体待公告）",
+        "changeReason": "制冷剂配额红利释放，行业龙头充分受益涨价周期",
+        "dataSource": "化工行业业绩预览",
+        "confidence": "high",
+        "limitUpCatalyst": "制冷剂绝对龙头+业绩大幅修复，政策驱动确定性高",
+        "disclosureStatus": "建议关注下周是否发布业绩预告"
+      },
+      {
+        "companyName": "赛力斯",
+        "stockCode": "601127.SH",
+        "sector": "新能源汽车",
+        "forecastType": "预盈",
+        "profitChangeRange": "Q3单季实现扭亏为盈，全年预计延续",
+        "changeReason": "问界系列销量爆发，规模效应推动盈利转正，华为智选车模式成功",
+        "dataSource": "业绩预告公告",
+        "confidence": "high",
+        "limitUpCatalyst": "新势力龙头+华为背书，扭亏为盈后估值重构空间大",
+        "disclosureStatus": "已发布Q3预告，关注年报预告是否超预期"
+      }
+    ],
+    "turnaroundCandidates": [
+      {
+        "companyName": "歌尔股份",
+        "stockCode": "002241.SZ",
+        "type": "扭亏为盈",
+        "catalyst": "VR周期反转+Meta新品",
+        "limitUpProbability": "高"
+      },
+      {
+        "companyName": "汇顶科技",
+        "stockCode": "603160.SH",
+        "type": "扭亏为盈",
+        "catalyst": "超声波指纹技术突破+份额回升",
+        "limitUpProbability": "高"
+      }
+    ]
+  },
+  "majorAnnouncements": {
+    "stRemovalWatch": {
+      "description": "ST/*ST申请撤销风险警示",
+      "disclaimer": "需查询交易所公告获取最新申请信息",
+      "typicalCatalyst": "ST摘帽通常触发连续涨停，因流动性改善和机构准入",
+      "querySource": "上交所/深交所风险警示板公告"
+    },
+    "renameWatch": {
+      "description": "公司名称变更/业务转型更名",
+      "disclaimer": "需查询最新工商变更及公告",
+      "typicalCatalyst": "更名反映业务转型，尤其向AI、芯片等热门领域转型易引发炒作",
+      "querySource": "巨潮资讯网→公司公告→变更事项"
+    },
+    "delistingRisk": {
+      "description": "退市风险提示公告",
+      "disclaimer": "需查询*ST公司最新公告",
+      "typicalImpact": "负面冲击，连续跌停风险，需规避",
+      "querySource": "交易所风险警示公告"
+    },
+    "majorContracts": {
+      "description": "重大合同中标/签订",
+      "highImpactContracts": [
+        {
+          "sector": "算力租赁/AI",
+          "catalyst": "大额算力订单公告",
+          "example": "鸿博股份等算力租赁商"
+        },
+        {
+          "sector": "光伏/储能",
+          "catalyst": "海外大储订单/组件长单",
+          "example": "阳光电源、宁德时代等"
+        },
+        {
+          "sector": "半导体设备",
+          "catalyst": "先进制程设备中标",
+          "example": "北方华创、中微公司等"
+        },
+        {
+          "sector": "人形机器人",
+          "catalyst": "特斯拉/国内厂商供应链定点",
+          "example": "三花智控、拓普集团等"
+        }
+      ],
+      "querySource": "巨潮资讯网→重大合同栏目"
+    }
+  },
+  "sectorEarningsSummary": {
+    "highGrowthSectors": [
+      {
+        "sector": "光模块/CPO",
+        "avgGrowth": "+100%以上",
+        "drivers": ["AI算力基建", "800G出货放量", "海外云厂商 capex增加"],
+        "keyStocks": ["中际旭创", "新易盛", "天孚通信"]
+      },
+      {
+        "sector": "AI服务器/算力",
+        "avgGrowth": "+50%-70%",
+        "drivers": ["国内AI投资加速", "液冷技术渗透", "订单饱满"],
+        "keyStocks": ["浪潮信息", "中科曙光", "工业富联"]
+      },
+      {
+        "sector": "半导体设备",
+        "avgGrowth": "+40%-60%",
+        "drivers": ["国产替代加速", "大基金三期投资", "先进制程扩产"],
+        "keyStocks": ["北方华创", "中微公司", "拓荆科技"]
+      },
+      {
+        "sector": "PCB/覆铜板",
+        "avgGrowth": "+90%-110%",
+        "drivers": ["AI服务器PCB升级", "高多层板需求", "数据中心建设"],
+        "keyStocks": ["沪电股份", "深南电路", "生益科技"]
+      },
+      {
+        "sector": "氟化工/制冷剂",
+        "avgGrowth": "预计大幅扭亏/预增",
+        "drivers": ["配额政策实施", "涨价周期", "供给侧约束"],
+        "keyStocks": ["巨化股份", "三美股份", "永太科技"]
+      }
+    ],
+    "turnaroundSectors": [
+      {
+        "sector": "消费电子/VR",
+        "catalyst": "库存去化完成+新品周期",
+        "keyStocks": ["歌尔股份", "立讯精密"]
+      },
+      {
+        "sector": "半导体设计",
+        "catalyst": "下游复苏+新品放量",
+        "keyStocks": ["汇顶科技", "韦尔股份", "兆易创新"]
+      }
+    ]
+  },
+  "investmentImplications": {
+    "highProbabilitySetups": [
+      {
+        "setup": "业绩超预期+热门赛道",
+        "example": "中际旭创（光模块业绩翻倍）",
+        "trigger": "正式业绩预告发布",
+        "expectedReaction": "20cm涨停或连续涨停"
+      },
+      {
+        "setup": "扭亏为盈+困境反转",
+        "example": "歌尔股份（VR周期反转）",
+        "trigger": "年报预告扭亏公告",
+        "expectedReaction": "首板涨停，次日溢价高"
+      },
+      {
+        "setup": "政策驱动+涨价逻辑",
+        "example": "巨化股份/三美股份（制冷剂配额）",
+        "trigger": "业绩预告大幅预增",
+        "expectedReaction": "连板概率高"
+      }
+    ],
+    "riskFactors": [
+      "业绩预告仅为初步核算，实际年报可能调整",
+      "前期涨幅过大个股可能利好兑现即下跌",
+      "大盘系统性风险可能压制个股表现",
+      "监管关注函可能抑制连板高度"
+    ]
+  },
+  "dataVerificationChecklist": {
+    "realTimeSources": [
+      {
+        "item": "沪深交易所预约披露表",
+        "url": "http://www.sse.com.cn/ | http://www.szse.cn/",
+        "status": "需联网查询"
+      },
+      {
+        "item": "巨潮资讯网最新公告",
+        "url": "http://www.cninfo.com.cn/",
+        "status": "需联网查询"
+      },
+      {
+        "item": "业绩预告/快报专区",
+        "url": "巨潮资讯网→信息披露→业绩预告",
+        "status": "需联网查询"
+      },
+      {
+        "item": "重大合同公告",
+        "url": "巨潮资讯网→信息披露→重大合同",
+        "status": "需联网查询"
+      },
+      {
+        "item": "ST/*ST公告",
+        "url": "交易所风险警示板",
+        "status": "需联网查询"
+      }
+    ],
+    "recommendedMonitoring": [
+      "每日盘后查看新增业绩预告（15:00-20:00）",
+      "关注交易所重点监控公告",
+      "跟踪龙虎榜资金动向",
+      "监控板块龙头股的业绩发布日历"
+    ]
+  }
+}

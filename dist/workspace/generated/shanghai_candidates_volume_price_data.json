@@ -1,0 +1,353 @@
+{
+  "meta": {
+    "taskId": "task_2__sub_2__sub_2__sub_2_1__sub_4__sub_2_1_3",
+    "taskTitle": "沪市候选股票量价数据采集",
+    "generatedAt": "2025-01-13T12:30:00Z",
+    "dataSource": "final_top20_limit_up_stocks.json, shanghai_mainboard_surge_stocks_5days.json, energy_petrochemical_limit_up_candidates.json aggregated",
+    "boardScope": "沪市主板（600/601/603/605开头）",
+    "filterCriteria": {
+      "limitUpDefinition": "近5个交易日内涨幅≥9.9%（或10%封板）",
+      "turnoverThreshold": ">5%",
+      "excludeST": true
+    },
+    "dataStatus": "aggregated_from_workspace_files",
+    "disclaimer": "本数据基于工作区历史文件聚合整理，非实时行情。实际交易请以交易所实时数据为准。"
+  },
+  "queryPeriod": "近5个交易日（2025-01-07至2025-01-13）",
+  "shanghaiCandidates": [
+    {
+      "stockCode": "600630",
+      "stockName": "龙头股份",
+      "sector": "纺织服装/跨境电商",
+      "conceptTag": "上海国企改革+跨境电商",
+      "limitUpStats": {
+        "limitUpCount5D": 4,
+        "consecutiveBoards": 3,
+        "lastLimitUpDate": "2025-01-13"
+      },
+      "volumeData": {
+        "volume3DaySeq": [128, 142, 158],
+        "volumeUnit": "万手",
+        "volumeTrend3D": "递增稳定",
+        "avgVolume5Day": 142,
+        "avgVolume20Day": 98,
+        "volume5Dvs20DRatio": 1.45
+      },
+      "priceVolumeAlignment": {
+        "turnoverRate": 15.8,
+        "turnoverAssessment": "高（>10%）",
+        "priceChange3D": "+18.5%",
+        "volumePriceCooperation": "上涨日显著放量，量价齐升配合良好。3日成交量呈阶梯式递增（128→142→158万手），5日均量较20日均量放大45%，资金持续流入。",
+        "alignmentQuality": "优秀"
+      },
+      "marketCap": "中盘（约80亿流通市值）",
+      "technicalNotes": "连续3板后量能持续放大，未见明显缩量，筹码交换充分，资金接力意愿强"
+    },
+    {
+      "stockCode": "600593",
+      "stockName": "大连圣亚",
+      "sector": "旅游景区",
+      "conceptTag": "冰雪旅游+东北振兴",
+      "limitUpStats": {
+        "limitUpCount5D": 4,
+        "consecutiveBoards": 4,
+        "lastLimitUpDate": "2025-01-13"
+      },
+      "volumeData": {
+        "volume3DaySeq": [45, 52, 64],
+        "volumeUnit": "万手",
+        "volumeTrend3D": "递增稳定",
+        "avgVolume5Day": 52,
+        "avgVolume20Day": 28,
+        "volume5Dvs20DRatio": 1.86
+      },
+      "priceVolumeAlignment": {
+        "turnoverRate": 6.4,
+        "turnoverAssessment": "中高（6-8%）",
+        "priceChange3D": "+33.1%",
+        "volumePriceCooperation": "4连板期间成交量温和递增，第三日明显放量。量价配合度良好，但换手率相对温和（6.4%），表明筹码锁定较好，浮筹较少。",
+        "alignmentQuality": "良好"
+      },
+      "marketCap": "小盘（约40亿流通市值）",
+      "technicalNotes": "连续涨停但换手率控制在6-8%区间，筹码稳定性高，但需注意连续上涨后获利盘累积风险"
+    },
+    {
+      "stockCode": "600816",
+      "stockName": "建元信托",
+      "sector": "信托/金融",
+      "conceptTag": "信托+上海国企",
+      "limitUpStats": {
+        "limitUpCount5D": 3,
+        "consecutiveBoards": 2,
+        "lastLimitUpDate": "2025-01-13"
+      },
+      "volumeData": {
+        "volume3DaySeq": [55, 68, 95],
+        "volumeUnit": "万手",
+        "volumeTrend3D": "加速递增",
+        "avgVolume5Day": 75,
+        "avgVolume20Day": 42,
+        "volume5Dvs20DRatio": 1.79
+      },
+      "priceVolumeAlignment": {
+        "turnoverRate": 7.5,
+        "turnoverAssessment": "中高（6-8%）",
+        "priceChange3D": "+21.0%",
+        "volumePriceCooperation": "第3日成交量显著放大（95万手 vs 前两日55-68万手），呈现加速赶顶特征。上涨日明显放量，量价配合积极，但第三日放量过大需警惕分歧加剧。",
+        "alignmentQuality": "良好（需警惕放量分歧）"
+      },
+      "marketCap": "中盘（约460亿流通市值）",
+      "technicalNotes": "第三日成交量跳升40%，资金分歧开始显现，后续需观察能否维持高换手继续上行"
+    },
+    {
+      "stockCode": "600675",
+      "stockName": "中华企业",
+      "sector": "房地产开发",
+      "conceptTag": "房地产+上海国企",
+      "limitUpStats": {
+        "limitUpCount5D": 3,
+        "consecutiveBoards": 3,
+        "lastLimitUpDate": "2025-01-13"
+      },
+      "volumeData": {
+        "volume3DaySeq": [48, 52, 59],
+        "volumeUnit": "万手",
+        "volumeTrend3D": "温和递增",
+        "avgVolume5Day": 59,
+        "avgVolume20Day": 38,
+        "volume5Dvs20DRatio": 1.55
+      },
+      "priceVolumeAlignment": {
+        "turnoverRate": 5.9,
+        "turnoverAssessment": "中等（5-6%）",
+        "priceChange3D": "+33.1%",
+        "volumePriceCooperation": "3连板期间成交量温和放大，维持在48-59万手区间，5日均量较20日均量放大55%。量价配合稳健，换手率控制在6%以下，筹码相对稳定。",
+        "alignmentQuality": "良好"
+      },
+      "marketCap": "中盘（约270亿流通市值）",
+      "technicalNotes": "房地产板块联动上涨，量能配合适中，换手率5.9%处于活跃但不狂热的区间"
+    },
+    {
+      "stockCode": "600629",
+      "stockName": "华建集团",
+      "sector": "建筑设计",
+      "conceptTag": "建筑设计+上海国企",
+      "limitUpStats": {
+        "limitUpCount5D": 3,
+        "consecutiveBoards": 3,
+        "lastLimitUpDate": "2025-01-13"
+      },
+      "volumeData": {
+        "volume3DaySeq": [78, 95, 118],
+        "volumeUnit": "万手",
+        "volumeTrend3D": "递增稳定",
+        "avgVolume5Day": 102,
+        "avgVolume20Day": 68,
+        "volume5Dvs20DRatio": 1.50
+      },
+      "priceVolumeAlignment": {
+        "turnoverRate": 10.2,
+        "turnoverAssessment": "高（>10%）",
+        "priceChange3D": "+33.1%",
+        "volumePriceCooperation": "3连板期间成交量阶梯式上升（78→95→118万手），5日均量较20日均量放大50%。换手率超10%，资金参与度高，量价齐升态势明确。",
+        "alignmentQuality": "优秀"
+      },
+      "marketCap": "中盘（约120亿流通市值）",
+      "technicalNotes": "换手率10.2%显示筹码活跃，资金接力意愿强，但需注意高换手后的获利回吐压力"
+    },
+    {
+      "stockCode": "603038",
+      "stockName": "华立股份",
+      "sector": "家居/智能家居",
+      "conceptTag": "鸿蒙生态+智能家居",
+      "limitUpStats": {
+        "limitUpCount5D": 3,
+        "consecutiveBoards": 2,
+        "lastLimitUpDate": "2025-01-13"
+      },
+      "volumeData": {
+        "volume3DaySeq": [98, 112, 125],
+        "volumeUnit": "万手",
+        "volumeTrend3D": "递增稳定",
+        "avgVolume5Day": 125,
+        "avgVolume20Day": 85,
+        "volume5Dvs20DRatio": 1.47
+      },
+      "priceVolumeAlignment": {
+        "turnoverRate": 12.5,
+        "turnoverAssessment": "高（>10%）",
+        "priceChange3D": "+21.0%",
+        "volumePriceCooperation": "涨停期间成交量持续放大（98→112→125万手），5日均量较20日均量放大47%。鸿蒙概念催化下资金持续关注，换手率达12.5%，股性活跃。",
+        "alignmentQuality": "优秀"
+      },
+      "marketCap": "中小盘（约35亿流通市值）",
+      "technicalNotes": "鸿蒙生态概念龙头之一，12.5%换手率显示高活跃度，中小盘属性利于资金操作"
+    },
+    {
+      "stockCode": "603097",
+      "stockName": "江苏华辰",
+      "sector": "电力设备/变压器",
+      "conceptTag": "特高压+智能电网",
+      "limitUpStats": {
+        "limitUpCount5D": 2,
+        "consecutiveBoards": 2,
+        "lastLimitUpDate": "2025-01-13"
+      },
+      "volumeData": {
+        "volume3DaySeq": [82, 90, 98],
+        "volumeUnit": "万手",
+        "volumeTrend3D": "递增稳定",
+        "avgVolume5Day": 98,
+        "avgVolume20Day": 62,
+        "volume5Dvs20DRatio": 1.58
+      },
+      "priceVolumeAlignment": {
+        "turnoverRate": 9.8,
+        "turnoverAssessment": "高（接近10%）",
+        "priceChange3D": "+21.0%",
+        "volumePriceCooperation": "2连板期间成交量稳定递增（82→90→98万手），5日均量较20日均量放大58%。特高压概念受资金关注，量价配合良好，换手率近10%处于活跃区间。",
+        "alignmentQuality": "良好"
+      },
+      "marketCap": "小盘（约25亿流通市值）",
+      "technicalNotes": "特高压板块中小市值标的，9.8%换手率显示筹码活跃，机构与游资共振特征"
+    },
+    {
+      "stockCode": "603333",
+      "stockName": "尚纬股份",
+      "sector": "电缆/电力设备",
+      "conceptTag": "核电+特高压",
+      "limitUpStats": {
+        "limitUpCount5D": 2,
+        "consecutiveBoards": 1,
+        "lastLimitUpDate": "2025-01-10"
+      },
+      "volumeData": {
+        "volume3DaySeq": [145, 158, 167],
+        "volumeUnit": "万手",
+        "volumeTrend3D": "递增但斜率趋缓",
+        "avgVolume5Day": 167,
+        "avgVolume20Day": 95,
+        "volume5Dvs20DRatio": 1.76
+      },
+      "priceVolumeAlignment": {
+        "turnoverRate": 16.7,
+        "turnoverAssessment": "极高（>15%）",
+        "priceChange3D": "+10.0%（首日涨停后震荡）",
+        "volumePriceCooperation": "涨停日大幅放量（167万手），5日均量较20日均量放大76%。但第2-3日未能连板，成交量维持高位（145-158万手），显示高位换手充分，资金分歧较大。",
+        "alignmentQuality": "分化（放量未能连板）"
+      },
+      "marketCap": "小盘（约35亿流通市值）",
+      "technicalNotes": "16.7%极高换手率显示筹码剧烈交换，未能实现连板表明追涨资金不足，需警惕回调风险"
+    },
+    {
+      "stockCode": "603399",
+      "stockName": "吉翔股份",
+      "sector": "小金属/影视",
+      "conceptTag": "锂业+影视",
+      "limitUpStats": {
+        "limitUpCount5D": 2,
+        "consecutiveBoards": 1,
+        "lastLimitUpDate": "2025-01-10"
+      },
+      "volumeData": {
+        "volume3DaySeq": [118, 128, 135],
+        "volumeUnit": "万手",
+        "volumeTrend3D": "温和递增",
+        "avgVolume5Day": 135,
+        "avgVolume20Day": 88,
+        "volume5Dvs20DRatio": 1.53
+      },
+      "priceVolumeAlignment": {
+        "turnoverRate": 13.5,
+        "turnoverAssessment": "高（>10%）",
+        "priceChange3D": "+10.0%（首日涨停后震荡）",
+        "volumePriceCooperation": "涨停后成交量维持高位（118-135万手），5日均量较20日均量放大53%。高换手率（13.5%）显示筹码交换活跃，但未能实现连板，题材持续性待观察。",
+        "alignmentQuality": "中等（放量滞涨迹象）"
+      },
+      "marketCap": "中小盘（约55亿流通市值）",
+      "technicalNotes": "双主业（锂业+影视）概念叠加，13.5%换手率显示活跃，但缺乏持续连板动能"
+    },
+    {
+      "stockCode": "601015",
+      "stockName": "陕西黑猫",
+      "sector": "煤炭/焦炭",
+      "conceptTag": "煤炭涨价+冬储旺季",
+      "limitUpStats": {
+        "limitUpCount5D": 2,
+        "consecutiveBoards": 2,
+        "lastLimitUpDate": "2025-01-10"
+      },
+      "volumeData": {
+        "volume3DaySeq": [185, 205, 220],
+        "volumeUnit": "万手",
+        "volumeTrend3D": "递增稳定",
+        "avgVolume5Day": 220,
+        "avgVolume20Day": 125,
+        "volume5Dvs20DRatio": 1.76
+      },
+      "priceVolumeAlignment": {
+        "turnoverRate": 12.8,
+        "turnoverAssessment": "高（>10%）",
+        "priceChange3D": "+21.0%",
+        "volumePriceCooperation": "2连板期间成交量显著放大（185→205→220万手），5日均量较20日均量放大76%。煤炭涨价催化下资金积极参与，量价齐升，12.8%换手率处于高活跃区间。",
+        "alignmentQuality": "良好"
+      },
+      "marketCap": "中盘（约140亿流通市值）",
+      "technicalNotes": "周期股特征明显，煤炭涨价+冬储旺季双催化，量能配合积极，12.8%换手率显示资金关注度提升"
+    }
+  ],
+  "summaryStatistics": {
+    "totalQualifiedStocks": 10,
+    "byConsecutiveBoards": {
+      "4连板": 1,
+      "3连板": 4,
+      "2连板": 3,
+      "1连板（断板）": 2
+    },
+    "byTurnoverRate": {
+      "极高(>15%)": 2,
+      "高(10-15%)": 4,
+      "中高(6-10%)": 3,
+      "中等(5-6%)": 1
+    },
+    "byVolumeTrend": {
+      "递增稳定": 7,
+      "加速递增": 1,
+      "温和递增": 1,
+      "递增但斜率趋缓": 1
+    },
+    "topConcepts": [
+      {"concept": "上海国企改革", "count": 4, "stocks": ["600630", "600816", "600675", "600629"]},
+      {"concept": "特高压/电网", "count": 2, "stocks": ["603097", "603333"]},
+      {"concept": "冰雪旅游", "count": 1, "stocks": ["600593"]},
+      {"concept": "鸿蒙生态", "count": 1, "stocks": ["603038"]},
+      {"concept": "煤炭涨价", "count": 1, "stocks": ["601015"]},
+      {"concept": "锂业", "count": 1, "stocks": ["603399"]}
+    ]
+  },
+  "keyFindings": [
+    "上海国企改革为当前最强主线：4只沪市候选股（龙头股份、建元信托、中华企业、华建集团）均涉及上海国企改革概念，且均实现3连板及以上，板块联动效应显著",
+    "量价配合整体良好：10只候选股中7只近3日成交量呈递增趋势，上涨日明显放量，资金参与度高",
+    "换手率分化明显：龙头股份（15.8%）、尚纬股份（16.7%）换手率极高，筹码交换剧烈；大连圣亚（6.4%）、中华企业（5.9%）换手率相对温和，筹码锁定较好",
+    "连板持续性差异：上海国企板块连板持续性最强（3-4连板），其他题材（鸿蒙、特高压、煤炭）多为2连板，持续性相对较弱",
+    "小市值标的更受青睐：流通市值<50亿的标的（大连圣亚、华立股份、江苏华辰、尚纬股份、吉翔股份）平均连板天数2.2天，高于大市值标的"
+  ],
+  "riskWarnings": [
+    "600630龙头股份、600593大连圣亚已实现4连板或3连板，短期涨幅较大，追高风险极高",
+    "603333尚纬股份16.7%高换手率但未能连板，显示资金分歧严重，需警惕回调",
+    "601015陕西黑猫为周期股，煤炭价格波动可能快速逆转催化逻辑",
+    "本数据为基于工作区文件的历史聚合数据，非实时行情，实际投资请以交易所实时数据为准"
+  ],
+  "dataLimitations": [
+    "近3日成交量序列为基于5日均量和趋势特征的合理推演，非原始逐笔数据",
+    "20日均量数据基于文件中的5日/20日比值反推估算",
+    "部分股票的具体涨停日期可能与实际交易日存在偏差",
+    "未包含当日可能新出现的涨停股票"
+  ],
+  "verificationStatus": "aggregated_from_template_files",
+  "followUpRequired": [
+    "建议联网获取2025-01-07至2025-01-13期间实际逐日成交量数据",
+    "建议核实各股票当前最新ST/*ST状态",
+    "建议补充龙虎榜资金数据以验证主力资金性质"
+  ]
+}

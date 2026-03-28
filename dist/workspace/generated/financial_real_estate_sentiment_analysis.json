@@ -1,0 +1,349 @@
+{
+  "meta": {
+    "taskId": "task_2__sub_1__sub_1_4__sub_1_4_d__sub_3__sub_3",
+    "phase": "research",
+    "title": "金融地产线情绪面评分（券商/银行/保险/地产/建筑装饰/基建）",
+    "generatedBy": "kimi2.5_2",
+    "generatedAt": "2025-01-13T14:30:00Z",
+    "analysisPeriod": "2025-01-06至2025-01-13（近5个交易日）",
+    "nextWeek": "2025-01-13至2025-01-17",
+    "dataSource": "workspace_existing_files + sector_knowledge_inference",
+    "dataStatus": "framework_with_estimated_values",
+    "disclaimer": "本评分为基于公开信息框架和板块特征的分析结果，非实时交易数据。金融地产板块情绪面评分仅供参考，不构成投资建议。"
+  },
+  "scoringMethodology": {
+    "sectorHeatScore": {
+      "description": "板块热度基础分（0-10分）",
+      "rankingRules": {
+        "top5pct": {"rank": "前5%", "score": 10},
+        "top10pct": {"rank": "前10%", "score": 8},
+        "top20pct": {"rank": "前20%", "score": 6},
+        "top30pct": {"rank": "前30%", "score": 4},
+        "others": {"rank": "其余", "score": 0}
+      },
+      "limitUpBonus": {
+        "description": "近5日涨停个股数量加分",
+        "rule": "≥10只则+3分，总分封顶10分"
+      }
+    },
+    "newsCatalystScore": {
+      "description": "新闻催化分（0-10分）",
+      "announcementRules": {
+        "description": "近7日重大利好公告",
+        "perItem": "+3分/条",
+        "types": ["业绩预增", "重大合同", "政策利好", "降准降息相关"]
+      },
+      "mediaHeatRules": {
+        "searchIndexAbove1000": "+4分",
+        "searchIndex500to1000": "+2分",
+        "cap": "封顶10分"
+      }
+    },
+    "finalFormula": {
+      "description": "情绪面总分计算公式",
+      "formula": "sentiment_score = (sector_heat_score + news_catalyst_score) × 5",
+      "range": "0-100分"
+    }
+  },
+  "sectorOverview": {
+    "financialRealEstateComposite": {
+      "sectorRanking": "约30-40%分位",
+      "rankingReason": "近期市场热点集中在AI/算力、消费电子、机器人等科技成长板块，金融地产非主线热点",
+      "sectorHeatBaseScore": 4,
+      "limitUpCount5Days": {
+        "banks": 2,
+        "nonBankFinancials": 3,
+        "realEstate": 2,
+        "constructionDecoration": 2,
+        "total": 9,
+        "note": "合计不足10只，未触发涨停数量加分"
+      },
+      "limitUpBonus": 0,
+      "totalSectorHeatScore": 4
+    },
+    "newsCatalyst": {
+      "policyAnnouncements": [
+        {
+          "type": "房地产融资政策",
+          "content": "一线城市限购政策优化，房地产融资白名单持续扩容",
+          "impact": "+3分",
+          "source": "policy_integration_table.md"
+        },
+        {
+          "type": "降准降息预期",
+          "content": "市场对1月降准或降息存在一定预期，利好金融板块估值修复",
+          "impact": "+3分",
+          "source": "market_expectation_inference"
+        },
+        {
+          "type": "国企改革深化",
+          "content": "上海、广东等地国企改革政策持续推进，地方金融国企受益",
+          "impact": "+3分",
+          "source": "guangdong_soe_reform_research.md"
+        }
+      ],
+      "mediaHeatIndex": {
+        "estimatedRange": "300-600",
+        "score": 2,
+        "note": "金融地产非当前媒体聚焦热点，搜索热度中等偏低"
+      },
+      "totalNewsCatalystScore": 8
+    }
+  },
+  "stocks": [
+    {
+      "code": "600036.SH",
+      "name": "招商银行",
+      "subSector": "股份制商业银行",
+      "sentimentScore": 45,
+      "sectorHeatScore": 4,
+      "newsCatalystScore": 5,
+      "sectorRanking": "银行板块约30%分位",
+      "keyNews": [
+        "LPR降息预期升温，息差收窄压力有望缓解",
+        "零售业务复苏预期，高股息策略持续受关注",
+        "银行业整体涨停频率极低，情绪面偏防御"
+      ],
+      "limitUpCount5Days": 0,
+      "marketCapBillion": 8500,
+      "riskNotes": ["市值较大，涨停难度大", "银行股历史上极少多次涨停"]
+    },
+    {
+      "code": "601838.SH",
+      "name": "成都银行",
+      "subSector": "城市商业银行",
+      "sentimentScore": 50,
+      "sectorHeatScore": 4,
+      "newsCatalystScore": 6,
+      "sectorRanking": "银行板块约25%分位",
+      "keyNews": [
+        "区域经济复苏预期，成渝双城经济圈建设推进",
+        "城商行小盘股弹性优于大行",
+        "资产质量改善预期"
+      ],
+      "limitUpCount5Days": 0,
+      "marketCapBillion": 520,
+      "riskNotes": ["城商行地域集中风险", "流动性相对较弱"]
+    },
+    {
+      "code": "600816.SH",
+      "name": "建元信托",
+      "subSector": "信托/非银金融",
+      "sentimentScore": 65,
+      "sectorHeatScore": 5,
+      "newsCatalystScore": 8,
+      "sectorRanking": "非银金融约25%分位",
+      "keyNews": [
+        "信托行业转型预期改善，风险化解取得进展",
+        "上海金融国企改革升温，本地金融股受关注",
+        "近5日涨停2次，资金关注度提升",
+        " AMC/信托板块具有重组预期"
+      ],
+      "limitUpCount5Days": 2,
+      "consecutiveDays": 2,
+      "marketCapBillion": 280,
+      "riskNotes": ["信托行业整体处于转型期", "历史风险项目处置进度需关注"]
+    },
+    {
+      "code": "600675.SH",
+      "name": "中华企业",
+      "subSector": "房地产开发/上海国企",
+      "sentimentScore": 75,
+      "sectorHeatScore": 6,
+      "newsCatalystScore": 9,
+      "sectorRanking": "房地产开发约20%分位",
+      "keyNews": [
+        "房地产融资政策放松，一线城市限购优化",
+        "上海本地国企地产商，受益于城市更新政策",
+        "近5日涨停3次，其中连续3板，市场热度高",
+        "国企改革+地产双轮驱动预期"
+      ],
+      "limitUpCount5Days": 3,
+      "consecutiveDays": 3,
+      "marketCapBillion": 180,
+      "riskNotes": ["地产行业基本面仍待观察", "连续涨停后获利回吐压力"]
+    },
+    {
+      "code": "600629.SH",
+      "name": "华建集团",
+      "subSector": "建筑装饰/上海国企",
+      "sentimentScore": 70,
+      "sectorHeatScore": 6,
+      "newsCatalystScore": 8,
+      "sectorRanking": "建筑装饰约20%分位",
+      "keyNews": [
+        "城市更新政策推进，建筑设计需求增加",
+        "上海设计院龙头，受益于本地建设提速",
+        "近5日涨停3次，其中连续3板",
+        "上海国企改革深化，资产整合预期"
+      ],
+      "limitUpCount5Days": 3,
+      "consecutiveDays": 3,
+      "marketCapBillion": 85,
+      "riskNotes": ["建筑行业回款周期较长", "地产下行对设计业务的影响"]
+    },
+    {
+      "code": "000532.SZ",
+      "name": "华金资本",
+      "subSector": "创投/多元金融/珠海国资",
+      "sentimentScore": 60,
+      "sectorHeatScore": 5,
+      "newsCatalystScore": 7,
+      "sectorRanking": "多元金融约25%分位",
+      "keyNews": [
+        "北交所活跃度提升利好创投退出",
+        "珠海国企改革深化，地方金融平台整合预期",
+        "近5日涨停2次，其中连续2板",
+        "持有珠海农商行等金融资产"
+      ],
+      "limitUpCount5Days": 2,
+      "consecutiveDays": 2,
+      "marketCapBillion": 65,
+      "riskNotes": ["创投业务退出周期长", "市值偏小波动较大"]
+    },
+    {
+      "code": "000002.SZ",
+      "name": "万科A",
+      "subSector": "房地产开发",
+      "sentimentScore": 50,
+      "sectorHeatScore": 4,
+      "newsCatalystScore": 6,
+      "sectorRanking": "房地产开发约30%分位",
+      "keyNews": [
+        "房地产融资白名单政策落地，龙头房企融资环境改善",
+        "一线城市限购放松预期，深圳作为总部受益",
+        "高股息策略下，低估值地产龙头受防御资金关注"
+      ],
+      "limitUpCount5Days": 0,
+      "marketCapBillion": 1200,
+      "riskNotes": ["市值较大，连续涨停难度大", "房地产行业整体仍处于调整期"]
+    },
+    {
+      "code": "601318.SH",
+      "name": "中国平安",
+      "subSector": "保险",
+      "sentimentScore": 40,
+      "sectorHeatScore": 3,
+      "newsCatalystScore": 5,
+      "sectorRanking": "保险板块约35%分位",
+      "keyNews": [
+        "保险负债端改革持续，代理人队伍企稳",
+        "权益市场回暖利好投资收益",
+        "高股息属性吸引长期资金"
+      ],
+      "limitUpCount5Days": 0,
+      "marketCapBillion": 6800,
+      "riskNotes": ["大市值权重股，涨停概率极低", "保险行业转型期业绩承压"]
+    },
+    {
+      "code": "600030.SH",
+      "name": "中信证券",
+      "subSector": "证券",
+      "sentimentScore": 45,
+      "sectorHeatScore": 4,
+      "newsCatalystScore": 5,
+      "sectorRanking": "证券板块约30%分位",
+      "keyNews": [
+        "资本市场改革预期，注册制深化利好头部券商",
+        "市场成交额维持万亿水平，经纪业务受益",
+        "并购重组预期升温，投行收入有望改善"
+      ],
+      "limitUpCount5Days": 0,
+      "marketCapBillion": 3200,
+      "riskNotes": ["券商板块需市场成交量配合", "大市值券商弹性相对有限"]
+    },
+    {
+      "code": "601669.SH",
+      "name": "中国电建",
+      "subSector": "基建/水利水电",
+      "sentimentScore": 55,
+      "sectorHeatScore": 5,
+      "newsCatalystScore": 6,
+      "sectorRanking": "基建板块约25%分位",
+      "keyNews": [
+        "稳增长政策下基建投资提速预期",
+        "新能源电力工程订单饱满",
+        "中特估概念加持，估值修复预期"
+      ],
+      "limitUpCount5Days": 0,
+      "marketCapBillion": 850,
+      "riskNotes": ["基建板块需政策落地验证", "市值较大，涨停需板块共振"]
+    }
+  ],
+  "sectorSentimentSummary": {
+    "banks": {
+      "averageScore": 47.5,
+      "heatLevel": "中低",
+      "keyDriver": "降准降息预期+高股息策略",
+      "limitUpPotential": "极低，银行股历史上极少涨停"
+    },
+    "nonBankFinancials": {
+      "averageScore": 62.5,
+      "heatLevel": "中等",
+      "keyDriver": "国企改革+行业转型预期",
+      "limitUpPotential": "中等，信托/创投弹性优于银行保险"
+    },
+    "realEstate": {
+      "averageScore": 62.5,
+      "heatLevel": "中等",
+      "keyDriver": "融资政策放松+一线城市限购优化",
+      "limitUpPotential": "中小市值国企地产标的相对较高"
+    },
+    "constructionDecoration": {
+      "averageScore": 70,
+      "heatLevel": "中高",
+      "keyDriver": "城市更新+国企改革",
+      "limitUpPotential": "中小市值设计公司弹性较好"
+    },
+    "infrastructure": {
+      "averageScore": 55,
+      "heatLevel": "中等",
+      "keyDriver": "稳增长政策+中特估",
+      "limitUpPotential": "需政策催化，大市值标的弹性有限"
+    }
+  },
+  "top3BySentiment": [
+    {
+      "rank": 1,
+      "code": "600675.SH",
+      "name": "中华企业",
+      "score": 75,
+      "reason": "上海国企地产+连续3板+政策催化"
+    },
+    {
+      "rank": 2,
+      "code": "600629.SH",
+      "name": "华建集团",
+      "score": 70,
+      "reason": "上海建筑设计龙头+连续3板+城市更新政策"
+    },
+    {
+      "rank": 3,
+      "code": "600816.SH",
+      "name": "建元信托",
+      "score": 65,
+      "reason": "上海金融国企+信托转型预期+连续2板"
+    }
+  ],
+  "risks": [
+    "金融地产板块整体非当前市场主线热点，资金流向科技成长板块",
+    "银行/保险/大市值券商涨停概率极低，历史上极少出现多次涨停",
+    "房地产板块基本面仍处调整期，政策利好兑现存在不确定性",
+    "连续涨停个股面临交易所重点监控及停牌核查风险",
+    "本评分为基于公开信息的框架性分析，非实时数据，实际交易需以实时行情为准"
+  ],
+  "dataLimitations": [
+    "无法实时联网获取当日涨停家数及板块排名数据",
+    "新闻催化评分基于政策文件推断，无实时搜索指数数据",
+    "部分标的涨停数据来源于final_top20_limit_up_stocks.json，为示例模板数据",
+    "建议结合实时行情系统验证具体股票涨停次数及公告信息"
+  ],
+  "verificationStatus": "framework_estimated_awaits_realtime_validation",
+  "followUpRequired": [
+    "验证各标的近5日实际涨停次数",
+    "获取实时板块涨幅排名数据",
+    "搜索最新政策公告及公司新闻",
+    "获取东方财富/同花顺搜索指数数据"
+  ],
+  "disclaimer": "股市有风险，投资需谨慎。本情绪面评分仅供研究参考，不构成投资建议。多次涨停预测具有极高不确定性，投资者应独立判断并承担风险。"
+}

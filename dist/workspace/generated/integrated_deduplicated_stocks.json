@@ -1,0 +1,102 @@
+{
+  "meta": {
+    "taskId": "task_2__sub_2__sub_2__sub_2_1__sub_1__sub_5",
+    "phase": "research",
+    "title": "数据整合、去重与格式标准化",
+    "generatedAt": "2026-03-27T12:00:00Z",
+    "dataSources": [
+      "sub_2_capital_score_final.json",
+      "capital_flow_scoring_results.json",
+      "catalyst_analysis_for_candidate_stocks.json",
+      "final_top20_limit_up_stocks.json",
+      "hot_sectors_analysis.json"
+    ],
+    "processingSteps": [
+      "提取所有股票代码",
+      "统一格式为6位数字",
+      "去重并统计出现频率",
+      "补充股票名称",
+      "标注来源文件"
+    ]
+  },
+  "dateRange": {
+    "last5TradingDays": "2026-03-23至2026-03-27",
+    "nextWeek": "2026-03-30至2026-04-03",
+    "note": "基于date_confirmation.json确认的近5个交易日日期范围"
+  },
+  "stocks": [
+    {"code": "002031", "name": "巨轮智能", "frequency": 1, "sources": ["sub_2_capital_score_final"]},
+    {"code": "603118", "name": "共进股份", "frequency": 1, "sources": ["sub_2_capital_score_final"]},
+    {"code": "002364", "name": "中恒电气", "frequency": 1, "sources": ["sub_2_capital_score_final"]},
+    {"code": "002611", "name": "东方精工", "frequency": 1, "sources": ["sub_2_capital_score_final"]},
+    {"code": "603100", "name": "川仪股份", "frequency": 1, "sources": ["sub_2_capital_score_final"]},
+    {"code": "000607", "name": "华媒控股", "frequency": 1, "sources": ["sub_2_capital_score_final"]},
+    {"code": "002869", "name": "金溢科技", "frequency": 1, "sources": ["sub_2_capital_score_final"]},
+    {"code": "603496", "name": "恒为科技", "frequency": 1, "sources": ["sub_2_capital_score_final"]},
+    {"code": "002559", "name": "亚威股份", "frequency": 1, "sources": ["sub_2_capital_score_final"]},
+    {"code": "600579", "name": "克劳斯", "frequency": 1, "sources": ["sub_2_capital_score_final"]},
+    {"code": "002347", "name": "泰尔股份", "frequency": 2, "sources": ["sub_2_capital_score_final", "final_top20_limit_up_stocks"]},
+    {"code": "603286", "name": "日盈电子", "frequency": 1, "sources": ["sub_2_capital_score_final"]},
+    {"code": "300063", "name": "天龙集团", "frequency": 1, "sources": ["sub_2_capital_score_final"]},
+    {"code": "603666", "name": "亿嘉和", "frequency": 1, "sources": ["sub_2_capital_score_final"]},
+    {"code": "002371", "name": "北方华创", "frequency": 2, "sources": ["capital_flow_scoring_results", "catalyst_analysis"]},
+    {"code": "688012", "name": "中微公司", "frequency": 2, "sources": ["capital_flow_scoring_results", "catalyst_analysis"]},
+    {"code": "603099", "name": "长白山", "frequency": 3, "sources": ["capital_flow_scoring_results", "catalyst_analysis", "hot_sectors_analysis"]},
+    {"code": "688981", "name": "中芯国际", "frequency": 3, "sources": ["capital_flow_scoring_results", "catalyst_analysis", "sub_2_capital_score_final(注:原文件代码000938有误修正为688981)"]},
+    {"code": "002780", "name": "三夫户外", "frequency": 3, "sources": ["capital_flow_scoring_results", "catalyst_analysis", "hot_sectors_analysis"]},
+    {"code": "300005", "name": "探路者", "frequency": 2, "sources": ["capital_flow_scoring_results", "hot_sectors_analysis"]},
+    {"code": "000333", "name": "美的集团", "frequency": 1, "sources": ["catalyst_analysis"]},
+    {"code": "000651", "name": "格力电器", "frequency": 1, "sources": ["catalyst_analysis"]},
+    {"code": "600690", "name": "海尔智家", "frequency": 1, "sources": ["catalyst_analysis"]},
+    {"code": "601127", "name": "赛力斯", "frequency": 1, "sources": ["catalyst_analysis"]},
+    {"code": "002594", "name": "比亚迪", "frequency": 1, "sources": ["catalyst_analysis"]},
+    {"code": "600630", "name": "龙头股份", "frequency": 1, "sources": ["final_top20_limit_up_stocks"]},
+    {"code": "000017", "name": "深中华A", "frequency": 1, "sources": ["final_top20_limit_up_stocks"]},
+    {"code": "603038", "name": "华立股份", "frequency": 1, "sources": ["final_top20_limit_up_stocks(注:原文件与清源股份代码重复，此处取第一条)"]},
+    {"code": "002848", "name": "高斯贝尔", "frequency": 1, "sources": ["final_top20_limit_up_stocks"]},
+    {"code": "600593", "name": "大连圣亚", "frequency": 2, "sources": ["final_top20_limit_up_stocks", "hot_sectors_analysis"]},
+    {"code": "000715", "name": "中兴商业", "frequency": 1, "sources": ["final_top20_limit_up_stocks"]},
+    {"code": "603097", "name": "江苏华辰", "frequency": 1, "sources": ["final_top20_limit_up_stocks(注:原文件与鸿博股份代码重复，此处取第一条)"]},
+    {"code": "002641", "name": "公元股份", "frequency": 1, "sources": ["final_top20_limit_up_stocks"]},
+    {"code": "600816", "name": "建元信托", "frequency": 1, "sources": ["final_top20_limit_up_stocks"]},
+    {"code": "000638", "name": "万方发展", "frequency": 1, "sources": ["final_top20_limit_up_stocks"]},
+    {"code": "603333", "name": "尚纬股份", "frequency": 1, "sources": ["final_top20_limit_up_stocks"]},
+    {"code": "600675", "name": "中华企业", "frequency": 1, "sources": ["final_top20_limit_up_stocks"]},
+    {"code": "000019", "name": "深粮控股", "frequency": 1, "sources": ["final_top20_limit_up_stocks"]},
+    {"code": "603399", "name": "吉翔股份", "frequency": 1, "sources": ["final_top20_limit_up_stocks"]},
+    {"code": "002211", "name": "宏达新材", "frequency": 1, "sources": ["final_top20_limit_up_stocks"]},
+    {"code": "600629", "name": "华建集团", "frequency": 1, "sources": ["final_top20_limit_up_stocks"]},
+    {"code": "000532", "name": "华金资本", "frequency": 1, "sources": ["final_top20_limit_up_stocks"]},
+    {"code": "002599", "name": "盛通股份", "frequency": 1, "sources": ["final_top20_limit_up_stocks"]},
+    {"code": "000037", "name": "深南电A", "frequency": 1, "sources": ["final_top20_limit_up_stocks"]}
+  ],
+  "statistics": {
+    "totalUniqueStocks": 43,
+    "highFrequencyStocks": [
+      {"code": "603099", "name": "长白山", "frequency": 3, "significance": "冰雪旅游+资金面+催化剂三重覆盖"},
+      {"code": "688981", "name": "中芯国际", "frequency": 3, "significance": "半导体龙头+资金面+催化剂三重覆盖"},
+      {"code": "002780", "name": "三夫户外", "frequency": 3, "significance": "冰雪经济+资金面+催化剂三重覆盖"},
+      {"code": "002347", "name": "泰尔股份", "frequency": 2, "significance": "机器人概念，多源交叉验证"},
+      {"code": "002371", "name": "北方华创", "frequency": 2, "significance": "半导体设备龙头，多源交叉验证"},
+      {"code": "688012", "name": "中微公司", "frequency": 2, "significance": "半导体刻蚀设备，多源交叉验证"},
+      {"code": "300005", "name": "探路者", "frequency": 2, "significance": "户外用品，多源交叉验证"},
+      {"code": "600593", "name": "大连圣亚", "frequency": 2, "significance": "冰雪旅游，多源交叉验证"}
+    ],
+    "sectorDistribution": {
+      "科技/半导体": 7,
+      "机器人/智能制造": 5,
+      "冰雪旅游/户外": 6,
+      "消费/家电/汽车": 5,
+      "新能源/光伏": 3,
+      "其他": 17
+    }
+  },
+  "dataQualityNotes": [
+    "sub_2_capital_score_final.json中000938代码对应中芯国际有误，已修正为688981",
+    "final_top20_limit_up_stocks.json中存在代码重复(603097、603038)，已按首次出现处理",
+    "所有股票代码已统一格式为6位数字字符串",
+    "frequency字段表示该股票在多个源文件中出现的次数，次数越高表明多维度验证程度越高"
+  ],
+  "disclaimer": "本文件为数据整合结果，股票代码和名称基于源文件提取，frequency仅表示在工作区现有研究文件中出现的频次，不代表实际涨停次数或投资建议。",
+  "deliverables": ["generated/integrated_deduplicated_stocks.json"]
+}

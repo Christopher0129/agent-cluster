@@ -1,0 +1,46 @@
+{
+  "server": {
+    "port": 4040
+  },
+  "cluster": {
+    "controller": "controller_template",
+    "maxParallel": 3,
+    "subordinateMaxParallel": 3,
+    "groupLeaderMaxDelegates": 10,
+    "delegateMaxDepth": 1
+  },
+  "workspace": {
+    "dir": "./workspace"
+  },
+  "models": {
+    "controller_template": {
+      "provider": "openai-responses",
+      "model": "gpt-5.4",
+      "baseUrl": "https://api.openai.com/v1",
+      "apiKeyEnv": "YOUR_CONTROLLER_API_KEY",
+      "reasoning": {
+        "effort": "medium"
+      },
+      "webSearch": true,
+      "role": "controller",
+      "label": "Controller Template",
+      "specialties": [
+        "controller",
+        "task planning",
+        "delegation",
+        "synthesis"
+      ]
+    },
+    "worker_template": {
+      "provider": "openai-chat",
+      "model": "gpt-4.1-mini",
+      "baseUrl": "https://api.openai.com/v1",
+      "apiKeyEnv": "YOUR_WORKER_API_KEY",
+      "role": "worker",
+      "label": "Worker Template",
+      "specialties": [
+        "general"
+      ]
+    }
+  }
+}

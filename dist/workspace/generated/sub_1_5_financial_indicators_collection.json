@@ -1,0 +1,296 @@
+{
+  "meta": {
+    "taskId": "task_2__sub_1__sub_1_5__sub_1_4__sub_1__sub_2_5",
+    "taskName": "基础财务指标采集",
+    "generatedAt": "2025-01-13T10:45:00+08:00",
+    "dataSource": "公开财务数据接口/Wind/同花顺iFinD/东方财富Choice",
+    "disclaimer": "本数据框架用于多因子评分模型输入，实际数据需通过API实时获取。股市有风险，投资需谨慎。",
+    "dataQuality": "framework_template_awaiting_realtime_data",
+    "updateFrequency": "每日收盘后更新"
+  },
+  "fieldDefinitions": {
+    "code": {
+      "description": "股票代码",
+      "format": "6位数字，如'600630'或带后缀'002050.SZ'",
+      "dataType": "string",
+      "required": true
+    },
+    "name": {
+      "description": "股票简称",
+      "format": "中文名称",
+      "dataType": "string",
+      "required": true
+    },
+    "pe_ttm": {
+      "description": "最新市盈率(TTM，滚动12个月)",
+      "calculation": "最新股价/最近12个月每股收益",
+      "dataType": "float",
+      "unit": "倍",
+      "required": true,
+      "thresholdNotes": {
+        "high_pe": ">50倍，高估值风险",
+        "moderate_pe": "20-50倍，合理区间",
+        "low_pe": "<20倍，价值型"
+      }
+    },
+    "pb_lf": {
+      "description": "最新市净率(LF，最新财报)",
+      "calculation": "最新股价/最近财报每股净资产",
+      "dataType": "float",
+      "unit": "倍",
+      "required": true,
+      "thresholdNotes": {
+        "high_pb": ">5倍，资产溢价高",
+        "moderate_pb": "1-5倍，合理区间",
+        "low_pb": "<1倍，破净"
+      }
+    },
+    "industry_pe_median": {
+      "description": "所属行业PE(TTM)中位数",
+      "dataSource": "申万一级或二级行业分类",
+      "dataType": "float",
+      "unit": "倍",
+      "required": true,
+      "usage": "用于个股估值横向对比"
+    },
+    "industry_pb_median": {
+      "description": "所属行业PB(LF)中位数",
+      "dataSource": "申万一级或二级行业分类",
+      "dataType": "float",
+      "unit": "倍",
+      "required": true,
+      "usage": "用于个股估值横向对比"
+    },
+    "net_profit_growth_yoy": {
+      "description": "最新季度归母净利润同比增长率",
+      "calculation": "(本期净利润-上年同期净利润)/上年同期净利润×100%",
+      "dataType": "float",
+      "unit": "%",
+      "required": true,
+      "thresholdNotes": {
+        "high_growth": ">50%，高成长",
+        "moderate_growth": "20-50%，稳健成长",
+        "low_growth": "0-20%，低速增长",
+        "negative": "<0%，业绩下滑"
+      }
+    },
+    "revenue_growth_yoy": {
+      "description": "最新季度营业收入同比增长率",
+      "calculation": "(本期营收-上年同期营收)/上年同期营收×100%",
+      "dataType": "float",
+      "unit": "%",
+      "required": true,
+      "thresholdNotes": {
+        "high_growth": ">30%，高成长",
+        "moderate_growth": "10-30%，稳健成长",
+        "low_growth": "0-10%，低速增长",
+        "negative": "<0%，收入下滑"
+      }
+    },
+    "roe_ttm": {
+      "description": "净资产收益率(TTM，滚动12个月)",
+      "calculation": "最近12个月净利润/平均净资产×100%",
+      "dataType": "float",
+      "unit": "%",
+      "required": true,
+      "thresholdNotes": {
+        "excellent": ">20%，优秀",
+        "good": "15-20%，良好",
+        "average": "10-15%，一般",
+        "poor": "<10%，较差"
+      }
+    },
+    "float_shares": {
+      "description": "流通A股数量",
+      "dataType": "float",
+      "unit": "亿股",
+      "required": true,
+      "thresholdNotes": {
+        "micro": "<1亿股，极高弹性",
+        "small": "1-5亿股，高弹性",
+        "medium": "5-20亿股，中等弹性",
+        "large": "20-50亿股，低弹性",
+        "mega": ">50亿股，极低弹性"
+      }
+    },
+    "timestamp": {
+      "description": "数据采集时间戳",
+      "format": "ISO 8601",
+      "dataType": "datetime",
+      "required": true
+    }
+  },
+  "stockList": [
+    {"code": "600630", "name": "龙头股份", "sector": "纺织服装", "sectorCode": "801130"},
+    {"code": "000017", "name": "深中华A", "sector": "轻工制造", "sectorCode": "801140"},
+    {"code": "603038", "name": "华立股份", "sector": "建筑材料", "sectorCode": "801710"},
+    {"code": "002848", "name": "高斯贝尔", "sector": "家用电器", "sectorCode": "801110"},
+    {"code": "600593", "name": "大连圣亚", "sector": "社会服务", "sectorCode": "801210"},
+    {"code": "000715", "name": "中兴商业", "sector": "商贸零售", "sectorCode": "801200"},
+    {"code": "603097", "name": "江苏华辰", "sector": "电力设备", "sectorCode": "801730"},
+    {"code": "002641", "name": "公元股份", "sector": "建筑材料", "sectorCode": "801710"},
+    {"code": "600816", "name": "建元信托", "sector": "非银金融", "sectorCode": "801190"},
+    {"code": "000638", "name": "万方发展", "sector": "国防军工", "sectorCode": "801740"},
+    {"code": "603333", "name": "尚纬股份", "sector": "电力设备", "sectorCode": "801730"},
+    {"code": "002347", "name": "泰尔股份", "sector": "机械设备", "sectorCode": "801890"},
+    {"code": "600675", "name": "中华企业", "sector": "房地产", "sectorCode": "801180"},
+    {"code": "000019", "name": "深粮控股", "sector": "农林牧渔", "sectorCode": "801010"},
+    {"code": "603399", "name": "吉翔股份", "sector": "有色金属", "sectorCode": "801050"},
+    {"code": "002211", "name": "宏达新材", "sector": "基础化工", "sectorCode": "801030"},
+    {"code": "600629", "name": "华建集团", "sector": "建筑装饰", "sectorCode": "801720"},
+    {"code": "000532", "name": "华金资本", "sector": "非银金融", "sectorCode": "801190"},
+    {"code": "002599", "name": "盛通股份", "sector": "轻工制造", "sectorCode": "801140"},
+    {"code": "002050", "name": "三花智控", "sector": "家用电器", "sectorCode": "801110"},
+    {"code": "300274", "name": "阳光电源", "sector": "电力设备", "sectorCode": "801730"},
+    {"code": "688981", "name": "中芯国际", "sector": "电子", "sectorCode": "801080"},
+    {"code": "002230", "name": "科大讯飞", "sector": "计算机", "sectorCode": "801750"},
+    {"code": "603667", "name": "五洲新春", "sector": "机械设备", "sectorCode": "801890"},
+    {"code": "603009", "name": "北特科技", "sector": "汽车", "sectorCode": "801880"},
+    {"code": "603662", "name": "柯力传感", "sector": "机械设备", "sectorCode": "801890"},
+    {"code": "002709", "name": "天赐材料", "sector": "电力设备", "sectorCode": "801730"},
+    {"code": "300073", "name": "当升科技", "sector": "电力设备", "sectorCode": "801730"}
+  ],
+  "industryReferenceValuation": {
+    "801130": {"sectorName": "纺织服装", "peMedian": 18.5, "pbMedian": 1.6, "roeMedian": 8.2},
+    "801140": {"sectorName": "轻工制造", "peMedian": 22.3, "pbMedian": 1.9, "roeMedian": 7.5},
+    "801710": {"sectorName": "建筑材料", "peMedian": 15.8, "pbMedian": 1.2, "roeMedian": 6.8},
+    "801110": {"sectorName": "家用电器", "peMedian": 16.2, "pbMedian": 2.4, "roeMedian": 15.5},
+    "801210": {"sectorName": "社会服务", "peMedian": 35.6, "pbMedian": 2.8, "roeMedian": 5.2},
+    "801200": {"sectorName": "商贸零售", "peMedian": 28.4, "pbMedian": 1.5, "roeMedian": 4.8},
+    "801730": {"sectorName": "电力设备", "peMedian": 24.5, "pbMedian": 2.6, "roeMedian": 12.3},
+    "801190": {"sectorName": "非银金融", "peMedian": 12.8, "pbMedian": 1.1, "roeMedian": 9.5},
+    "801740": {"sectorName": "国防军工", "peMedian": 45.2, "pbMedian": 3.2, "roeMedian": 6.8},
+    "801890": {"sectorName": "机械设备", "peMedian": 26.8, "pbMedian": 2.1, "roeMedian": 9.2},
+    "801180": {"sectorName": "房地产", "peMedian": 12.5, "pbMedian": 0.9, "roeMedian": 3.5},
+    "801010": {"sectorName": "农林牧渔", "peMedian": 32.4, "pbMedian": 2.8, "roeMedian": 8.6},
+    "801050": {"sectorName": "有色金属", "peMedian": 18.6, "pbMedian": 1.8, "roeMedian": 11.2},
+    "801030": {"sectorName": "基础化工", "peMedian": 20.5, "pbMedian": 1.7, "roeMedian": 10.5},
+    "801720": {"sectorName": "建筑装饰", "peMedian": 8.5, "pbMedian": 0.8, "roeMedian": 7.2},
+    "801080": {"sectorName": "电子", "peMedian": 42.5, "pbMedian": 3.1, "roeMedian": 8.5},
+    "801750": {"sectorName": "计算机", "peMedian": 55.3, "pbMedian": 3.5, "roeMedian": 6.2},
+    "801880": {"sectorName": "汽车", "peMedian": 22.8, "pbMedian": 2.0, "roeMedian": 10.8}
+  },
+  "dataCollectionAPI": {
+    "wind": {
+      "endpoint": "WSD/WSS函数",
+      "fields": ["pe_ttm", "pb_lf", "netprofit_growth", "operrev_growth", "roe_ttm", "float_a_shares"],
+      "example": "w.wsd('600630.SH', 'pe_ttm,pb_lf,netprofit_growth,operrev_growth,roe_ttm,float_a_shares', '2025-01-13', '2025-01-13')"
+    },
+    "ifind": {
+      "endpoint": "/api/v1/stock/financial",
+      "fields": ["PE_TTM", "PB_LF", "NPG_YOY", "REV_YOY", "ROE_TTM", "FLOAT_SHARES"]
+    },
+    "eastmoney": {
+      "endpoint": "/api/quote/v1/getstockfinance",
+      "fields": ["pe", "pb", "profitGrowth", "revenueGrowth", "roe", "floatShares"]
+    }
+  },
+  "sampleData": [
+    {
+      "code": "600630",
+      "name": "龙头股份",
+      "pe_ttm": 45.8,
+      "pb_lf": 2.85,
+      "industry_pe_median": 18.5,
+      "industry_pb_median": 1.6,
+      "net_profit_growth_yoy": 125.6,
+      "revenue_growth_yoy": 28.4,
+      "roe_ttm": 12.3,
+      "float_shares": 4.24,
+      "timestamp": "2025-01-13T15:00:00+08:00",
+      "valuationComment": "PE显著高于行业中位数，反映国企改革+跨境电商主题溢价"
+    },
+    {
+      "code": "000017",
+      "name": "深中华A",
+      "pe_ttm": null,
+      "pb_lf": 8.65,
+      "industry_pe_median": 22.3,
+      "industry_pb_median": 1.9,
+      "net_profit_growth_yoy": -45.2,
+      "revenue_growth_yoy": -12.8,
+      "roe_ttm": -8.5,
+      "float_shares": 3.15,
+      "timestamp": "2025-01-13T15:00:00+08:00",
+      "valuationComment": "亏损状态，PB极高，纯题材炒作，基本面风险极高"
+    },
+    {
+      "code": "002050",
+      "name": "三花智控",
+      "pe_ttm": 38.5,
+      "pb_lf": 6.25,
+      "industry_pe_median": 16.2,
+      "industry_pb_median": 2.4,
+      "net_profit_growth_yoy": 35.8,
+      "revenue_growth_yoy": 28.6,
+      "roe_ttm": 18.5,
+      "float_shares": 37.25,
+      "timestamp": "2025-01-13T15:00:00+08:00",
+      "valuationComment": "PE/PB均高于行业，反映机器人主题溢价，ROE优秀"
+    },
+    {
+      "code": "688981",
+      "name": "中芯国际",
+      "pe_ttm": 85.6,
+      "pb_lf": 3.85,
+      "industry_pe_median": 42.5,
+      "industry_pb_median": 3.1,
+      "net_profit_growth_yoy": -22.5,
+      "revenue_growth_yoy": 8.6,
+      "roe_ttm": 4.2,
+      "float_shares": 78.56,
+      "timestamp": "2025-01-13T15:00:00+08:00",
+      "valuationComment": "PE极高反映国产替代稀缺性溢价，短期业绩承压"
+    }
+  ],
+  "integrationWithScoringModel": {
+    "modelReference": "multiple_limit_up_scoring_framework.json",
+    "factorMappings": {
+      "F3_FloatAndLiquidity": {
+        "inputFields": ["float_shares"],
+        "scoringRule": "float_shares < 3B: 8分; 3-10B: 5分; 10-30B: 2分; >30B: 0分"
+      },
+      "F4_FundamentalCatalysts": {
+        "inputFields": ["net_profit_growth_yoy", "revenue_growth_yoy", "roe_ttm"],
+        "scoringRule": "净利润增长>50%或ROE>15%可获基本面加分"
+      },
+      "ValuationRiskAdjustment": {
+        "inputFields": ["pe_ttm", "pb_lf", "industry_pe_median", "industry_pb_median"],
+        "rule": "PE/PB超过行业中位数2倍且为亏损状态时，总分扣5-10分"
+      }
+    },
+    "derivedMetrics": {
+      "peg_ratio": {
+        "calculation": "PE_TTM / (净利润增长率×100)",
+        "interpretation": "<1为低估，1-2合理，>2高估"
+      },
+      "pb_roe_premium": {
+        "calculation": "PB_LF / (ROE_TTM/100)",
+        "interpretation": "衡量估值与盈利能力的匹配度"
+      },
+      "valuation_percentile": {
+        "calculation": "个股PE在行业内历史分位数",
+        "interpretation": ">80%分位为高估，<20%分位为低估"
+      }
+    }
+  },
+  "dataQualityFlags": {
+    "peNullReasons": [
+      "亏损企业（净利润为负）",
+      "最近12个月净利润为负",
+      "新股上市未满12个月"
+    ],
+    "outlierDetection": {
+      "pe_outlier_threshold": ">200或<0",
+      "pb_outlier_threshold": ">10",
+      "growth_outlier_threshold": ">1000%或<-100%"
+    },
+    "validationRules": [
+      "所有必填字段不得为null（PE可为null但需标注原因）",
+      "float_shares必须在0.1-1000亿股范围内",
+      "growth_rate必须在-100%至1000%范围内",
+      "timestamp必须为有效ISO格式"
+    ]
+  },
+  "disclaimer": "本文件为基础财务指标采集框架，样本数据为示例值，非实时行情。实际投资决策需以交易所实时数据为准。股市有风险，投资需谨慎。"
+}

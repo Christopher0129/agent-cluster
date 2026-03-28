@@ -1,0 +1,111 @@
+{
+  "reportMeta": {
+    "generatedBy": "kimi2.5_2",
+    "generationTime": "2025-01-13T12:00:00Z",
+    "dataSource": "workspace_existing_files + date_inference",
+    "limitationNotice": "本模型不具备联网能力，以下内容部分为基于工作区已有资料的推断，实时政策搜索需由具备联网能力的worker补充",
+    "nextWeekDateRange": {
+      "description": "基于参考日期2025-01-13（周一）推算的下周日期范围",
+      "weekStart": "01/20",
+      "weekEnd": "01/26",
+      "format": "MM/DD-MM/DD",
+      "tradingDays": ["01/20", "01/21", "01/22", "01/23", "01/24"],
+      "note": "若当前日期非2025-01-13，需根据实际当前日期重新计算"
+    }
+  },
+  "policyCatalysts": {
+    "status": "partial_from_existing_files",
+    "aiComputeRelated": [
+      {
+        "policyName": "国家集成电路产业投资基金三期（大基金三期）",
+        "issuer": "国家集成电路产业投资基金",
+        "publishStatus": "已成立（2024年5月）",
+        "expectedFollowUp": "2025年Q1可能进入实质投资阶段，关注项目落地公告",
+        "coreSummary": "注册资本3440亿元，重点投向先进制程、AI芯片、存储、半导体设备/材料/EDA",
+        "affectedSectors": ["半导体设备", "AI芯片", "先进封装", "存储芯片", "光刻胶"],
+        "potentialLimitUpStocks": ["北方华创", "中微公司", "中芯国际", "通富微电", "兆易创新"],
+        "impactScore": 5,
+        "impactDescription": "重大产业政策，改变AI算力基础设施投资逻辑",
+        "source": "chip_sector_research.json (workspace)",
+        "sourceUrl": "需联网验证最新进展",
+        "timeHorizon": "持续发酵，下周关注是否有首批投资项目披露"
+      },
+      {
+        "policyName": "[需联网搜索]工信部AI/算力基础设施专项政策",
+        "issuer": "工信部",
+        "publishStatus": "待确认",
+        "expectedFollowUp": "搜索www.miit.gov.cn查看最新政策文件",
+        "coreSummary": "待联网搜索：是否有算力基础设施高质量发展行动计划、AI创新中心建设指南等",
+        "affectedSectors": ["AI服务器", "光模块", "数据中心", "液冷技术"],
+        "impactScore": 0,
+        "impactDescription": "待评估",
+        "source": "placeholder",
+        "sourceUrl": "https://www.miit.gov.cn/jgsj/jsc/wjfb/",
+        "timeHorizon": "下周需确认"
+      },
+      {
+        "policyName": "[需联网搜索]发改委数字经济/算力枢纽政策",
+        "issuer": "国家发改委",
+        "publishStatus": "待确认",
+        "expectedFollowUp": "搜索www.ndrc.gov.cn查看东数西算、算力网络相关政策",
+        "coreSummary": "待联网搜索：是否有新型基础设施REITs、算力券、数据中心能耗指标调整等政策",
+        "affectedSectors": ["IDC", "云计算", "算力租赁", "光通信"],
+        "impactScore": 0,
+        "impactDescription": "待评估",
+        "source": "placeholder",
+        "sourceUrl": "https://www.ndrc.gov.cn/xxgk/zcwj/zcjd/",
+        "timeHorizon": "下周需确认"
+      },
+      {
+        "policyName": "[需联网搜索]科技部新一代AI发展规划配套政策",
+        "issuer": "科技部",
+        "publishStatus": "待确认",
+        "expectedFollowUp": "搜索www.most.gov.cn查看大模型、AI算力中心相关指导意见",
+        "coreSummary": "待联网搜索：是否有国家新一代人工智能创新发展试验区扩容、AI大模型备案新规等",
+        "affectedSectors": ["AI大模型", "智算中心", "AI应用", "语料数据"],
+        "impactScore": 0,
+        "impactDescription": "待评估",
+        "source": "placeholder",
+        "sourceUrl": "https://www.most.gov.cn/kjbgz/",
+        "timeHorizon": "下周需确认"
+      },
+      {
+        "policyName": "[需联网搜索]网信办大模型/算法监管动态",
+        "issuer": "国家网信办",
+        "publishStatus": "待确认",
+        "expectedFollowUp": "搜索www.cac.gov.cn查看生成式AI服务管理办法更新、算法备案清单",
+        "coreSummary": "待联网搜索：是否有新一批大模型通过备案、AIGC内容治理新规等",
+        "affectedSectors": ["AI应用", "内容生成", "数据安全"],
+        "impactScore": 0,
+        "impactDescription": "待评估（监管政策可能双面影响）",
+        "source": "placeholder",
+        "sourceUrl": "https://www.cac.gov.cn/",
+        "timeHorizon": "下周需确认"
+      }
+    ]
+  },
+  "sectorHeatFromExistingData": {
+    "chipSemiconductor": {
+      "heatLevel": "高",
+      "limitUpEstimate": "8-15只/5日",
+      "keyDrivers": ["大基金三期", "AI算力需求", "国产替代"],
+      "leaderStocks": ["中芯国际", "北方华创", "中微公司"],
+      "riskLevel": "中高"
+    }
+  },
+  "dataGaps": [
+    "无法获取2025年1月13日之后的实时日期确认",
+    "无法访问.gov.cn域名获取最新政策发布计划",
+    "无法确认下周是否有国务院政策例行吹风会",
+    "无法获取新华社/央视新闻最新报道"
+  ],
+  "recommendationsForNextWorker": {
+    "withWebAccess": [
+      "访问中国政府网(www.gov.cn)查询国务院下周政策吹风会预告",
+      "搜索site:gov.cn AI 算力 大模型 政策 2025年1月",
+      "查看新华社1月13日-19日新闻稿是否有政策预告",
+      "访问上交所/深交所公告，查看是否有AI算力相关公司重大合同/投资公告"
+    ]
+  },
+  "disclaimer": "本报告基于工作区已有静态文件生成，不具备实时性。所有政策信息需经联网验证。股市有风险，投资需谨慎。"
+}

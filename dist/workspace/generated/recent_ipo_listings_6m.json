@@ -1,0 +1,26 @@
+{
+  "meta": {
+    "task": "获取近6个月A股新上市股票基础列表",
+    "status": "blocked_no_web_access",
+    "note": "Current model (kimi2.5 2) does not have web search capability. Cannot access East Money (东方财富网), Flush (同花顺), or exchange announcements to retrieve real-time IPO data for the past 6 months.",
+    "timestamp_context": "Unable to confirm current date without web access",
+    "required_sources": [
+      "东方财富网新股数据 (eastmoney.com/ipady.html)",
+      "同花顺新股中心 (basic.10jqka.com.cn/)",
+      "上海证券交易所公告",
+      "深圳证券交易所公告",
+      "北京证券交易所公告"
+    ],
+    "expected_output_format": {
+      "description": "JSON array of objects with fields: code (6-digit), name (string), list_date (YYYY-MM-DD), board (沪主板/深主板/创业板/科创板/北交所)"
+    },
+    "generatedAt": "2025-01-13T10:00:00Z"
+  },
+  "data": [],
+  "recommendations": [
+    "请将此任务重新分配给具备联网能力的worker以获取实时数据",
+    "或手动下载新股数据并保存到工作区供后续处理",
+    "所需数据时间范围：今日往前推180天",
+    "建议检查文件：sub_2_5_1_ipo_listings.json 或类似命名"
+  ]
+}

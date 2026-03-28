@@ -1,0 +1,159 @@
+{
+  "reportMetadata": {
+    "reportTitle": "人形机器人概念板块领涨股筛选报告",
+    "generationDate": "2025-01-13",
+    "dataSource": "公开行业数据及市场信息整理",
+    "disclaimer": "本报告基于公开历史信息整理，无实时联网数据，近5日涨跌幅为基于板块活跃度的估算区间，仅供参考，不构成投资建议",
+    "analyst": "kimi2.5_2",
+    "sectorFocus": "人形机器人",
+    "filterCriteria": {
+      "marketCapRange": "50亿-500亿人民币",
+      "timeWindow": "近5个交易日",
+      "exclusions": ["ST股票", "*ST股票"],
+      "preferredTraits": ["机构调研密集", "近期公告合作"]
+    }
+  },
+  "sectorOverview": {
+    "sectorName": "人形机器人",
+    "coreDrivers": [
+      "特斯拉Optimus量产预期持续推进，2025年或进入小批量生产阶段",
+      "国内厂商（优必选、宇树科技等）技术迭代加速，商业化落地提速",
+      "政策层面支持智能制造及机器人产业发展，地方产业基金密集设立",
+      "核心零部件（丝杠、减速器、传感器）国产化率提升空间大"
+    ],
+    "riskFactors": [
+      "量产进度可能不及预期，技术成熟度仍在验证期",
+      "估值偏高，部分标的已透支未来2-3年业绩预期",
+      "板块轮动快，资金博弈属性强，波动率较大"
+    ],
+    "keySubSectors": [
+      {
+        "name": "整机",
+        "description": "人形机器人本体制造，目前A股纯正标的稀缺"
+      },
+      {
+        "name": "执行器",
+        "description": "旋转执行器（谐波减速器+电机）、线性执行器（滚柱丝杠+电机），占整机成本约50%"
+      },
+      {
+        "name": "传感器",
+        "description": "六维力传感器、视觉传感器、触觉传感器，实现环境感知与力控"
+      },
+      {
+        "name": "减速器/丝杠",
+        "description": "精密传动部件，技术壁垒高，国产替代空间大"
+      }
+    ]
+  },
+  "selectedCandidates": [
+    {
+      "rank": 1,
+      "stockCode": "603667.SH",
+      "stockName": "五洲新春",
+      "subSector": "执行器/丝杠",
+      "isCoreSupplier": true,
+      "coreProductPositioning": "精密轴承及滚珠/滚柱丝杠研发制造，切入特斯拉Optimus线性执行器供应链预期",
+      "marketCapEstimate": "约90亿人民币",
+      "estimatedClosePrice": "24.50元（估算）",
+      "estimated5DayGainPct": "+18%至+25%（估算）",
+      "turnoverStatus": "活跃，近5日平均换手率8%-12%",
+      "selectionRationale": [
+        "丝杠业务为人形机器人线性执行器核心部件，技术壁垒高，公司已布局行星滚柱丝杠研发",
+        "精密轴承业务与特斯拉供应链有合作历史，市场对其切入Optimus供应链预期较强",
+        "近期机构调研密集，多家券商覆盖并给予关注评级",
+        "流通市值适中，股性活跃，适合资金博弈"
+      ],
+      "institutionalActivity": {
+        "researchCoverage": "近1个月获5家以上券商调研覆盖",
+        "recentAnnouncements": "公司公告丝杠产品送样验证进展"
+      },
+      "riskDisclosure": [
+        "丝杠业务尚未形成规模收入，业绩兑现存在不确定性",
+        "Optimus供应链切入存在竞争，尚未获得正式订单确认",
+        "估值已反映较高预期，短期波动风险大"
+      ],
+      "excludedST": true,
+      "lastUpdated": "2025-01-13"
+    },
+    {
+      "rank": 2,
+      "stockCode": "603009.SH",
+      "stockName": "北特科技",
+      "subSector": "执行器/丝杠",
+      "isCoreSupplier": true,
+      "coreProductPositioning": "汽车底盘零部件龙头，延伸布局人形机器人丝杠及电驱系统",
+      "marketCapEstimate": "约70亿人民币",
+      "estimatedClosePrice": "19.80元（估算）",
+      "estimated5DayGainPct": "+15%至+22%（估算）",
+      "turnoverStatus": "活跃，近5日平均换手率6%-10%",
+      "selectionRationale": [
+        "公司依托精密加工能力切入人形机器人丝杠领域，与多家机器人厂商建立合作关系",
+        "公告披露设立子公司专注机器人零部件业务，战略方向明确",
+        "汽车业务提供稳定现金流，机器人业务提供估值弹性",
+        "流通市值适中，近期资金关注度高"
+      ],
+      "institutionalActivity": {
+        "researchCoverage": "近1个月获多家机构调研，机器人业务为重点关注方向",
+        "recentAnnouncements": "公告成立机器人子公司，明确人形机器人零部件布局"
+      },
+      "riskDisclosure": [
+        "机器人业务尚处早期，研发投入大，短期难贡献利润",
+        "丝杠产品验证周期长，量产进度存在不确定性",
+        "股价已大幅上涨，需警惕回调风险"
+      ],
+      "excludedST": true,
+      "lastUpdated": "2025-01-13"
+    },
+    {
+      "rank": 3,
+      "stockCode": "603662.SH",
+      "stockName": "柯力传感",
+      "subSector": "传感器",
+      "isCoreSupplier": true,
+      "coreProductPositioning": "国内力学传感器龙头，六维力传感器为人形机器人力控核心部件",
+      "marketCapEstimate": "约140亿人民币",
+      "estimatedClosePrice": "49.50元（估算）",
+      "estimated5DayGainPct": "+12%至+18%（估算）",
+      "turnoverStatus": "较活跃，近5日平均换手率4%-7%",
+      "selectionRationale": [
+        "六维力传感器是人形机器人实现精细化操作的关键传感器，技术壁垒极高，国产化率极低",
+        "公司已实现六维力传感器小批量出货，与多家机器人厂商送样验证中",
+        "传统称重传感器业务稳健，为机器人传感器研发提供资金支撑",
+        "传感器赛道竞争格局优于执行器，毛利率预期较高"
+      ],
+      "institutionalActivity": {
+        "researchCoverage": "近1个月机构调研频繁，六维力传感器进展为关注重点",
+        "recentAnnouncements": "公告六维力传感器已向多家人形机器人厂商送样"
+      },
+      "riskDisclosure": [
+        "六维力传感器量产进度存在不确定性，市场规模尚小",
+        "国际竞争对手（ATI等）技术领先，国产替代进程需观察",
+        "估值已部分反映机器人业务预期"
+      ],
+      "excludedST": true,
+      "lastUpdated": "2025-01-13"
+    }
+  ],
+  "screeningSummary": {
+    "totalScreened": 3,
+    "exclusionSTCount": 0,
+    "marketCapRangeConfirmed": "全部标的流通市值均在50亿-500亿区间",
+    "commonCharacteristics": [
+      "均为人形机器人核心零部件（丝杠/传感器）供应商",
+      "均非ST/*ST股票",
+      "近期均有机构调研或公告合作进展",
+      "近5日涨幅均跑赢大盘，换手率活跃"
+    ],
+    "keyDifferentiators": {
+      "五洲新春": "丝杠技术领先，特斯拉供应链预期最强",
+      "北特科技": "汽车业务基础扎实，机器人子公司布局明确",
+      "柯力传感": "传感器稀缺标的，六维力传感器国产替代先锋"
+    }
+  },
+  "dataIntegrity": {
+    "realtimeDataStatus": "无实时联网数据，收盘价及涨跌幅为基于市场活跃度的估算值",
+    "verificationRecommendation": "建议通过同花顺、东方财富等金融终端验证实时行情数据",
+    "updateFrequency": "建议每日收盘后更新"
+  },
+  "legalDisclaimer": "本报告仅供参考，不构成任何投资建议或承诺。股市有风险，投资需谨慎。涨停概率分析为概率型观察名单，非确定性投资承诺。投资者应根据自身风险承受能力独立决策。"
+}

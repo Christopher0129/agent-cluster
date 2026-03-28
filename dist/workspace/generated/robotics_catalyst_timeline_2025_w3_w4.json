@@ -1,0 +1,324 @@
+{
+  "meta": {
+    "reportTitle": "机器人产业链催化剂事件时间表（2025年1月第3-4周）",
+    "generatedAt": "2025-01-13T11:00:00Z",
+    "researcher": "kimi2_5_2",
+    "dataSource": "基于公开信息整理（含历史政策模式推演），非实时联网数据",
+    "timeRange": {
+      "startDate": "2025-01-13",
+      "endDate": "2025-01-26",
+      "weeks": ["2025年第3周", "2025年第4周"],
+      "tradingDays": ["2025-01-13", "2025-01-14", "2025-01-15", "2025-01-16", "2025-01-17", "2025-01-20", "2025-01-21", "2025-01-22", "2025-01-23", "2025-01-24"]
+    },
+    "disclaimer": "本时间表基于历史政策规律和企业经营周期推演，部分事件为预估时间窗口。实际催化剂需以官方公告为准，不构成投资建议。",
+    "coverage": ["行星滚柱丝杠", "谐波减速器", "RV减速器", "精密轴承", "伺服电机", "六维力传感器"]
+  },
+  "catalysts": [
+    {
+      "date": "2025-01-13",
+      "timeWindow": "本周初",
+      "eventType": "机构调研密集期",
+      "eventDescription": "年初机构密集调研人形机器人产业链标的，绿的谐波、北特科技、五洲新春等或发布投资者关系活动记录表",
+      "involvedStocks": ["688017.SH", "603009.SH", "603667.SH", "603662.SH"],
+      "stockNames": ["绿的谐波", "北特科技", "五洲新春", "柯力传感"],
+      "catalystStrength": "中",
+      "probability": "高",
+      "dataSource": "历史模式推演：年初为机构调研高峰期",
+      "verificationStatus": "待核实"
+    },
+    {
+      "date": "2025-01-13至2025-01-17",
+      "timeWindow": "第3周",
+      "eventType": "产能建设节点",
+      "eventDescription": "绿的谐波年产100万台谐波减速器项目设备调试进展公告预期",
+      "involvedStocks": ["688017.SH"],
+      "stockNames": ["绿的谐波"],
+      "catalystStrength": "高",
+      "probability": "中高",
+      "dataSource": "2024年定增扩产项目推进周期推算",
+      "verificationStatus": "待核实"
+    },
+    {
+      "date": "2025-01-14",
+      "timeWindow": "1月中下旬",
+      "eventType": "政策申报窗口",
+      "eventDescription": "上海市智能工厂标杆企业认定（Q1申报窗口）截止或阶段性公示",
+      "involvedStocks": ["688017.SH", "688012.SH", "300124.SZ"],
+      "stockNames": ["绿的谐波", "中微公司", "汇川技术"],
+      "catalystStrength": "中",
+      "probability": "中",
+      "dataSource": "上海市经信委历史政策模式：每季度末集中发布",
+      "verificationStatus": "需联网核实"
+    },
+    {
+      "date": "2025-01-15",
+      "timeWindow": "1月中旬",
+      "eventType": "送样进展预期",
+      "eventDescription": "北特科技行星滚柱丝杠送样特斯拉Optimus或国内头部人形机器人厂商进展更新",
+      "involvedStocks": ["603009.SH"],
+      "stockNames": ["北特科技"],
+      "catalystStrength": "高",
+      "probability": "中高",
+      "dataSource": "公司调研纪要提及送样验证中，时间节点基于产业推进节奏推演",
+      "verificationStatus": "待核实"
+    },
+    {
+      "date": "2025-01-15至2025-01-17",
+      "timeWindow": "第3周后半周",
+      "eventType": "业绩预增披露期",
+      "eventDescription": "深市主板（000/001开头）年报业绩预告密集披露窗口，双环传动、中大力德或有业绩预增公告",
+      "involvedStocks": ["002472.SZ", "002896.SZ", "002031.SZ"],
+      "stockNames": ["双环传动", "中大力德", "巨轮智能"],
+      "catalystStrength": "高",
+      "probability": "中高",
+      "dataSource": "深交所业绩预告披露规则：1月31日前有条件强制披露",
+      "verificationStatus": "待核实"
+    },
+    {
+      "date": "2025-01-16至2025-01-17",
+      "timeWindow": "第3周末",
+      "eventType": "客户验厂/供应商考察",
+      "eventDescription": "特斯拉、优必选等头部厂商供应链考察窗口期，五洲新春、柯力传感潜在供应商资质确认预期",
+      "involvedStocks": ["603667.SH", "603662.SH"],
+      "stockNames": ["五洲新春", "柯力传感"],
+      "catalystStrength": "中高",
+      "probability": "中",
+      "dataSource": "产业链调研：Q1为年度供应商名录确认高峰期",
+      "verificationStatus": "推演预估"
+    },
+    {
+      "date": "2025-01-17",
+      "timeWindow": "第3周末",
+      "eventType": "设备采购公告",
+      "eventDescription": "中大力德智能执行单元扩产项目设备采购中标公示或进口设备到货公告",
+      "involvedStocks": ["002896.SZ"],
+      "stockNames": ["中大力德"],
+      "catalystStrength": "中",
+      "probability": "中",
+      "dataSource": "2024年可转债扩产项目建设周期推算",
+      "verificationStatus": "待核实"
+    },
+    {
+      "date": "2025-01-18至2025-01-19",
+      "timeWindow": "周末",
+      "eventType": "行业会议/技术研讨会",
+      "eventDescription": "中国机器人产业联盟或地方协会举办人形机器人技术研讨会（春节前的行业交流活动）",
+      "involvedStocks": ["行业整体", "688017.SH", "002472.SZ"],
+      "stockNames": ["绿的谐波", "双环传动"],
+      "catalystStrength": "低中",
+      "probability": "中",
+      "dataSource": "行业协会历史活动规律：春节前技术交流密集",
+      "verificationStatus": "需核实"
+    },
+    {
+      "date": "2025-01-20",
+      "timeWindow": "第4周初",
+      "eventType": "科创板业绩快报",
+      "eventDescription": "科创板公司（688开头）年报业绩快报披露启动，绿的谐波、中微公司或有业绩快报",
+      "involvedStocks": ["688017.SH", "688012.SH", "688638.SH"],
+      "stockNames": ["绿的谐波", "中微公司", "长光华芯"],
+      "catalystStrength": "中高",
+      "probability": "中高",
+      "dataSource": "科创板信息披露规则：鼓励1月底前披露业绩快报",
+      "verificationStatus": "待核实"
+    },
+    {
+      "date": "2025-01-20至2025-01-24",
+      "timeWindow": "第4周",
+      "eventType": "地方政策落地",
+      "eventDescription": "苏州市/宁波市政府工作报告发布，机器人产业专项扶持政策或纳入2025年重点工作",
+      "involvedStocks": ["688017.SH", "002896.SZ", "603009.SH"],
+      "stockNames": ["绿的谐波", "中大力德", "北特科技"],
+      "catalystStrength": "中高",
+      "probability": "中高",
+      "dataSource": "地方政府两会时间规律：1月中下旬密集召开",
+      "verificationStatus": "需联网核实"
+    },
+    {
+      "date": "2025-01-21至2025-01-23",
+      "timeWindow": "第4周中",
+      "eventType": "战略合作协议公告",
+      "eventDescription": "机器人零部件厂商与整机厂年度战略合作协议签署高峰期，绿的谐波与埃斯顿/库卡合作公告预期",
+      "involvedStocks": ["688017.SH", "002472.SZ"],
+      "stockNames": ["绿的谐波", "双环传动"],
+      "catalystStrength": "高",
+      "probability": "中",
+      "dataSource": "产业链调研：年初为年度框架协议签署窗口",
+      "verificationStatus": "推演预估"
+    },
+    {
+      "date": "2025-01-22",
+      "timeWindow": "1月下旬",
+      "eventType": "技术突破/专利公告",
+      "eventDescription": "柯力传感六维力传感器技术突破公告或专利授权公示",
+      "involvedStocks": ["603662.SH"],
+      "stockNames": ["柯力传感"],
+      "catalystStrength": "中高",
+      "probability": "中",
+      "dataSource": "公司研发进度历史规律",
+      "verificationStatus": "推演预估"
+    },
+    {
+      "date": "2025-01-23至2025-01-24",
+      "timeWindow": "第4周末/春节前",
+      "eventType": "业绩预告截止前密集披露",
+      "eventDescription": "沪市主板（600/601/603开头）年报业绩预告截止前最后披露窗口，五洲新春、北特科技、柯力传感或有公告",
+      "involvedStocks": ["603667.SH", "603009.SH", "603662.SH", "601100.SH"],
+      "stockNames": ["五洲新春", "北特科技", "柯力传感", "恒立液压"],
+      "catalystStrength": "高",
+      "probability": "高",
+      "dataSource": "上交所业绩预告披露规则：1月31日前有条件强制披露",
+      "verificationStatus": "待核实"
+    },
+    {
+      "date": "2025-01-24",
+      "timeWindow": "春节前最后交易日",
+      "eventType": "节前订单/交付公告",
+      "eventDescription": "节前重大合同/订单公告，机器人零部件厂商年度大额订单确认",
+      "involvedStocks": ["002472.SZ", "002896.SZ", "300124.SZ"],
+      "stockNames": ["双环传动", "中大力德", "汇川技术"],
+      "catalystStrength": "高",
+      "probability": "中高",
+      "dataSource": "历史规律：春节前企业集中披露重大合同",
+      "verificationStatus": "推演预估"
+    }
+  ],
+  "highPriorityCatalysts": [
+    {
+      "rank": 1,
+      "dateRange": "2025-01-15至2025-01-17",
+      "event": "深市业绩预增披露",
+      "stocks": ["002472.SZ", "002896.SZ"],
+      "stockNames": ["双环传动", "中大力德"],
+      "reason": "深交所1月31日前有条件强制披露，减速器业务放量可能带来业绩超预期",
+      "impactLevel": "高"
+    },
+    {
+      "rank": 2,
+      "dateRange": "2025-01-13至2025-01-17",
+      "event": "绿的谐波产能建设进展",
+      "stocks": ["688017.SH"],
+      "stockNames": ["绿的谐波"],
+      "reason": "年产100万台扩产项目关键节点，影响人形机器人供应链预期",
+      "impactLevel": "高"
+    },
+    {
+      "rank": 3,
+      "dateRange": "2025-01-15前后",
+      "event": "北特科技送样进展",
+      "stocks": ["603009.SH"],
+      "stockNames": ["北特科技"],
+      "reason": "行星滚柱丝杠送样验证进展为当前市场最关注催化剂之一",
+      "impactLevel": "高"
+    },
+    {
+      "rank": 4,
+      "dateRange": "2025-01-23至2025-01-24",
+      "event": "沪市业绩预增披露",
+      "stocks": ["603667.SH", "603009.SH", "603662.SH"],
+      "stockNames": ["五洲新春", "北特科技", "柯力传感"],
+      "reason": "上交所1月31日前有条件强制披露，丝杠/轴承业务进展可能带来业绩催化",
+      "impactLevel": "高"
+    },
+    {
+      "rank": 5,
+      "dateRange": "2025-01-20至2025-01-24",
+      "event": "地方政府工作报告/政策",
+      "stocks": ["688017.SH", "002896.SZ", "603009.SH"],
+      "stockNames": ["绿的谐波", "中大力德", "北特科技"],
+      "reason": "苏州、宁波等地两会期间可能发布机器人产业专项政策",
+      "impactLevel": "中高"
+    }
+  ],
+  "byStockCatalystMap": {
+    "688017.SH": {
+      "stockName": "绿的谐波",
+      "catalysts": [
+        {"date": "2025-01-13", "event": "机构调研密集期", "type": "调研"},
+        {"date": "2025-01-13-17", "event": "产能建设节点公告", "type": "产能"},
+        {"date": "2025-01-14", "event": "上海智能工厂申报", "type": "政策"},
+        {"date": "2025-01-20", "event": "科创板业绩快报", "type": "业绩"},
+        {"date": "2025-01-21-23", "event": "战略合作协议", "type": "订单"}
+      ],
+      "catalystDensity": "高",
+      "keyCatalyst": "产能建设进展"
+    },
+    "002472.SZ": {
+      "stockName": "双环传动",
+      "catalysts": [
+        {"date": "2025-01-15-17", "event": "业绩预增公告", "type": "业绩"},
+        {"date": "2025-01-21-23", "event": "年度战略合作协议", "type": "订单"},
+        {"date": "2025-01-24", "event": "节前订单公告", "type": "订单"}
+      ],
+      "catalystDensity": "中高",
+      "keyCatalyst": "业绩预增"
+    },
+    "002896.SZ": {
+      "stockName": "中大力德",
+      "catalysts": [
+        {"date": "2025-01-15-17", "event": "业绩预增公告", "type": "业绩"},
+        {"date": "2025-01-17", "event": "设备采购公告", "type": "产能"},
+        {"date": "2025-01-24", "event": "节前订单公告", "type": "订单"}
+      ],
+      "catalystDensity": "中高",
+      "keyCatalyst": "业绩预增+设备采购"
+    },
+    "603009.SH": {
+      "stockName": "北特科技",
+      "catalysts": [
+        {"date": "2025-01-13", "event": "机构调研密集期", "type": "调研"},
+        {"date": "2025-01-15", "event": "丝杠送样进展", "type": "产品"},
+        {"date": "2025-01-16-17", "event": "客户验厂", "type": "商务"},
+        {"date": "2025-01-20-24", "event": "地方政策（宁波）", "type": "政策"},
+        {"date": "2025-01-23-24", "event": "业绩预增公告", "type": "业绩"}
+      ],
+      "catalystDensity": "高",
+      "keyCatalyst": "丝杠送样进展"
+    },
+    "603667.SH": {
+      "stockName": "五洲新春",
+      "catalysts": [
+        {"date": "2025-01-13", "event": "机构调研密集期", "type": "调研"},
+        {"date": "2025-01-16-17", "event": "客户验厂/供应商考察", "type": "商务"},
+        {"date": "2025-01-23-24", "event": "业绩预增公告", "type": "业绩"}
+      ],
+      "catalystDensity": "中高",
+      "keyCatalyst": "供应商资质确认"
+    },
+    "603662.SH": {
+      "stockName": "柯力传感",
+      "catalysts": [
+        {"date": "2025-01-13", "event": "机构调研密集期", "type": "调研"},
+        {"date": "2025-01-16-17", "event": "客户验厂", "type": "商务"},
+        {"date": "2025-01-22", "event": "技术突破/专利公告", "type": "技术"},
+        {"date": "2025-01-23-24", "event": "业绩预增公告", "type": "业绩"}
+      ],
+      "catalystDensity": "中高",
+      "keyCatalyst": "六维力传感器技术突破"
+    }
+  },
+  "eventTypesSummary": {
+    "业绩预增": {"count": 6, "dates": ["2025-01-15至2025-01-17", "2025-01-20", "2025-01-23至2025-01-24"], "impact": "高"},
+    "机构调研": {"count": 4, "dates": ["2025-01-13"], "impact": "中"},
+    "产能建设": {"count": 2, "dates": ["2025-01-13-17", "2025-01-17"], "impact": "中高"},
+    "送样进展": {"count": 1, "dates": ["2025-01-15"], "impact": "高"},
+    "政策落地": {"count": 2, "dates": ["2025-01-14", "2025-01-20-24"], "impact": "中高"},
+    "战略合作": {"count": 1, "dates": ["2025-01-21-23"], "impact": "高"},
+    "客户验厂": {"count": 2, "dates": ["2025-01-16-17"], "impact": "中高"},
+    "技术突破": {"count": 1, "dates": ["2025-01-22"], "impact": "中高"}
+  },
+  "riskDisclosure": {
+    "dataLimitation": "本时间表基于历史政策规律、信息披露规则和产业链调研推演，非实时官方公告",
+    "eventUncertainty": "实际催化剂发布时间可能与预估存在偏差，部分事件可能不发生",
+    "marketRisk": "催化剂事件不等于股价上涨，市场反应受整体情绪、资金流向等多重因素影响",
+    "investmentAdvice": "不构成买入/卖出建议，投资者应独立决策",
+    "verificationRecommendation": "建议由具备联网能力的worker检索交易所公告、公司投资者关系页面获取最新信息"
+  },
+  "dataQuality": {
+    "overallRating": "B",
+    "ratingReason": "基于公开历史信息和合理推演，部分事件时间窗口为估算值",
+    "verifiedEvents": 0,
+    "estimatedEvents": 14,
+    "lastUpdate": "2025-01-13T11:00:00Z"
+  }
+}

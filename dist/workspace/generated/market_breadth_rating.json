@@ -1,0 +1,144 @@
+{
+  "meta": {
+    "taskId": "task_2__sub_2__sub_1__sub_2__sub_2__sub_4",
+    "generatedAt": "2025-01-13T10:15:00Z",
+    "dataStatus": "upstream_missing_using_assumptions",
+    "note": "上游sub_5_1至sub_5_4数据未找到，以下使用基于近期A股典型市场特征的合理假设值演示评级逻辑",
+    "assumptionBasis": "基于2025年1月初A股市场 typical 特征：量能维持1.2万亿左右，结构性行情为主"
+  },
+  "market_breadth": {
+    "rating": "medium",
+    "ratingCN": "中活跃度",
+    "score": 55,
+    "scoreRange": {
+      "high": "70-100",
+      "medium": "30-69",
+      "low": "0-29"
+    },
+    "components": {
+      "turnoverRate": {
+        "indicator": "全市场加权平均换手率",
+        "value": 1.65,
+        "unit": "%",
+        "threshold": {
+          "high": "> 2.0%",
+          "medium": "1.0% - 2.0%",
+          "low": "< 1.0%"
+        },
+        "assessment": "中等水平",
+        "detail": "当前换手率1.65%，处于1.0%-2.0%中活跃区间，未达到高活跃阈值(>2%)，但高于低活跃警戒线(<1%)",
+        "weight": 0.30,
+        "subScore": 45
+      },
+      "advanceDeclineRatio": {
+        "indicator": "涨跌家数比(ADR)",
+        "value": 1.35,
+        "unit": "ratio",
+        "rawData": {
+          "upCount": 2150,
+          "downCount": 1590,
+          "flatCount": 160,
+          "total": 3900
+        },
+        "threshold": {
+          "high": "> 2.0 (涨:跌 > 2:1)",
+          "medium": "0.8 - 2.0",
+          "low": "< 0.8"
+        },
+        "assessment": "偏多但非过热",
+        "detail": "涨跌比1.35:1，上涨家数2150家，下跌1590家。多头占优但未达到2:1的高活跃标准，市场呈现结构性分化特征",
+        "weight": 0.35,
+        "subScore": 55
+      },
+      "turnoverAmount": {
+        "indicator": "沪深两市总成交额环比变化",
+        "value": 3.2,
+        "unit": "%",
+        "rawData": {
+          "currentDayAmount": 12850,
+          "previousDayAmount": 12450,
+          "unit": "亿元"
+        },
+        "threshold": {
+          "high": "环比增长 > 10%",
+          "medium": "环比变化 -5% 至 +10%",
+          "low": "环比下滑 > 5%"
+        },
+        "assessment": "温和放量",
+        "detail": "成交额12850亿元，较昨日+3.2%。温和放量但未达高活跃标准(+10%以上)，量能支持结构性行情但非全面爆发",
+        "weight": 0.35,
+        "subScore": 65
+      }
+    },
+    "compositeCalculation": {
+      "formula": "总评分 = Σ(单项评分 × 权重)",
+      "breakdown": {
+        "turnoverRate": "45 × 0.30 = 13.5",
+        "advanceDeclineRatio": "55 × 0.35 = 19.25",
+        "turnoverAmount": "65 × 0.35 = 22.75"
+      },
+      "totalScore": 55.5,
+      "finalRating": "medium"
+    }
+  },
+  "ratingCriteria": {
+    "highActivity": {
+      "name": "高活跃度",
+      "conditions": [
+        "全市场加权换手率 > 2%",
+        "涨跌家数比 > 2:1 (ADR > 2.0)",
+        "成交额环比增长 > 10%"
+      ],
+      "marketImplication": "市场交投火热，资金积极入场，热点板块扩散，涨停家数大概率>50家，适合激进策略但需防过热回调",
+      "limitUpProbabilityContext": "连续涨停概率提升，龙头标的溢价明显"
+    },
+    "mediumActivity": {
+      "name": "中活跃度",
+      "conditions": [
+        "换手率 1.0% - 2.0%",
+        "涨跌家数比 0.8 - 2.0",
+        "成交额环比变化 -5% 至 +10%"
+      ],
+      "marketImplication": "结构性行情为主，量能适中，板块轮动特征明显，涨停家数集中在20-40家，适合精选个股策略",
+      "limitUpProbabilityContext": "需结合题材强度与资金聚焦度，连板股集中在核心题材"
+    },
+    "lowActivity": {
+      "name": "低活跃度",
+      "conditions": [
+        "换手率 < 1.0%",
+        "涨跌家数比 < 0.8",
+        "成交额环比下滑 > 5%"
+      ],
+      "marketImplication": "市场观望情绪浓厚，流动性萎缩，涨停家数<15家且炸板率高，防御策略为主",
+      "limitUpProbabilityContext": "连板难度大，高度受限（通常2-3板），追涨风险极高"
+    }
+  },
+  "crossValidation": {
+    "withSentimentIndicators": {
+      "referenceDoc": "core_sentiment_indicators.md",
+      "consistency": "一致",
+      "analysis": "当前假设ADR=1.35处于正常区间(0.8-1.2)略偏强，对应market_breadth中活跃度评级合理；若结合HGR(高涨幅占比)约5-8%，则印证结构性行情判断"
+    },
+    "withLimitUpSummary": {
+      "referenceDoc": "a_stock_limit_up_summary_data.json",
+      "consistency": "待验证",
+      "note": "上游涨停统计数据缺失，无法交叉验证涨跌家数比与涨停家数的一致性"
+    }
+  },
+  "risks": [
+    "数据假设风险：当前评分为基于典型市场特征的假设值，非实时数据",
+    "指标滞后性：换手率/成交额为盘后统计，对盘中突发变化反应滞后",
+    "结构性偏差：全市场平均可能掩盖极端分化（如权重护盘+中小盘下跌）",
+    "阈值漂移：随A股扩容（现超5000家），历史阈值可能需动态调整"
+  ],
+  "dataGap": {
+    "status": "upstream_data_missing",
+    "missingSources": [
+      "sub_5_1: 市场换手率统计数据",
+      "sub_5_2: 涨跌家数明细数据",
+      "sub_5_3: 成交额环比计算数据"
+    ],
+    "recommendation": "建议补充上游数据后重新计算，当前输出为框架性参考"
+  },
+  "timestamp": "2025-01-13T10:15:00Z"
+}

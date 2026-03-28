@@ -1,0 +1,261 @@
+{
+  "meta": {
+    "reportTitle": "A股候选股票上涨催化剂与动因分析报告",
+    "generatedAt": "2025-01-13T12:00:00Z",
+    "dataSource": "基于工作区已有研究文件整合分析（chip_sector_research.json / consumption_stimulus_theme_mapping.md / ice_snow_tourism_candidates.md / multiple_limit_up_scoring_framework.json等）",
+    "dataLimitation": "当前模型无实时联网能力，以下分析基于历史公开信息整理，未包含2025年1月13日后的最新公告、资金流向或龙虎榜数据",
+    "confidenceLevel": "中等（受限于数据时效性）",
+    "disclaimer": "本报告仅供研究参考，不构成投资建议。股市有风险，投资需谨慎。所有催化剂分析为概率型观察，非确定性承诺。"
+  },
+  "catalystAnalysisBySector": {
+    "chipSemiconductor": {
+      "sectorName": "芯片半导体",
+      "overallCatalyst": {
+        "description": "国产替代加速+周期复苏预期+大基金三期政策资金三重驱动，AI算力需求带动产业链关注度提升",
+        "policyDrivers": [
+          {
+            "policy": "国家集成电路产业投资基金三期",
+            "details": "2024年5月正式成立，注册资本3440亿元，超前两期总和，重点投向先进制程、AI芯片、存储",
+            "source": "国家集成电路产业投资基金公告"
+          },
+          {
+            "policy": "国产替代战略",
+            "details": "外部技术封锁持续，半导体设备/材料/EDA工具自主可控需求迫切，国产化率提升空间明确",
+            "source": "公开行业政策文件"
+          }
+        ],
+        "industryCycle": "全球半导体销售额同比增速转正，存储芯片价格回升，晶圆厂产能利用率改善预期",
+        "hotConcept": "AI算力需求带动GPU、HBM、先进封装需求，光刻胶、先进封装细分板块近期活跃"
+      },
+      "stocks": [
+        {
+          "stockCode": "688981.SH",
+          "stockName": "中芯国际",
+          "keyCatalyst": "大陆晶圆代工龙头，先进制程突破核心标的，大基金重点持仓；受益国产替代加速及AI芯片需求增长，技术突破预期持续发酵。",
+          "catalystType": ["政策受益", "技术突破", "资金持仓"],
+          "fundFlow": "大基金重点持仓标的，机构长期配置型资金聚集",
+          "riskFactors": ["港股AH溢价波动风险", "美国出口管制风险"],
+          "informationSource": ["国家大基金公告", "上市公司定期报告"]
+        },
+        {
+          "stockCode": "002371.SZ",
+          "stockName": "北方华创",
+          "keyCatalyst": "半导体设备平台型龙头，刻蚀/薄膜/PVD设备全覆盖，订单饱满；周期复苏预期下设备厂商率先受益，业绩确定性较高。",
+          "catalystType": ["行业周期复苏", "订单驱动", "平台型龙头"],
+          "fundFlow": "机构资金偏好标的，业绩兑现预期吸引价值型资金",
+          "riskFactors": ["估值处于历史较高分位", "业绩兑现节奏不及预期"],
+          "informationSource": ["上市公司公告", "行业研报"]
+        },
+        {
+          "stockCode": "688012.SH",
+          "stockName": "中微公司",
+          "keyCatalyst": "刻蚀设备龙头，5nm及以下先进制程突破，CCP/ICP双轮驱动；技术壁垒高，国产替代空间明确。",
+          "catalystType": ["技术突破", "国产替代", "细分龙头"],
+          "fundFlow": "科技类主题基金配置标的",
+          "riskFactors": ["研发投入持续", "国际竞争加剧"],
+          "informationSource": ["公司公告", "SEMI全球半导体设备出货报告"]
+        }
+      ]
+    },
+    "consumptionStimulus": {
+      "sectorName": "消费刺激",
+      "overallCatalyst": {
+        "description": "2024年底中央经济工作会议将'大力提振消费'列为2025年九大重点任务之首，以旧换新政策全面铺开",
+        "policyDrivers": [
+          {
+            "policy": "以旧换新补贴政策",
+            "details": "家电、汽车以旧换新政策已全面铺开，地方消费券持续发放",
+            "source": "中央经济工作会议公报"
+          },
+          {
+            "policy": "消费扩容政策预期",
+            "details": "2025年3月两会窗口期，消费刺激增量政策预期",
+            "source": "政策预期"
+          }
+        ],
+        "dataCatalyst": "月度社零数据、乘用车零售周度数据、节假日消费数据验证",
+        "hotConcept": "家电以旧换新、新能源汽车置换补贴、文旅消费"
+      },
+      "stocks": [
+        {
+          "stockCode": "000333.SZ",
+          "stockName": "美的集团",
+          "keyCatalyst": "家电龙头，以旧换新政策核心受益者，渠道覆盖广；政策直接刺激换新需求，龙头受益确定性最高。",
+          "catalystType": ["政策直接受益", "龙头优势", "渠道壁垒"],
+          "fundFlow": "北向资金及机构长期持仓标的，防御属性吸引配置资金",
+          "riskFactors": ["估值修复空间有限", "房地产后周期拖累"],
+          "informationSource": ["中央经济工作会议", "行业政策文件"]
+        },
+        {
+          "stockCode": "000651.SZ",
+          "stockName": "格力电器",
+          "keyCatalyst": "空调龙头，以旧换新政策直接刺激换新需求；品牌认知度高，存量市场更新需求释放。",
+          "catalystType": ["政策受益", "存量更新", "品牌优势"],
+          "fundFlow": "机构防御配置标的",
+          "riskFactors": ["空调行业增速放缓", "渠道改革不确定性"],
+          "informationSource": ["行业政策", "公司公告"]
+        },
+        {
+          "stockCode": "601127.SH",
+          "stockName": "赛力斯",
+          "keyCatalyst": "新能源汽车政策受益，问界系列销量强劲；华为合作车型持续热销，新能源置换补贴直接受益。",
+          "catalystType": ["产品热销", "政策受益", "华为概念"],
+          "fundFlow": "游资及机构共振标的，成交量活跃",
+          "riskFactors": ["销量数据波动", "竞争加剧"],
+          "informationSource": ["乘联会数据", "公司公告"]
+        },
+        {
+          "stockCode": "002594.SZ",
+          "stockName": "比亚迪",
+          "keyCatalyst": "新能源车龙头，置换补贴核心标的；销量持续领跑，规模优势巩固，政策+业绩双轮驱动。",
+          "catalystType": ["龙头地位", "政策受益", "业绩确定性"],
+          "fundFlow": "机构重仓及北向资金偏好标的",
+          "riskFactors": ["价格战压力", "估值高位"],
+          "informationSource": ["乘联会", "公司产销快报"]
+        },
+        {
+          "stockCode": "603288.SH",
+          "stockName": "海天味业",
+          "keyCatalyst": "调味品龙头，餐饮复苏受益标的；必选消费防御属性，餐饮渠道恢复带动B端需求。",
+          "catalystType": ["餐饮复苏", "必选消费", "渠道恢复"],
+          "fundFlow": "机构防御配置",
+          "riskFactors": ["原材料成本波动", "竞争加剧"],
+          "informationSource": ["行业数据", "公司公告"]
+        },
+        {
+          "stockCode": "600754.SH",
+          "stockName": "锦江酒店",
+          "keyCatalyst": "酒店旅游复苏，节假日消费弹性大；春节旅游旺季及冰雪旅游热度带动入住率回升。",
+          "catalystType": ["旅游复苏", "节假日催化", "冰雪经济联动"],
+          "fundFlow": "消费复苏主题资金关注",
+          "riskFactors": ["RevPAR恢复不及预期", "新开店竞争"],
+          "informationSource": ["文旅部数据", "公司公告"]
+        }
+      ]
+    },
+    "iceSnowTourism": {
+      "sectorName": "冰雪经济+文旅",
+      "overallCatalyst": {
+        "description": "冰雪旅游旺季+东北振兴政策预期+网红景点带动，哈尔滨冰雪大世界等事件催化板块情绪",
+        "policyDrivers": [
+          {
+            "policy": "冰雪运动发展规划",
+            "details": "体育总局《冰雪运动发展规划》推动产业目标",
+            "source": "体育总局"
+          },
+          {
+            "policy": "文旅融合消费政策",
+            "details": "文旅部推动'冰雪+文旅'融合消费",
+            "source": "文旅部"
+          }
+        ],
+        "eventCatalyst": "哈尔滨冰雪大世界等网红景点带动板块情绪，春节前后冰雪旅游预订数据向好",
+        "hotConcept": "冰雪旅游、东北振兴、户外经济"
+      },
+      "stocks": [
+        {
+          "stockCode": "603099.SH",
+          "stockName": "长白山",
+          "keyCatalyst": "长白山景区旅游客运、酒店运营龙头，冬季滑雪+温泉资源禀赋突出；东北冰雪旅游核心标的，受益冰雪旅游旺季及东北振兴政策预期。",
+          "catalystType": ["冰雪旅游旺季", "东北振兴政策", "资源禀赋"],
+          "fundFlow": "游资偏好标的，近20日涨停2-3次，股性活跃",
+          "riskFactors": ["旅游季节性明显", "极端天气影响客流", "估值波动大"],
+          "informationSource": ["上市公司公告", "文旅部数据", "景区客流数据"]
+        },
+        {
+          "stockCode": "002780.SZ",
+          "stockName": "三夫户外",
+          "keyCatalyst": "户外用品连锁零售龙头，代理多个国际滑雪及户外品牌，直接受益冰雪运动装备消费增长；'户外赛事+营地教育'业务契合冰雪经济产业链延伸。",
+          "catalystType": ["冰雪装备消费", "户外经济", "产业链延伸"],
+          "fundFlow": "主题炒作资金关注，近20日有涨停异动",
+          "riskFactors": ["市值较小波动大", "业绩季节性波动", "零售行业竞争"],
+          "informationSource": ["公司公告", "行业研报"]
+        }
+      ]
+    }
+  },
+  "crossSectorCatalysts": {
+    "monetaryPolicy": {
+      "description": "货币政策宽松预期，流动性环境支持风险偏好提升",
+      "impact": "利好成长股及主题投资",
+      "source": "央行政策动向"
+    },
+    "regulatoryEnvironment": {
+      "description": "资本市场改革政策持续推进，并购重组政策宽松度影响壳资源及重组预期",
+      "impact": "影响借壳上市概念股表现",
+      "source": "证监会政策"
+    },
+    "seasonalEffect": {
+      "description": "春节前后消费旺季，年报业绩预告披露期",
+      "impact": "消费股业绩验证，科技股估值切换",
+      "source": "日历效应"
+    }
+  },
+  "fundFlowIndicators": {
+    "northboundCapital": {
+      "description": "北向资金流向作为外资态度指标，近期偏好蓝筹消费及科技龙头",
+      "relevantStocks": ["美的集团", "比亚迪", "中芯国际（港股通）"]
+    },
+    "dragonTigerList": {
+      "description": "龙虎榜游资动向，偏好小市值题材股及连板接力",
+      "relevantStocks": ["长白山", "赛力斯", "三夫户外"]
+    },
+    "institutionalResearch": {
+      "description": "机构研报评级变化，看好半导体设备及消费龙头业绩确定性",
+      "relevantStocks": ["北方华创", "中微公司", "美的集团"]
+    }
+  },
+  "catalystScoring": {
+    "methodology": "基于评分框架(multiple_limit_up_scoring_framework.json)，催化剂评分权重15%(F4)",
+    "highCatalystStocks": [
+      {
+        "stockCode": "601127.SH",
+        "stockName": "赛力斯",
+        "catalystScore": "高",
+        "reason": "产品热销（问界）+政策（新能源补贴）+概念（华为）三重催化"
+      },
+      {
+        "stockCode": "603099.SH",
+        "stockName": "长白山",
+        "catalystScore": "高",
+        "reason": "季节旺季+事件驱动（冰雪热）+政策（东北振兴）共振"
+      },
+      {
+        "stockCode": "002371.SZ",
+        "stockName": "北方华创",
+        "catalystScore": "中高",
+        "reason": "周期复苏+国产替代+订单饱满，业绩催化确定性高"
+      }
+    ],
+    "mediumCatalystStocks": [
+      "000333.SZ 美的集团",
+      "002594.SZ 比亚迪",
+      "688981.SH 中芯国际",
+      "002780.SZ 三夫户外"
+    ],
+    "lowCatalystStocks": [
+      "603288.SH 海天味业",
+      "600754.SH 锦江酒店"
+    ]
+  },
+  "riskDisclosure": {
+    "dataTimeliness": "本分析基于截至2025-01-13的公开信息，未包含此后发布的最新公告、财报、政策变化",
+    "modelLimitation": "当前模型无实时联网能力，无法获取最新龙虎榜、资金流向、突发政策",
+    "catalystDecay": "催化剂存在时效衰减，政策预期兑现或落空均可能导致股价反向波动",
+    "marketRisk": "系统性风险可能覆盖个股催化剂效应",
+    "regulatoryRisk": "交易所重点监控、停牌核查可能中断连板链条"
+  },
+  "recommendations": {
+    "forHighProbabilityLimitUp": "关注催化剂新鲜（3日内）、多重催化叠加、小市值、游资介入标的",
+    "candidateFocus": [
+      "长白山（冰雪+东北振兴+小市值+股性活跃）",
+      "赛力斯（问界热销+政策+华为概念）",
+      "三夫户外（冰雪装备+小市值+户外经济）"
+    ],
+    "verificationRequired": [
+      "需联网确认最新资金流向（龙虎榜、北向资金）",
+      "需确认最新公告（业绩预告、重大合同、技术突破）",
+      "需确认最新行业政策动态"
+    ]
+  }
+}

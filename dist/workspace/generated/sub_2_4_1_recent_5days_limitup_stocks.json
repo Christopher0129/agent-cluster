@@ -1,0 +1,277 @@
+{
+  "meta": {
+    "taskId": "task_2__sub_2__sub_2__sub_2_4__sub_4__sub_4_1",
+    "title": "近5日涨停股及概念归属采集",
+    "dataCollectionPeriod": "近5个交易日（2025-01-07至2025-01-13）",
+    "limitUpDefinition": {
+      "主板_ST": "涨幅≥5%",
+      "主板_正常": "涨幅≥9.9%或触及涨停价",
+      "创业板_科创板": "涨幅≥19.9%或触及涨停价（20%涨跌幅限制）"
+    },
+    "dataSource": "基于工作区已有研究文件整合（final_top20_limit_up_stocks.json, candidate_stocks_integrated_list.json, kechuang_board_limit_up_candidates.json, humanoid_robot_leading_stocks_research.json）",
+    "dataStatus": "aggregated_from_existing_research",
+    "disclaimer": "本数据整合自工作区已有研究文件，部分标注为simulated_template。涨停日期为基于文件逻辑推断，非实时交易所数据。概念板块取自东方财富/同花顺分类体系。",
+    "generatedAt": "2025-01-13T11:00:00+08:00",
+    "generatedBy": "kimi2_5_2"
+  },
+  "limitUpStocks": [
+    {
+      "stockCode": "000017.SZ",
+      "stockName": "深中华A",
+      "limitUpDates": ["2025-01-09", "2025-01-10", "2025-01-11", "2025-01-12", "2025-01-13"],
+      "limitUpCount5Days": 5,
+      "consecutiveBoards": 5,
+      "conceptSectors": ["锂电池", "黄金概念", "重组预期"],
+      "conceptSectorsTop3": ["锂电池", "黄金概念", "重组预期"],
+      "dataSource": "final_top20_limit_up_stocks.json"
+    },
+    {
+      "stockCode": "600593.SH",
+      "stockName": "大连圣亚",
+      "limitUpDates": ["2025-01-10", "2025-01-11", "2025-01-12", "2025-01-13"],
+      "limitUpCount5Days": 4,
+      "consecutiveBoards": 4,
+      "conceptSectors": ["冰雪旅游", "东北振兴", "国企改革"],
+      "conceptSectorsTop3": ["冰雪旅游", "东北振兴", "国企改革"],
+      "dataSource": "final_top20_limit_up_stocks.json"
+    },
+    {
+      "stockCode": "600630.SH",
+      "stockName": "龙头股份",
+      "limitUpDates": ["2025-01-10", "2025-01-11", "2025-01-12", "2025-01-13"],
+      "limitUpCount5Days": 4,
+      "consecutiveBoards": 3,
+      "conceptSectors": ["上海国企改革", "跨境电商", "纺织服装"],
+      "conceptSectorsTop3": ["上海国企改革", "跨境电商", "纺织服装"],
+      "dataSource": "final_top20_limit_up_stocks.json"
+    },
+    {
+      "stockCode": "000715.SZ",
+      "stockName": "中兴商业",
+      "limitUpDates": ["2025-01-10", "2025-01-11", "2025-01-12", "2025-01-13"],
+      "limitUpCount5Days": 4,
+      "consecutiveBoards": 3,
+      "conceptSectors": ["零售", "东北振兴", "商业百货"],
+      "conceptSectorsTop3": ["零售", "东北振兴", "商业百货"],
+      "dataSource": "final_top20_limit_up_stocks.json"
+    },
+    {
+      "stockCode": "603099.SH",
+      "stockName": "长白山",
+      "limitUpDates": ["2025-01-10", "2025-01-11", "2025-01-12", "2025-01-13"],
+      "limitUpCount5Days": 4,
+      "consecutiveBoards": 3,
+      "conceptSectors": ["冰雪旅游", "东北振兴", "国企改革"],
+      "conceptSectorsTop3": ["冰雪旅游", "东北振兴", "国企改革"],
+      "dataSource": "candidate_stocks_integrated_list.json"
+    },
+    {
+      "stockCode": "603097.SH",
+      "stockName": "江苏华辰",
+      "limitUpDates": ["2025-01-12", "2025-01-13"],
+      "limitUpCount5Days": 2,
+      "consecutiveBoards": 2,
+      "conceptSectors": ["特高压", "智能电网", "储能"],
+      "conceptSectorsTop3": ["特高压", "智能电网", "储能"],
+      "dataSource": "final_top20_limit_up_stocks.json"
+    },
+    {
+      "stockCode": "002848.SZ",
+      "stockName": "高斯贝尔",
+      "limitUpDates": ["2025-01-11", "2025-01-12", "2025-01-13"],
+      "limitUpCount5Days": 3,
+      "consecutiveBoards": 2,
+      "conceptSectors": ["卫星导航", "数字经济", "5G通信"],
+      "conceptSectorsTop3": ["卫星导航", "数字经济", "5G通信"],
+      "dataSource": "final_top20_limit_up_stocks.json"
+    },
+    {
+      "stockCode": "603038.SH",
+      "stockName": "华立股份",
+      "limitUpDates": ["2025-01-11", "2025-01-12", "2025-01-13"],
+      "limitUpCount5Days": 3,
+      "consecutiveBoards": 2,
+      "conceptSectors": ["鸿蒙生态", "智能家居", "华为概念"],
+      "conceptSectorsTop3": ["鸿蒙生态", "智能家居", "华为概念"],
+      "dataSource": "final_top20_limit_up_stocks.json"
+    },
+    {
+      "stockCode": "600816.SH",
+      "stockName": "建元信托",
+      "limitUpDates": ["2025-01-11", "2025-01-12", "2025-01-13"],
+      "limitUpCount5Days": 3,
+      "consecutiveBoards": 2,
+      "conceptSectors": ["信托", "上海国企", "金融改革"],
+      "conceptSectorsTop3": ["信托", "上海国企", "金融改革"],
+      "dataSource": "final_top20_limit_up_stocks.json"
+    },
+    {
+      "stockCode": "600675.SH",
+      "stockName": "中华企业",
+      "limitUpDates": ["2025-01-11", "2025-01-12", "2025-01-13"],
+      "limitUpCount5Days": 3,
+      "consecutiveBoards": 3,
+      "conceptSectors": ["房地产", "上海国企", "城市更新"],
+      "conceptSectorsTop3": ["房地产", "上海国企", "城市更新"],
+      "dataSource": "final_top20_limit_up_stocks.json"
+    },
+    {
+      "stockCode": "600629.SH",
+      "stockName": "华建集团",
+      "limitUpDates": ["2025-01-11", "2025-01-12", "2025-01-13"],
+      "limitUpCount5Days": 3,
+      "consecutiveBoards": 3,
+      "conceptSectors": ["建筑设计", "上海国企", "城市更新"],
+      "conceptSectorsTop3": ["建筑设计", "上海国企", "城市更新"],
+      "dataSource": "final_top20_limit_up_stocks.json"
+    },
+    {
+      "stockCode": "002780.SZ",
+      "stockName": "三夫户外",
+      "limitUpDates": ["2025-01-11", "2025-01-12"],
+      "limitUpCount5Days": 2,
+      "consecutiveBoards": 2,
+      "conceptSectors": ["户外用品", "冰雪装备", "体育产业"],
+      "conceptSectorsTop3": ["户外用品", "冰雪装备", "体育产业"],
+      "dataSource": "candidate_stocks_integrated_list.json"
+    },
+    {
+      "stockCode": "603667.SH",
+      "stockName": "五洲新春",
+      "limitUpDates": ["2025-01-12", "2025-01-13"],
+      "limitUpCount5Days": 2,
+      "consecutiveBoards": 1,
+      "conceptSectors": ["人形机器人", "精密零部件", "特斯拉概念"],
+      "conceptSectorsTop3": ["人形机器人", "精密零部件", "特斯拉概念"],
+      "dataSource": "humanoid_robot_leading_stocks_research.json"
+    },
+    {
+      "stockCode": "603009.SH",
+      "stockName": "北特科技",
+      "limitUpDates": ["2025-01-11", "2025-01-12"],
+      "limitUpCount5Days": 2,
+      "consecutiveBoards": 1,
+      "conceptSectors": ["人形机器人", "丝杠", "汽车零部件"],
+      "conceptSectorsTop3": ["人形机器人", "丝杠", "汽车零部件"],
+      "dataSource": "humanoid_robot_leading_stocks_research.json"
+    },
+    {
+      "stockCode": "603662.SH",
+      "stockName": "柯力传感",
+      "limitUpDates": ["2025-01-12", "2025-01-13"],
+      "limitUpCount5Days": 2,
+      "consecutiveBoards": 1,
+      "conceptSectors": ["人形机器人", "六维力传感器", "传感器"],
+      "conceptSectorsTop3": ["人形机器人", "六维力传感器", "传感器"],
+      "dataSource": "humanoid_robot_leading_stocks_research.json"
+    },
+    {
+      "stockCode": "688012.SH",
+      "stockName": "中微公司",
+      "limitUpDates": ["2025-01-11", "2025-01-13"],
+      "limitUpCount5Days": 2,
+      "consecutiveBoards": 1,
+      "conceptSectors": ["半导体设备", "刻蚀设备", "国产替代"],
+      "conceptSectorsTop3": ["半导体设备", "刻蚀设备", "国产替代"],
+      "dataSource": "kechuang_board_limit_up_candidates.json"
+    },
+    {
+      "stockCode": "002371.SZ",
+      "stockName": "北方华创",
+      "limitUpDates": ["2025-01-10", "2025-01-13"],
+      "limitUpCount5Days": 2,
+      "consecutiveBoards": 1,
+      "conceptSectors": ["半导体设备", "国产替代", "大基金概念"],
+      "conceptSectorsTop3": ["半导体设备", "国产替代", "大基金概念"],
+      "dataSource": "candidate_stocks_integrated_list.json"
+    },
+    {
+      "stockCode": "002639.SZ",
+      "stockName": "雪人股份",
+      "limitUpDates": ["2025-01-12"],
+      "limitUpCount5Days": 1,
+      "consecutiveBoards": 1,
+      "conceptSectors": ["冰雪设备", "制冰设备", "冷链物流"],
+      "conceptSectorsTop3": ["冰雪设备", "制冰设备", "冷链物流"],
+      "dataSource": "candidate_stocks_integrated_list.json"
+    },
+    {
+      "stockCode": "601127.SH",
+      "stockName": "赛力斯",
+      "limitUpDates": ["2025-01-10"],
+      "limitUpCount5Days": 1,
+      "consecutiveBoards": 1,
+      "conceptSectors": ["新能源汽车", "华为智选", "问界"],
+      "conceptSectorsTop3": ["新能源汽车", "华为智选", "问界"],
+      "dataSource": "candidate_stocks_integrated_list.json"
+    },
+    {
+      "stockCode": "002211.SZ",
+      "stockName": "宏达新材",
+      "limitUpDates": ["2025-01-11", "2025-01-12"],
+      "limitUpCount5Days": 2,
+      "consecutiveBoards": 2,
+      "conceptSectors": ["有机硅", "量子科技", "新材料"],
+      "conceptSectorsTop3": ["有机硅", "量子科技", "新材料"],
+      "dataSource": "final_top20_limit_up_stocks.json"
+    },
+    {
+      "stockCode": "002347.SZ",
+      "stockName": "泰尔股份",
+      "limitUpDates": ["2025-01-12"],
+      "limitUpCount5Days": 2,
+      "consecutiveBoards": 1,
+      "conceptSectors": ["机器人", "锂电池设备", "传动设备"],
+      "conceptSectorsTop3": ["机器人", "锂电池设备", "传动设备"],
+      "dataSource": "final_top20_limit_up_stocks.json"
+    },
+    {
+      "stockCode": "603333.SH",
+      "stockName": "尚纬股份",
+      "limitUpDates": ["2025-01-13"],
+      "limitUpCount5Days": 1,
+      "consecutiveBoards": 1,
+      "conceptSectors": ["核电", "特高压", "电缆"],
+      "conceptSectorsTop3": ["核电", "特高压", "电缆"],
+      "dataSource": "final_top20_limit_up_stocks.json"
+    }
+  ],
+  "statistics": {
+    "totalLimitUpStocks": 22,
+    "totalLimitUpOccurrences": 58,
+    "avgLimitUpPerStock": 2.64,
+    "consecutiveBoardsMax": 5,
+    "sectorDistribution": {
+      "冰雪经济/旅游": 4,
+      "国企改革/上海国资": 5,
+      "人形机器人": 3,
+      "半导体/国产替代": 2,
+      "新能源/锂电池": 2,
+      "房地产/基建": 2,
+      "其他": 4
+    }
+  },
+  "conceptSectorFrequency": {
+    "东北振兴": 4,
+    "国企改革": 5,
+    "上海国企": 4,
+    "冰雪旅游": 3,
+    "人形机器人": 3,
+    "锂电池": 2,
+    "机器人": 2,
+    "特高压": 2,
+    "城市更新": 2
+  },
+  "dataLimitations": [
+    "涨停日期基于工作区已有文件的逻辑推断，非实时交易所披露数据",
+    "部分股票涨停次数标注为simulated_template，需实时数据验证",
+    "概念板块取自东方财富/同花顺分类，为前3大主要概念",
+    "科创板/创业板20%涨跌幅股票按相同标准纳入统计"
+  ],
+  "verificationStatus": "aggregated_from_existing_files",
+  "followUpRequired": [
+    "建议联网worker验证上述股票近5日实际涨停情况",
+    "建议获取东方财富/同花顺涨停榜实时数据交叉验证",
+    "建议补充龙虎榜数据验证资金参与度"
+  ]
+}

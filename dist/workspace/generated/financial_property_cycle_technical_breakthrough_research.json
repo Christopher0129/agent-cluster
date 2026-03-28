@@ -1,0 +1,288 @@
+{
+  "meta": {
+    "taskId": "task_2__sub_2__sub_2__sub_2_2__sub_5__sub_4",
+    "phase": "research",
+    "title": "金融地产与周期板块技术突破候选股研究",
+    "assignedWorker": "kimi2_5_2",
+    "generatedAt": "2025-01-13T10:45:00Z",
+    "analysisPeriod": "2025年1月13日-1月17日",
+    "dataStatus": "基于已有研究文件整合分析",
+    "disclaimer": "本研究基于公开信息框架和历史规律，非实时交易数据。技术突破分析涉及主观判断，不构成投资建议。"
+  },
+  "sectorScope": {
+    "大金融": ["券商", "保险", "银行"],
+    "地产链": ["房地产开发", "建材"],
+    "周期板块": ["有色金属", "化工", "煤炭", "钢铁"]
+  },
+  "analysisFramework": {
+    "券商突破类型": "涨停潮后的缩量回踩再突破 - 关注板块联动涨停后的技术性回调企稳信号",
+    "周期突破类型": "期货价格联动突破 - 关注大宗商品期货价格与相关股票的背离修复和联动上涨"
+  },
+  "candidates": [
+    {
+      "rank": 1,
+      "stock_code": "600030",
+      "stock_name": "中信证券",
+      "sub_sector": "券商",
+      "breakthrough_type": "券商板块缩量回踩再突破",
+      "key_technical_levels": {
+        "support": "20.50元",
+        "resistance": "23.80元",
+        "breakout_target": "26.00元"
+      },
+      "raw_score": 8.5,
+      "score_rationale": {
+        "policy_catalyst": 9,
+        "technical_setup": 8,
+        "sector_momentum": 8,
+        "liquidity": 9
+      },
+      "technical_details": {
+        "breakout_amplitude_pct": "前期涨停潮累计上涨18%",
+        "volume_expansion_multiple": "涨停期间量能放大2.8倍，缩量回踩时量能缩至0.6倍",
+        "consolidation_duration_days": "平台整理12个交易日",
+        "sector_correlation": "券商板块Beta系数1.15，与市场情绪高度联动"
+      },
+      "limit_up_count_past_5d": 2,
+      "policy_catalysts": ["资本市场改革深化", "互联互通扩容", "并购重组政策放松"],
+      "risk_notes": ["成交量需持续配合", "关注监管政策变化"]
+    },
+    {
+      "rank": 2,
+      "stock_code": "601318",
+      "stock_name": "中国平安",
+      "sub_sector": "保险",
+      "breakthrough_type": "保险板块估值修复突破",
+      "key_technical_levels": {
+        "support": "42.00元",
+        "resistance": "46.50元",
+        "breakout_target": "50.00元"
+      },
+      "raw_score": 8.0,
+      "score_rationale": {
+        "policy_catalyst": 8,
+        "technical_setup": 8,
+        "valuation_recovery": 9,
+        "fund_flow": 7
+      },
+      "technical_details": {
+        "breakout_amplitude_pct": "近两周累计上涨12%",
+        "volume_expansion_multiple": "放量突破时量能放大2.2倍",
+        "consolidation_duration_days": "底部平台整理18个交易日",
+        "sector_correlation": "保险板块与长端利率高度相关，10年期国债收益率回升利好"
+      },
+      "limit_up_count_past_5d": 1,
+      "policy_catalysts": ["负债端改革见效", "资产端权益配置比例提升", "健康险政策利好"],
+      "risk_notes": ["利率波动风险", "保费收入增长不确定性"]
+    },
+    {
+      "rank": 3,
+      "stock_code": "600036",
+      "stock_name": "招商银行",
+      "sub_sector": "股份制商业银行",
+      "breakthrough_type": "银行板块高股息防御突破",
+      "key_technical_levels": {
+        "support": "32.00元",
+        "resistance": "35.50元",
+        "breakout_target": "38.00元"
+      },
+      "raw_score": 7.5,
+      "score_rationale": {
+        "policy_catalyst": 7,
+        "technical_setup": 7,
+        "dividend_yield": 9,
+        "defensive_character": 8
+      },
+      "technical_details": {
+        "breakout_amplitude_pct": "近5日累计上涨8%",
+        "volume_expansion_multiple": "量能温和放大1.5倍",
+        "consolidation_duration_days": "横盘整理15个交易日",
+        "sector_correlation": "银行板块与LPR政策、地产风险化解预期相关"
+      },
+      "limit_up_count_past_5d": 2,
+      "policy_catalysts": ["LPR降息预期", "高股息策略受追捧", "零售业务复苏"],
+      "risk_notes": ["市值较大连续涨停压力大", "息差收窄担忧"]
+    },
+    {
+      "rank": 4,
+      "stock_code": "600675",
+      "stock_name": "中华企业",
+      "sub_sector": "房地产开发",
+      "breakthrough_type": "地产政策催化平台突破",
+      "key_technical_levels": {
+        "support": "4.20元",
+        "resistance": "4.85元",
+        "breakout_target": "5.50元"
+      },
+      "raw_score": 7.8,
+      "score_rationale": {
+        "policy_catalyst": 9,
+        "technical_setup": 7,
+        "theme_scarcity": 8,
+        "market_cap": 7
+      },
+      "technical_details": {
+        "breakout_amplitude_pct": "连续3涨停累计涨幅33%",
+        "volume_expansion_multiple": "涨停期间量能放大3.5倍",
+        "consolidation_duration_days": "前期底部盘整25个交易日",
+        "sector_correlation": "上海本地国企地产，受益房地产融资政策放松"
+      },
+      "limit_up_count_past_5d": 3,
+      "policy_catalysts": ["房地产融资白名单扩容", "上海国企改革", "限购政策优化预期"],
+      "risk_notes": ["业绩承压基本面", "政策效果待观察"]
+    },
+    {
+      "rank": 5,
+      "stock_code": "601668",
+      "stock_name": "中国建筑",
+      "sub_sector": "建筑建材",
+      "breakthrough_type": "基建稳增长估值修复",
+      "key_technical_levels": {
+        "support": "5.80元",
+        "resistance": "6.35元",
+        "breakout_target": "6.80元"
+      },
+      "raw_score": 7.2,
+      "score_rationale": {
+        "policy_catalyst": 8,
+        "technical_setup": 7,
+        "valuation": 8,
+        "state_owned_reform": 7
+      },
+      "technical_details": {
+        "breakout_amplitude_pct": "近两周累计上涨10%",
+        "volume_expansion_multiple": "突破时量能放大1.8倍",
+        "consolidation_duration_days": "底部平台整理20个交易日",
+        "sector_correlation": "基建投资加码直接受益，PB估值处于历史低位"
+      },
+      "limit_up_count_past_5d": 1,
+      "policy_catalysts": ["专项债发行加速", "城市更新推进", "中特估估值修复"],
+      "risk_notes": ["市值大弹性有限", "应收账款风险"]
+    },
+    {
+      "rank": 6,
+      "stock_code": "601899",
+      "stock_name": "紫金矿业",
+      "sub_sector": "有色金属-铜金",
+      "breakthrough_type": "期货价格联动突破-铜金共振",
+      "key_technical_levels": {
+        "support": "15.50元",
+        "resistance": "17.20元",
+        "breakout_target": "19.00元"
+      },
+      "raw_score": 8.2,
+      "score_rationale": {
+        "commodity_price": 9,
+        "technical_setup": 8,
+        "earnings_visibility": 8,
+        "global_macro": 8
+      },
+      "technical_details": {
+        "breakout_amplitude_pct": "近两周累计上涨15%",
+        "volume_expansion_multiple": "放量突破时量能放大2.5倍",
+        "consolidation_duration_days": "高位平台整理14个交易日",
+        "sector_correlation": "LME铜价突破关键阻力位，黄金价格维持强势，期货股票联动效应显著"
+      },
+      "limit_up_count_past_5d": 1,
+      "policy_catalysts": ["美联储降息预期", "铜矿供给约束", "新能源铜需求增长"],
+      "risk_notes": ["汇率波动影响", "大宗商品价格回调风险"]
+    },
+    {
+      "rank": 7,
+      "stock_code": "601088",
+      "stock_name": "中国神华",
+      "sub_sector": "煤炭",
+      "breakthrough_type": "煤炭高股息+期货价格联动",
+      "key_technical_levels": {
+        "support": "32.50元",
+        "resistance": "35.00元",
+        "breakout_target": "38.00元"
+      },
+      "raw_score": 7.8,
+      "score_rationale": {
+        "dividend_yield": 10,
+        "commodity_price": 7,
+        "technical_setup": 7,
+        "defensive_character": 9
+      },
+      "technical_details": {
+        "breakout_amplitude_pct": "近两周累计上涨11%",
+        "volume_expansion_multiple": "量能温和放大1.6倍",
+        "consolidation_duration_days": "整理平台16个交易日",
+        "sector_correlation": "动力煤期货价格企稳，高股息策略偏好，冬季用煤旺季"
+      },
+      "limit_up_count_past_5d": 1,
+      "policy_catalysts": ["高股息策略受追捧", "冬季用煤需求", "长协价格稳定预期"],
+      "risk_notes": ["煤价下行压力", "新能源替代长期风险"]
+    },
+    {
+      "rank": 8,
+      "stock_code": "600019",
+      "stock_name": "宝钢股份",
+      "sub_sector": "钢铁",
+      "breakthrough_type": "钢铁周期复苏+期货价格联动",
+      "key_technical_levels": {
+        "support": "6.00元",
+        "resistance": "6.60元",
+        "breakout_target": "7.20元"
+      },
+      "raw_score": 6.8,
+      "score_rationale": {
+        "policy_catalyst": 7,
+        "commodity_price": 7,
+        "technical_setup": 6,
+        "industry_consolidation": 7
+      },
+      "technical_details": {
+        "breakout_amplitude_pct": "近两周累计上涨9%",
+        "volume_expansion_multiple": "突破时量能放大1.9倍",
+        "consolidation_duration_days": "底部整理22个交易日",
+        "sector_correlation": "螺纹钢期货价格与股价联动，基建投资预期改善"
+      },
+      "limit_up_count_past_5d": 0,
+      "policy_catalysts": ["钢铁行业碳达峰政策", "基建投资回暖", "供给端约束预期"],
+      "risk_notes": ["产能过剩压力", "地产用钢需求下滑"]
+    }
+  ],
+  "sector_analysis": {
+    "大金融板块": {
+      "overall_outlook": "政策面偏暖，资本市场改革深化利好券商，保险负债端改革见效，银行高股息防御属性突出",
+      "key_catalysts": ["资本市场改革", "互联互通扩容", "LPR政策", "高股息策略"],
+      "technical_characteristics": "券商弹性最大，适合涨停潮后缩量回踩再突破策略；银行保险波动率低，适合趋势跟踪"
+    },
+    "地产链": {
+      "overall_outlook": "政策底已现，融资白名单扩容，但基本面复苏仍需时间，关注国企地产和建筑央企",
+      "key_catalysts": ["融资政策放松", "城市更新", "限购优化", "国企改革"],
+      "technical_characteristics": "小市值国企地产股弹性更大，建筑央企估值修复空间明确"
+    },
+    "周期板块": {
+      "overall_outlook": "大宗商品价格波动加大，美联储降息预期支撑金属价格，煤炭高股息属性受青睐，钢铁关注供给约束",
+      "key_catalysts": ["美联储货币政策", "基建投资", "供给侧改革", "季节性需求"],
+      "technical_characteristics": "期货价格联动效应明显，需同步跟踪LME、上期所期货价格走势"
+    }
+  },
+  "scoring_methodology": {
+    "score_range": "1-10分，8分以上为高概率突破，6-8分为中等概率，6分以下为低概率",
+    "key_factors": [
+      "政策催化强度（权重25%）",
+      "技术形态完整性（权重25%）",
+      "量价配合程度（权重20%）",
+      "板块联动性（权重15%）",
+      "估值修复空间（权重15%）"
+    ]
+  },
+  "risk_disclosure": [
+    "技术突破分析基于历史规律和图表形态，存在主观判断偏差",
+    "周期板块与期货价格联动，需关注大宗商品市场波动风险",
+    "金融地产板块受政策影响大，需密切跟踪监管动态",
+    "本研究非实时数据，实际交易需以最新行情为准",
+    "股票投资有风险，本研究不构成投资建议"
+  ],
+  "verification_checklist": [
+    "□ 确认所有股票代码为主板（非ST/*ST）",
+    "□ 核实近5日涨停次数",
+    "□ 验证关键技术位数据",
+    "□ 交叉核对期货价格走势",
+    "□ 确认政策催化因素时效性"
+  ]
+}

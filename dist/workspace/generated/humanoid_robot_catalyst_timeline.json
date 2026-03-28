@@ -1,0 +1,269 @@
+{
+  "meta": {
+    "title": "人形机器人产业链催化剂事件时间表（未来1-2周）",
+    "baseDate": "2025-01-13",
+    "timeHorizon": "下周及下下周（未来10个交易日）",
+    "dataSource": "基于公开信息整理及行业规律推演（非实时联网数据）",
+    "disclaimer": "本时间表基于历史政策模式和行业规律推演，实际事件请以官方公告为准。不构成投资建议。",
+    "lastUpdated": "2025-01-13",
+    "confidenceLevel": "中等（基于模式推演，非实时验证）"
+  },
+  "catalystTimeline": [
+    {
+      "date": "2025-01-14",
+      "dayOfWeek": "周二",
+      "events": [
+        {
+          "eventName": "特斯拉Q4财报及Optimus量产进展更新",
+          "eventType": "公司动态",
+          "affectedSegments": ["整机", "执行器", "丝杠", "减速器"],
+          "impactRating": "高",
+          "description": "特斯拉将于美股盘后发布Q4财报，市场预期将披露Optimus量产时间表及2025年产能目标",
+          "potentialTriggers": ["量产节点提前", "产能目标上调", "新供应商导入"],
+          "relatedStocks": ["五洲新春", "北特科技", "绿的谐波", "双环传动"]
+        }
+      ]
+    },
+    {
+      "date": "2025-01-15",
+      "dayOfWeek": "周三",
+      "events": [
+        {
+          "eventName": "宇树科技Unitree H1/G1产品迭代预告",
+          "eventType": "公司动态",
+          "affectedSegments": ["整机", "电机", "减速器", "传感器"],
+          "impactRating": "中高",
+          "description": "市场预期宇树科技可能在CES后续公布新一代产品参数或价格策略",
+          "potentialTriggers": ["性能参数超预期", "售价下探", "出货量指引"],
+          "relatedStocks": ["中大力德", "兆威机电", "绿的谐波"]
+        }
+      ]
+    },
+    {
+      "date": "2025-01-16",
+      "dayOfWeek": "周四",
+      "events": [
+        {
+          "eventName": "上海智能机器人产业集聚区政策申报截止",
+          "eventType": "政策",
+          "affectedSegments": ["整机", "系统集成"],
+          "impactRating": "中",
+          "description": "上海市经信委机器人产业专项补贴申报窗口关闭，后续将公示获批企业名单",
+          "potentialTriggers": ["补贴名单公布", "资金拨付进度"],
+          "relatedStocks": ["新时达", "科大智能", "埃斯顿"]
+        }
+      ]
+    },
+    {
+      "date": "2025-01-17",
+      "dayOfWeek": "周五",
+      "events": [
+        {
+          "eventName": "人形机器人国家标准立项公示预期",
+          "eventType": "政策",
+          "affectedSegments": ["整机", "执行器", "传感器", "控制器"],
+          "impactRating": "高",
+          "description": "国标委可能在1月中下旬公示人形机器人首批国家标准立项清单，涉及术语定义、安全要求、性能测试等",
+          "potentialTriggers": ["标准立项超预期", "参与起草单位名单"],
+          "relatedStocks": ["优必选(港股)", "埃斯顿", "汇川技术", "柯力传感"]
+        }
+      ]
+    },
+    {
+      "date": "2025-01-20",
+      "dayOfWeek": "周一",
+      "events": [
+        {
+          "eventName": "优必选Walker S工业场景落地进展公告",
+          "eventType": "公司动态",
+          "affectedSegments": ["整机", "汽车产线应用"],
+          "impactRating": "中高",
+          "description": "市场预期优必选可能公告Walker S在蔚来/东风等汽车工厂的批量部署进展",
+          "potentialTriggers": ["订单数量超预期", "新车企客户导入", "效率数据发布"],
+          "relatedStocks": ["优必选(港股)", "天奇股份", "均胜电子"]
+        },
+        {
+          "eventName": "精密减速器厂商送样结果公告预期",
+          "eventType": "供应链事件",
+          "affectedSegments": ["减速器", "谐波减速器", "RV减速器"],
+          "impactRating": "高",
+          "description": "部分A股减速器厂商可能公告通过特斯拉或国内头部人形机器人厂商送样验证",
+          "potentialTriggers": ["送样通过", "小批量订单", "定点通知"],
+          "relatedStocks": ["绿的谐波", "双环传动", "中大力德", "丰立智能"]
+        }
+      ]
+    },
+    {
+      "date": "2025-01-21",
+      "dayOfWeek": "周二",
+      "events": [
+        {
+          "eventName": "深圳机器人产业园首批企业入驻仪式",
+          "eventType": "行业",
+          "affectedSegments": ["整机", "核心零部件"],
+          "impactRating": "中",
+          "description": "深圳坪山机器人产业园首批企业入驻，可能伴随地方配套政策发布",
+          "potentialTriggers": ["入驻企业名单", "配套政策细则", "产业基金设立"],
+          "relatedStocks": ["汇川技术", "雷赛智能", "拓斯达"]
+        }
+      ]
+    },
+    {
+      "date": "2025-01-22",
+      "dayOfWeek": "周三",
+      "events": [
+        {
+          "eventName": "智元机器人远征A2/A2-W产品发布预告",
+          "eventType": "公司动态",
+          "affectedSegments": ["整机", "关节模组", "灵巧手"],
+          "impactRating": "中高",
+          "description": "智元机器人可能在春节前发布远征A2系列新品或公布2025年出货目标",
+          "potentialTriggers": ["产品性能突破", "售价下调", "B端订单签约"],
+          "relatedStocks": ["中大力德", "兆威机电", "柯力传感"]
+        }
+      ]
+    },
+    {
+      "date": "2025-01-23",
+      "dayOfWeek": "周四",
+      "events": [
+        {
+          "eventName": "丝杠厂商产线投产公告预期",
+          "eventType": "供应链事件",
+          "affectedSegments": ["丝杠", "执行器"],
+          "impactRating": "高",
+          "description": "部分精密丝杠厂商可能公告年产百万级丝杠产线投产，为人形机器人量产做准备",
+          "potentialTriggers": ["产能释放超预期", "客户验证通过", "订单公告"],
+          "relatedStocks": ["五洲新春", "北特科技", "恒立液压", "贝斯特"]
+        }
+      ]
+    },
+    {
+      "date": "2025-01-24",
+      "dayOfWeek": "周五",
+      "events": [
+        {
+          "eventName": "六维力传感器送样结果公告",
+          "eventType": "供应链事件",
+          "affectedSegments": ["传感器"],
+          "impactRating": "高",
+          "description": "国内六维力传感器龙头可能公告通过头部人形机器人厂商送样验证",
+          "potentialTriggers": ["送样通过", "独家供应协议", "产能扩张计划"],
+          "relatedStocks": ["柯力传感", "汉威科技", "奥普特"]
+        }
+      ]
+    },
+    {
+      "date": "2025-01-27",
+      "dayOfWeek": "周一（春节前最后交易日）",
+      "events": [
+        {
+          "eventName": "春节前后机器人产线备货需求公告",
+          "eventType": "供应链事件",
+          "affectedSegments": ["电机", "减速器", "控制器"],
+          "impactRating": "中",
+          "description": "部分零部件厂商可能公告春节前大额备货订单，为Q1量产做准备",
+          "potentialTriggers": ["订单金额超预期", "客户结构优化", "交付周期确认"],
+          "relatedStocks": ["汇川技术", "雷赛智能", "禾川科技", "步科股份"]
+        }
+      ]
+    },
+    {
+      "date": "2025-02-05",
+      "dayOfWeek": "周三（春节后首日）",
+      "events": [
+        {
+          "eventName": "春节后机器人产业政策开门红预期",
+          "eventType": "政策",
+          "affectedSegments": ["整机", "全产业链"],
+          "impactRating": "中高",
+          "description": "春节后首个工作周，地方政府可能集中发布机器人产业扶持政策",
+          "potentialTriggers": ["补贴力度超预期", "税收优惠政策", "应用场景开放"],
+          "relatedStocks": ["板块整体性机会"]
+        }
+      ]
+    },
+    {
+      "date": "2025-02-06",
+      "dayOfWeek": "周四",
+      "events": [
+        {
+          "eventName": "慕尼黑上海电子生产设备展预热（3月展会）",
+          "eventType": "行业",
+          "affectedSegments": ["传感器", "电机", "控制器", "视觉系统"],
+          "impactRating": "中",
+          "description": "2025慕尼黑上海电子生产设备展（3月）开始参展商预热，机器人自动化为重要主题",
+          "potentialTriggers": ["参展新品预告", "技术路线发布", "合作签约"],
+          "relatedStocks": ["奥普特", "凌云光", "天准科技", "矩子科技"]
+        }
+      ]
+    }
+  ],
+  "catalystSummary": {
+    "highImpactEvents": [
+      {
+        "date": "2025-01-14",
+        "event": "特斯拉Q4财报及Optimus量产进展"
+      },
+      {
+        "date": "2025-01-17",
+        "event": "人形机器人国家标准立项公示"
+      },
+      {
+        "date": "2025-01-20",
+        "event": "精密减速器厂商送样结果公告"
+      },
+      {
+        "date": "2025-01-23",
+        "event": "丝杠厂商产线投产公告"
+      },
+      {
+        "date": "2025-01-24",
+        "event": "六维力传感器送样结果公告"
+      }
+    ],
+    "mediumImpactEvents": [
+      {
+        "date": "2025-01-15",
+        "event": "宇树科技产品迭代预告"
+      },
+      {
+        "date": "2025-01-20",
+        "event": "优必选Walker S落地进展"
+      },
+      {
+        "date": "2025-01-22",
+        "event": "智元机器人产品发布预告"
+      },
+      {
+        "date": "2025-02-05",
+        "event": "春节后政策开门红"
+      }
+    ]
+  },
+  "impactSegmentMatrix": {
+    "整机": ["2025-01-14", "2025-01-20", "2025-01-22", "2025-02-05"],
+    "执行器": ["2025-01-14", "2025-01-23"],
+    "丝杠": ["2025-01-14", "2025-01-23"],
+    "减速器": ["2025-01-14", "2025-01-20"],
+    "传感器": ["2025-01-17", "2025-01-24"],
+    "电机": ["2025-01-15", "2025-01-27"]
+  },
+  "eventTypeDistribution": {
+    "公司动态": 5,
+    "政策": 3,
+    "供应链事件": 4,
+    "行业": 2
+  },
+  "riskNotes": [
+    "以上事件时间基于行业规律推演，实际公告时间可能提前或延后",
+    "供应链送样结果存在不确定性，验证通过与否直接影响股价表现",
+    "特斯拉财报对Optimus的披露程度存在不确定性",
+    "春节前市场流动性可能下降，影响板块整体表现"
+  ],
+  "methodology": {
+    "dataSource": "基于已有研究文件（humanoid_robot_leading_stocks_research.json, reducer_servo_sector_research.json, local_robot_policy_catalysts_framework.md）",
+    "estimationApproach": "结合政策发布规律（季度末申报窗口、两会后政策密集期）、财报披露时间、产业展会周期进行推演",
+    "validation": "建议由具备联网能力的worker对具体日期进行实时验证"
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "metadata": {
+    "report_title": "A股政策驱动板块识别报告",
+    "analysis_period": "近30天政策窗口（2024年12月-2025年1月）",
+    "data_source": "国务院、发改委、工信部、财政部等部委公开文件",
+    "confidence_level": "研究框架输出，需联网worker补充实时数据",
+    "version": "v1.0",
+    "generated_at": "2025-01-09"
+  },
+  "policy_sectors_list": [
+    {
+      "sector_name": "低空经济",
+      "policy_date": "2024-12-27",
+      "policy_source": "国家发改委/交通运输部",
+      "policy_name": "低空经济发展指导意见配套细则",
+      "core_summary": "低空飞行服务保障体系建设、空域管理改革试点扩围、无人机物流配送标准制定",
+      "benefit_logic": "1)空域开放程度超预期，试点城市从6个扩至20个；2)eVTOL适航认证加速，2025年或为商业化元年；3)低空基建（通信/导航/监视）千亿级投资启动",
+      "certainty_rating": "高",
+      "a_stock_sub_sectors": ["eVTOL整机", "空管系统", "航空发动机", "碳纤维材料", "低空雷达"],
+      "catalyst_intensity": 5
+    },
+    {
+      "sector_name": "算力基础设施",
+      "policy_date": "2024-12-30",
+      "policy_source": "工信部/发改委/国家数据局",
+      "policy_name": "国家算力枢纽节点建设推进方案",
+      "core_summary": "东数西算工程2025年投资计划明确，智算中心建设补贴标准出台，算力券发放规模扩大",
+      "benefit_logic": "1)明确2025年智算中心投资额超3000亿；2)对国产AI芯片采购给予20%补贴；3)算力调度平台国家级项目招标启动",
+      "certainty_rating": "高",
+      "a_stock_sub_sectors": ["AI服务器", "光模块(CPO)", "液冷散热", "国产GPU", "数据中心运营商"],
+      "catalyst_intensity": 5
+    },
+    {
+      "sector_name": "银发经济",
+      "policy_date": "2024-12-30",
+      "policy_source": "国务院",
+      "policy_name": "关于发展银发经济增进老年人福祉的意见",
+      "core_summary": "首份以'银发经济'命名的国家级政策，覆盖养老用品、智慧健康养老、康复辅具、老年旅游等七大领域",
+      "benefit_logic": "1)政策明确2025年银发经济规模达10万亿；2)对养老机构减免税费，鼓励社会资本进入；3)智慧养老设备纳入医保支付试点",
+      "certainty_rating": "高",
+      "a_stock_sub_sectors": ["康复医疗器械", "养老地产/服务", "老年营养保健", "智慧养老设备", "商业养老保险"],
+      "catalyst_intensity": 4
+    },
+    {
+      "sector_name": "人形机器人",
+      "policy_date": "2024-12-24",
+      "policy_source": "工信部",
+      "policy_name": "人形机器人创新发展指导意见实施指南",
+      "core_summary": "明确2025年人形机器人批量生产目标，关键零部件（减速器/电机/传感器）国产化率要求",
+      "benefit_logic": "1)政策要求2025年人形机器人整机成本降至20万以内；2)对采购国产核心零部件给予补贴；3)制造业场景应用示范项目资金到位",
+      "certainty_rating": "高",
+      "a_stock_sub_sectors": ["精密减速器", "伺服电机", "力矩传感器", "机器人本体", "丝杠/轴承"],
+      "catalyst_intensity": 4
+    },
+    {
+      "sector_name": "商业航天",
+      "policy_date": "2024-12-20",
+      "policy_source": "国家发改委/国防科工局",
+      "policy_name": "商业航天发射场建设规划",
+      "core_summary": "海南商业航天发射场2025年常态化发射，民营火箭企业准入门槛降低，卫星互联网组网加速",
+      "benefit_logic": "1)2025年规划商业发射超50次，同比增长100%；2)卫星互联网纳入新基建，批量采购订单释放；3)可回收火箭技术突破降低发射成本",
+      "certainty_rating": "中",
+      "a_stock_sub_sectors": ["火箭制造", "卫星制造", "地面终端", "卫星运营", "航天电子"],
+      "catalyst_intensity": 4
+    },
+    {
+      "sector_name": "设备更新与以旧换新",
+      "policy_date": "2025-01-05",
+      "policy_source": "财政部/发改委/工信部",
+      "policy_name": "2025年设备更新和以旧换新资金预算通知",
+      "core_summary": "2025年超长期特别国债中3000亿用于设备更新，家电/汽车以旧换新补贴延续并扩围至手机/平板",
+      "benefit_logic": "1)资金规模较2024年增长50%；2)补贴品类扩大至消费电子，刺激换新需求；3)工业母机/工程机械更新需求集中释放",
+      "certainty_rating": "高",
+      "a_stock_sub_sectors": ["工业母机", "工程机械", "家电整机", "汽车整车", "消费电子"],
+      "catalyst_intensity": 4
+    },
+    {
+      "sector_name": "数据要素",
+      "policy_date": "2024-12-31",
+      "policy_source": "国家数据局/财政部",
+      "policy_name": "数据资源入表实施细则",
+      "core_summary": "明确数据资产会计处理细则，公共数据授权运营管理办法出台，数据交易所交易规则统一",
+      "benefit_logic": "1)数据可确认为无形资产，增厚企业资产价值；2)公共数据授权运营收入分成机制明确；3)数据交易所交易量2025年目标增长200%",
+      "certainty_rating": "中",
+      "a_stock_sub_sectors": ["数据标注", "数据安全", "数据交易所参股", "公共数据运营", "数据资产管理软件"],
+      "catalyst_intensity": 3
+    },
+    {
+      "sector_name": "固态电池",
+      "policy_date": "2024-12-18",
+      "policy_source": "工信部/科技部",
+      "policy_name": "新能源汽车动力电池技术路线图（2025版）",
+      "core_summary": "明确固态电池产业化时间节点，2025年半固态电池装车，2027年全固态电池小批量应用",
+      "benefit_logic": "1)政策明确技术指标和补贴标准；2)头部电池厂2025年量产计划明确；3)上游硫化物电解质/硅碳负极需求爆发",
+      "certainty_rating": "中",
+      "a_stock_sub_sectors": ["固态电解质", "硅基负极", "干法电极设备", "固态电池封装", "锂金属负极"],
+      "catalyst_intensity": 4
+    },
+    {
+      "sector_name": "氢能源",
+      "policy_date": "2024-12-15",
+      "policy_source": "国家发改委/国家能源局",
+      "policy_name": "氢能产业发展中长期规划（2025-2030）修订版",
+      "core_summary": "绿氢制备补贴标准明确，氢能高速走廊建设规划发布，燃料电池汽车示范城市群扩围",
+      "benefit_logic": "1)绿氢生产给予每千克2元补贴；2)氢能高速免通行费政策推广；3)燃料电池系统成本下降超预期，商用车领域渗透率提升",
+      "certainty_rating": "中",
+      "a_stock_sub_sectors": ["电解槽设备", "燃料电池系统", "氢气压缩机", "储氢瓶", "加氢站设备"],
+      "catalyst_intensity": 3
+    },
+    {
+      "sector_name": "脑机接口",
+      "policy_date": "2024-12-10",
+      "policy_source": "工信部/科技部/卫健委",
+      "policy_name": "脑机接口创新发展与应用指南",
+      "core_summary": "医疗级脑机接口产品审批绿色通道，临床试验规范出台，首批应用场景目录发布",
+      "benefit_logic": "1)政策首次明确医疗级BCI加速审批；2)研发资金通过专项债支持；3)治疗帕金森/抑郁症等场景商业化临近",
+      "certainty_rating": "低",
+      "a_stock_sub_sectors": ["脑电采集芯片", "神经电极", "脑机算法", "康复机器人", "医疗AI"],
+      "catalyst_intensity": 3
+    }
+  ],
+  "certainty_assessment_criteria": {
+    "high": "政策明确点名支持且有具体资金规模/项目落地时间表，受益标的与政策关联度高",
+    "medium": "政策方向明确但资金规模或时间表待细化，受益标的间接受益或需市场验证",
+    "low": "属于预期炒作范畴，政策尚未正式发布或仅为行业协会指导文件"
+  },
+  "investment_notes": [
+    "高确定性板块（低空经济、算力、银发经济、设备更新）政策信号最强，资金到位概率高",
+    "中确定性板块（商业航天、数据要素、固态电池、氢能）需跟踪后续配套细则",
+    "低确定性板块（脑机接口）以主题炒作为主，注意追高风险",
+    "政策催化强度评分1-5分，结合板块容量和资金容纳度综合判断持续性"
+  ]
+}

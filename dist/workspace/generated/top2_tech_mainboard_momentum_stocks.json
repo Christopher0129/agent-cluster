@@ -1,0 +1,146 @@
+{
+  "meta": {
+    "generatedAt": "2025-01-13T10:15:00Z",
+    "task": "Final Compilation & TOP2 Selection",
+    "dataSource": "chip_sector_research.json + sentiment_indicators + fund_behavior_theory",
+    "dataCompleteness": "partial",
+    "upstreamDataStatus": "a_stock_limit_up_summary_data.json indicates missing upstream (sub_5_1 to sub_5_4)",
+    "importantNote": "部分字段基于板块研究文件中的活跃度推断，非实时统计，需联网验证"
+  },
+  "selectionCriteria": {
+    "sectorFilter": "科技板块 - 芯片半导体",
+    "boardFilter": "主板（含原中小板，不含科创板/创业板）",
+    "primaryMetrics": [
+      "limit-up frequency/consecutiveness (past 5 days)",
+      "volume expansion magnitude vs 20-day average",
+      "catalyst strength (policy/fund/sector momentum)"
+    ],
+    "scoringFramework": "Momentum Score = 0.4×LimitUpIntensity + 0.35×VolumeExpansion + 0.25×CatalystStrength"
+  },
+  "top2_stocks": [
+    {
+      "rank": 1,
+      "stock_code": "002371",
+      "stock_name": "北方华创",
+      "sector": "电子-半导体设备",
+      "sub_sector": "半导体设备平台型龙头",
+      "board_type": "主板（深市）",
+      "recent_limit_up_count_5d": {
+        "value": "2-3次",
+        "inferenceBasis": "基于芯片板块近5日涨停数8-15只，设备细分占比约20%，龙头标的活跃度推断",
+        "dataQuality": "inferred_from_sector_activity",
+        "verificationRequired": "需联网验证实际涨停次数"
+      },
+      "consecutive_limit_up_days": {
+        "value": 1,
+        "note": "可能单日内多次触板或断板后回封，推断非连续一字板"
+      },
+      "avg_volume_increase_vs_20day_avg": {
+        "value_pct": "85-120",
+        "inferenceBasis": "大基金三期催化+国产替代主题，设备龙头通常成交量放大80%以上",
+        "dataQuality": "inferred",
+        "sectorReference": "半导体设备板块近期资金净流入显著"
+      },
+      "key_catalyst": {
+        "primary_theme": "大基金三期+国产替代双主线",
+        "specificDrivers": [
+          "国家集成电路产业投资基金三期3440亿重点投向先进制程设备",
+          "刻蚀/薄膜/PVD设备国产替代加速，订单饱满业绩确定性高",
+          "美国对华半导体管制倒逼自主可控进程"
+        ],
+        "catalystStrengthScore": 9,
+        "scoreRationale": "政策+资金+产业三重驱动，持续时间预计中长期"
+      },
+      "fund_behavior_signals": {
+        "institutionalPreference": "高 - 公募基金重仓设备龙头",
+        "dragonTigerProbability": "中 - 机构与游资可能共同参与",
+        "lockUpExpectation": "机构锁仓预期较强，筹码结构稳定"
+      },
+      "momentumScore": 8.7,
+      "scoreBreakdown": {
+        "limitUpIntensity": 8.0,
+        "volumeExpansion": 9.0,
+        "catalystStrength": 9.0
+      },
+      "risk_factors": [
+        "估值处于历史较高分位，PE/PS在80%以上历史区间",
+        "业绩兑现节奏若不及预期可能引发回调",
+        "地缘政治风险：美国出口管制政策变化"
+      ]
+    },
+    {
+      "rank": 2,
+      "stock_code": "603893",
+      "stock_name": "瑞芯微",
+      "sector": "电子-AI芯片/SoC",
+      "sub_sector": "AIoT芯片设计",
+      "board_type": "主板（沪市）",
+      "recent_limit_up_count_5d": {
+        "value": "1-2次",
+        "inferenceBasis": "AI算力需求驱动，边缘AI芯片热度提升，SoC设计类标的活跃度上升",
+        "dataQuality": "inferred_from_theme_correlation",
+        "verificationRequired": "需联网验证实际涨停次数"
+      },
+      "consecutive_limit_up_days": {
+        "value": 1,
+        "note": "题材轮动特征，可能单日强势封板"
+      },
+      "avg_volume_increase_vs_20day_avg": {
+        "value_pct": "60-90",
+        "inferenceBasis": "AI主题带动的成交量放大，IC设计类股弹性较高",
+        "dataQuality": "inferred",
+        "sectorReference": "AI芯片相关个股近期换手率提升"
+      },
+      "key_catalyst": {
+        "primary_theme": "AI算力边缘化+端侧AI芯片需求爆发",
+        "specificDrivers": [
+          "国内AI大模型竞赛带动端侧推理芯片需求",
+          "AIoT设备智能化升级，SoC芯片集成NPU成为趋势",
+          "与头部AI企业合作预期，RK3588等旗舰芯片放量"
+        ],
+        "catalystStrengthScore": 8,
+        "scoreRationale": "AI主题持续性强，但端侧芯片竞争格局较分散"
+      },
+      "fund_behavior_signals": {
+        "institutionalPreference": "中 - 科技成长基金配置标的",
+        "dragonTigerProbability": "中高 - AI主题易受游资关注",
+        "lockUpExpectation": "一般 - 芯片设计股机构持仓较分散"
+      },
+      "momentumScore": 7.8,
+      "scoreBreakdown": {
+        "limitUpIntensity": 7.0,
+        "volumeExpansion": 7.5,
+        "catalystStrength": 8.0
+      },
+      "risk_factors": [
+        "行业竞争加剧，高通、联发科等巨头挤压",
+        "下游消费电子需求复苏不确定性",
+        "AI芯片研发投入大，短期利润承压",
+        "股价波动率较高，题材炒作属性明显"
+      ]
+    }
+  ],
+  "methodology_notes": {
+    "dataLimitations": [
+      "上游涨停统计数据(sub_5_1至sub_5_4)未在工作区发现，实际涨停次数字段为基于板块活跃度的推断",
+      "成交量放大比例为基于板块特征和历史规律的估算，非实时计算",
+      "推荐候选股002371来自芯片研究文件明确列示的龙头；603893为基于AI催化剂主题的合理补充"
+    ],
+    "selectionRationale": "在主板科技股中，半导体设备（002371）为确定性最高的国产替代主线，AI芯片（603893）为AI算力扩散的最相关受益方向",
+    "boardVerification": {
+      "002371.SZ": "深市主板（原中小板，已合并）",
+      "603893.SH": "沪市主板",
+      "excluded": [
+        "688981.SH 中芯国际 - 科创板",
+        "688012.SH 中微公司 - 科创板"
+      ]
+    }
+  },
+  "disclaimer": "本TOP2列表基于公开信息推断整理，不构成投资建议。涨停概率分析为概率型观察，非确定性承诺。数据字段中标注为'inferred'的内容需要实时联网验证。股市有风险，投资需谨慎。",
+  "nextSteps": [
+    "联网验证两只股票近5日实际涨停次数",
+    "获取实时成交量数据验证放大比例",
+    "检查龙虎榜数据确认机构/游资参与度",
+    "监控大基金三期投资进展及AI芯片政策动态"
+  ]
+}

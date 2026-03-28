@@ -1,0 +1,107 @@
+{
+  "meta": {
+    "taskId": "task_2__sub_2__sub_3__sub_4__sub_5",
+    "phase": "research",
+    "status": "blocked_upstream_missing",
+    "generatedAt": "2025-01-13T10:05:00Z",
+    "blockerReason": "上游任务 sub_3、sub_4（或 sub_5_1 至 sub_5_4）输出文件未在工作区发现；本 Worker 无联网能力无法自行获取实时数据"
+  },
+  "upstreamDependencyStatus": {
+    "sub_3_candidate_targets": "not_found",
+    "sub_4_candidate_targets": "not_found",
+    "sub_5_1_limitup_stats": "not_found",
+    "sub_5_2_consecutive": "not_found",
+    "sub_5_3_sectors": "not_found",
+    "sub_5_4_dragon_tiger": "not_found",
+    "consolidatedDataFile": "a_stock_limit_up_summary_data.json (template_only)"
+  },
+  "crossValidationFramework": {
+    "description": "交叉验证评分框架（待填充数据后执行）",
+    "dimensions": [
+      {
+        "dimension": "股价位置",
+        "weight": 0.25,
+        "checkItems": [
+          "距前高距离 < 15%（已提前反应风险高）",
+          "近5日累计涨幅（过高则排除）",
+          "当前是否已处涨停潮末期"
+        ],
+        "scoring": "5分制，位置越低分越高"
+      },
+      {
+        "dimension": "新催化节点",
+        "weight": 0.30,
+        "checkItems": [
+          "下周确定性事件（订单公告/政策发布/产品发布）",
+          "催化强度（行业级 > 公司级）",
+          "时间节点（T+1至T+3内发生）"
+        ],
+        "scoring": "有明确强催化+3分，时间窗口匹配+2分"
+      },
+      {
+        "dimension": "流通盘与筹码",
+        "weight": 0.25,
+        "checkItems": [
+          "流通市值 < 100亿（小盘股易涨停）",
+          "近5日换手率（活跃但非过度）",
+          "机构持仓比例（过高则弹性不足）"
+        ],
+        "scoring": "流通盘30-80亿为最佳区间"
+      },
+      {
+        "dimension": "监管与异常",
+        "weight": 0.20,
+        "checkItems": [
+          "近3日是否有异常波动公告",
+          "是否被列入重点监控名单",
+          "近1月是否收到问询函/监管函"
+        ],
+        "scoring": "任一阳性直接排除（0分）"
+      }
+    ],
+    "threshold": "综合评分 >= 3.5 且监管维度满分方可入选"
+  },
+  "finalSelectionTemplate": {
+    "description": "最终输出格式模板（待数据填充后生成）",
+    "targets": [
+      {
+        "rank": 1,
+        "stockCode": "待填充",
+        "stockName": "待填充",
+        "selectionRationale": "交叉验证综合得分及核心逻辑",
+        "newCatalyst": {
+          "event": "下周具体催化事件",
+          "date": "YYYY-MM-DD",
+          "type": "order/policy/tech/product",
+          "confidence": "high/medium/low"
+        },
+        "positionAssessment": {
+          "currentPrice": 0.0,
+          "distanceToHigh": "0%",
+          "recentGain5D": "0%",
+          "riskLevel": "high/medium/low"
+        },
+        "floatCharacteristics": {
+          "floatMarketCapBillion": 0.0,
+          "turnover5DAvg": "0%",
+          "institutionHoldings": "0%"
+        },
+        "riskDisclosure": [
+          "具体风险点1",
+          "具体风险点2"
+        ]
+      }
+    ],
+    "excludedStocks": [
+      {
+        "stockCode": "示例",
+        "exclusionReason": "监管异常/股价已充分反应/缺乏新催化"
+      }
+    ]
+  },
+  "recommendations": [
+    "请确保前置任务 sub_3 和 sub_4 已完成并将标的列表输出到工作区",
+    "或补充执行 sub_5_1 至 sub_5_4 以生成 a_stock_limit_up_summary_data.json 的完整数据",
+    "若需本 Worker 继续执行，请重新调度任务并提供：候选股票代码列表、近期涨停数据、板块资金流向、龙虎榜数据"
+  ]
+}

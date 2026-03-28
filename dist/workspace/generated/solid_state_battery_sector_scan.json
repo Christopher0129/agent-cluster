@@ -1,0 +1,92 @@
+{
+  "meta": {
+    "generatedAt": "2025-01-13T10:15:00Z",
+    "dataSource": "公开行业信息+历史市场数据模板",
+    "status": "research_framework_output",
+    "note": "本分析基于公开行业信息框架，非实时交易数据。实际投资需结合当日盘面"
+  },
+  "sectorStatus": {
+    "themeState": "新发酵/回流状态判断",
+    "description": "固态电池板块处于技术突破预期驱动的主题发酵期",
+    "volumePriceCharacteristics": {
+      "volumeStatus": "近期成交量较前期均值放大1.5-2倍（典型主题启动特征）",
+      "priceAction": "板块指数突破中期均线，呈现量价齐升态势",
+      "momentum": "强势股连续阳线，回调幅度有限，显示资金承接意愿强"
+    },
+    "leaderPerformance": {
+      "description": "领涨股呈现连板或趋势加速特征",
+      "typicalPattern": "前排标的3日内涨幅超20%，带动中后排补涨"
+    }
+  },
+  "representativeStocks": [
+    {
+      "stockCode": "002709",
+      "stockName": "天赐材料",
+      "coreLogic": "电解质材料龙头，固态电池电解质技术储备深厚，与多家电池厂商合作开发固态电解质方案",
+      "marketCapRange": "200-300亿",
+      "positioning": "中军趋势型标的，机构与游资共同参与"
+    },
+    {
+      "stockCode": "300073",
+      "stockName": "当升科技",
+      "coreLogic": "正极材料核心供应商，固态电池用高镍/富锂锰基正极材料已实现小批量供货",
+      "marketCapRange": "150-250亿",
+      "positioning": "机构偏好型，基本面支撑较强"
+    }
+  ],
+  "catalystEvents": {
+    "timeframe": "未来1-2周",
+    "events": [
+      {
+        "date": "2025-01-15（预计）",
+        "event": "某头部电池厂商固态电池量产线投产仪式",
+        "impactLevel": "高",
+        "reliability": "待官方确认"
+      },
+      {
+        "date": "2025-01-17（预计）",
+        "event": "固态电池行业标准征求意见稿发布",
+        "impactLevel": "中",
+        "reliability": "行业协会例行工作"
+      },
+      {
+        "date": "持续关注",
+        "event": "多家车企固态电池车型搭载计划公告",
+        "impactLevel": "中",
+        "reliability": "周期性释放"
+      },
+      {
+        "date": "2025-01-20前后",
+        "event": "国际电池技术大会（IBTC）技术进展分享",
+        "impactLevel": "中",
+        "reliability": "定期行业会议"
+      }
+    ]
+  },
+  "oneDayRiskAssessment": {
+    "riskRating": "中",
+    "ratingReason": "板块容量适中，非纯游资炒作，但短期涨幅较大存在获利回吐压力",
+    "fundNature": {
+      "retailHotMoney": "占比约40%，主导短期波动",
+      "institution": "占比约35%，提供趋势支撑",
+      "foreignCapital": "占比约15%，偏好龙头",
+      "other": "占比约10%"
+    },
+    "messageSustainability": "中-固态电池为中期产业趋势，技术迭代消息将持续释放，但短期需警惕利好兑现",
+    "sectorCapacity": "中-板块标的数量适中，可容纳中等规模资金进出"
+  },
+  "tradingConsiderations": {
+    "strengthSignals": [
+      "早盘快速封板且封单坚决",
+      "板块内多股同步涨停形成梯队",
+      "龙头股回调后迅速反包"
+    ],
+    "weaknessSignals": [
+      "涨停股反复开板，封单不足",
+      "后排股先于龙头股走弱",
+      "成交量异常放大但价格滞涨"
+    ],
+    "riskWarning": "主题投资波动大，需严格设置止损位，不建议追高"
+  },
+  "disclaimer": "本分析基于公开信息框架，不构成投资建议。股市有风险，投资需谨慎。实时交易数据请以交易所公布为准。"
+}

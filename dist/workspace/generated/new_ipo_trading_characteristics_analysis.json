@@ -1,0 +1,229 @@
+{
+  "meta": {
+    "reportTitle": "A股新股交易特征与热度追踪分析",
+    "generatedAt": "2025-01-13T12:00:00Z",
+    "analysisPeriod": "过去10个交易日上市新股",
+    "dataStatus": "framework_template",
+    "note": "本框架为标准化分析模板，实际数据需通过东方财富/同花顺等金融终端获取",
+    "disclaimer": "本分析仅供参考，不构成投资建议。股市有风险，投资需谨慎。"
+  },
+  "dataCollectionGuide": {
+    "dataSources": [
+      "东方财富网 - 新股申购/新股数据板块",
+      "同花顺iFinD - 新股专题统计",
+      "雪球 - 新股讨论热度",
+      "通达信/大智慧 - 主力资金流向数据"
+    ],
+    "queryMethods": {
+      "新股列表": "东方财富网 → 新股申购 → 已上市新股 → 按上市日期筛选近10日",
+      "交易数据": "同花顺iFinD → 股票 → 新股专题 → 换手率/成交量统计",
+      "资金流向": "东方财富 → 个股页 → 资金 → 主力净流入",
+      "热度指数": "雪球搜索股票代码 → 查看讨论数/关注数变化"
+    }
+  },
+  "indicatorDefinitions": {
+    "avg_turnover_rate": {
+      "name": "上市至今日均换手率",
+      "unit": "%",
+      "formula": "SUM(每日换手率) / 上市交易天数",
+      "interpretation": {
+        "high": ">30%：极高换手，筹码快速交换，投机情绪浓厚",
+        "normal": "10%-30%：正常换手，市场充分定价",
+        "low": "<10%：换手不足，流动性风险或机构锁仓"
+      }
+    },
+    "total_volume": {
+      "name": "上市至今累计成交量",
+      "unit": "万手",
+      "formula": "SUM(每日成交量) / 10000",
+      "interpretation": {
+        "high": ">流通股本的5倍：资金深度介入",
+        "normal": "1-5倍流通股本：正常交易",
+        "low": "<流通股本：交投清淡"
+      }
+    },
+    "consecutive_limit_up_days": {
+      "name": "连续涨停天数",
+      "unit": "天",
+      "definition": "上市后连续以涨停价收盘的天数（一字板+换手板）",
+      "interpretation": {
+        "tier1": ">10天：超级新股，市场情绪极度亢奋",
+        "tier2": "5-10天：强势新股，具备成为妖股潜力",
+        "tier3": "<5天：弱势新股，市场认可度低"
+      }
+    },
+    "opening_day": {
+      "name": "开板日",
+      "unit": "第N个交易日",
+      "definition": "首次未以涨停价收盘的交易日序号",
+      "significance": "开板日越早，说明抛压越大或定价过高；开板日晚说明筹码锁定良好"
+    },
+    "fund_flow": {
+      "name": "主力资金流向",
+      "unit": "万元",
+      "definition": "上市以来大单净流入金额（超大单+大单）",
+      "interpretation": {
+        "strong_inflow": ">5000万：主力积极建仓",
+        "moderate_inflow": "1000-5000万：温和建仓",
+        "neutral": "-1000万至1000万：观望",
+        "outflow": "<-1000万：主力派发"
+      }
+    },
+    "heat_index": {
+      "name": "讨论热度指数",
+      "unit": "分(0-100)",
+      "calculation": "基于雪球帖子数、东方财富股吧活跃度、搜索指数的加权综合得分",
+      "tiers": {
+        "extreme": "80-100：全民关注，社交媒体刷屏",
+        "high": "60-79：高热话题，投资者积极讨论",
+        "moderate": "40-59：正常关注",
+        "low": "20-39：关注度低",
+        "ignored": "0-19：无人问津"
+      }
+    }
+  },
+  "abnormalTradingDetectionRules": {
+    "highRiskSignals": [
+      {
+        "signal": "开板后巨量换手",
+        "condition": "开板首日换手率>50%且次日低开",
+        "riskLevel": "高",
+        "implication": "主力借开板出货，短期回避"
+      },
+      {
+        "signal": "连续一字板后断崖下跌",
+        "condition": "开板后3日内跌幅>20%",
+        "riskLevel": "高",
+        "implication": "筹码断层，获利盘集中涌出"
+      },
+      {
+        "signal": "上市首日破发",
+        "condition": "收盘价<发行价",
+        "riskLevel": "中高",
+        "implication": "市场环境极差或定价过高，暂不参与"
+      }
+    ],
+    "opportunitySignals": [
+      {
+        "signal": "开板后缩量整理",
+        "condition": "开板后3日换手递减且未破5日线",
+        "opportunityLevel": "高",
+        "implication": "主力未出货，可能二次拉升"
+      },
+      {
+        "signal": "开板日机构大买",
+        "condition": "龙虎榜显示机构席位净买入>1000万",
+        "opportunityLevel": "高",
+        "implication": "机构认可估值，中线配置价值"
+      },
+      {
+        "signal": "热点题材叠加",
+        "condition": "新股所属概念为当前市场主线（如AI、机器人、芯片）",
+        "opportunityLevel": "中高",
+        "implication": "享受新股溢价+题材溢价双重加持"
+      }
+    ]
+  },
+  "scoringFramework": {
+    "name": "新股下周涨停概率评分模型",
+    "dimensions": [
+      {
+        "dimension": "筹码结构",
+        "weight": 0.25,
+        "indicators": [
+          {"name": "连续涨停天数", "maxScore": 25, "scoring": ">10天:25分, 7-10天:20分, 5-7天:15分, 3-5天:10分, <3天:5分"},
+          {"name": "开板后换手率稳定性", "maxScore": 15, "scoring": "递减:15分, 震荡:10分, 激增:5分"}
+        ]
+      },
+      {
+        "dimension": "资金行为",
+        "weight": 0.30,
+        "indicators": [
+          {"name": "主力净流入", "maxScore": 20, "scoring": ">1亿:20分, 5000万-1亿:16分, 1000-5000万:12分, <1000万:6分"},
+          {"name": "龙虎榜机构参与度", "maxScore": 10, "scoring": "机构净买:10分, 游资主导:5分, 散户博弈:2分"}
+        ]
+      },
+      {
+        "dimension": "市场环境",
+        "weight": 0.20,
+        "indicators": [
+          {"name": "所属概念热度", "maxScore": 15, "scoring": "主线热点:15分, 支线题材:10分, 冷门概念:5分"},
+          {"name": "次新股板块情绪", "maxScore": 5, "scoring": "板块领涨:5分, 跟随上涨:3分, 板块调整:1分"}
+        ]
+      },
+      {
+        "dimension": "情绪热度",
+        "weight": 0.15,
+        "indicators": [
+          {"name": "社交媒体热度", "maxScore": 10, "scoring": "极高:10分, 高:8分, 中:5分, 低:2分"},
+          {"name": "搜索指数趋势", "maxScore": 5, "scoring": "上升:5分, 平稳:3分, 下降:1分"}
+        ]
+      },
+      {
+        "dimension": "估值空间",
+        "weight": 0.10,
+        "indicators": [
+          {"name": "相对行业PE", "maxScore": 5, "scoring": "<80%:5分, 80-120%:3分, >120%:1分"},
+          {"name": "发行价溢价空间", "maxScore": 5, "scoring": "开板早估值低:5分, 开板晚估值高:2分"}
+        ]
+      }
+    ],
+    "scoreInterpretation": {
+      "85-100": "极高概率——下周多次涨停可能性大，重点关注",
+      "70-84": "高概率——具备涨停条件，关注开板后承接",
+      "55-69": "中等概率——存在机会但需精选时机",
+      "40-54": "低概率——参与价值有限",
+      "<40": "极低概率——建议回避"
+    }
+  },
+  "historicalPatterns": {
+    "highPerformanceNewStockCharacteristics": [
+      "注册制新股（创业板/科创板）因前五日无涨跌幅限制，更易出现首日暴涨后持续走强",
+      "流通盘<5亿的小市值新股更易被资金炒作",
+      "发行价<30元的低价新股散户参与度高，涨停连板数通常更多",
+      "开板时间在上市后第4-8个交易日的新股，二次拉升概率最高",
+      "叠加当时市场主线题材的新股享受双重溢价"
+    ],
+    "recentHotSectorsForNewIPOs": [
+      "半导体设备与材料（国产替代逻辑）",
+      "人形机器人核心零部件",
+      "AI算力与光模块",
+      "商业航天与低空经济",
+      "创新药与医疗器械"
+    ]
+  },
+  "templateTable": {
+    "description": "以下为数据填充模板，实际分析时需填入具体新股数据",
+    "columns": ["stockCode", "stockName", "listDate", "avgTurnoverRate", "totalVolume", "consecutiveLimitUpDays", "openingDay", "fundFlow", "heatIndex", "abnormalSignal", "nextWeekLimitUpProbability", "score"],
+    "sampleRows": [
+      {
+        "stockCode": "示例：688XXX.SH",
+        "stockName": "示例新股A",
+        "listDate": "2025-01-06",
+        "avgTurnoverRate": "待填充",
+        "totalVolume": "待填充",
+        "consecutiveLimitUpDays": "待填充",
+        "openingDay": "待填充",
+        "fundFlow": "待填充",
+        "heatIndex": "待填充",
+        "abnormalSignal": "待识别",
+        "nextWeekLimitUpProbability": "待评估",
+        "score": "待计算"
+      }
+    ]
+  },
+  "riskDisclosure": [
+    "新股交易波动极大，上市首日及前五个交易日无涨跌幅限制（注册制）或44%涨幅限制（核准制），风险远高于普通股票",
+    "本分析框架基于历史规律总结，无法预测突发政策变化或市场系统性风险",
+    "开板后的次新股面临巨大获利盘抛压，短线回调风险极高",
+    "主力资金流向数据存在滞后性，且主力可能使用分单手段隐藏真实意图",
+    "社交媒体热度可能被人为操纵（水军刷帖），需结合多维度验证"
+  ],
+  "nextSteps": [
+    "通过东方财富/同花顺获取近10日上市新股清单",
+    "逐只提取交易数据填入templateTable",
+    "根据scoringFramework计算每只新股的涨停概率得分",
+    "结合abnormalTradingDetectionRules识别异常信号",
+    "输出最终的新股交易特征表和下周涨停概率排名"
+  ]
+}

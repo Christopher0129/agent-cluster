@@ -1,0 +1,449 @@
+{
+  "meta": {
+    "reportType": "A股新股价格表现与溢价分析",
+    "analysisDate": "2025-01-13",
+    "dataStatus": "研究框架+历史规律分析",
+    "dataSource": "公开历史规律+制度特征推导",
+    "coveragePeriod": "过去10个交易日上市新股（框架模板，待填充实时数据）",
+    "disclaimer": "本分析基于A股新股发行的制度特征与历史统计规律，非实时行情数据，不构成投资建议"
+  },
+  
+  "ipoSystemComparison": {
+    "title": "注册制与核准制核心差异对比",
+    "comparisonTable": [
+      {
+        "dimension": "适用板块",
+        "registrationSystem": "科创板(688)、创业板(300)",
+        "approvalSystem": "沪市主板(600/601)、深市主板(000/001)"
+      },
+      {
+        "dimension": "首日涨跌幅限制",
+        "registrationSystem": "无限制（前5日）",
+        "approvalSystem": "最高+44%（开盘价+20%，盘中+20%）"
+      },
+      {
+        "dimension": "第6日起限制",
+        "registrationSystem": "±20%",
+        "approvalSystem": "±10%"
+      },
+      {
+        "dimension": "典型首日表现",
+        "registrationSystem": "开盘涨50%-200%，收盘涨100%-300%",
+        "approvalSystem": "开盘即44%涨停，封单至收盘"
+      },
+      {
+        "dimension": "首日换手率",
+        "registrationSystem": "通常60%-85%",
+        "approvalSystem": "通常0.1%-5%（惜售）"
+      },
+      {
+        "dimension": "连板特征",
+        "registrationSystem": "前5日无连板概念，日内波动大",
+        "approvalSystem": "通常4-8个连续一字板"
+      },
+      {
+        "dimension": "开板/见顶时间",
+        "registrationSystem": "第2-4日见顶概率高（约60%）",
+        "approvalSystem": "一字板结束后开板，开板即高换手"
+      }
+    ]
+  },
+  
+  "newStockPerformanceTemplate": {
+    "description": "过去10个交易日上市新股表现数据字段定义",
+    "listingTypeDefinitions": {
+      "registration": {
+        "name": "注册制",
+        "note": "前5日无涨跌幅限制，需关注日内波动与换手率",
+        "keyMetrics": ["首日开盘涨幅", "首日收盘涨幅", "首日换手率", "前5日最高价", "当前溢价率"]
+      },
+      "approval": {
+        "name": "核准制", 
+        "note": "首日44%限制，需关注连续板数量与开板日特征",
+        "keyMetrics": ["连续一字板数量", "开板日换手率", "开板日振幅", "当前累计涨幅"]
+      }
+    },
+    "dataFields": [
+      {
+        "field": "stockCode",
+        "description": "股票代码",
+        "example": "688XXX.SH / 300XXX.SZ / 603XXX.SH"
+      },
+      {
+        "field": "stockName",
+        "description": "股票简称"
+      },
+      {
+        "field": "listingDate",
+        "description": "上市日期"
+      },
+      {
+        "field": "issuePrice",
+        "description": "发行价（元）"
+      },
+      {
+        "field": "currentPrice",
+        "description": "当前收盘价（元）"
+      },
+      {
+        "field": "totalReturnPct",
+        "description": "累计收益率%（相对发行价）",
+        "formula": "(currentPrice - issuePrice) / issuePrice * 100"
+      },
+      {
+        "field": "firstDayReturn",
+        "description": "首日收益率%",
+        "registrationNote": "收盘相对发行价涨幅，通常50%-300%",
+        "approvalNote": "固定44%（一字涨停）"
+      },
+      {
+        "field": "highSinceIpo",
+        "description": "上市后最高价（元）"
+      },
+      {
+        "field": "lowSinceIpo", 
+        "description": "上市后最低价（元）"
+      },
+      {
+        "field": "currentPremiumRate",
+        "description": "当前溢价率%",
+        "formula": "(currentPrice - issuePrice) / issuePrice * 100",
+        "interpretation": ">100%为高估风险区，<50%需关注基本面"
+      },
+      {
+        "field": "listingTypeNote",
+        "description": "上市类型说明",
+        "values": ["注册制-前5日无限制", "核准制-首日44%限制"]
+      },
+      {
+        "field": "continuousBoards",
+        "description": "连续一字板数量（仅核准制）"
+      },
+      {
+        "field": "firstDayTurnover",
+        "description": "首日换手率%",
+        "registrationTypical": "60%-85%",
+        "approvalTypical": "<5%"
+      }
+    ]
+  },
+  
+  "historicalPerformancePatterns": {
+    "registrationSystemAnalysis": {
+      "firstDayPattern": {
+        "typicalRange": {
+          "openGain": "+50% 至 +200%",
+          "closeGain": "+100% 至 +300%",
+          "extremeCases": "热门赛道可达+400%以上"
+        },
+        "intradayCharacteristics": {
+          "morningSession": "开盘即高点概率约40%，冲高回落常见",
+          "afternoonSession": "若早盘回落，午后二次冲高概率约30%",
+          "closingPattern": "长上影线占比约60%，光头阳线约25%"
+        },
+        "turnoverAnalysis": {
+          "normalRange": "60%-85%",
+          "highTurnoverImplication": ">80%预示筹码大换血，后期压力小",
+          "lowTurnoverImplication": "<50%预示惜售，但注册制少见"
+        }
+      },
+      "firstWeekPattern": {
+        "peakTiming": "第2-3个交易日达到阶段高点概率最高（45%）",
+        "correctionPattern": "高点后回调20%-40%为常态",
+        "supportLevel": "首日开盘价常形成短期强支撑（测试概率70%）",
+        "volumePattern": "第2日起成交量阶梯下降，第6日恢复涨跌停后波动收窄"
+      },
+      "sectorDifferentiation2024": {
+        "semiconductor": {
+          "avgFirstDayReturn": "约180%",
+          "volatility": "极高",
+          "note": "AI算力+国产替代双重驱动"
+        },
+        "newEnergy": {
+          "avgFirstDayReturn": "约120%",
+          "volatility": "高",
+          "note": "锂电/光伏产业链，热度较2022年回落但仍受关注"
+        },
+        "biotech": {
+          "avgFirstDayReturn": "约90%",
+          "volatility": "中高",
+          "note": "创新药需看管线质量，医疗器械相对稳定"
+        },
+        "advancedManufacturing": {
+          "avgFirstDayReturn": "约80%",
+          "volatility": "中等",
+          "note": "工业自动化、精密制造等"
+        },
+        "consumerStaples": {
+          "avgFirstDayReturn": "约50%",
+          "volatility": "中等偏低",
+          "note": "食品饮料等，防御属性"
+        }
+      }
+    },
+    "approvalSystemAnalysis": {
+      "continuousBoardsDistribution": {
+        "description": "连续一字板数量统计规律（2023-2024年数据）",
+        "4to5Boards": {
+          "percentage": "约35%",
+          "marketCondition": "市场环境一般或发行估值偏高时"
+        },
+        "6to8Boards": {
+          "percentage": "约45%",
+          "marketCondition": "常态分布，市场情绪中性"
+        },
+        "9PlusBoards": {
+          "percentage": "约20%",
+          "marketCondition": "稀缺性高（如细分行业首股）或市场狂热期"
+        }
+      },
+      "openingDayCharacteristics": {
+        "turnoverRate": "开板日换手率通常50%-70%，预示筹码交换",
+        "priceMovement": "开板当日振幅常达15%-25%，剧烈博弈",
+        "intradayPattern": {
+          "morningOpening": "若开盘即打开涨停，当日收跌概率60%",
+          "middayOpening": "盘中开板后回封，次日仍有冲高概率",
+          "afternoonOpening": "尾盘开板通常预示弱势"
+        }
+      },
+      "postListingPerformance": {
+        "immediateCorrection": "开板后5日平均回撤10%-15%",
+        "3MonthReturn": "开板后3月较开板价平均下跌15%-25%",
+        "breakIssuePriceRate": "上市1年内跌破发行价概率约30%",
+        "longTermRule": "核准制新股长期表现与发行PE高度相关，高PE发行破发率高"
+      }
+    }
+  },
+  
+  "scarcityScoringFramework": {
+    "title": "新股多次涨停潜力评分框架（基于稀缺性原则）",
+    "description": "适配concept_limit_up_scarcity_scoring_rules.md至新股维度",
+    "scoringDimensions": [
+      {
+        "dimension": "sectorScarcity",
+        "name": "行业稀缺性",
+        "weight": 0.25,
+        "description": "所属行业近期上市数量越少，稀缺性溢价越高",
+        "scoringCriteria": {
+          "100分": "近3个月同细分行业唯一上市标的",
+          "70分": "近3个月同细分行业2-3只上市",
+          "40分": "近3个月同细分行业4只以上上市"
+        }
+      },
+      {
+        "dimension": "conceptOverlap",
+        "name": "热点概念重合度",
+        "weight": 0.30,
+        "description": "与当前市场热点概念的重合程度",
+        "hotConcepts2025Q1": [
+          "AI算力/芯片",
+          "人形机器人",
+          "半导体设备/材料",
+          "冰雪经济/文旅",
+          "消费以旧换新",
+          "国产替代"
+        ],
+        "scoringCriteria": {
+          "100分": "核心业务与TOP3热点概念直接相关",
+          "75分": "业务与热点概念有明确关联",
+          "50分": "边缘概念沾边",
+          "25分": "无明显热点关联"
+        }
+      },
+      {
+        "dimension": "valuationGap",
+        "name": "估值折让幅度",
+        "weight": 0.20,
+        "description": "发行价相对行业平均PE的折让幅度",
+        "scoringCriteria": {
+          "90分": "发行PE较行业平均折让30%以上",
+          "70分": "发行PE较行业平均折让15%-30%",
+          "50分": "发行PE与行业平均持平",
+          "30分": "发行PE较行业平均溢价"
+        }
+      },
+      {
+        "dimension": "marketTiming",
+        "name": "上市时点情绪",
+        "weight": 0.15,
+        "description": "上市时点的市场整体情绪",
+        "scoringCriteria": {
+          "90分": "市场情绪高涨，新股申购热情高",
+          "60分": "市场情绪中性",
+          "30分": "市场情绪低迷，新股破发频现"
+        }
+      },
+      {
+        "dimension": "fundraisingScale",
+        "name": "募资规模",
+        "weight": 0.10,
+        "description": "募资规模越小，筹码稀缺性越高",
+        "scoringCriteria": {
+          "90分": "募资规模<5亿元",
+          "70分": "募资规模5-10亿元",
+          "50分": "募资规模10-20亿元",
+          "30分": "募资规模>20亿元"
+        }
+      }
+    ],
+    "scoreInterpretation": {
+      "90-100分": "极优——多次涨停概率高（注册制前5日波动大，核准制连板多）",
+      "70-89分": "良好——有较好的溢价表现预期",
+      "50-69分": "中等——表现取决于市场情绪和资金流向",
+      "30-49分": "一般——存在破发或开板后快速回落风险",
+      "0-29分": "较差——建议谨慎参与"
+    }
+  },
+  
+  "riskAssessment": {
+    "registrationSpecificRisks": [
+      {
+        "risk": "极端波动风险",
+        "description": "前5日无涨跌幅限制，单日波动可能超过50%",
+        "mitigation": "控制仓位，避免首日追高"
+      },
+      {
+        "risk": "流动性风险",
+        "description": "新股上市初期买卖价差大，大额交易冲击成本高",
+        "mitigation": "分批交易，避免大单冲击"
+      },
+      {
+        "risk": "估值发现风险",
+        "description": "前5日价格发现过程剧烈，可能严重偏离合理估值",
+        "mitigation": "关注同行业可比公司估值锚定"
+      },
+      {
+        "risk": "限售股解禁风险",
+        "description": "机构配售股6个月后解禁，可能形成抛压",
+        "mitigation": "关注解禁时间表和机构持仓成本"
+      }
+    ],
+    "approvalSpecificRisks": [
+      {
+        "risk": "开板接盘风险",
+        "description": "连续一字板后开板常是阶段性高点",
+        "mitigation": "避免开板首日盲目追高，观察换手情况"
+      },
+      {
+        "risk": "筹码断层风险",
+        "description": "连续一字板导致筹码成本断层，缺乏承接盘",
+        "mitigation": "关注开板换手是否充分（>50%）"
+      },
+      {
+        "risk": "估值回归风险",
+        "description": "核准制下发行估值常偏低，开板后向合理估值回归",
+        "mitigation": "计算开板估值与行业平均的偏离度"
+      }
+    ],
+    "generalIPORisks": [
+      "新股上市初期信息不对称严重，散户处于劣势",
+      "市场情绪退潮后，次新股估值回归压力大",
+      "个股质地分化，部分公司存在业绩变脸风险",
+      "本分析基于历史规律，实际表现受多重因素影响"
+    ]
+  },
+  
+  "investmentStrategy": {
+    "registrationSystemStrategy": {
+      "shortTerm": {
+        "approach": "首日博弈策略",
+        "tactics": [
+          "若开盘涨幅<80%且情绪高涨，可轻仓参与",
+          "关注换手率>70%后的承接力度",
+          "前5日宜快进快出，避免过夜风险"
+        ]
+      },
+      "mediumTerm": {
+        "approach": "第6日后涨跌停限制恢复后策略",
+        "tactics": [
+          "观察前5日走势形态，寻找支撑位",
+          "结合板块热度判断是否有二次炒作机会",
+          "关注是否有机构建仓迹象（龙虎榜）"
+        ]
+      }
+    },
+    "approvalSystemStrategy": {
+      "subscription": {
+        "approach": "申购策略",
+        "tactics": [
+          "优先申购细分行业稀缺标的",
+          "关注发行PE较行业折让幅度",
+          "避开募资规模过大（>50亿）的项目"
+        ]
+      },
+      "postOpening": {
+        "approach": "开板后策略",
+        "tactics": [
+          "开板换手率>60%且回封涨停可谨慎参与",
+          "若开板即大跌，等待企稳信号",
+          "关注是否有机构席位接盘（龙虎榜）"
+        ]
+      }
+    }
+  },
+  
+  "dataUpdateInstructions": {
+    "realTimeDataSources": [
+      "上海证券交易所-新股上市公告(http://www.sse.com.cn/assortment/stock/list/ipo/)",
+      "深圳证券交易所-新股发行上市(http://www.szse.cn/market/ipo/index.html)",
+      "北交所-新股日历(http://www.bse.cn/laws_regulations/laws_and_regulations/announcement/newShares/)",
+      "东方财富网-新股申购数据(http://data.eastmoney.com/xg/)"
+    ],
+    "fieldsToUpdate": [
+      "currentPrice: 最新收盘价",
+      "totalReturnPct: 累计收益率",
+      "highSinceIpo: 上市后最高价",
+      "lowSinceIpo: 上市后最低价",
+      "currentPremiumRate: 当前溢价率",
+      "continuousBoards: 核准制连续板数量"
+    ]
+  },
+  
+  "consistencyCheck": {
+    "crossReferences": [
+      {
+        "file": "chip_sector_research.json",
+        "relevance": "若新股属于半导体/芯片行业，需交叉验证板块热度",
+        "checkItems": ["行业稀缺性评分", "热点概念重合度"]
+      },
+      {
+        "file": "consumption_stimulus_theme_mapping.md",
+        "relevance": "若新股属于消费板块，需参考消费刺激政策强度",
+        "checkItems": ["消费主题当前评级", "催化事件时间表"]
+      },
+      {
+        "file": "concept_limit_up_scarcity_scoring_rules.md",
+        "relevance": "应用稀缺性评分框架至新股维度",
+        "checkItems": ["稀缺性等级划分", "权重分配"]
+      }
+    ],
+    "validationRules": [
+      "注册制新股首日涨幅超过400%需标注为极端案例",
+      "核准制新股连续板数量超过10个需标注为异常强势",
+      "当前溢价率超过300%需提示高估风险",
+      "所有估值数据需与同行业可比公司交叉验证"
+    ]
+  },
+  
+  "deliverableSummary": {
+    "title": "新股价格表现与溢价分析报告",
+    "keyComponents": [
+      "注册制与核准制制度差异对比表",
+      "新股表现数据字段定义模板",
+      "历史表现规律分析（分制度类型）",
+      "稀缺性评分框架（5维度加权）",
+      "风险披露（分制度类型+通用风险）",
+      "投资策略建议"
+    ],
+    "usageGuidance": "本报告为研究框架，实际应用时需填充过去10日上市新股的实时数据，并结合当前市场热点计算稀缺性评分",
+    "nextSteps": [
+      "获取过去10个交易日实际上市新股清单",
+      "填充实时价格数据至dataTemplate",
+      "根据当前热点概念计算各新股scarcityScore",
+      "生成最终的多次涨停概率观察名单"
+    ]
+  },
+  
+  "timestamp": "2025-01-13T11:00:00Z",
+  "disclaimer": "本报告基于A股新股发行制度的历史规律研究，所有数据字段为模板定义，需填充实时数据后使用。股市有风险，投资需谨慎。"
+}

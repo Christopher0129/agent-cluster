@@ -1,0 +1,70 @@
+{
+  "meta": {
+    "generatedAt": "2025-01-13T10:15:00Z",
+    "taskId": "task_2__sub_1__sub_1_3__sub_1_3_a__sub_1_3_a_1__sub_1_3_a_1_2",
+    "taskName": "ST Filter & Continuity Verification",
+    "status": "blocked_upstream_missing",
+    "processingNote": "上游依赖数据缺失，以下为筛选规则定义与占位符结构"
+  },
+  "filterCriteria": {
+    "criterion1_STExclusion": {
+      "description": "排除所有ST/*ST股票",
+      "rule": "stock.specialTreatmentStatus IN ['ST', '*ST'] → EXCLUDE",
+      "dataSource": "交易所公告/行情软件ST标识",
+      "verificationMethod": "交叉比对交易所风险警示板列表"
+    },
+    "criterion2_LimitUpContinuity": {
+      "description": "验证连续涨停模式",
+      "patterns": [
+        {
+          "patternId": "P1",
+          "name": "5日内2次及以上涨停",
+          "condition": "COUNT(limitUpEvents WHERE date >= today-5) >= 2",
+          "weight": "medium"
+        },
+        {
+          "patternId": "P2", 
+          "name": "连续2日及以上涨停",
+          "condition": "MAX(consecutiveLimitUpDays) >= 2",
+          "weight": "high"
+        }
+      ]
+    },
+    "criterion3_BoardValidation": {
+      "description": "主板股票验证（排除科创板688/创业板300）",
+      "validPrefixes": {
+        "Shanghai": ["600", "601", "603", "605"],
+        "Shenzhen": ["000", "001", "002", "003"]
+      },
+      "excludedPrefixes": ["300", "301", "688", "689"]
+    }
+  },
+  "processedCandidates": [],
+  "excludedCandidates": {
+    "bySTStatus": [],
+    "byBoardType": [],
+    "byContinuityPattern": []
+  },
+  "qualifiedCandidates": [],
+  "dataDependencyStatus": {
+    "requiredFiles": [
+      "sub_5_1_limitup_stats.json",
+      "sub_5_2_consecutive.json", 
+      "sub_5_3_sectors.json",
+      "sub_5_4_dragon_tiger.json"
+    ],
+    "foundFiles": [],
+    "missingFiles": [
+      "sub_5_1_limitup_stats.json",
+      "sub_5_2_consecutive.json",
+      "sub_5_3_sectors.json", 
+      "sub_5_4_dragon_tiger.json"
+    ],
+    "blockingIssue": "前置任务sub_5_1至sub_5_4输出文件未在工作区发现，无法执行实际筛选"
+  },
+  "recommendations": [
+    "请确认前置数据收集任务已执行完毕",
+    "建议重新执行sub_5_1至sub_5_4以生成所需输入文件",
+    "筛选规则已定义，数据可用后可立即执行"
+  ]
+}

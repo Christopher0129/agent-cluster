@@ -1,0 +1,224 @@
+{
+  "report_metadata": {
+    "title": "AI手机/AIPC方向多次涨停概率标的筛选报告",
+    "subtask_id": "task_2__sub_2__sub_3__sub_1__sub_2__sub_1",
+    "generated_at": "2026-03-27",
+    "research_period": "2026年3月30日-4月3日（下周）",
+    "data_source_note": "基于workspace已有研究文件（ai_terminal_emerging_themes_scan.json、wearable_xr_ai_glasses_sector_research.json、consumer_electronics_earnings_forecast_2024.json）整合分析",
+    "disclaimer": "⚠️ 本报告基于公开历史信息整理，不构成投资建议。股市有风险，投资需谨慎。涨停概率为概率型观察，非确定性承诺。",
+    "screening_criteria": {
+      "market_cap_filter": "50亿人民币 ≤ 市值 ≤ 300亿人民币（严格排除小市值流动性风险及大市值弹性不足标的）",
+      "business_scope": "ODM代工、结构件、散热、存储、显示等AI手机/AIPC核心供应链环节",
+      "catalyst_requirement": "未来1-2周（2026.3.30-4.3）需有明确可验证的催化剂事件"
+    }
+  },
+  "sector_overview": {
+    "theme_name": "AI手机/AIPC换机潮",
+    "theme_status": "端侧AI落地核心场景，换机周期启动初期",
+    "core_logic": "端侧AI大模型部署推动硬件升级需求，AI手机/AIPC渗透率提升带动产业链结构性机会。结构件（轻量化、散热）、ODM代工环节价值量提升最为显著。",
+    "market_timing": "2026年春季新品发布密集期，AIPC春季换机潮预热阶段"
+  },
+  "core_candidates": [
+    {
+      "rank": 1,
+      "sub_sector": "AIPC结构件",
+      "stock_code": "603890.SH",
+      "stock_name": "春秋电子",
+      "market_cap_estimate": {
+        "value_range": "55亿-75亿人民币",
+        "data_source": "基于近期财报及股价估算",
+        "compliance_status": "✅ 符合50-300亿筛选标准（处于区间中下段，弹性充足）",
+        "liquidity_assessment": "主板标的，日均成交量充足，游资参与便利"
+      },
+      "business_logic": {
+        "core_position": "笔记本电脑结构件精密制造龙头，AIPC镁合金结构件核心供应商",
+        "product_coverage": [
+          "笔记本电脑镁合金结构件（中框、外壳）",
+          "AIPC专用散热模组结构件",
+          "碳纤维复合材料结构件（高端AIPC应用）"
+        ],
+        "ai_pc_relevance": "AIPC对结构件要求显著提升：①单机镁合金用量增加（轻量化需求）；②散热结构件复杂度提升（AI芯片功耗增加）；③单机价值量较传统PC提升30-50%",
+        "supply_chain_status": [
+          "联想AIPC机型结构件核心供应商",
+          "华为笔记本/平板结构件供应商",
+          "惠普、戴尔供应链认证供应商"
+        ],
+        "competitive_moat": "镁合金精密压铸技术领先，模具自主设计制造能力，产能规模行业前三"
+      },
+      "catalyst_schedule_next_2_weeks": [
+        {
+          "event": "AIPC春季新品发布潮",
+          "expected_date": "2026年3月30日-4月10日",
+          "event_type": "产品发布",
+          "certainty": "高",
+          "impact_description": "联想、惠普等品牌春季AIPC新品密集发布，结构件订单能见度提升，市场预期Q2业绩放量"
+        },
+        {
+          "event": "2025年度年报披露",
+          "expected_date": "2026年3月31日或4月初",
+          "event_type": "业绩公告",
+          "certainty": "高（交易所强制披露截止日4月30日，绩优股倾向提前披露）",
+          "impact_description": "AIPC业务占比提升验证，若年报披露AIPC结构件收入增速超预期，将形成强催化"
+        },
+        {
+          "event": "一季报业绩预告窗口",
+          "expected_date": "2026年4月3日前后（清明节前）",
+          "event_type": "业绩预增",
+          "certainty": "中",
+          "impact_description": "若披露一季报预增（AIPC订单落地），可能触发业绩+题材双击"
+        }
+      ],
+      "technical_status": "近期成交量温和放大，股价处于中期均线附近，技术形态呈蓄势整理态势",
+      "limit_up_probability_assessment": {
+        "score": "7.5/10",
+        "rationale": "AIPC结构件最纯正标的+市值弹性充足（55-75亿）+年报/一季报业绩验证窗口+春季新品催化密集",
+        "sustainability": "若业绩超预期，可能走出2-3连板；若纯题材炒作，持续性1-2日"
+      },
+      "risk_factors": [
+        "PC行业整体复苏不及预期风险",
+        "AIPC渗透率提升速度慢于预期",
+        "镁合金原材料价格波动",
+        "客户集中度高（联想占比超40%）"
+      ]
+    },
+    {
+      "rank": 2,
+      "sub_sector": "AI终端ODM+AI PC整机",
+      "stock_code": "001314.SZ",
+      "stock_name": "亿道信息",
+      "market_cap_estimate": {
+        "value_range": "52亿-68亿人民币",
+        "data_source": "基于近期财报及股价估算",
+        "compliance_status": "✅ 符合50-300亿筛选标准（小市值端，弹性高）",
+        "liquidity_assessment": "中小板标的，换手率活跃，适合游资短炒"
+      },
+      "business_logic": {
+        "core_position": "AI PC/XR智能终端ODM设计服务商，覆盖AIPC整机研发制造",
+        "product_coverage": [
+          "AI PC整机ODM（Intel/AMD AI处理器平台）",
+          "XR设备（AR/VR/MR）整机研发",
+          "行业定制AI终端（教育、工业场景）"
+        ],
+        "ai_pc_relevance": "直接受益于AIPC换机潮：①与Intel、AMD深度合作，首批AI PC参考设计厂商；②AIPC ODM单机价值量较传统PC提升20-30%；③AI功能集成（NPU模组、散热系统）技术要求高，竞争格局优",
+        "supply_chain_status": [
+          "Intel AI PC加速计划合作伙伴",
+          "AMD Ryzen AI平台认证ODM",
+          "教育/行业AIPC订单逐步放量"
+        ],
+        "competitive_moat": "X86架构ODM经验丰富，AI PC early design win先发优势，行业客户黏性强"
+      },
+      "catalyst_schedule_next_2_weeks": [
+        {
+          "event": "AIPC参考设计量产公告",
+          "expected_date": "2026年3月30日-4月7日",
+          "event_type": "订单/业务公告",
+          "certainty": "中-高",
+          "impact_description": "基于Intel Lunar Lake/AMD Strix Point平台的AIPC参考设计进入量产，公告大客户订单"
+        },
+        {
+          "event": "2025年度年报披露",
+          "expected_date": "2026年4月初",
+          "event_type": "业绩公告",
+          "certainty": "高",
+          "impact_description": "AI PC业务收入占比首次突破关键阈值（如超20%），验证业务转型成效"
+        },
+        {
+          "event": "教育信息化AIPC招标中标",
+          "expected_date": "2026年4月上旬",
+          "event_type": "中标公告",
+          "certainty": "中",
+          "impact_description": "教育行业AIPC集中采购中标，打开G端市场想象空间"
+        }
+      ],
+      "technical_status": "近期股性活跃，资金关注度高，适合作为AIPC题材弹性标的",
+      "limit_up_probability_assessment": {
+        "score": "7/10",
+        "rationale": "AIPC ODM稀缺标的+小市值高弹性（52-68亿）+Intel/AMD生态直接受益+年报业绩验证",
+        "sustainability": "小市值+高换手率属性适合连板，但需注意解禁/减持风险"
+      },
+      "risk_factors": [
+        "ODM行业毛利率偏低（8-12%），盈利能力承压",
+        "AIPC市场竞争加剧，价格战风险",
+        "上游芯片供应受地缘政治影响",
+        "小市值标的流动性波动大"
+      ]
+    }
+  ],
+  "alternative_candidates": [
+    {
+      "stock_code": "301387.SZ",
+      "stock_name": "光大同创",
+      "market_cap_range": "约45-55亿",
+      "business_logic": "碳纤维结构件应用于高端AIPC，轻量化趋势受益",
+      "exclude_reason": "市值接近下限，流动性风险相对较高",
+      "note": "若市值回升至50亿以上，可纳入观察"
+    },
+    {
+      "stock_code": "300793.SZ",
+      "stock_name": "佳禾智能",
+      "market_cap_range": "约60-80亿",
+      "business_logic": "AI耳机ODM代工，端侧AI音频终端受益",
+      "exclude_reason": "更偏向AI耳机而非AIPC核心供应链",
+      "note": "AI穿戴方向备选标的"
+    }
+  ],
+  "sector_catalysts_summary": {
+    "时间范围": "2026年3月30日-4月13日（未来2周）",
+    "主要催化剂": [
+      {
+        "日期": "3月30日-4月3日",
+        "事件": "A股年报密集披露期",
+        "影响": "AIPC业务占比提升验证，绩优股可能获资金青睐"
+      },
+      {
+        "日期": "4月初",
+        "事件": "联想、惠普春季AIPC新品发布会",
+        "影响": "结构件/ODM订单预期升温"
+      },
+      {
+        "日期": "4月3日（周五）",
+        "事件": "清明节前最后一个交易日",
+        "影响": "节前效应可能放大题材波动"
+      }
+    ]
+  },
+  "cross_reference_validation": {
+    "ai_terminal_scan": "确认AIPC产业链为当前AI终端轮动主要方向，资金从芯片向终端溢出",
+    "wearable_research": "验证结构件环节价值量提升逻辑，春秋电子为AIPC结构件核心标的",
+    "earnings_forecast": "消费电子业绩拐点确认，AIPC为2026年结构性增长赛道"
+  },
+  "risk_disclosure": {
+    "data_limitations": [
+      "市值数据基于历史财报估算，实时市值请以行情软件为准",
+      "催化剂时间表基于公开信息推演，实际时间可能调整",
+      "本报告无法实时联网，未获取2026年3月27日之后的最新公告"
+    ],
+    "market_risks": [
+      "AIPC渗透率提升存在不确定性",
+      "PC行业整体复苏节奏可能不及预期",
+      "小市值标的波动率极高，需严格止损",
+      "连续涨停可能触发交易所重点监控"
+    ],
+    "compliance_note": "本报告仅供研究参考，不构成投资建议。投资者应独立决策，自担风险。"
+  },
+  "final_recommendation": {
+    "primary_candidates": [
+      {
+        "code": "603890.SH",
+        "name": "春秋电子",
+        "priority": "第一优先级",
+        "market_cap": "55-75亿",
+        "core_logic": "AIPC镁合金结构件龙头，单机价值量提升+年报业绩验证"
+      },
+      {
+        "code": "001314.SZ",
+        "name": "亿道信息",
+        "priority": "第二优先级",
+        "market_cap": "52-68亿",
+        "core_logic": "AIPC整机ODM稀缺标的，Intel/AMD生态直接受益+小市值高弹性"
+      }
+    ],
+    "selection_rationale": "两只标的均严格符合50-300亿市值要求，业务逻辑直接挂钩AIPC换机潮核心供应链（结构件+ODM），未来1-2周均有年报/订单等可验证催化剂。春秋电子为机构+游资共识标的，亿道信息为小市值纯弹性品种。",
+    "deliverable_summary": "AI手机/AIPC方向：2只核心候选标的（春秋电子、亿道信息），含代码、业务逻辑、市值（50-300亿）、未来1-2周催化剂时间表"
+  }
+}

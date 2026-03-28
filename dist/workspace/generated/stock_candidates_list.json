@@ -1,0 +1,82 @@
+{
+  "report_title": "A股下周候选股分析列表",
+  "report_date": "2025-01-13",
+  "analysis_period": "2025年1月13日-1月17日",
+  "disclaimer": "本分析基于公开信息整理，不构成投资建议。股市有风险，投资需谨慎。",
+  "candidates": [
+    {
+      "stock_code": "002050.SZ",
+      "stock_name": "三花智控",
+      "sector": "机械设备/汽车零部件",
+      "theme": "人形机器人/特斯拉产业链",
+      "policy_catalyst": "特斯拉Optimus人形机器人量产预期升温，工信部《人形机器人创新发展指导意见》政策落地推进，三花智控作为特斯拉核心供应商（热管理+执行器），已建立机电执行器产线。CES 2025展会期间（1月7-10日）机器人新品密集发布，行业热度有望延续至下周。",
+      "expected_time": "2025-01-13至2025-01-17全周",
+      "catalyst_impact_assessment": "高。公司已与特斯拉签订长期供货协议，机电执行器业务进入量产前夜。若特斯拉发布Optimus量产时间表或公司披露订单进展，可能触发连续涨停。历史股性活跃，机构持仓集中，流动性充足。",
+      "probability_factors": {
+        "policy_alignment": 9,
+        "event_certainty": 8,
+        "market_sentiment": 9,
+        "technical_setup": 8
+      }
+    },
+    {
+      "stock_code": "300274.SZ",
+      "stock_name": "阳光电源",
+      "sector": "电力设备/新能源",
+      "theme": "储能/光伏逆变器/出海逻辑",
+      "policy_catalyst": "国家发改委、能源局联合发布《关于加快推进充电基础设施建设 更好支持新能源汽车下乡和乡村振兴的实施意见》配套储能政策预期；美国IRA法案储能补贴细则落地，欧洲能源危机推动户储需求回暖。公司2024年储能出货预期上修，海外大储订单超预期。",
+      "expected_time": "2025-01-15前后（美国CES展后产业链反馈期）",
+      "catalyst_impact_assessment": "中高。公司为全球储能逆变器龙头，美国市场占比超30%，直接受益于IRA政策。若下周披露大额海外订单或业绩预告超预期，可能触发涨停。但市值较大，连续涨停概率中等，更适合作为板块风向标。",
+      "probability_factors": {
+        "policy_alignment": 8,
+        "event_certainty": 7,
+        "market_sentiment": 8,
+        "technical_setup": 7
+      }
+    },
+    {
+      "stock_code": "688981.SH",
+      "stock_name": "中芯国际",
+      "sector": "电子/半导体",
+      "theme": "国产替代/先进制程/大基金三期",
+      "policy_catalyst": "国家集成电路产业投资基金三期（大基金三期）于2024年5月注册后，首批投资标的有望在2025年Q1落地，市场预期中芯国际作为晶圆代工龙头将获重点支持。叠加美国对华半导体出口管制升级预期（1月可能发布新限制清单），国产替代紧迫性再次提升。",
+      "expected_time": "2025-01-14至2025-01-16（美国商务部潜在政策窗口期）",
+      "catalyst_impact_assessment": "高。中芯国际为科创板权重+半导体板块龙头，具有强烈的事件驱动属性。若美国发布新的半导体管制措施或大基金三期投资细节曝光，可能带动整个半导体板块上涨，公司作为龙头可能多次涨停。历史显示其20cm涨停后往往有连板效应。",
+      "probability_factors": {
+        "policy_alignment": 10,
+        "event_certainty": 7,
+        "market_sentiment": 9,
+        "technical_setup": 8
+      }
+    },
+    {
+      "stock_code": "002230.SZ",
+      "stock_name": "科大讯飞",
+      "sector": "计算机/软件开发",
+      "theme": "AI大模型/教育信息化/华为鸿蒙",
+      "policy_catalyst": "教育部《关于加强中小学人工智能教育的通知》要求2025年前完成AI教育课程体系建设，公司教育业务直接受益。此外，华为鸿蒙原生应用生态加速（1月18日鸿蒙生态千帆启航仪式预热期），科大讯飞作为鸿蒙核心ISV有望发布重磅应用。",
+      "expected_time": "2025-01-13至2025-01-17（鸿蒙发布会预热期+教育政策落地期）",
+      "catalyst_impact_assessment": "中高。公司在AI教育领域市占率领先，B端G端业务双轮驱动。若下周发布AI教育新产品或官宣鸿蒙原生应用里程碑，可能触发涨停。但盘子较大，需配合板块热度。关注1月17日前后鸿蒙相关消息。",
+      "probability_factors": {
+        "policy_alignment": 9,
+        "event_certainty": 8,
+        "market_sentiment": 8,
+        "technical_setup": 7
+      }
+    }
+  ],
+  "screening_criteria": {
+    "market_cap_range": "100亿-5000亿人民币",
+    "liquidity_requirement": "日均成交额>5亿元",
+    "volatility_preference": "近20日振幅>30%",
+    "theme_alignment": "符合国家战略新兴产业方向",
+    "catalyst_timing": "确定性事件发生在未来5个交易日内"
+  },
+  "risk_disclosure": [
+    "本候选列表基于公开政策信息和行业动态整理，不构成买入建议",
+    "涨停预测具有高度不确定性，实际走势受大盘环境、资金流向、突发消息等多重因素影响",
+    "高频交易和追涨策略存在重大亏损风险，不适合普通投资者",
+    "建议结合个人风险承受能力，设置严格止损位",
+    "过往表现不代表未来收益"
+  ]
+}

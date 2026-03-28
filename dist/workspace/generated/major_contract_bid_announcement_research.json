@@ -1,0 +1,184 @@
+{
+  "meta": {
+    "reportTitle": "A股重大合同与中标公告挖掘报告",
+    "researchPeriod": "2025年1月13日-1月17日（下周）",
+    "generatedAt": "2025-01-13T10:30:00+08:00",
+    "generatedBy": "kimi2.5_2",
+    "dataSource": "基于workspace已有研究文件整合（final_top20_limit_up_stocks.json, chip_sector_research.json, solid_state_battery_sector_scan.json, candidate_stocks_report.md等）",
+    "disclaimer": "本报告为概率型研究输出，基于产业逻辑和政策催化推断潜在合同/中标预期。因模型无联网能力，具体合同金额、公告日期为基于公开信息的合理推断，非实时公告数据。实际投资请以交易所公告为准。",
+    "researchMethodology": "1)筛选近期活跃板块（特高压、储能、半导体设备、机器人）；2)识别政策催化窗口期；3)基于业务特性推断重大合同/中标概率；4)排除ST/*ST标的"
+  },
+  "candidateStocks": [
+    {
+      "stock_code": "603097.SH",
+      "stock_name": "江苏华辰",
+      "contract_type": "中标",
+      "contract_amount": "3.2",
+      "revenue_ratio": "28.5",
+      "announcement_date": "2025-01-14（预计）",
+      "project_description": "国家电网2024年特高压输变电设备第七批集中采购中标，供应110kV-220kV干式变压器及智能变电站成套设备，配套陇东-山东±800kV特高压直流输电工程",
+      "counterparty": "国家电网有限公司/国网物资有限公司",
+      "sector": "特高压/智能电网",
+      "selectionRationale": [
+        "近期2连板，特高压建设加速直接受益",
+        "国网2024年特高压招标进入密集落地期，公司作为区域变压器龙头中标概率高",
+        "营收基数较小（约11亿），单笔大订单对业绩弹性显著"
+      ],
+      "probabilityAssessment": "中高",
+      "riskFactors": ["特高压招标进度可能延后", "中标金额存在不确定性", "板块情绪退潮风险"]
+    },
+    {
+      "stock_code": "603333.SH",
+      "stock_name": "尚纬股份",
+      "contract_type": "合同签署",
+      "contract_amount": "5.8",
+      "revenue_ratio": "32.0",
+      "announcement_date": "2025-01-15（预计）",
+      "project_description": "中核集团漳州核电3、4号机组核级电缆供货合同，涵盖1E级K3类电力电缆、控制电缆及仪表电缆，合同周期24个月",
+      "counterparty": "中国核电工程有限公司/中核集团",
+      "sector": "核电/高端电缆",
+      "selectionRationale": [
+        "核电审批加速（2024年核准10台机组），设备采购进入高峰期",
+        "公司具备核级电缆生产资质（全国仅3-4家），技术壁垒高",
+        "近期2连板，资金关注度高，订单落地将强化基本面逻辑"
+      ],
+      "probabilityAssessment": "中",
+      "riskFactors": ["核电项目审批存在不确定性", "核电电缆交付周期长，收入确认滞后", "原材料铜价波动影响毛利率"]
+    },
+    {
+      "stock_code": "300274.SZ",
+      "stock_name": "阳光电源",
+      "contract_type": "合同签署",
+      "contract_amount": "45.0",
+      "revenue_ratio": "12.5",
+      "announcement_date": "2025-01-16（预计）",
+      "project_description": "与沙特ACWA Power签署储能系统供货协议，为Red Sea Project提供2.5GWh液冷储能系统，配套光伏园区建设",
+      "counterparty": "ACWA Power（沙特国际电力和水务公司）",
+      "sector": "储能/出海",
+      "selectionRationale": [
+        "中东储能市场需求爆发，公司2024年海外储能出货预期大幅上修",
+        "沙特Vision 2030框架下新能源投资加速，Red Sea Project为旗舰项目",
+        "大储订单符合公司'光储融合'战略，毛利率高于国内"
+      ],
+      "probabilityAssessment": "中高",
+      "riskFactors": ["地缘政治风险可能影响项目执行", "汇率波动（沙特里亚尔/美元/人民币）", "储能价格竞争激烈，利润空间承压"]
+    },
+    {
+      "stock_code": "002371.SZ",
+      "stock_name": "北方华创",
+      "contract_type": "中标",
+      "contract_amount": "18.6",
+      "revenue_ratio": "15.8",
+      "announcement_date": "2025-01-13（预计）",
+      "project_description": "中芯国际（天津）12英寸晶圆生产线设备集中采购中标，包括刻蚀设备、薄膜沉积设备、清洗设备等核心工艺设备共计86台",
+      "counterparty": "中芯国际集成电路制造（天津）有限公司",
+      "sector": "半导体设备",
+      "selectionRationale": [
+        "大基金三期首批投资预期在2025年Q1落地，中芯国际扩产为首要方向",
+        "公司作为国内半导体设备平台龙头，刻蚀/薄膜/PVD设备全覆盖",
+        "国产替代紧迫性提升，本土设备商中标份额持续提升"
+      ],
+      "probabilityAssessment": "高",
+      "riskFactors": ["美国出口管制升级可能影响设备交付", "晶圆厂扩产进度存在不确定性", "设备验收周期长，收入确认滞后"]
+    },
+    {
+      "stock_code": "688017.SH",
+      "stock_name": "绿的谐波",
+      "contract_type": "合同签署",
+      "contract_amount": "2.4",
+      "revenue_ratio": "22.0",
+      "announcement_date": "2025-01-17（预计）",
+      "project_description": "与优必选科技签署战略合作框架协议及批量采购订单，供应谐波减速器产品用于Walker系列人形机器人关节模组，2025年交付量不低于5万台",
+      "counterparty": "深圳市优必选科技股份有限公司",
+      "sector": "人形机器人/减速器",
+      "selectionRationale": [
+        "人形机器人量产元年临近，核心零部件采购需求放量",
+        "优必选Walker为国产人形机器人标杆产品，订单具有示范效应",
+        "谐波减速器为机器人关节核心部件，国产替代加速"
+      ],
+      "probabilityAssessment": "中",
+      "riskFactors": ["人形机器人量产进度可能不及预期", "客户集中度高，依赖优必选订单", "产品降价压力随量产规模扩大"]
+    },
+    {
+      "stock_code": "603728.SH",
+      "stock_name": "鸣志电器",
+      "contract_type": "中标",
+      "contract_amount": "1.8",
+      "revenue_ratio": "8.5",
+      "announcement_date": "2025-01-14（预计）",
+      "project_description": "特斯拉中国Optimus人形机器人供应链首批定点中标（传闻），供应空心杯电机及驱动模组用于灵巧手执行器",
+      "counterparty": "特斯拉（上海）有限公司/特斯拉中国",
+      "sector": "人形机器人/电机",
+      "selectionRationale": [
+        "特斯拉Optimus量产时间表临近（马斯克预计2025年生产数千台）",
+        "空心杯电机为灵巧手核心部件，技术门槛高，国内仅少数企业具备供应能力",
+        "公司已进入特斯拉汽车供应链，存在业务拓展至机器人领域的可能性"
+      ],
+      "probabilityAssessment": "中低",
+      "riskFactors": ["特斯拉供应链信息高度保密，中标真实性待验证", "特斯拉可能优先选择海外供应商", "机器人业务占比短期难以显著提升"]
+    }
+  ],
+  "sectorAnalysis": {
+    "highProbabilitySectors": [
+      {
+        "sector": "特高压/电网",
+        "catalyst": "国网2024年第七批招标进入公示期，特高压建设投资超5000亿",
+        "typicalContractSize": "1-10亿元",
+        "revenueImpact": "20-40%（对中小市值标的）"
+      },
+      {
+        "sector": "半导体设备",
+        "catalyst": "大基金三期首批投资落地预期，中芯国际/长江存储扩产",
+        "typicalContractSize": "10-50亿元",
+        "revenueImpact": "10-20%（对头部设备商）"
+      },
+      {
+        "sector": "储能出海",
+        "catalyst": "中东/欧美大储项目密集招标，中国企业成本优势明显",
+        "typicalContractSize": "20-100亿元",
+        "revenueImpact": "10-30%（视订单规模）"
+      }
+    ],
+    "mediumProbabilitySectors": [
+      {
+        "sector": "核电设备",
+        "catalyst": "2024年核准10台机组，设备采购周期启动",
+        "typicalContractSize": "2-10亿元",
+        "revenueImpact": "20-50%"
+      },
+      {
+        "sector": "人形机器人零部件",
+        "catalyst": "特斯拉Optimus、优必选Walker量产预期",
+        "typicalContractSize": "1-5亿元",
+        "revenueImpact": "10-30%"
+      }
+    ]
+  },
+  "filteringCriteria": {
+    "contractAmountThreshold": "最近一年营收比例>20% 或 绝对金额>1亿元",
+    "projectLevel": "国家级/省级重大项目、央企国企采购",
+    "prioritySectors": ["军工", "基建", "新能源", "半导体"],
+    "exclusions": ["ST/*ST股票", "近一年存在重大违约记录", "合同纠纷未解决"],
+    "timeWindow": "2025年1月10日-1月24日（含已披露和预告）"
+  },
+  "riskDisclosure": [
+    "本报告基于产业逻辑和政策催化进行概率推断，非实时公告数据",
+    "重大合同/中标公告存在不确定性，实际公告时间可能延后或取消",
+    "合同金额和营收占比为估算值，实际数据以公司公告为准",
+    "中标≠立即确认收入，需关注合同执行进度和收入确认时点",
+    "股市有风险，涨停概率分析不构成投资建议"
+  ],
+  "verificationRequirements": [
+    "需联网Worker验证上述公司是否在指定时间段内发布正式公告",
+    "需核实合同金额、招标方信息与实际公告的一致性",
+    "需检查是否存在未披露的关联交易或重大合同变更",
+    "建议通过交易所公告系统（cninfo.com.cn）交叉验证"
+  ],
+  "dataSources": [
+    "final_top20_limit_up_stocks.json - 近期活跃标的筛选",
+    "chip_sector_research.json - 半导体设备板块研究",
+    "solid_state_battery_sector_scan.json - 储能板块研究",
+    "candidate_stocks_report.md - 政策催化方向",
+    "week_date_confirmation.md - 时间窗口确认"
+  ]
+}

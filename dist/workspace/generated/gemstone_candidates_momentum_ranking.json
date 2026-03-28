@@ -1,0 +1,169 @@
+{
+  "meta": {
+    "generatedAt": "2025-01-13T10:30:00Z",
+    "taskId": "task_2__sub_1__sub_1_3__sub_1_3_b__sub_1__sub_5",
+    "phase": "research",
+    "dataStatus": "template_based_on_historical_framework",
+    "note": "前置任务sub_1-sub_4原始数据未找到，本文件基于multiple_limit_up_scoring_framework和历史分析构建候选模板，需后续填充实时数据",
+    "nextWeekTradingDates": "2025-01-14至2025-01-17（4个交易日，周一为马丁路德金日假期）",
+    "scoringFramework": "MLUP v1.0 (Multiple Limit-Up Probability)",
+    "disclaimer": "本列表为基于历史规律的模拟分析框架，非实时股票推荐，实际数据需从前置任务获取"
+  },
+  "methodology": {
+    "weightedLimitUpCalculation": {
+      "description": "近5日涨停/大涨加权次数计算规则",
+      "rules": [
+        "涨停（创业板20%，主板10%，ST 5%）计1.0次",
+        "涨幅>15%但未涨停（创业板）计0.5次",
+        "涨幅>7%但未涨停（主板）计0.3次",
+        "时间衰减因子：当日1.0，昨日0.9，前日0.8，依此类推"
+      ],
+      "formula": "recent_limit_up_count = Σ(weight_i × decay_factor_i)"
+    },
+    "momentumRankingCriteria": [
+      "Primary: 近5日加权涨停次数（高者优先）",
+      "Secondary: 最近一次涨停日期（近者优先）", 
+      "Tertiary: 所属题材热度排名",
+      "Quaternary: 流通市值（小盘优先）"
+    ]
+  },
+  "candidates": [
+    {
+      "rank": 1,
+      "stockCode": "300XXX",
+      "stockName": "【需填充】",
+      "exchange": "ChiNext/创业板",
+      "industry": "【需根据实际填充：AI算力/半导体/机器人等政策热点】",
+      "recentLimitUpCount": {
+        "weightedScore": "【计算值】",
+        "rawData": {
+          "day1_today": {"date": "2025-01-13", "change": "+20.00%", "weight": 1.0},
+          "day2": {"date": "2025-01-10", "change": "+18.50%", "weight": 0.5},
+          "day3": {"date": "2025-01-09", "change": "+20.00%", "weight": 0.9},
+          "day4": {"date": "2025-01-08", "change": "+5.20%", "weight": 0},
+          "day5": {"date": "2025-01-07", "change": "+20.00%", "weight": 0.8}
+        },
+        "calculated": "1.0×1.0 + 0.5×0.9 + 1.0×0.8 + 0 + 1.0×0.7 = 2.95"
+      },
+      "keyCatalyst": {
+        "primary": "【政策/概念催化剂】如：国家AI产业规划发布/低空经济政策",
+        "secondary": "【技术面】多头排列+倍量突破/平台突破形态",
+        "tertiary": "【资金面】知名游资现身龙虎榜/机构席位净买入"
+      },
+      "mlupScore": {
+        "technicalMomentum": "20-25分",
+        "themeAlignment": "15-20分", 
+        "floatLiquidity": "15-20分",
+        "fundamental": "10-15分",
+        "sentiment": "10-15分",
+        "seasonality": "3-5分",
+        "totalEstimate": "73-100分 (高概率层)"
+      },
+      "probabilityTier": "High Probability (高概率层)",
+      "expectedOccurrenceRate": "25-35%",
+      "riskFactors": [
+        "连续涨停后交易所重点监控风险",
+        "T+1交易规则下次日低开风险", 
+        "题材退潮导致的A杀风险"
+      ],
+      "dataStatus": "template_placeholder",
+      "action": "需从前置任务sub_1-sub_4获取真实数据填充"
+    },
+    {
+      "rank": 2,
+      "stockCode": "300YYY", 
+      "stockName": "【需填充】",
+      "exchange": "ChiNext/创业板",
+      "industry": "【科技成长/高端制造】",
+      "recentLimitUpCount": {
+        "weightedScore": "【计算值】",
+        "rawData": "【待填充近5日涨跌幅数据】",
+        "estimatedRange": "2.0-2.5"
+      },
+      "keyCatalyst": {
+        "primary": "【概念题材】如：人形机器人/固态电池/CPO光模块",
+        "secondary": "【事件驱动】业绩预增/重大合同签订",
+        "tertiary": "【市场情绪】板块效应带动"
+      },
+      "mlupScore": {
+        "totalEstimate": "60-75分 (中高概率层)"
+      },
+      "probabilityTier": "Medium-High Probability (中高概率层)",
+      "expectedOccurrenceRate": "15-25%",
+      "dataStatus": "template_placeholder",
+      "action": "需从前置任务sub_1-sub_4获取真实数据填充"
+    },
+    {
+      "rank": 3,
+      "stockCode": "300ZZZ",
+      "stockName": "【需填充】", 
+      "exchange": "ChiNext/创业板",
+      "industry": "【新能源/周期/消费】",
+      "recentLimitUpCount": {
+        "weightedScore": "【计算值】",
+        "estimatedRange": "1.5-2.0"
+      },
+      "keyCatalyst": {
+        "primary": "【政策驱动】如：消费刺激政策/新能源补贴",
+        "secondary": "【技术面】V型反弹/均线粘合突破"
+      },
+      "mlupScore": {
+        "totalEstimate": "55-70分 (中等概率层)"
+      },
+      "probabilityTier": "Medium Probability (中等概率层)",
+      "expectedOccurrenceRate": "8-15%",
+      "dataStatus": "template_placeholder",
+      "action": "需从前置任务sub_1-sub_4获取真实数据填充"
+    },
+    {
+      "rank": 4,
+      "stockCode": "300WWW",
+      "stockName": "【需填充】",
+      "exchange": "ChiNext/创业板", 
+      "industry": "【生物医药/信创】",
+      "recentLimitUpCount": {
+        "weightedScore": "【计算值】",
+        "estimatedRange": "1.0-1.5"
+      },
+      "keyCatalyst": {
+        "primary": "【业绩催化】季报超预期/创新药进展",
+        "secondary": "【重组预期】资产注入/股权变动传闻"
+      },
+      "mlupScore": {
+        "totalEstimate": "50-65分 (中低概率层)"
+      },
+      "probabilityTier": "Medium-Low Probability (中低概率层)",
+      "expectedOccurrenceRate": "5-12%",
+      "dataStatus": "template_placeholder",
+      "action": "需从前置任务sub_1-sub_4获取真实数据填充"
+    }
+  ],
+  "historicalReference": {
+    "highProbabilityProfile": {
+      "sector": "科技成长（AI算力、半导体、机器人）占38.5%",
+      "marketCap": "流通市值<100亿占75.8%",
+      "technicalPattern": "多头排列初期+倍量突破占31.5%",
+      "catalyst": "政策+概念共振组合概率45.3%",
+      "continuationProbability": "小盘股(<50亿)次周继续涨停概率22%"
+    },
+    "source": "historical_limit_up_analysis_report.md (2020-2024数据)"
+  },
+  "dataGapAnalysis": {
+    "missingInputs": [
+      "sub_1: 当日涨停股票原始数据",
+      "sub_2: 连板股票统计数据", 
+      "sub_3: 板块资金流向数据",
+      "sub_4: 龙虎榜/机构偏好数据"
+    ],
+    "impact": "无法进行真实股票筛选，当前输出为结构化模板",
+    "recommendation": "建议执行前置任务sub_1-sub_4获取实时数据后，重新运行本整合任务"
+  },
+  "nextSteps": [
+    "1. 执行前置任务sub_1-sub_4获取实时涨停数据",
+    "2. 填充本文件candidate字段的真实数据",
+    "3. 按weightedLimitUpCount重新排序",
+    "4. 输出最终3-4只候选股票列表",
+    "5. 移交下游任务生成Word报告"
+  ],
+  "disclaimer": "股市有风险，投资需谨慎。本文件为研究分析框架，不构成投资建议。多次涨停预测具有高度不确定性，历史规律不代表未来表现。"
+}

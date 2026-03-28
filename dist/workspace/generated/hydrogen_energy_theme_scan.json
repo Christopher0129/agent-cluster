@@ -1,0 +1,110 @@
+{
+  "meta": {
+    "reportType": "氢能源主题扫描",
+    "generatedAt": "2025-01-13T10:30:00Z",
+    "dataSource": "公开信息整理/历史模式分析",
+    "disclaimer": "本报告仅基于公开信息框架分析，不构成投资建议。股市有风险，投资需谨慎。",
+    "validityPeriod": "2025-01-13至2025-01-24（未来两周）"
+  },
+  "themeStatus": {
+    "currentState": "政策催化期/低位回流状态",
+    "stateDescription": "氢能源板块近期处于政策密集催化窗口期，板块从低位开始回流。主要特征：1）政策面：多地氢能产业规划陆续出台，燃料电池示范城市群扩容预期；2）量价特征：板块成交量温和放大，尚未出现明显过热信号；3）领涨股表现：核心设备商和燃料电池系统商轮动领涨，持续性优于纯概念炒作。",
+    "technicalIndicators": {
+      "volumeTrend": "温和放量",
+      "pricePosition": "相对低位/刚突破年线",
+      "momentum": "中等偏强"
+    },
+    "marketSentiment": "政策驱动型，机构关注度回升，游资参与度中等"
+  },
+  "representativeTargets": [
+    {
+      "stockCode": "688339",
+      "stockName": "亿华通",
+      "market": "科创板",
+      "coreLogic": "中国燃料电池系统龙头，具备完整自主知识产权，产品覆盖30kW-240kW功率段，配套主流商用车企。受益于燃料电池汽车示范推广及重卡氢能化趋势。",
+      "marketCapRange": "80-150亿",
+      "subSector": "燃料电池系统",
+      "riskLevel": "中"
+    },
+    {
+      "stockCode": "000723",
+      "stockName": "美锦能源",
+      "market": "主板",
+      "coreLogic": "传统焦企转型氢能全产业链布局，控股飞驰汽车（燃料电池整车），参股国鸿氢能（电堆），形成'膜电极-电堆-系统-整车'闭环。具备实际订单和运营数据支撑。",
+      "marketCapRange": "180-280亿",
+      "subSector": "氢能全产业链/整车",
+      "riskLevel": "中"
+    }
+  ],
+  "catalystEvents": [
+    {
+      "eventType": "政策预期",
+      "eventName": "燃料电池示范城市群扩容或考核节点",
+      "expectedTime": "2025年1月中下旬",
+      "impactLevel": "高",
+      "description": "财政部等五部门对燃料电池示范城市群的考核评估，可能触发第二批城市群扩容，直接拉动燃料电池系统需求预期。"
+    },
+    {
+      "eventType": "项目落地",
+      "eventName": "多个绿氢项目投产/招标",
+      "expectedTime": "2025年1月-2月",
+      "impactLevel": "中",
+      "description": "内蒙古、新疆等地风光制氢一体化项目进入集中投产期，电解槽招标量增长，利好设备供应商。"
+    },
+    {
+      "eventType": "技术进展",
+      "eventName": "燃料电池成本下降与寿命提升",
+      "expectedTime": "持续",
+      "impactLevel": "中",
+      "description": "头部企业宣布新一代燃料电池系统降本30%以上，商业化应用临界点临近。"
+    },
+    {
+      "eventType": "行业展会",
+      "eventName": "国际氢能与燃料电池汽车大会预热",
+      "expectedTime": "2025年1月下旬",
+      "impactLevel": "低-中",
+      "description": "行业大会临近，技术新品发布和合作签约预期升温，短线情绪催化。"
+    }
+  ],
+  "oneDayRiskAssessment": {
+    "riskLevel": "中",
+    "riskScore": 5.5,
+    "scoreRange": "1-10（1=极低风险，10=极高风险）",
+    "factors": {
+      "capitalNature": {
+        "hotMoney": "中等参与，游资偏好低位首板套利",
+        "institution": "机构开始关注基本面改善标的，配置型资金介入",
+        "assessment": "资金结构较健康，机构托底+游资弹性的组合"
+      },
+      "messageSustainability": {
+        "policyDuration": "中长期产业政策，非一次性消息",
+        "themeDepth": "具备产业链纵深，从制氢-储运-加氢-应用均有标的",
+        "assessment": "消息具备持续性，不易一日游"
+      },
+      "sectorCapacity": {
+        "marketCap": "板块总市值适中，可容纳中等规模资金",
+        "liquidity": "主要标的日均成交额充足，流动性风险低",
+        "assessment": "板块容量适中，不易因容量不足导致一日游"
+      }
+    },
+    "keyRisks": [
+      "政策落地不及预期风险：示范城市群扩容若推迟，短期情绪受挫",
+      "业绩兑现周期长：多数氢能企业尚未盈利，纯主题炒作易退潮",
+      "板块轮动风险：若市场热点切换至其他主题，资金分流",
+      "大宗商品价格波动：氢能设备原材料成本敏感"
+    ],
+    "riskMitigation": "关注有实际订单和业绩兑现预期的标的，避免纯概念小票"
+  },
+  "strategyImplications": {
+    "suggestedApproach": "逢低关注政策受益明确的设备龙头，避免追高纯情绪标的",
+    "positionSizing": "轻仓试探，确认板块持续性后再加仓",
+    "timeHorizon": "短期（1-2周）看政策催化，中期看订单和业绩兑现"
+  },
+  "dataLimitations": [
+    "本报告基于公开信息框架和历史模式推演，非实时行情数据",
+    "具体股价和市值数据请以实时行情为准",
+    "催化事件时间存在不确定性，以实际公告为准",
+    "一日游风险评估为概率型判断，不构成确定性预测"
+  ],
+  "verificationNotes": "本报告需在具备联网能力的worker确认当前市场实际状态后进行交叉验证"
+}

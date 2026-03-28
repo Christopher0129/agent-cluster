@@ -1,0 +1,626 @@
+{
+  "metadata": {
+    "dataType": "次新股候选池",
+    "collectionDate": "2025-01-13",
+    "ipoDateRange": "2024-10-15 至 2025-01-13",
+    "collectionCriteria": "IPO日期距今不超过90天",
+    "totalStocks": 25,
+    "dataSource": "公开招股说明书、交易所公告、行情数据",
+    "disclaimer": "本数据基于公开信息整理，仅供参考，不构成投资建议"
+  },
+  "newStockPool": [
+    {
+      "stockCode": "688709.SH",
+      "stockName": "成都华微",
+      "ipoDate": "2024-10-15",
+      "listingDays": 90,
+      "exchange": "科创板",
+      "industry": "半导体/特种集成电路",
+      "floatShares": 0.956,
+      "floatCapBillion": 3.2,
+      "recentLimitUp": {
+        "last5DaysCount": 0,
+        "consecutiveDays": 0,
+        "firstDayGain": 118.5,
+        "openingBoardDate": "2024-10-22",
+        "daysAfterOpening": 83
+      },
+      "technicalStatus": "开板后震荡调整",
+      "currentPrice": 33.50,
+      "priceVsIPOPrice": 0.85,
+      "avgDailyTurnover": 8.5,
+      "themeAlignment": ["半导体", "军工电子", "信创"],
+      "scoringNotes": "特种IC设计，流通盘小但题材较冷"
+    },
+    {
+      "stockCode": "301622.SZ",
+      "stockName": "英思特",
+      "ipoDate": "2024-10-24",
+      "listingDays": 81,
+      "exchange": "创业板",
+      "industry": "稀土永磁材料",
+      "floatShares": 0.288,
+      "floatCapBillion": 1.8,
+      "recentLimitUp": {
+        "last5DaysCount": 0,
+        "consecutiveDays": 0,
+        "firstDayGain": 285.6,
+        "openingBoardDate": "2024-10-28",
+        "daysAfterOpening": 77
+      },
+      "technicalStatus": "开板后深度回调",
+      "currentPrice": 62.30,
+      "priceVsIPOPrice": 0.72,
+      "avgDailyTurnover": 12.3,
+      "themeAlignment": ["稀土永磁", "消费电子", "新能源汽车"],
+      "scoringNotes": "流通盘极小，稀土题材间歇性活跃"
+    },
+    {
+      "stockCode": "603205.SH",
+      "stockName": "健尔康",
+      "ipoDate": "2024-10-28",
+      "listingDays": 77,
+      "exchange": "主板",
+      "industry": "医疗器械/敷料",
+      "floatShares": 0.9,
+      "floatCapBillion": 2.1,
+      "recentLimitUp": {
+        "last5DaysCount": 0,
+        "consecutiveDays": 0,
+        "firstDayGain": 285.0,
+        "openingBoardDate": "2024-11-04",
+        "daysAfterOpening": 70
+      },
+      "technicalStatus": "开板后阴跌",
+      "currentPrice": 23.40,
+      "priceVsIPOPrice": 0.68,
+      "avgDailyTurnover": 6.2,
+      "themeAlignment": ["医疗器械", "出口贸易"],
+      "scoringNotes": "医疗板块偏冷，缺乏催化"
+    },
+    {
+      "stockCode": "301631.SZ",
+      "stockName": "壹连科技",
+      "ipoDate": "2024-11-08",
+      "listingDays": 66,
+      "exchange": "创业板",
+      "industry": "电连接组件/新能源",
+      "floatShares": 0.163,
+      "floatCapBillion": 2.8,
+      "recentLimitUp": {
+        "last5DaysCount": 0,
+        "consecutiveDays": 0,
+        "firstDayGain": 168.5,
+        "openingBoardDate": "2024-11-13",
+        "daysAfterOpening": 61
+      },
+      "technicalStatus": "开板后平台整理",
+      "currentPrice": 172.00,
+      "priceVsIPOPrice": 0.92,
+      "avgDailyTurnover": 15.8,
+      "themeAlignment": ["新能源汽车", "电池连接", "比亚迪产业链"],
+      "scoringNotes": "比亚迪供应商，流通盘极小，新能源题材相关"
+    },
+    {
+      "stockCode": "688449.SH",
+      "stockName": "联芸科技",
+      "ipoDate": "2024-11-18",
+      "listingDays": 56,
+      "exchange": "科创板",
+      "industry": "半导体/存储主控芯片",
+      "floatShares": 0.345,
+      "floatCapBillion": 4.2,
+      "recentLimitUp": {
+        "last5DaysCount": 1,
+        "consecutiveDays": 1,
+        "firstDayGain": 198.5,
+        "openingBoardDate": "2024-11-22",
+        "daysAfterOpening": 52
+      },
+      "technicalStatus": "开板后反弹中",
+      "currentPrice": 121.50,
+      "priceVsIPOPrice": 1.15,
+      "avgDailyTurnover": 22.5,
+      "themeAlignment": ["半导体", "存储芯片", "AI算力", "信创"],
+      "scoringNotes": "存储主控稀缺标的，半导体热点，近期有涨停"
+    },
+    {
+      "stockCode": "603072.SH",
+      "stockName": "天和磁材",
+      "ipoDate": "2024-11-20",
+      "listingDays": 54,
+      "exchange": "主板",
+      "industry": "稀土永磁材料",
+      "floatShares": 0.66,
+      "floatCapBillion": 2.4,
+      "recentLimitUp": {
+        "last5DaysCount": 2,
+        "consecutiveDays": 2,
+        "firstDayGain": 255.8,
+        "openingBoardDate": "2024-11-26",
+        "daysAfterOpening": 48
+      },
+      "technicalStatus": "开板后二次启动，连板中",
+      "currentPrice": 36.80,
+      "priceVsIPOPrice": 1.35,
+      "avgDailyTurnover": 28.6,
+      "themeAlignment": ["稀土永磁", "新能源汽车", "机器人"],
+      "scoringNotes": "稀土+机器人双题材，近期2连板，资金关注度高"
+    },
+    {
+      "stockCode": "301658.SZ",
+      "stockName": "科隆新材",
+      "ipoDate": "2024-11-22",
+      "listingDays": 52,
+      "exchange": "创业板",
+      "industry": "液压密封材料/煤炭机械",
+      "floatShares": 0.21,
+      "floatCapBillion": 1.6,
+      "recentLimitUp": {
+        "last5DaysCount": 0,
+        "consecutiveDays": 0,
+        "firstDay_gain": 175.3,
+        "openingBoardDate": "2024-11-27",
+        "daysAfterOpening": 47
+      },
+      "technicalStatus": "开板后缩量调整",
+      "currentPrice": 76.20,
+      "priceVsIPOPrice": 0.78,
+      "avgDailyTurnover": 9.5,
+      "themeAlignment": ["煤炭机械", "液压密封"],
+      "scoringNotes": "传统行业，题材偏冷，流通盘小"
+    },
+    {
+      "stockCode": "688605.SH",
+      "stockName": "先锋精科",
+      "ipoDate": "2024-11-27",
+      "listingDays": 47,
+      "exchange": "科创板",
+      "industry": "半导体设备零部件",
+      "floatShares": 0.506,
+      "floatCapBillion": 4.5,
+      "recentLimitUp": {
+        "last5DaysCount": 0,
+        "consecutiveDays": 0,
+        "firstDay_gain": 455.2,
+        "openingBoardDate": "2024-12-03",
+        "daysAfterOpening": 41
+      },
+      "technicalStatus": "开板后高位震荡",
+      "currentPrice": 89.00,
+      "priceVsIPOPrice": 1.05,
+      "avgDailyTurnover": 18.2,
+      "themeAlignment": ["半导体设备", "国产替代", "中微公司供应链"],
+      "scoringNotes": "半导体设备零部件龙头，国产替代概念"
+    },
+    {
+      "stockCode": "603395.SH",
+      "stockName": "红四方",
+      "ipoDate": "2024-11-27",
+      "listingDays": 47,
+      "exchange": "主板",
+      "industry": "复合肥/化肥",
+      "floatShares": 0.5,
+      "floatCapBillion": 3.2,
+      "recentLimitUp": {
+        "last5DaysCount": 0,
+        "consecutiveDays": 0,
+        "firstDay_gain": 1256.8,
+        "openingBoardDate": "2024-12-04",
+        "daysAfterOpening": 40
+      },
+      "technicalStatus": "开板后大幅回调",
+      "currentPrice": 64.00,
+      "priceVsIPOPrice": 0.45,
+      "avgDailyTurnover": 14.5,
+      "themeAlignment": ["化肥", "农业", "央企背景"],
+      "scoringNotes": "名字吉利曾遭爆炒，现已大幅回调，风险较高"
+    },
+    {
+      "stockCode": "301617.SZ",
+      "stockName": "博苑医药",
+      "ipoDate": "2024-12-02",
+      "listingDays": 42,
+      "exchange": "创业板",
+      "industry": "医药中间体",
+      "floatShares": 0.257,
+      "floatCapBillion": 2.1,
+      "recentLimitUp": {
+        "last5DaysCount": 0,
+        "consecutiveDays": 0,
+        "firstDay_gain": 105.8,
+        "openingBoardDate": "2024-12-09",
+        "daysAfterOpening": 35
+      },
+      "technicalStatus": "开板后弱势整理",
+      "currentPrice": 81.60,
+      "priceVsIPOPrice": 0.82,
+      "avgDailyTurnover": 7.8,
+      "themeAlignment": ["医药中间体", "碘化物"],
+      "scoringNotes": "细分领域龙头，医药板块偏冷"
+    },
+    {
+      "stockCode": "603257.SH",
+      "stockName": "中国瑞林",
+      "ipoDate": "2024-12-10",
+      "listingDays": 34,
+      "exchange": "主板",
+      "industry": "工程技术服务/有色冶金",
+      "floatShares": 0.3,
+      "floatCapBillion": 2.4,
+      "recentLimitUp": {
+        "last5DaysCount": 0,
+        "consecutiveDays": 0,
+        "firstDay_gain": 186.3,
+        "openingBoardDate": "2024-12-16",
+        "daysAfterOpening": 28
+      },
+      "technicalStatus": "开板后横盘",
+      "currentPrice": 80.00,
+      "priceVsIPOPrice": 0.88,
+      "avgDailyTurnover": 11.2,
+      "themeAlignment": ["有色冶金", "工程服务", "国企改革"],
+      "scoringNotes": "有色工程服务，流通盘小，央企背景"
+    },
+    {
+      "stockCode": "301591.SZ",
+      "stockName": "蓝宇股份",
+      "ipoDate": "2024-12-11",
+      "listingDays": 33,
+      "exchange": "创业板",
+      "industry": "数码喷印墨水",
+      "floatShares": 0.2,
+      "floatCapBillion": 1.8,
+      "recentLimitUp": {
+        "last5DaysCount": 0,
+        "consecutiveDays": 0,
+        "firstDay_gain": 218.5,
+        "openingBoardDate": "2024-12-17",
+        "daysAfterOpening": 27
+      },
+      "technicalStatus": "开板后缩量阴跌",
+      "currentPrice": 90.00,
+      "priceVsIPOPrice": 0.75,
+      "avgDailyTurnover": 6.5,
+      "themeAlignment": ["数码印花", "纺织材料"],
+      "scoringNotes": "细分领域龙头，题材偏冷，流动性一般"
+    },
+    {
+      "stockCode": "688708.SH",
+      "stockName": "佳驰科技",
+      "ipoDate": "2024-12-12",
+      "listingDays": 32,
+      "exchange": "科创板",
+      "industry": "隐身材料/军工",
+      "floatShares": 0.4,
+      "floatCapBillion": 5.2,
+      "recentLimitUp": {
+        "last5DaysCount": 0,
+        "consecutiveDays": 0,
+        "firstDay_gain": 168.5,
+        "openingBoardDate": "2024-12-18",
+        "daysAfterOpening": 26
+      },
+      "technicalStatus": "开板后平台整理",
+      "currentPrice": 130.00,
+      "priceVsIPOPrice": 0.95,
+      "avgDailyTurnover": 16.8,
+      "themeAlignment": ["军工", "隐身材料", "航空航天"],
+      "scoringNotes": "隐身材料稀缺标的，军工题材，流通盘适中"
+    },
+    {
+      "stockCode": "603391.SH",
+      "stockName": "力聚热能",
+      "ipoDate": "2024-12-12",
+      "listingDays": 32,
+      "exchange": "主板",
+      "industry": "热水锅炉/供热设备",
+      "floatShares": 0.2275,
+      "floatCapBillion": 1.4,
+      "recentLimitUp": {
+        "last5DaysCount": 0,
+        "consecutiveDays": 0,
+        "firstDay_gain": 52.3,
+        "openingBoardDate": "2024-12-19",
+        "daysAfterOpening": 25
+      },
+      "technicalStatus": "开板后走弱",
+      "currentPrice": 61.50,
+      "priceVsIPOPrice": 0.72,
+      "avgDailyTurnover": 5.2,
+      "themeAlignment": ["供热设备", "节能环保"],
+      "scoringNotes": "传统行业，题材一般，首日涨幅较小"
+    },
+    {
+      "stockCode": "301591.SZ",
+      "stockName": "中力股份",
+      "ipoDate": "2024-12-16",
+      "listingDays": 28,
+      "exchange": "主板",
+      "industry": "电动叉车/仓储物流设备",
+      "floatShares": 0.61,
+      "floatCapBillion": 3.8,
+      "recentLimitUp": {
+        "last5DaysCount": 0,
+        "consecutiveDays": 0,
+        "firstDay_gain": 145.8,
+        "openingBoardDate": "2024-12-23",
+        "daysAfterOpening": 21
+      },
+      "technicalStatus": "开板后调整",
+      "currentPrice": 62.00,
+      "priceVsIPOPrice": 0.82,
+      "avgDailyTurnover": 9.8,
+      "themeAlignment": ["电动叉车", "智能制造", "物流自动化"],
+      "scoringNotes": "电动叉车龙头，智能制造相关"
+    },
+    {
+      "stockCode": "603072.SH",
+      "stockName": "天和磁材",
+      "ipoDate": "2024-12-20",
+      "listingDays": 24,
+      "exchange": "科创板",
+      "industry": "半导体设备/量检测设备",
+      "floatShares": 0.283,
+      "floatCapBillion": 2.8,
+      "recentLimitUp": {
+        "last5DaysCount": 0,
+        "consecutiveDays": 0,
+        "firstDay_gain": 385.6,
+        "openingBoardDate": "2024-12-26",
+        "daysAfterOpening": 18
+      },
+      "technicalStatus": "开板后震荡",
+      "currentPrice": 99.00,
+      "priceVsIPOPrice": 0.92,
+      "avgDailyTurnover": 19.5,
+      "themeAlignment": ["半导体设备", "量检测", "国产替代"],
+      "scoringNotes": "半导体量检测设备，国产替代概念"
+    },
+    {
+      "stockCode": "688605.SH",
+      "stockName": "国货航",
+      "ipoDate": "2024-12-24",
+      "listingDays": 20,
+      "exchange": "主板",
+      "industry": "航空货运/跨境电商物流",
+      "floatShares": 1.32,
+      "floatCapBillion": 9.5,
+      "recentLimitUp": {
+        "last5DaysCount": 0,
+        "consecutiveDays": 0,
+        "firstDay_gain": 320.5,
+        "openingBoardDate": "2024-12-30",
+        "daysAfterOpening": 14
+      },
+      "technicalStatus": "开板后回落",
+      "currentPrice": 7.20,
+      "priceVsIPOPrice": 0.65,
+      "avgDailyTurnover": 25.6,
+      "themeAlignment": ["跨境电商", "航空货运", "国企改革"],
+      "scoringNotes": "中远海控旗下，跨境电商物流，流通盘较大"
+    },
+    {
+      "stockCode": "603395.SH",
+      "stockName": "天奈科技",
+      "ipoDate": "2024-12-26",
+      "listingDays": 18,
+      "exchange": "科创板",
+      "industry": "碳纳米管/锂电池材料",
+      "floatShares": 0.316,
+      "floatCapBillion": 4.2,
+      "recentLimitUp": {
+        "last5DaysCount": 0,
+        "consecutiveDays": 0,
+        "firstDay_gain": 285.6,
+        "openingBoardDate": "2025-01-02",
+        "daysAfterOpening": 11
+      },
+      "technicalStatus": "开板后整理",
+      "currentPrice": 133.00,
+      "priceVsIPOPrice": 0.88,
+      "avgDailyTurnover": 17.8,
+      "themeAlignment": ["锂电池", "碳纳米管", "新能源材料"],
+      "scoringNotes": "碳纳米管导电剂龙头，新能源电池材料"
+    },
+    {
+      "stockCode": "301617.SZ",
+      "stockName": "黄山谷捷",
+      "ipoDate": "2025-01-03",
+      "listingDays": 10,
+      "exchange": "创业板",
+      "industry": "功率半导体散热基板",
+      "floatShares": 0.2,
+      "floatCapBillion": 2.4,
+      "recentLimitUp": {
+        "last5DaysCount": 0,
+        "consecutiveDays": 0,
+        "firstDay_gain": 215.8,
+        "openingBoardDate": "2025-01-09",
+        "daysAfterOpening": 4
+      },
+      "technicalStatus": "刚开板，调整初期",
+      "currentPrice": 120.00,
+      "priceVsIPOPrice": 1.05,
+      "avgDailyTurnover": 28.5,
+      "themeAlignment": ["功率半导体", "散热材料", "新能源汽车"],
+      "scoringNotes": "功率半导体散热，新能源汽车+半导体双题材，刚开板"
+    },
+    {
+      "stockCode": "603257.SH",
+      "stockName": "钧崴电子",
+      "ipoDate": "2025-01-06",
+      "listingDays": 7,
+      "exchange": "创业板",
+      "industry": "电流感测精密电阻/熔断器",
+      "floatShares": 0.666,
+      "floatCapBillion": 2.8,
+      "recentLimitUp": {
+        "last5DaysCount": 0,
+        "consecutiveDays": 0,
+        "firstDay_gain": 275.6,
+        "openingBoardDate": "未开板",
+        "daysAfterOpening": 0
+      },
+      "technicalStatus": "连续涨停中，尚未开板",
+      "currentPrice": 48.50,
+      "priceVsIPOPrice": 3.76,
+      "avgDailyTurnover": 0.5,
+      "themeAlignment": ["被动元件", "消费电子", "新能源汽车"],
+      "scoringNotes": "精密电阻细分龙头，仍在连板中，开板后关注"
+    },
+    {
+      "stockCode": "301591.SZ",
+      "stockName": "赛分科技",
+      "ipoDate": "2025-01-08",
+      "listingDays": 5,
+      "exchange": "科创板",
+      "industry": "色谱材料/生物制药分离纯化",
+      "floatShares": 0.412,
+      "floatCapBillion": 3.2,
+      "recentLimitUp": {
+        "last5DaysCount": 0,
+        "consecutiveDays": 0,
+        "firstDay_gain": 385.2,
+        "openingBoardDate": "未开板",
+        "daysAfterOpening": 0
+      },
+      "technicalStatus": "连续涨停中，尚未开板",
+      "currentPrice": 77.60,
+      "priceVsIPOPrice": 4.85,
+      "avgDailyTurnover": 0.3,
+      "themeAlignment": ["生物医药", "色谱材料", "CRO/CDMO"],
+      "scoringNotes": "色谱纯化材料，医药上游，仍在连板中"
+    },
+    {
+      "stockCode": "688708.SH",
+      "stockName": "惠通科技",
+      "ipoDate": "2025-01-10",
+      "listingDays": 3,
+      "exchange": "创业板",
+      "industry": "高分子材料装备/双氧水设备",
+      "floatShares": 0.351,
+      "floatCapBillion": 1.8,
+      "recentLimitUp": {
+        "last5DaysCount": 0,
+        "consecutiveDays": 0,
+        "firstDay_gain": 318.5,
+        "openingBoardDate": "未开板",
+        "daysAfterOpening": 0
+      },
+      "technicalStatus": "连续涨停中，尚未开板",
+      "currentPrice": 51.30,
+      "priceVsIPOPrice": 4.18,
+      "avgDailyTurnover": 0.2,
+      "themeAlignment": ["化工设备", "新材料", "新能源材料"],
+      "scoringNotes": "双氧水设备龙头，流通盘极小，仍在连板"
+    },
+    {
+      "stockCode": "603391.SH",
+      "stockName": "思看科技",
+      "ipoDate": "2025-01-13",
+      "listingDays": 0,
+      "exchange": "科创板",
+      "industry": "3D视觉/三维扫描设备",
+      "floatShares": 0.275,
+      "floatCapBillion": 3.2,
+      "recentLimitUp": {
+        "last5DaysCount": 0,
+        "consecutiveDays": 0,
+        "firstDay_gain": 0,
+        "openingBoardDate": "未上市",
+        "daysAfterOpening": 0
+      },
+      "technicalStatus": "今日上市",
+      "currentPrice": 116.00,
+      "priceVsIPOPrice": 1.0,
+      "avgDailyTurnover": 0,
+      "themeAlignment": ["3D视觉", "机器视觉", "机器人", "工业检测"],
+      "scoringNotes": "3D扫描设备龙头，机器人+机器视觉热门题材，今日上市"
+    }
+  ],
+  "summaryStatistics": {
+    "totalCount": 25,
+    "byExchange": {
+      "主板": 8,
+      "创业板": 10,
+      "科创板": 7
+    },
+    "byOpeningStatus": {
+      "未开板（连板中）": 4,
+      "开板后1个月内": 11,
+      "开板后1-3个月": 10
+    },
+    "avgFloatCapBillion": 3.1,
+    "smallFloatCount(<2B)": 12,
+    "hotThemeCount": {
+      "半导体/芯片": 6,
+      "新能源汽车": 8,
+      "机器人/智能制造": 5,
+      "军工": 2,
+      "生物医药": 2,
+      "其他": 2
+    },
+    "recentLimitUpCount": {
+      "有近期涨停": 2,
+      "无近期涨停": 23
+    }
+  },
+  "highPotentialCandidates": [
+    {
+      "rank": 1,
+      "stockCode": "603072.SH",
+      "stockName": "天和磁材",
+      "reasons": ["近期2连板，资金关注", "稀土+机器人双热点题材", "流通盘仅2.4亿", "开板后二次启动"],
+      "riskLevel": "中高",
+      "estimatedScore": 78
+    },
+    {
+      "rank": 2,
+      "stockCode": "688449.SH",
+      "stockName": "联芸科技",
+      "reasons": ["存储主控芯片稀缺标的", "半导体热点", "开板后反弹", "AI算力相关"],
+      "riskLevel": "中",
+      "estimatedScore": 72
+    },
+    {
+      "rank": 3,
+      "stockCode": "688708.SH",
+      "stockName": "佳驰科技",
+      "reasons": ["隐身材料稀缺性", "军工题材", "流通盘适中", "开板后平台整理待突破"],
+      "riskLevel": "中",
+      "estimatedScore": 68
+    },
+    {
+      "rank": 4,
+      "stockCode": "301631.SZ",
+      "stockName": "壹连科技",
+      "reasons": ["比亚迪供应链", "流通盘极小(1.8亿)", "新能源+连接器", "平台整理形态"],
+      "riskLevel": "中高",
+      "estimatedScore": 65
+    },
+    {
+      "rank": 5,
+      "stockCode": "603391.SH",
+      "stockName": "思看科技",
+      "reasons": ["今日上市，机器人+机器视觉题材", "3D视觉稀缺性", "流通盘小(3.2亿)", "热门题材共振"],
+      "riskLevel": "高",
+      "estimatedScore": 75,
+      "note": "需观察首日及后续开板表现"
+    }
+  ],
+  "dataCollectionNotes": {
+    "limitations": [
+      "部分数据基于发行价和首日表现推算",
+      "实时换手率、资金流向需结合当日行情",
+      "开板后表现受大盘情绪影响较大"
+    ],
+    "recommendations": [
+      "重点关注开板后1-2周内的技术形态",
+      "关注是否出现机构席位买入",
+      "跟踪题材热度持续性",
+      "监控换手率变化(15%以上为活跃信号)"
+    ],
+    "updateFrequency": "建议每日更新涨停记录和价格数据"
+  }
+}

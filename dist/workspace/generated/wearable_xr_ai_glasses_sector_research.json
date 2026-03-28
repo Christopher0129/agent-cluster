@@ -1,0 +1,278 @@
+{
+  "report_metadata": {
+    "title": "智能穿戴/XR/AI眼镜方向标的筛选报告",
+    "sector_focus": "智能穿戴设备、XR设备、AI眼镜、AI耳机硬件供应链",
+    "report_date": "2025-01-13",
+    "data_source_note": "本报告基于公开渠道信息整理，市值数据为基于近期财报的估算区间，实时数据需通过行情软件核实。催化剂事件基于行业公开信息披露整理。",
+    "disclaimer": "⚠️ 本报告仅供参考，不构成投资建议。股市有风险，投资需谨慎。涨停概率为定性分析，非确定性承诺。",
+    "screening_criteria": {
+      "market_cap_range": "50亿人民币 - 300亿人民币",
+      "business_relevance": "光学模组、微型显示、传感器、结构件、代工、音频芯片等核心供应链环节",
+      "exclusion_reasons": "排除市值<50亿（流动性风险高）或>300亿（弹性有限）的标的"
+    }
+  },
+  "sector_overview": {
+    "current_catalyst": {
+      "event": "CES 2025（国际消费电子展）",
+      "date": "2025年1月7日-10日",
+      "location": "美国拉斯维加斯",
+      "relevance": "AI眼镜、AI耳机、XR设备成为展会焦点，多家厂商发布新品"
+    },
+    "upcoming_catalysts_1_2_weeks": [
+      {
+        "event": "CES 2025后续订单转化期",
+        "timeframe": "1月中旬",
+        "impact": "展会意向订单转化为正式订单，供应链企业迎来订单公告窗口"
+      },
+      {
+        "event": "国内AI眼镜厂商新品密集发布",
+        "timeframe": "1月中下旬",
+        "impact": "百度、小米、华为等厂商AI眼镜产品迭代或发布预告"
+      },
+      {
+        "event": "苹果Vision Pro二代预期升温",
+        "timeframe": "持续催化",
+        "impact": "供应链企业进入备货周期，相关标的获得资金关注"
+      }
+    ],
+    "industry_trend": {
+      "core_logic": "AI终端创新周期启动，智能穿戴成为端侧AI核心落地场景",
+      "key_drivers": [
+        "AI大模型轻量化部署推动AI眼镜/耳机功能升级",
+        "光学显示技术突破（光波导、Micro LED）降低成本",
+        "端侧AI芯片算力提升带动硬件升级需求",
+        "消费电子库存去化完成，补库需求释放"
+      ]
+    }
+  },
+  "core_candidates": [
+    {
+      "rank": 1,
+      "stock_code": "688608.SH",
+      "stock_name": "恒玄科技",
+      "business_segment": "智能音频SoC芯片设计",
+      "market_cap_estimate": {
+        "value_range": "150亿-180亿人民币",
+        "note": "基于近期股价估算，请以实时行情为准",
+        "compliance_check": "✅ 符合50-300亿筛选标准"
+      },
+      "business_logic": {
+        "core_position": "AI耳机/智能穿戴主控芯片龙头",
+        "product_coverage": [
+          "蓝牙音频SoC芯片（BES系列）",
+          "智能手表/手环主控芯片",
+          "AI降噪算法集成方案"
+        ],
+        "supply_chain_status": [
+          "华为FreeBuds系列核心供应商",
+          "小米TWS耳机主控芯片供应商",
+          "OPPO/vivo等安卓阵营主要供应商",
+          "海外品牌JBL、Skullcandy等供应关系"
+        ],
+        "ai_wearable_relevance": "AI耳机需要更强算力支持端侧AI功能（实时翻译、语音助手），推动主控芯片升级换代，价值量提升"
+      },
+      "catalyst_schedule": [
+        {
+          "event": "CES 2025 AI音频终端新品发布潮",
+          "date": "2025年1月7-10日",
+          "certainty": "高",
+          "impact": "多家客户发布AI耳机新品，采用公司新一代芯片方案"
+        },
+        {
+          "event": "Q4业绩预告窗口期",
+          "date": "2025年1月中下旬",
+          "certainty": "中",
+          "impact": "AI耳机需求爆发带动Q4业绩超预期"
+        },
+        {
+          "event": "新一代AI音频芯片发布",
+          "date": "2025年Q1",
+          "certainty": "中",
+          "impact": "技术迭代带来产品溢价能力提升"
+        }
+      ],
+      "technical_moats": [
+        "国内少数具备高端蓝牙音频SoC设计能力的企业",
+        "AI降噪算法与芯片硬件深度耦合",
+        "12nm/22nm先进制程工艺量产能力"
+      ],
+      "risk_factors": [
+        "客户集中度较高，依赖手机品牌商订单",
+        "与高通、联发科等国际巨头竞争激烈",
+        "芯片设计行业研发投入大，毛利率波动"
+      ],
+      "limit_up_probability_assessment": {
+        "score": "8/10",
+        "rationale": "AI耳机赛道最纯正标的+CES催化明确+业绩拐点确认+市值弹性充足"
+      }
+    },
+    {
+      "rank": 2,
+      "stock_code": "300115.SZ",
+      "stock_name": "长盈精密",
+      "business_segment": "精密电子结构件及模组",
+      "market_cap_estimate": {
+        "value_range": "100亿-130亿人民币",
+        "note": "基于近期股价估算，请以实时行情为准",
+        "compliance_check": "✅ 符合50-300亿筛选标准"
+      },
+      "business_logic": {
+        "core_position": "苹果Vision Pro结构件核心供应商，XR设备精密结构件龙头",
+        "product_coverage": [
+          "XR设备精密结构件（中框、外壳、散热模组）",
+          "智能手表/手环结构件",
+          "AI手机金属中框",
+          "新能源电池结构件"
+        ],
+        "supply_chain_status": [
+          "苹果Vision Pro结构件核心供应商",
+          "Meta Quest系列结构件供应商",
+          "华为智能穿戴结构件供应商",
+          "特斯拉等新能源汽车客户"
+        ],
+        "ai_wearable_relevance": "AI眼镜/XR设备对精密结构件要求极高（轻量化、散热、电磁屏蔽），单机价值量显著高于普通消费电子"
+      },
+      "catalyst_schedule": [
+        {
+          "event": "Vision Pro二代备货启动预期",
+          "date": "2025年1月中下旬",
+          "certainty": "中高",
+          "impact": "供应链进入新一轮备货周期，订单公告催化股价"
+        },
+        {
+          "event": "国内AI眼镜结构件订单落地",
+          "date": "2025年1-2月",
+          "certainty": "中",
+          "impact": "华为、小米等厂商AI眼镜量产，结构件订单释放"
+        },
+        {
+          "event": "Q4业绩预告",
+          "date": "2025年1月中下旬",
+          "certainty": "高",
+          "impact": "Vision Pro量产交付+新能源业务放量，业绩有望超预期"
+        }
+      ],
+      "technical_moats": [
+        "精密结构件制造技术积累深厚（CNC加工、金属注射成型）",
+        "苹果供应链认证壁垒高",
+        "XR设备结构件设计制造经验丰富"
+      ],
+      "risk_factors": [
+        "客户集中度高，苹果订单波动影响大",
+        "VR/XR设备需求存在周期性波动",
+        "新能源业务占比提升，估值体系可能变化"
+      ],
+      "limit_up_probability_assessment": {
+        "score": "7.5/10",
+        "rationale": "Vision Pro供应链最核心A股标的+AI眼镜结构件增量+市值适中弹性好+业绩触底回升"
+      }
+    }
+  ],
+  "secondary_candidates": [
+    {
+      "stock_code": "001314.SZ",
+      "stock_name": "亿道信息",
+      "business_segment": "XR产品研发设计+AI PC",
+      "market_cap_estimate": "50亿-70亿人民币",
+      "business_logic": "XR产品ODM设计服务商，覆盖AR/VR/MR整机研发，AI PC+XR双轮驱动",
+      "catalyst": "AI眼镜新品发布+教育/工业XR订单落地",
+      "exclude_reason": "流通市值偏小，流动性风险相对较高"
+    },
+    {
+      "stock_code": "300793.SZ",
+      "stock_name": "佳禾智能",
+      "business_segment": "智能电声产品ODM",
+      "market_cap_estimate": "60亿-80亿人民币",
+      "business_logic": "AI耳机/智能穿戴ODM代工龙头，为哈曼、安克等知名品牌代工",
+      "catalyst": "CES后海外大客户订单释放+AI耳机新品量产",
+      "exclude_reason": "ODM利润率相对较低，技术壁垒不如芯片环节"
+    },
+    {
+      "stock_code": "002045.SZ",
+      "stock_name": "国光电器",
+      "business_segment": "声学模组",
+      "market_cap_estimate": "70亿-90亿人民币",
+      "business_logic": "AI眼镜/耳机声学模组供应商，VR设备声学解决方案",
+      "catalyst": "Meta Quest声学模组订单+AI终端声学升级",
+      "exclude_reason": "声学模组价值量相对较低，业务多元化程度不足"
+    }
+  ],
+  "excluded_large_caps": [
+    {
+      "stock_code": "002241.SZ",
+      "stock_name": "歌尔股份",
+      "exclude_reason": "市值约700亿，超过300亿上限，弹性有限",
+      "note": "VR/AR代工龙头，基本面优秀但不符合本筛选标准"
+    },
+    {
+      "stock_code": "002475.SZ",
+      "stock_name": "立讯精密",
+      "exclude_reason": "市值超2000亿，超过300亿上限",
+      "note": "苹果Vision Pro组装供应商，大盘蓝筹属性"
+    },
+    {
+      "stock_code": "002273.SZ",
+      "stock_name": "水晶光电",
+      "exclude_reason": "市值可能接近或超过300亿上限（需实时确认）",
+      "note": "光学滤光片龙头，AI眼镜光学组件受益标的"
+    }
+  ],
+  "sector_risk_assessment": {
+    "overall_risk_level": "中高",
+    "key_risks": [
+      {
+        "risk_type": "需求波动风险",
+        "description": "XR/AI眼镜渗透率提升速度存在不确定性，消费者接受度待验证"
+      },
+      {
+        "risk_type": "技术迭代风险",
+        "description": "光学显示技术路线（光波导 vs Birdbath）尚未完全确定，技术路线变更可能导致供应链重塑"
+      },
+      {
+        "risk_type": "竞争加剧风险",
+        "description": "AI眼镜赛道热度高，新进入者增多，价格战风险上升"
+      },
+      {
+        "risk_type": "客户集中风险",
+        "description": "多数标的依赖苹果、华为等头部客户，订单波动影响大"
+      },
+      {
+        "risk_type": "估值波动风险",
+        "description": "AI概念炒作属性强，短期涨幅可能透支业绩预期"
+      }
+    ]
+  },
+  "data_limitations": {
+    "timestamp": "本报告生成时间：2025-01-13",
+    "limitation_notes": [
+      "市值数据基于近期财报和股价估算，实时市值请通过行情软件核实",
+      "催化剂事件基于公开信息整理，实际时间可能存在调整",
+      "业务关联度分析基于公开披露信息，具体供应链地位请以公司公告为准",
+      "本报告无法实时联网获取最新数据，存在信息滞后可能"
+    ],
+    "verification_sources": [
+      "巨潮资讯网 www.cninfo.com.cn",
+      "上海证券交易所/深圳证券交易所公告",
+      "公司投资者关系活动记录表",
+      "行业研究报告（券商研报）"
+    ]
+  },
+  "final_recommendation": {
+    "primary_candidates": [
+      {
+        "code": "688608.SH",
+        "name": "恒玄科技",
+        "priority": "第一优先级",
+        "core_logic": "AI耳机主控芯片最纯正标的，端侧AI核心受益环节"
+      },
+      {
+        "code": "300115.SZ",
+        "name": "长盈精密",
+        "priority": "第二优先级",
+        "core_logic": "Vision Pro结构件核心供应商，AI眼镜精密制造龙头"
+      }
+    ],
+    "monitoring_list": ["001314.SZ 亿道信息", "300793.SZ 佳禾智能"],
+    "disclaimer": "以上推荐仅为研究筛选结果，不构成买卖建议。投资者应结合自身风险承受能力独立决策。"
+  }
+}

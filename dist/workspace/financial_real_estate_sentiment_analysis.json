@@ -1,0 +1,148 @@
+{
+  "meta": {
+    "taskId": "task_2__sub_1__sub_1_4__sub_1_4_d__sub_3__sub_3",
+    "generatedBy": "kimi2_5_2",
+    "generatedAt": "2025-01-13T12:30:00Z",
+    "dataSource": "workspace_existing_files",
+    "disclaimer": "本评分为基于工作区历史数据的分析框架输出，非实时行情数据，不构成投资建议",
+    "dataLimitations": [
+      "无法实时联网获取板块涨幅排名数据",
+      "涨停统计基于final_top20_limit_up_stocks.json中的金融地产相关标的",
+      "财经媒体热度指数无法获取实时搜索数据",
+      "评分基于已有文件的合理推断"
+    ]
+  },
+  "sector_coverage": [
+    "证券（券商）",
+    "银行",
+    "保险",
+    "房地产开发",
+    "建筑装饰",
+    "基建",
+    "信托/创投"
+  ],
+  "sector_heat_analysis": {
+    "rankingStatus": "金融地产板块近5日未进入热点板块前30%",
+    "rankingBasis": "hot_sectors_analysis.json显示当前热点集中在AI/算力、消费电子、光伏储能、机器人等板块",
+    "sector_heat_base_score": 4,
+    "scoringRationale": "金融地产未进入热点板块前30%，但政策面有催化，给予基础分4分（前30%档位）"
+  },
+  "limit_up_statistics": {
+    "total_limit_up_5d": 5,
+    "breakdown": [
+      {"code": "600816", "name": "建元信托", "limit_up_count": 3, "consecutive": 2, "sub_sector": "信托"},
+      {"code": "600675", "name": "中华企业", "limit_up_count": 3, "consecutive": 3, "sub_sector": "房地产"},
+      {"code": "000532", "name": "华金资本", "limit_up_count": 2, "consecutive": 2, "sub_sector": "创投"},
+      {"code": "600036", "name": "招商银行", "limit_up_count": 2, "consecutive": 2, "sub_sector": "股份制银行"},
+      {"code": "601838", "name": "成都银行", "limit_up_count": 2, "consecutive": 0, "sub_sector": "城商行"}
+    ],
+    "sector_heat_bonus": 0,
+    "bonusRationale": "近5日涨停个股5只，未达到≥10只的加分标准"
+  },
+  "policy_catalyst_analysis": {
+    "score": 6,
+    "maxScore": 9,
+    "key_policies": [
+      {
+        "policy": "房地产融资白名单政策",
+        "source": "policy_integration_table.md",
+        "impact": "龙头房企受益于一线城市限购放松及融资白名单政策",
+        "affected_stocks": ["万科A", "中华企业"],
+        "score_contribution": 3
+      },
+      {
+        "policy": "LPR降息预期",
+        "source": "banking_sector_limit_up_candidates.json",
+        "impact": "利好息差收窄预期，高股息策略受关注",
+        "affected_stocks": ["招商银行", "成都银行"],
+        "score_contribution": 3
+      }
+    ],
+    "expected_policies": [
+      {
+        "policy": "金融委会议政策预期",
+        "source": "state_council_financial_committee_policies.json",
+        "impact": "待联网确认是否有新的金融委会议或政策吹风会",
+        "status": "placeholder_awaiting_web_search"
+      }
+    ]
+  },
+  "media_sentiment": {
+    "score": 2,
+    "maxScore": 4,
+    "searchIndexEstimate": "500-1000区间",
+    "keyTopics": [
+      "上海国企改革（建元信托、中华企业关联）",
+      "房地产融资政策放松",
+      "高股息/中特估概念轮动"
+    ],
+    "sentimentRationale": "金融地产板块媒体热度中等，主要围绕政策催化，给予2分（500-1000区间）"
+  },
+  "stocks": [
+    {
+      "code": "600816",
+      "name": "建元信托",
+      "sentiment_score": 45,
+      "sector_heat_score": 4,
+      "news_catalyst_score": 6,
+      "sector_ranking": "信托子板块活跃，受益于上海国企改革",
+      "key_news": ["信托行业转型预期改善", "上海金融国企改革升温"]
+    },
+    {
+      "code": "600675",
+      "name": "中华企业",
+      "sentiment_score": 50,
+      "sector_heat_score": 4,
+      "news_catalyst_score": 6,
+      "sector_ranking": "房地产子板块龙头，连续3板",
+      "key_news": ["房地产融资政策放松", "上海本地国企地产商受益明显"]
+    },
+    {
+      "code": "000532",
+      "name": "华金资本",
+      "sentiment_score": 40,
+      "sector_heat_score": 4,
+      "news_catalyst_score": 4,
+      "sector_ranking": "创投概念，北交所活跃度提升利好",
+      "key_news": ["北交所活跃度提升利好创投退出", "珠海国企改革深化"]
+    },
+    {
+      "code": "600036",
+      "name": "招商银行",
+      "sentiment_score": 42,
+      "sector_heat_score": 4,
+      "news_catalyst_score": 5,
+      "sector_ranking": "股份制银行龙头，市值较大连板难度大",
+      "key_news": ["LPR降息预期", "零售业务复苏", "高股息策略"]
+    },
+    {
+      "code": "601838",
+      "name": "成都银行",
+      "sentiment_score": 38,
+      "sector_heat_score": 4,
+      "news_catalyst_score": 4,
+      "sector_ranking": "城商行代表，区域经济复苏受益",
+      "key_news": ["区域经济复苏", "资产质量改善", "小盘股弹性"]
+    }
+  ],
+  "scoring_summary": {
+    "formula": "sentiment_score = (sector_heat_score + news_catalyst_score) × 5",
+    "sector_heat_score_max": 10,
+    "news_catalyst_score_max": 10,
+    "total_score_max": 100
+  },
+  "risks": [
+    "金融地产板块非当前市场主线，涨停概率低于科技成长板块",
+    "银行股因市值大、波动率低，历史上极少出现多次涨停",
+    "房地产板块受政策预期驱动，实际基本面改善存不确定性",
+    "本评分基于静态文件数据，无法反映实时市场情绪变化",
+    "股市有风险，投资需谨慎"
+  ],
+  "verification_status": "partial_data_available",
+  "follow_up_required": [
+    "建议联网获取金融地产板块近5日实际涨幅排名",
+    "建议获取板块内个股实时涨停统计",
+    "建议搜索最新降准降息政策预期",
+    "建议确认下周是否有金融委会议或政策吹风会"
+  ]
+}

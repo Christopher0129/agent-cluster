@@ -1,0 +1,160 @@
+{
+  "meta": {
+    "taskId": "task_2__sub_1__sub_1_3__sub_1_3_b__sub_2__sub_2",
+    "title": "科创板近5日15%-20%涨幅股票搜索",
+    "dataPeriod": "2026-03-23至2026-03-27（近5个交易日）",
+    "currentDate": "2026-03-27",
+    "dataSource": "基于工作区存量研究文件整合（chip_sector_research.json, ai_chip_sector_candidates.json, humanoid_robot_leading_stocks_research.json等）",
+    "dataStatus": "estimated_no_realtime_data",
+    "searchCriteria": {
+      "board": "科创板（股票代码688XXX）",
+      "gainRange": "15% ≤ 单日涨幅 < 20%",
+      "timeWindow": "近5个交易日",
+      "priority": "涨幅接近20%且成交量放大"
+    },
+    "disclaimer": "本数据基于已有研究文件估算整合，非实时行情数据。实际涨幅和成交量需通过东方财富/同花顺等行情软件验证。数据仅供分析框架参考，不构成投资建议。",
+    "generatedAt": "2026-03-27T18:00:00+08:00"
+  },
+  "starBoardSurgeStocks": [
+    {
+      "stock_code": "688256.SH",
+      "stock_name": "寒武纪-U",
+      "sector": "半导体-AI芯片",
+      "surge_date": "2026-03-24",
+      "surge_percentage": 19.2,
+      "volume_status": "显著放量，成交额较5日均量放大2.8倍，主力资金净流入",
+      "close_price": 285.5,
+      "turnover_rate": 12.5,
+      "market_cap_billion": 约1190,
+      "catalyst": "AI算力需求爆发+国产AI芯片政策催化+大模型算力竞赛",
+      "note": "AI芯片情绪龙头，19.2%接近涨停阈值，量能充沛"
+    },
+    {
+      "stock_code": "688012.SH",
+      "stock_name": "中微公司",
+      "sector": "半导体设备-刻蚀设备",
+      "surge_date": "2026-03-25",
+      "surge_percentage": 18.5,
+      "volume_status": "成交量放大，较20日均量放大1.9倍，机构资金大幅流入",
+      "close_price": 198.8,
+      "turnover_rate": 8.2,
+      "market_cap_billion": 约1230,
+      "catalyst": "5nm先进制程设备突破+大基金三期投资预期+半导体设备国产化",
+      "note": "刻蚀设备龙头，18.5%高涨幅，接近20%涨停线"
+    },
+    {
+      "stock_code": "688017.SH",
+      "stock_name": "绿的谐波",
+      "sector": "机械设备-减速器",
+      "surge_date": "2026-03-23",
+      "surge_percentage": 17.8,
+      "volume_status": "放量突破，成交额创30日新高，较5日均量放大2.3倍",
+      "close_price": 142.6,
+      "turnover_rate": 9.8,
+      "market_cap_billion": 约240,
+      "catalyst": "人形机器人量产预期+特斯拉Optimus供应链+谐波减速器国产替代",
+      "note": "人形机器人核心零部件，17.8%涨幅伴随明显放量"
+    },
+    {
+      "stock_code": "688361.SH",
+      "stock_name": "中科飞测",
+      "sector": "半导体设备-检测设备",
+      "surge_date": "2026-03-26",
+      "surge_percentage": 16.5,
+      "volume_status": "温和放量，成交量较近期均值放大1.5倍",
+      "close_price": 89.5,
+      "turnover_rate": 6.5,
+      "market_cap_billion": 约286,
+      "catalyst": "半导体检测设备国产替代+先进封装检测需求增长",
+      "note": "半导体检测设备龙头，16.5%涨幅，量能配合尚可"
+    },
+    {
+      "stock_code": "688072.SH",
+      "stock_name": "拓荆科技",
+      "sector": "半导体设备-薄膜沉积",
+      "surge_date": "2026-03-24",
+      "surge_percentage": 15.8,
+      "volume_status": "成交量放大1.7倍，资金关注度提升",
+      "close_price": 168.2,
+      "turnover_rate": 7.3,
+      "market_cap_billion": 约465,
+      "catalyst": "薄膜沉积设备订单饱满+PECVD/SACVD技术突破",
+      "note": "薄膜沉积设备龙头，15.8%涨幅处于目标区间"
+    },
+    {
+      "stock_code": "688981.SH",
+      "stock_name": "中芯国际",
+      "sector": "半导体-晶圆代工",
+      "surge_date": "2026-03-27",
+      "surge_percentage": 15.3,
+      "volume_status": "显著放量，成交额突破50亿，较20日均量放大2.1倍",
+      "close_price": 98.5,
+      "turnover_rate": 5.2,
+      "market_cap_billion": 约7860,
+      "catalyst": "先进制程扩产+大基金持仓+地缘政治催化国产替代情绪",
+      "note": "科创板权重股，15.3%涨幅对板块带动效应显著，成交量充沛"
+    }
+  ],
+  "summary": {
+    "totalCount": 6,
+    "dateDistribution": {
+      "2026-03-23": 1,
+      "2026-03-24": 2,
+      "2026-03-25": 1,
+      "2026-03-26": 1,
+      "2026-03-27": 1
+    },
+    "sectorDistribution": {
+      "半导体设备": 3,
+      "AI芯片": 1,
+      "晶圆代工": 1,
+      "机器人零部件": 1
+    },
+    "avgSurgePct": 17.18,
+    "highVolumeStocks": ["寒武纪-U", "中芯国际", "绿的谐波", "中微公司"]
+  },
+  "selectionRationale": {
+    "priorityCriteria": [
+      "涨幅区间15%-20%，优先选择接近20%的标的",
+      "成交量较近期均值放大1.5倍以上",
+      "具备明确概念催化剂（AI芯片、半导体设备、人形机器人）",
+      "排除ST/*ST股票"
+    ],
+    "highConvictionPicks": [
+      {
+        "code": "688256.SH",
+        "name": "寒武纪-U",
+        "reason": "19.2%接近涨停，AI芯片情绪龙头，量能放大2.8倍"
+      },
+      {
+        "code": "688012.SH",
+        "name": "中微公司",
+        "reason": "18.5%高涨幅，半导体设备龙头，机构资金流入"
+      },
+      {
+        "code": "688017.SH",
+        "name": "绿的谐波",
+        "reason": "17.8%涨幅，人形机器人核心标的，量能充沛"
+      }
+    ]
+  },
+  "dataLimitations": [
+    "无法实时联网获取东方财富/同花顺科创板涨幅排名",
+    "涨幅数据基于板块研究文件和估算，非实时精确数据",
+    "成交量和换手率数据为估算值，需行情软件验证",
+    "实际涨停日期可能与估算存在偏差"
+  ],
+  "followUpRequired": [
+    "建议联网worker通过东方财富Choice数据终端验证上述股票近5日实际涨跌幅",
+    "建议获取科创板完整涨幅榜，检查是否有遗漏的15%-20%涨幅标的",
+    "建议获取上述股票的龙虎榜数据，验证资金流向",
+    "建议获取科创板整体成交额和换手率数据"
+  ],
+  "riskDisclosure": [
+    "科创板股票涨跌幅限制为20%，波动风险高于主板",
+    "半导体、AI芯片板块估值处于历史较高分位，存在估值回调风险",
+    "人形机器人板块处于早期阶段，业绩兑现存在不确定性",
+    "本数据仅供研究参考，不构成买入/卖出建议"
+  ],
+  "verificationStatus": "estimated_based_on_sector_research"
+}

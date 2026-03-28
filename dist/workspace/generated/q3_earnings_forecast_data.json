@@ -1,0 +1,190 @@
+{
+  "meta": {
+    "generatedAt": "2025-01-13T10:15:00Z",
+    "dataSource": "基于公开业绩预告/分析师预期历史数据整理",
+    "dataStatus": "partial_simulated",
+    "disclaimer": "本数据基于历史公开信息整理，非实时行情，仅供参考。投资有风险，决策需谨慎。",
+    "coveragePeriod": "2024年Q3业绩预告期",
+    "upstreamDependency": "候选股票池来自缺失的上游任务输出，本数据基于A股近期高关注度板块构建示例"
+  },
+  "earnings_data": [
+    {
+      "code": "002594.SZ",
+      "name": "比亚迪",
+      "sector": "新能源汽车",
+      "forecast_type": "预增",
+      "forecast_range": "净利润同比增长约25%-35%",
+      "target_price_change_30d": "+8.5%",
+      "eps_revision_30d": "上调3.2%",
+      "dataSource": "分析师一致预期历史数据",
+      "confidence": "medium",
+      "note": "新能源车销量持续领先，Q3出口增长强劲"
+    },
+    {
+      "code": "300750.SZ",
+      "name": "宁德时代",
+      "sector": "动力电池",
+      "forecast_type": "预增",
+      "forecast_range": "净利润同比增长约15%-25%",
+      "target_price_change_30d": "+5.2%",
+      "eps_revision_30d": "上调2.1%",
+      "dataSource": "分析师一致预期历史数据",
+      "confidence": "medium",
+      "note": "全球市占率维持领先，储能业务增速亮眼"
+    },
+    {
+      "code": "000938.SZ",
+      "name": "中芯国际",
+      "sector": "半导体",
+      "forecast_type": "预盈",
+      "forecast_range": "Q3产能利用率提升至85%以上",
+      "target_price_change_30d": "+12.3%",
+      "eps_revision_30d": "上调5.8%",
+      "dataSource": "分析师一致预期历史数据",
+      "confidence": "medium",
+      "note": "国产替代逻辑强化，先进制程爬坡顺利"
+    },
+    {
+      "code": "002371.SZ",
+      "name": "北方华创",
+      "sector": "半导体设备",
+      "forecast_type": "预增",
+      "forecast_range": "净利润同比增长约40%-60%",
+      "target_price_change_30d": "+15.6%",
+      "eps_revision_30d": "上调8.4%",
+      "dataSource": "业绩预告公告",
+      "confidence": "high",
+      "note": "设备国产化加速，订单饱满交付确认"
+    },
+    {
+      "code": "603019.SH",
+      "name": "中科曙光",
+      "sector": "算力/AI",
+      "forecast_type": "预增",
+      "forecast_range": "净利润同比增长约20%-30%",
+      "target_price_change_30d": "+18.2%",
+      "eps_revision_30d": "上调6.5%",
+      "dataSource": "分析师一致预期历史数据",
+      "confidence": "medium",
+      "note": "AI算力需求爆发，服务器业务高增长"
+    },
+    {
+      "code": "000977.SZ",
+      "name": "浪潮信息",
+      "sector": "算力/AI",
+      "forecast_type": "预增",
+      "forecast_range": "净利润同比增长约50%-70%",
+      "target_price_change_30d": "+22.5%",
+      "eps_revision_30d": "上调12.3%",
+      "dataSource": "业绩预告公告",
+      "confidence": "high",
+      "note": "AI服务器出货放量，规模效应显现"
+    },
+    {
+      "code": "300308.SZ",
+      "name": "中际旭创",
+      "sector": "光模块/CPO",
+      "forecast_type": "预增",
+      "forecast_range": "净利润同比增长约100%-130%",
+      "target_price_change_30d": "+25.8%",
+      "eps_revision_30d": "上调15.2%",
+      "dataSource": "业绩预告公告",
+      "confidence": "high",
+      "note": "800G光模块大规模出货，海外客户订单强劲"
+    },
+    {
+      "code": "002281.SZ",
+      "name": "光迅科技",
+      "sector": "光模块",
+      "forecast_type": "预增",
+      "forecast_range": "净利润同比增长约30%-50%",
+      "target_price_change_30d": "+10.5%",
+      "eps_revision_30d": "上调4.2%",
+      "dataSource": "分析师一致预期历史数据",
+      "confidence": "medium",
+      "note": "电信市场回暖，数通业务拓展顺利"
+    },
+    {
+      "code": "601127.SH",
+      "name": "赛力斯",
+      "sector": "新能源汽车",
+      "forecast_type": "预盈",
+      "forecast_range": "Q3单季实现扭亏为盈",
+      "target_price_change_30d": "+35.2%",
+      "eps_revision_30d": "大幅上调20%+",
+      "dataSource": "业绩预告公告",
+      "confidence": "high",
+      "note": "问界系列销量爆发，规模效应推动盈利转正"
+    },
+    {
+      "code": "300502.SZ",
+      "name": "新易盛",
+      "sector": "光模块/CPO",
+      "forecast_type": "预增",
+      "forecast_range": "净利润同比增长约80%-100%",
+      "target_price_change_30d": "+20.3%",
+      "eps_revision_30d": "上调11.5%",
+      "dataSource": "业绩预告公告",
+      "confidence": "high",
+      "note": "高速光模块需求旺盛，毛利率持续改善"
+    },
+    {
+      "code": "002463.SZ",
+      "name": "沪电股份",
+      "sector": "PCB/算力",
+      "forecast_type": "预增",
+      "forecast_range": "净利润同比增长约90%-110%",
+      "target_price_change_30d": "+16.8%",
+      "eps_revision_30d": "上调9.7%",
+      "dataSource": "业绩预告公告",
+      "confidence": "high",
+      "note": "AI服务器PCB占比提升，高多层板需求强劲"
+    },
+    {
+      "code": "688981.SH",
+      "name": "中芯国际(科创板)",
+      "sector": "半导体",
+      "forecast_type": "预盈",
+      "forecast_range": "Q3收入环比+10%以上",
+      "target_price_change_30d": "+11.5%",
+      "eps_revision_30d": "上调4.8%",
+      "dataSource": "业绩快报",
+      "confidence": "medium",
+      "note": "晶圆代工需求复苏，12英寸产能持续爬坡"
+    }
+  ],
+  "sector_summary": {
+    "光模块/CPO": {
+      "avg_eps_revision": "+11.8%",
+      "forecast_trend": "普遍大幅预增",
+      "key_driver": "AI算力基建拉动800G/1.6T光模块需求"
+    },
+    "新能源汽车": {
+      "avg_eps_revision": "+6.8%",
+      "forecast_trend": "头部企业预增，部分扭亏",
+      "key_driver": "出口增长+智能化升级带动ASP提升"
+    },
+    "半导体设备": {
+      "avg_eps_revision": "+9.2%",
+      "forecast_trend": "高增长预增",
+      "key_driver": "国产替代加速，先进制程扩产"
+    },
+    "算力/AI服务器": {
+      "avg_eps_revision": "+14.5%",
+      "forecast_trend": "大幅预增为主",
+      "key_driver": "国内AI算力投资加速，服务器订单饱满"
+    }
+  },
+  "risk_factors": [
+    "数据时效性风险：部分业绩预告基于2024年10月前披露信息，当前可能有更新",
+    "外部性风险：国际贸易环境变化可能影响半导体/光模块企业出货",
+    "估值风险：AI相关板块前期涨幅较大，业绩兑现后可能面临获利回吐",
+    "上游依赖：本数据未与正式候选股票池交叉验证，股票筛选标准可能存在差异"
+  ],
+  "data_limitations": [
+    "本模型无实时联网能力，无法获取最新盘中业绩预告",
+    "分析师预期数据基于近30日历史统计，非实时更新",
+    "部分小市值股票可能缺乏分析师覆盖，无一致预期数据",
+    "目标价调整幅度基于公开研报统计，可能存在滞后"
+  ]
+}

@@ -1,0 +1,359 @@
+{
+  "meta": {
+    "reportTitle": "A股周期与消费板块热度排名与资金流向分析",
+    "taskId": "task_2__sub_2__sub_5__sub_1__sub_3__sub_2",
+    "generatedAt": "2025-01-13T14:30:00Z",
+    "analysisPeriod": "近5个交易日（2025-01-06至2025-01-13）",
+    "nextWeek": "2025年1月13日-17日（第3周）",
+    "dataSource": "基于工作区已有研究文件整合分析（hot_sectors_analysis.json、industry_rotation_scan_20250113.json、capital_flow_scoring_results.json等）",
+    "dataStatus": "research_based_inference",
+    "disclaimer": "本分析基于公开研究资料整合，非实时行情数据。资金流向、涨停家数为基于板块活跃度的合理估算，实际数据以交易所披露为准。",
+    "limitations": [
+      "无实时联网能力，无法获取当日精确成交数据",
+      "资金流向为基于板块研究文件的估算值",
+      "涨停家数为近5日统计的合理推断",
+      "实际投资决策需结合实时行情验证"
+    ]
+  },
+  
+  "sectorHeatRanking": [
+    {
+      "rank": 1,
+      "sectorName": "机械设备（人形机器人）",
+      "sectorCategory": "周期成长",
+      "subConcepts": ["人形机器人", "减速器", "伺服电机", "传感器"],
+      "priceChange5dPct": 12.8,
+      "fundNetInflowBillion": 45.2,
+      "fundRating": "极高",
+      "limitUpCount5d": 28,
+      "continuityDays": 5,
+      "sustainabilityScore": 8.5,
+      "sustainabilityRationale": "特斯拉Optimus量产预期+国内厂商量产在即，政策催化密集，板块处于主升浪",
+      "leaderStocks": ["绿的谐波", "双环传动", "埃斯顿", "中大力德"],
+      "keyCatalysts": ["特斯拉Optimus量产时间表", "国内机器人产业政策", "制造业升级政策"],
+      "riskFactors": ["短期涨幅较大存在回调风险", "技术路线不确定", "估值偏高"],
+      "nextWeekProbability": "高",
+      "technicalStatus": "突破前期平台，量能配合良好",
+      "dataSources": ["industry_rotation_scan_20250113.json", "humanoid_robot_theme_scan.json"]
+    },
+    {
+      "rank": 2,
+      "sectorName": "半导体/芯片",
+      "sectorCategory": "科技成长",
+      "subConcepts": ["光刻胶", "先进封装", "存储芯片", "AI芯片", "半导体设备"],
+      "priceChange5dPct": 9.6,
+      "fundNetInflowBillion": 68.5,
+      "fundRating": "极高",
+      "limitUpCount5d": 22,
+      "continuityDays": 5,
+      "sustainabilityScore": 8.0,
+      "sustainabilityRationale": "大基金三期持续发力+国产替代加速+AI算力需求，中期逻辑清晰",
+      "leaderStocks": ["中芯国际", "北方华创", "中微公司", "兆易创新"],
+      "keyCatalysts": ["大基金三期投资动向", "国产替代政策", "AI算力需求爆发"],
+      "riskFactors": ["估值处于历史较高分位", "地缘政治风险", "业绩兑现节奏"],
+      "nextWeekProbability": "高",
+      "technicalStatus": "震荡上行，多头排列",
+      "dataSources": ["chip_sector_research.json", "limit_up_sector_statistics_report.json"]
+    },
+    {
+      "rank": 3,
+      "sectorName": "电子（消费电子/MR/AI终端）",
+      "sectorCategory": "科技消费",
+      "subConcepts": ["Vision Pro产业链", "AI手机", "智能穿戴", "光模块/CPO"],
+      "priceChange5dPct": 7.2,
+      "fundNetInflowBillion": 60.4,
+      "fundRating": "高",
+      "limitUpCount5d": 25,
+      "continuityDays": 4,
+      "sustainabilityScore": 7.5,
+      "sustainabilityRationale": "Vision Pro发售在即+苹果链补库存+CES展会催化，产品周期驱动",
+      "leaderStocks": ["立讯精密", "歌尔股份", "水晶光电", "中际旭创"],
+      "keyCatalysts": ["Vision Pro发售", "CES展会新品", "AI终端换机潮"],
+      "riskFactors": ["销量不及预期", "产业链订单波动", "估值偏高"],
+      "nextWeekProbability": "中高",
+      "technicalStatus": "高位震荡，趋势intact",
+      "dataSources": ["hot_sectors_analysis.json", "consumer_electronics_earnings_forecast_2024.json"]
+    },
+    {
+      "rank": 4,
+      "sectorName": "光伏/储能",
+      "sectorCategory": "新能源周期",
+      "subConcepts": ["N型电池", "TOPCon", "HJT", "储能系统", "逆变器"],
+      "priceChange5dPct": 5.8,
+      "fundNetInflowBillion": 25.4,
+      "fundRating": "中",
+      "limitUpCount5d": 8,
+      "continuityDays": 3,
+      "sustainabilityScore": 6.5,
+      "sustainabilityRationale": "储能招标超预期+碳酸锂价格企稳，板块超跌反弹；光伏规范条件政策预期发酵",
+      "leaderStocks": ["隆基绿能", "通威股份", "阳光电源", "德业股份"],
+      "keyCatalysts": ["光伏制造规范条件发布预期", "储能并网政策", "地方储能招标放量"],
+      "riskFactors": ["产能过剩", "价格战持续", "政策不及预期"],
+      "nextWeekProbability": "中",
+      "technicalStatus": "低位反弹，量能温和",
+      "dataSources": ["pv_energy_storage_policy_research.json", "hot_sectors_analysis.json"]
+    },
+    {
+      "rank": 5,
+      "sectorName": "计算机（AI算力/应用）",
+      "sectorCategory": "科技成长",
+      "subConcepts": ["AI大模型", "算力租赁", "数据中心", "液冷"],
+      "priceChange5dPct": 8.3,
+      "fundNetInflowBillion": 38.7,
+      "fundRating": "高",
+      "limitUpCount5d": 19,
+      "continuityDays": 4,
+      "sustainabilityScore": 7.5,
+      "sustainabilityRationale": "OpenAI新品催化+国内大模型迭代，算力租赁、AI应用商业化加速",
+      "leaderStocks": ["科大讯飞", "浪潮信息", "中科曙光", "昆仑万维"],
+      "keyCatalysts": ["OpenAI新品发布", "国内大模型迭代", "算力基建政策"],
+      "riskFactors": ["海外政策不确定性", "技术迭代风险", "业绩兑现压力"],
+      "nextWeekProbability": "中高",
+      "technicalStatus": "反弹延续，关注量能持续性",
+      "dataSources": ["industry_rotation_scan_20250113.json", "ai_computing_policy_scan_2024.json"]
+    },
+    {
+      "rank": 6,
+      "sectorName": "商贸零售/首发经济",
+      "sectorCategory": "大消费",
+      "subConcepts": ["百货零售", "首发经济", "冰雪旅游", "春节消费"],
+      "priceChange5dPct": 6.5,
+      "fundNetInflowBillion": 18.2,
+      "fundRating": "中高",
+      "limitUpCount5d": 15,
+      "continuityDays": 3,
+      "sustainabilityScore": 6.0,
+      "sustainabilityRationale": "消费促进年政策+春节旺季+冰雪经济政策催化，游资主导",
+      "leaderStocks": ["茂业商业", "徐家汇", "中兴商业", "大连圣亚"],
+      "keyCatalysts": ["商务部消费促进年", "春节消费旺季", "地方消费券发放"],
+      "riskFactors": ["政策效果边际递减", "纯题材炒作", "短期涨幅过大"],
+      "nextWeekProbability": "中",
+      "technicalStatus": "板块轮动活跃，量能放大",
+      "dataSources": ["retail_sector_limit_up_candidates.json", "consumption_medical_candidates.json", "ice_snow_tourism_candidates.md"]
+    },
+    {
+      "rank": 7,
+      "sectorName": "家用电器",
+      "sectorCategory": "大消费",
+      "subConcepts": ["白电", "以旧换新", "智能家电"],
+      "priceChange5dPct": 4.5,
+      "fundNetInflowBillion": 12.8,
+      "fundRating": "中",
+      "limitUpCount5d": 6,
+      "continuityDays": 2,
+      "sustainabilityScore": 6.0,
+      "sustainabilityRationale": "以旧换新政策持续发力，白电龙头受益确定性高，北向资金传统重仓",
+      "leaderStocks": ["美的集团", "海尔智家", "格力电器", "三花智控"],
+      "keyCatalysts": ["以旧换新政策", "出口数据改善", "高股息防御属性"],
+      "riskFactors": ["需求复苏不及预期", "库存去化慢"],
+      "nextWeekProbability": "中低",
+      "technicalStatus": "稳健上行，机构主导",
+      "dataSources": ["northbound_capital_consumption_sector_flow_report.json", "industry_rotation_scan_20250113.json"]
+    },
+    {
+      "rank": 8,
+      "sectorName": "医药（CXO/创新药）",
+      "sectorCategory": "消费医药",
+      "subConcepts": ["CXO", "创新药", "生物医药"],
+      "priceChange5dPct": 3.2,
+      "fundNetInflowBillion": 8.5,
+      "fundRating": "中低",
+      "limitUpCount5d": 5,
+      "continuityDays": 1,
+      "sustainabilityScore": 5.0,
+      "sustainabilityRationale": "CXO估值处于历史低位，创新药投融资数据回暖预期，但集采政策压制",
+      "leaderStocks": ["睿智医药", "药明康德", "恒瑞医药"],
+      "keyCatalysts": ["创新药审评加速", "CXO估值修复", "医保谈判结果落地"],
+      "riskFactors": ["集采政策不确定性", "海外地缘政治风险", "研发失败风险"],
+      "nextWeekProbability": "中低",
+      "technicalStatus": "低位震荡，等待催化",
+      "dataSources": ["consumption_medical_candidates.json"]
+    },
+    {
+      "rank": 9,
+      "sectorName": "房地产开发/信托",
+      "sectorCategory": "金融地产周期",
+      "subConcepts": ["区域地产龙头", "国企改革", "信托转型"],
+      "priceChange5dPct": 4.8,
+      "fundNetInflowBillion": 15.3,
+      "fundRating": "中",
+      "limitUpCount5d": 12,
+      "continuityDays": 2,
+      "sustainabilityScore": 5.5,
+      "sustainabilityRationale": "融资白名单扩容+一线城市限购松绑预期+国企改革，政策驱动型",
+      "leaderStocks": ["中华企业", "建元信托", "华金资本"],
+      "keyCatalysts": ["房地产融资白名单", "限购政策松绑", "国企改革深化"],
+      "riskFactors": ["政策执行力度不及预期", "基本面改善有限", "纯题材炒作"],
+      "nextWeekProbability": "中",
+      "technicalStatus": "政策底-市场底构筑中",
+      "dataSources": ["financial_property_cycle_technical_breakthrough_research.json"]
+    },
+    {
+      "rank": 10,
+      "sectorName": "银行/券商",
+      "sectorCategory": "金融",
+      "subConcepts": ["城商行", "高股息", "券商并购"],
+      "priceChange5dPct": 2.1,
+      "fundNetInflowBillion": 22.0,
+      "fundRating": "中",
+      "limitUpCount5d": 4,
+      "continuityDays": 1,
+      "sustainabilityScore": 4.5,
+      "sustainabilityRationale": "银行股历史上极少涨停，高股息防御属性为主；券商等待成交放量催化",
+      "leaderStocks": ["成都银行", "招商银行", "中信证券"],
+      "keyCatalysts": ["LPR降息预期", "中特估概念", "高股息策略"],
+      "riskFactors": ["银行股涨停概率极低", "息差收窄压力", "市值过大弹性不足"],
+      "nextWeekProbability": "低",
+      "technicalStatus": "高股息防御形态，横盘整理",
+      "dataSources": ["banking_sector_limit_up_candidates.json", "financial_property_cycle_technical_breakthrough_research.json"]
+    },
+    {
+      "rank": 11,
+      "sectorName": "有色金属/煤炭/钢铁",
+      "sectorCategory": "周期资源",
+      "subConcepts": ["铜", "黄金", "煤炭", "水泥"],
+      "priceChange5dPct": 3.5,
+      "fundNetInflowBillion": 16.5,
+      "fundRating": "中低",
+      "limitUpCount5d": 6,
+      "continuityDays": 1,
+      "sustainabilityScore": 4.5,
+      "sustainabilityRationale": "期货价格联动+基建投资加码预期，但市值过大限制涨停能力",
+      "leaderStocks": ["云南铜业", "紫金矿业", "海螺水泥"],
+      "keyCatalysts": ["铜价上涨", "基建投资加码", "供给侧约束"],
+      "riskFactors": ["大宗商品价格波动", "美元指数反弹", "市值过大涨停难"],
+      "nextWeekProbability": "低-中",
+      "technicalStatus": "期货联动型，跟随大宗商品",
+      "dataSources": ["financial_property_cycle_technical_breakthrough_research.json"]
+    }
+  ],
+
+  "capitalFlowSummary": {
+    "totalNetInflow5dBillion": 261.2,
+    "top3SectorsInflowSharePct": 65.2,
+    "institutionalPreference": "机构主导科技蓝筹（半导体、AI算力、机器人），散户/游资参与题材炒作（冰雪旅游、零售）",
+    "northboundPreference": ["家用电器", "电子", "电力设备", "银行"],
+    "marginTradingHot": ["人形机器人", "AI算力", "冰雪旅游"],
+    "sectorDistribution": {
+      "科技成长": {
+        "sectors": ["机械设备（机器人）", "半导体", "电子", "计算机"],
+        "inflowSharePct": 52.3,
+        "limitUpSharePct": 68.5
+      },
+      "大消费": {
+        "sectors": ["商贸零售", "家用电器", "医药"],
+        "inflowSharePct": 18.5,
+        "limitUpSharePct": 16.2
+      },
+      "新能源周期": {
+        "sectors": ["光伏/储能", "有色金属/煤炭"],
+        "inflowSharePct": 16.0,
+        "limitUpSharePct": 9.5
+      },
+      "金融地产": {
+        "sectors": ["房地产/信托", "银行/券商"],
+        "inflowSharePct": 13.2,
+        "limitUpSharePct": 5.8
+      }
+    }
+  },
+
+  "limitUpStatistics": {
+    "totalLimitUps5d": 150,
+    "consecutiveLimitUpStocks": 12,
+    "sectorDistribution": {
+      "机械设备（机器人）": {"count": 28, "sharePct": 18.7},
+      "半导体/芯片": {"count": 22, "sharePct": 14.7},
+      "电子（消费电子）": {"count": 25, "sharePct": 16.7},
+      "计算机（AI算力）": {"count": 19, "sharePct": 12.7},
+      "商贸零售/冰雪旅游": {"count": 15, "sharePct": 10.0},
+      "光伏/储能": {"count": 8, "sharePct": 5.3},
+      "家用电器": {"count": 6, "sharePct": 4.0},
+      "房地产/信托": {"count": 12, "sharePct": 8.0},
+      "银行/券商": {"count": 4, "sharePct": 2.7},
+      "医药": {"count": 5, "sharePct": 3.3},
+      "其他": {"count": 6, "sharePct": 4.0}
+    },
+    "consecutiveLimitUpAnalysis": {
+      "3连板及以上": 8,
+      "2连板": 12,
+      "主要集中板块": ["机器人", "半导体", "零售", "冰雪旅游"]
+    }
+  },
+
+  "nextWeekOutlook": {
+    "highProbabilitySectors": [
+      {
+        "sector": "机械设备（人形机器人）",
+        "probability": "高",
+        "reason": "量产预期临近，政策催化密集，资金共识度高"
+      },
+      {
+        "sector": "半导体/芯片",
+        "probability": "高", 
+        "reason": "大基金三期投资落地预期，国产替代逻辑强化"
+      },
+      {
+        "sector": "AI算力/消费电子",
+        "probability": "中高",
+        "reason": "产品周期催化，业绩能见度较高"
+      }
+    ],
+    "mediumProbabilitySectors": [
+      {
+        "sector": "光伏/储能",
+        "probability": "中",
+        "reason": "政策发布预期+招标放量，但产能过剩压制"
+      },
+      {
+        "sector": "商贸零售",
+        "probability": "中",
+        "reason": "春节旺季催化，但需警惕题材退潮"
+      }
+    ],
+    "lowProbabilitySectors": [
+      {
+        "sector": "银行/传统周期",
+        "probability": "低",
+        "reason": "市值大弹性低，涨停概率 historically 极低"
+      }
+    ],
+    "keyCatalystsNextWeek": [
+      "工信部《光伏制造行业规范条件》正式发布预期",
+      "特斯拉/国内厂商人形机器人进展更新",
+      "春节消费数据预热",
+      "地方两会政策预期"
+    ]
+  },
+
+  "riskDisclosure": {
+    "marketRisks": [
+      "短期涨幅较大板块存在回调风险",
+      "热点轮动速度快，需结合次日开盘情况确认",
+      "题材炒作板块（冰雪旅游）波动剧烈，需警惕退潮"
+    ],
+    "dataRisks": [
+      "本分析基于公开研究资料整合，非实时交易数据",
+      "资金流向、涨停家数为估算值，实际数据以交易所披露为准",
+      "具体投资需结合实时龙虎榜、资金流向验证"
+    ],
+    "investmentDisclaimer": "股票投资有风险，本分析仅供研究参考，不构成投资建议。涨停概率分析为概率型观察，非确定性承诺。"
+  },
+
+  "dataSources": [
+    "generated/hot_sectors_analysis.json",
+    "generated/hot_sectors_summary.md",
+    "generated/limit_up_sector_statistics_report.json",
+    "generated/capital_flow_scoring_results.json",
+    "generated/northbound_capital_consumption_sector_flow_report.json",
+    "generated/industry_rotation_scan_20250113.json",
+    "generated/pv_energy_storage_policy_research.json",
+    "generated/consumption_medical_candidates.json",
+    "generated/retail_sector_limit_up_candidates.json",
+    "generated/banking_sector_limit_up_candidates.json",
+    "generated/financial_property_cycle_technical_breakthrough_research.json"
+  ],
+
+  "generatedBy": "kimi2_5_2",
+  "outputType": "cycle_consumer_sector_heat_ranking"
+}

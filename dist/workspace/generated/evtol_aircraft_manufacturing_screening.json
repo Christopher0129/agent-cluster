@@ -1,0 +1,110 @@
+{
+  "metadata": {
+    "task": "eVTOL整机制造标的筛选",
+    "filterCriteria": {
+      "businessScope": ["eVTOL整机研发", "航空器制造", "无人机整机生产"],
+      "marketCapRange": "50-300亿人民币",
+      "requirement": "实质性产品/订单/适航认证进展，排除纯概念炒作",
+      "exclusions": ["港股", "美股", "亿航智能等纯海外标的"]
+    },
+    "dataTimestamp": "2024年（基于知识截止日期，需联网验证最新数据）",
+    "disclaimer": "本分析基于公开历史信息，市值及股价数据需通过实时行情软件验证"
+  },
+  "screeningResults": {
+    "selectedTargets": [
+      {
+        "rank": 1,
+        "stockCode": "002085.SZ",
+        "companyFullName": "万丰奥威股份有限公司",
+        "abbreviation": "万丰奥威",
+        "businessLogic": {
+          "coreBusiness": "通用飞机制造+eVTOL整机研发",
+          "specificProducts": "钻石DA40/DA50系列飞机、HEMEP混合动力飞机、V2000X eVTOL原型机",
+          "certificationProgress": "钻石飞机持有EASA/FAA/CAAC适航认证；eVTOL处于研发验证阶段",
+          "orderSituation": "钻石飞机全球订单饱满，年交付量超200架；eVTOL已与多家运营商签署意向订单",
+          "differentiation": "拥有完整飞机制造资质与产线，非单纯概念炒作"
+        },
+        "estimatedMarketCap": {
+          "value": "约280-320亿元",
+          "note": "市值接近上限，需实时验证",
+          "asOfDate": "2024年数据"
+        },
+        "recentPerformance": {
+          "fiveDayChange": "需通过行情软件获取实时数据",
+          "volatility": "作为低空经济龙头，近期波动较大",
+          "technicalNote": "已多次触发涨停，资金关注度高"
+        },
+        "multipleLimitUpProbability": {
+          "score": 8,
+          "maxScore": 10,
+          "rationale": ["低空经济政策核心受益标的", "拥有实质性飞机制造业务", "eVTOL研发进展持续披露", "机构与游资共同关注", "成交量充沛流动性好"]
+        },
+        "riskFactors": ["市值偏大对连续涨停形成制约", "前期涨幅较大存在获利盘", "eVTOL商业化时间不确定", "属于传统行业转型，估值分歧大"]
+      },
+      {
+        "rank": 2,
+        "stockCode": "002097.SZ",
+        "companyFullName": "山河智能装备股份有限公司",
+        "abbreviation": "山河智能",
+        "businessLogic": {
+          "coreBusiness": "工程机械+航空装备（含无人机/飞行汽车）",
+          "specificProducts": "SA60L轻型运动飞机、参与大众汽车飞行汽车项目合作",
+          "certificationProgress": "SA60L已获CAAC型号合格证；参股公司参与eVTOL研发",
+          "orderSituation": "航空装备板块订单稳定增长，飞行汽车处于合作开发阶段",
+          "differentiation": "通过子公司博云新材等布局航空材料与整机，具备工程机械赋能的制造能力"
+        },
+        "estimatedMarketCap": {
+          "value": "约65-85亿元",
+          "note": "符合50-300亿区间",
+          "asOfDate": "2024年数据"
+        },
+        "recentPerformance": {
+          "fiveDayChange": "需通过行情软件获取实时数据",
+          "volatility": "低空经济概念弹性标的",
+          "technicalNote": "市值适中，易受资金推动"
+        },
+        "multipleLimitUpProbability": {
+          "score": 7,
+          "maxScore": 10,
+          "rationale": ["市值适中便于资金操作", "既有航空装备业务又有eVTOL概念", "股价位置相对较低", "工程机械板块提供业绩托底", "参与大众飞行汽车项目具有话题性"]
+        },
+        "riskFactors": ["航空装备非主营业务占比有限", "工程机械行业周期下行压力", "eVTOL业务处于早期阶段", "与纯粹eVTOL标的相比概念属性较强"]
+      }
+    ],
+    "rejectedCandidates": [
+      {
+        "stockCode": "688070.SH",
+        "name": "纵横股份",
+        "reason": "主营工业无人机（非载人eVTOL），市值通常低于50亿，不符合整机制造定位"
+      },
+      {
+        "stockCode": "600038.SH",
+        "name": "中直股份",
+        "reason": "主营直升机，市值通常超300亿，且eVTOL布局尚处早期"
+      },
+      {
+        "stockCode": "000099.SZ",
+        "name": "中信海直",
+        "reason": "主营通航运营服务，非整机制造环节"
+      },
+      {
+        "stockCode": "300900.SZ",
+        "name": "广联航空",
+        "reason": "主营航空零部件，非整机制造"
+      }
+    ]
+  },
+  "sectorAnalysis": {
+    "industryCatalyst": "低空经济写入2024年政府工作报告，多地出台eVTOL商业化试点政策",
+    "technicalBarrier": "适航认证是eVTOL商业化的核心门槛，具备航空制造经验的企业更具优势",
+    "investmentLogic": "整机制造是价值链核心，但需区分'有飞机的'vs'有概念的'",
+    "policyRisk": "适航审批进度不确定，空域开放政策存在变数"
+  },
+  "dataLimitations": [
+    "本分析基于历史公开信息，未获取实时行情数据",
+    "市值数据需通过同花顺/东方财富等工具实时验证",
+    "近5日涨跌幅需通过交易软件确认",
+    "涨停概率评分为定性判断，不构成投资建议"
+  ],
+  "complianceNote": "本文件仅供研究参考，不构成任何投资建议。股市有风险，投资需谨慎。"
+}

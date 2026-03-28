@@ -1,0 +1,339 @@
+{
+  "meta": {
+    "taskId": "task_2__sub_1__sub_1_3__sub_1_3_e__sub_5__sub_1_3_e__sub_5_4",
+    "phase": "research",
+    "title": "市场与治理风险标签框架",
+    "generatedAt": "2025-01-13T10:15:00Z",
+    "version": "1.0",
+    "purpose": "为事件驱动候选股提供流动性、监管与治理风险标签体系"
+  },
+  "risk_framework_market": {
+    "liquidity_risk": {
+      "risk_type": "流动性风险",
+      "description": "指股票因市值规模过小或交易活跃度不足，导致买卖价差扩大、冲击成本上升、涨停后难以出货或连续涨停中断的风险。对事件驱动策略而言，流动性风险直接影响建仓和平仓效率，是高弹性收益的隐性成本。",
+      "indicators": {
+        "market_cap_indicator": {
+          "name": "流通市值",
+          "threshold_critical": "流通市值 < 10亿元",
+          "threshold_warning": "10亿元 ≤ 流通市值 < 20亿元",
+          "threshold_normal": "流通市值 ≥ 20亿元",
+          "calculation": "流通股本 × 当前股价",
+          "data_source": "交易所日终行情数据"
+        },
+        "turnover_indicator": {
+          "name": "日均成交额",
+          "threshold_critical": "近20日日均成交额 < 3000万元",
+          "threshold_warning": "3000万元 ≤ 日均成交额 < 5000万元",
+          "threshold_normal": "日均成交额 ≥ 5000万元",
+          "calculation": "Σ(近20日成交额) / 20",
+          "data_source": "交易所成交明细"
+        },
+        "amplitude_indicator": {
+          "name": "日内振幅约束",
+          "threshold_critical": "近5日平均振幅 < 2%",
+          "threshold_warning": "2% ≤ 平均振幅 < 4%",
+          "threshold_normal": "平均振幅 ≥ 4%",
+          "calculation": "Σ((最高价-最低价)/开盘价) / 5",
+          "note": "振幅过低表明缺乏活跃资金参与"
+        }
+      },
+      "severity_level": {
+        "level_4_critical": {
+          "code": "L4",
+          "label": "极高流动性风险",
+          "conditions": ["流通市值<10亿", "日均成交额<3000万"],
+          "impact": "连续涨停概率低，涨停后次日低开风险高，单日出货容量<1000万",
+          "action": "原则上排除，除非事件强度为S级且市场情绪极度亢奋",
+          "score_penalty": -3.0
+        },
+        "level_3_high": {
+          "code": "L3",
+          "label": "高流动性风险",
+          "conditions": ["10亿≤流通市值<20亿", "3000万≤日均成交额<5000万"],
+          "impact": "可容纳中等规模资金，但大额卖出易砸开涨停",
+          "action": "严格控制仓位，单次建仓不超过日均成交额的10%",
+          "score_penalty": -1.5
+        },
+        "level_2_medium": {
+          "code": "L2",
+          "label": "中等流动性风险",
+          "conditions": ["20亿≤流通市值<50亿", "5000万≤日均成交额<1亿"],
+          "impact": "正常交易无显著障碍，极端行情下可能出现流动性枯竭",
+          "action": "正常参与，关注涨停封单量与成交量的比例",
+          "score_penalty": -0.5
+        },
+        "level_1_low": {
+          "code": "L1",
+          "label": "低流动性风险",
+          "conditions": ["流通市值≥50亿", "日均成交额≥1亿"],
+          "impact": "流动性充足，涨停封板稳固，出货渠道通畅",
+          "action": "无特殊限制",
+          "score_penalty": 0
+        }
+      },
+      "special_notes": [
+        "科创板/创业板20%涨跌停限制下，流动性风险需上调一个等级",
+        "ST股票流动性风险评估基准减半（临界值按50%计算）",
+        "近期连续一字板后开板股票，流动性风险临时上调一级"
+      ]
+    },
+    "regulatory_inquiry_risk": {
+      "risk_type": "监管问询风险",
+      "description": "指股票因股价异常波动、信息披露违规或交易行为异常，被交易所发出关注函、问询函、监管函或被证监会立案调查的风险。监管介入通常导致短期炒作降温，连续涨停被迫中断，是事件驱动策略的系统性风险源。",
+      "indicators": {
+        "inquiry_letter_6m": {
+          "name": "近6个月监管函件",
+          "categories": {
+            "attention_letter": "关注函-要求说明股价异动原因",
+            "inquiry_letter": "问询函-要求补充披露信息",
+            "regulatory_letter": "监管函-认定存在违规行为",
+            "case_filing_notice": "立案告知书-涉嫌违法违规被立案调查"
+          },
+          "severity_rank": "立案告知书 > 监管函 > 问询函 > 关注函",
+          "count_threshold": "累计收到≥2次函件为高频监管对象"
+        },
+        "abnormal_fluctuation_announcement": {
+          "name": "异常波动公告",
+          "threshold": "近3个交易日内日收盘价格涨跌幅偏离值累计达到±20%",
+          "impact": "触发交易所异常波动监控，可能面临停牌核查"
+        },
+        "key_monitoring_list": {
+          "name": "重点监控名单",
+          "source": "交易所每日盘后公布的重点监控证券名单",
+          "effect": "被列为重点监控后，大单交易受限制，涨停封单意愿下降"
+        },
+        "trading_halt_history": {
+          "name": "停牌核查记录",
+          "lookback": "近12个月",
+          "impact": "曾因股价异动被停牌核查的股票，再次异动时停牌概率显著升高"
+        }
+      },
+      "severity_level": {
+        "level_4_critical": {
+          "code": "R4",
+          "label": "极高监管风险",
+          "conditions": ["近6个月收到立案告知书", "当前处于重点监控名单", "近1月因异动被停牌核查"],
+          "impact": "股票可能被实施ST、连续涨停概率极低、存在强制停牌风险",
+          "action": "严格排除，不可参与",
+          "score_penalty": -5.0,
+          "exclude_flag": true
+        },
+        "level_3_high": {
+          "code": "R3",
+          "label": "高监管风险",
+          "conditions": ["近6个月收到监管函", "近3个月收到≥2次关注/问询函", "近3日触发异常波动公告"],
+          "impact": "监管关注度高，连续涨停易被监管干预中断",
+          "action": "原则上排除，除非事件为重大资产重组等硬逻辑",
+          "score_penalty": -3.0,
+          "exclude_flag": true
+        },
+        "level_2_medium": {
+          "code": "R2",
+          "label": "中等监管风险",
+          "conditions": ["近6个月收到1次关注函或问询函", "近1年曾被列入重点监控名单"],
+          "impact": "存在一定监管关注，连续涨停超过3板后风险显著上升",
+          "action": "可参与但需严控连板高度，设置3板止盈纪律",
+          "score_penalty": -1.5
+        },
+        "level_1_low": {
+          "code": "R1",
+          "label": "低监管风险",
+          "conditions": ["近6个月无监管函件", "近1年无重点监控记录", "近3日无异常波动公告"],
+          "impact": "监管环境宽松，连续涨停阻力小",
+          "action": "正常参与",
+          "score_penalty": 0
+        }
+      },
+      "special_notes": [
+        "注册制次新股（上市<1年）监管容忍度相对较低，R2级可放宽至R1.5",
+        "北交所股票监管标准与主板存在差异，需单独评估",
+        "涉及热点概念（如AI、芯片）的股票，监管关注阈值更低，需提前一级评估"
+      ]
+    },
+    "pledge_risk": {
+      "risk_type": "大股东质押风险",
+      "description": "指大股东股权质押比例过高或股价接近平仓线，可能引发强制平仓抛售、股价闪崩、连续跌停释放流动性风险，从而中断涨停趋势或导致涨停次日大幅低开。质押风险在熊市或个股急跌中尤为突出。",
+      "indicators": {
+        "pledge_ratio": {
+          "name": "大股东质押比例",
+          "calculation": "大股东累计质押股数 / 大股东持股总数 × 100%",
+          "threshold_critical": "质押比例 > 80%",
+          "threshold_high": "60% < 质押比例 ≤ 80%",
+          "threshold_warning": "50% < 质押比例 ≤ 60%",
+          "threshold_normal": "质押比例 ≤ 50%"
+        },
+        "margin_call_proximity": {
+          "name": "平仓线距离",
+          "calculation": "(当前股价 - 预警线/平仓线价格) / 当前股价 × 100%",
+          "warning_line": "通常为质押时股价的150%-160%",
+          "liquidation_line": "通常为质押时股价的130%-140%",
+          "threshold_critical": "当前股价距离平仓线 < 10%",
+          "threshold_high": "10% ≤ 距离 < 20%",
+          "threshold_warning": "20% ≤ 距离 < 30%",
+          "threshold_normal": "距离 ≥ 30% 或无质押"
+        },
+        "pledge_purpose": {
+          "name": "质押资金用途",
+          "high_risk": "补充上市公司流动资金（表明公司资金链紧张）",
+          "medium_risk": "个人资金需求/对外投资",
+          "low_risk": "股权激励/员工持股计划"
+        },
+        "pledge_maturity": {
+          "name": "质押到期时间",
+          "look_ahead": "未来3个月内",
+          "impact": "到期解押需资金回笼，若无力解押可能被动减持"
+        }
+      },
+      "severity_level": {
+        "level_4_critical": {
+          "code": "P4",
+          "label": "极高质押风险",
+          "conditions": ["质押比例>80%", "距离平仓线<10%", "已收到券商补仓通知"],
+          "impact": "随时可能触发强制平仓，股价承压严重，涨停次日低开概率极高",
+          "action": "坚决排除",
+          "score_penalty": -4.0,
+          "exclude_flag": true
+        },
+        "level_3_high": {
+          "code": "P3",
+          "label": "高质押风险",
+          "conditions": ["60%<质押比例≤80%", "距离平仓线10%-20%", "近1月质押比例上升>10%"],
+          "impact": "质押压力较大，连续上涨后抛压增加，影响连板持续性",
+          "action": "谨慎参与，设置严格止损，避免持仓过夜",
+          "score_penalty": -2.0
+        },
+        "level_2_medium": {
+          "code": "P2",
+          "label": "中等质押风险",
+          "conditions": ["50%<质押比例≤60%", "距离平仓线20%-30%", "未来3月有大额质押到期"],
+          "impact": "存在一定质押压力，极端行情下可能暴露风险",
+          "action": "可参与但需监控质押动态",
+          "score_penalty": -1.0
+        },
+        "level_1_low": {
+          "code": "P1",
+          "label": "低质押风险",
+          "conditions": ["质押比例≤50%", "距离平仓线≥30%", "无近3月到期质押"],
+          "impact": "质押风险可控，不影响股价弹性",
+          "action": "正常参与",
+          "score_penalty": 0
+        }
+      },
+      "special_notes": [
+        "控股股东质押与一致行动人质押合并计算",
+        "质押股份若被司法冻结，风险等级直接上调一级",
+        "近期已有质押违约记录的股票，P3级及以上直接排除"
+      ]
+    },
+    "unlocking_reduction_risk": {
+      "risk_type": "解禁/减持风险",
+      "description": "指股票面临限售股解禁或大股东/董监高发布减持计划，导致短期内流通股供给大幅增加，压制股价表现，可能中断涨停趋势或在涨停后引发大量抛售。解禁/减持是事件驱动策略中可预见的最大抛压来源。",
+      "indicators": {
+        "unlocking_soon": {
+          "name": "近期大额解禁",
+          "time_window": "未来7个交易日至未来1个月",
+          "scale_critical": "解禁股数 > 当前流通股本的50%",
+          "scale_high": "30% < 解禁比例 ≤ 50%",
+          "scale_medium": "10% < 解禁比例 ≤ 30%",
+          "scale_low": "解禁比例 ≤ 10%"
+        },
+        "reduction_plan": {
+          "name": "减持计划公告",
+          "lookback": "近3个月内发布的减持计划",
+          "types": {
+            "controlling_shareholder": "控股股东/实控人减持（影响最大）",
+            "senior_management": "董监高减持（信号负面）",
+            "institutional_shareholder": "机构股东减持（关注减持原因）",
+            "pre_ipo_investor": "Pre-IPO股东减持（正常退出）"
+          },
+          "scale_threshold": "拟减持数量 > 当前流通股本的5%为大规模减持"
+        },
+        "reduction_in_progress": {
+          "name": "减持实施中",
+          "indicator": "减持计划公告后尚未完成，处于可减持窗口期",
+          "impact": "减持抛压持续存在，股价上涨易触发减持"
+        },
+        "unlocking_holder_type": {
+          "name": "解禁股东类型",
+          "high_risk": "财务投资者/PE机构（退出意愿强）",
+          "medium_risk": "员工持股平台（部分减持）",
+          "low_risk": "战略投资者/控股股东承诺不减持"
+        }
+      },
+      "severity_level": {
+        "level_4_critical": {
+          "code": "U4",
+          "label": "极高解禁/减持风险",
+          "conditions": ["未来7日解禁比例>50%", "控股股东发布大比例减持计划(>5%)"],
+          "impact": "解禁/减持抛压将直接冲击股价，连续涨停概率极低",
+          "action": "严格排除",
+          "score_penalty": -4.0,
+          "exclude_flag": true
+        },
+        "level_3_high": {
+          "code": "U3",
+          "label": "高解禁/减持风险",
+          "conditions": ["未来1月解禁比例30%-50%", "董监高发布减持计划", "减持计划实施中且进度<50%"],
+          "impact": "显著抛压存在，涨停后易被减持资金砸盘，连板高度受限",
+          "action": "短周期交易，避免持仓跨越解禁日",
+          "score_penalty": -2.5
+        },
+        "level_2_medium": {
+          "code": "U2",
+          "label": "中等解禁/减持风险",
+          "conditions": ["未来1月解禁比例10%-30%", "机构股东发布减持计划(<3%)"],
+          "impact": "存在一定供给压力，但可通过上涨消化",
+          "action": "控制仓位，关注解禁后实际减持情况",
+          "score_penalty": -1.0
+        },
+        "level_1_low": {
+          "code": "U1",
+          "label": "低解禁/减持风险",
+          "conditions": ["未来1月无解禁", "无在效减持计划", "控股股东承诺不减持或延长锁定期"],
+          "impact": "筹码供给稳定，无额外抛压",
+          "action": "正常参与",
+          "score_penalty": 0,
+          "bonus": "控股股东承诺增持或回购可+0.5分"
+        }
+      },
+      "special_notes": [
+        "首发原股东限售股解禁压力大于定增限售股（成本差异）",
+        "解禁公告日至实际解禁日之间股价通常承压，解禁后反而可能利空出尽",
+        "减持计划可通过大宗交易进行，对二级市场冲击较小，但需关注6个月后集中竞价减持",
+        "业绩承诺未完成的限售股解禁，可能触发补偿义务，需特别关注"
+      ]
+    }
+  },
+  "risk_integration_rules": {
+    "composite_risk_calculation": {
+      "description": "综合风险得分计算规则",
+      "formula": "CompositeRiskScore = max(L_score, R_score, P_score, U_score) + 0.3 × (sum(secondary_risks))",
+      "interpretation": "以最高单项风险为主，次要风险按30%权重累加",
+      "example": "L3(-1.5) + R2(-1.5) + P1(0) + U2(-1.0) = max(1.5,1.5,0,1.0) + 0.3×(1.5+0+1.0) = 1.5 + 0.75 = 2.25"
+    },
+    "exclude_conditions": {
+      "any_r4": "任一风险维度达到R4/P4/U4/L4且exclude_flag=true时，股票直接排除",
+      "multiple_high": "两个及以上维度达到3级高风险时，建议排除",
+      "liquidity_regulatory_combo": "L4+R3或L3+R4组合直接排除（流动性差且监管严，极易被闷杀）"
+    },
+    "scoring_adjustments": {
+      "description": "风险评分对涨停概率评分的影响",
+      "method": "在TotalScore基础上直接累加风险惩罚分",
+      "floor": "风险调整后分数最低为1分（D级）",
+      "ceiling": "风险维度全为L1/R1/P1/U1时，TotalScore可上浮0.5分作为安全边际奖励"
+    }
+  },
+  "usage_guidance": {
+    "pre_selection": "在初步筛选阶段，直接剔除所有exclude_flag=true的标的",
+    "scoring_phase": "对剩余标的计算各风险维度得分，按综合风险计算规则调整TotalScore",
+    "monitoring_phase": "持仓期间持续监控风险指标变化，特别是监管名单和质押平仓线",
+    "documentation": "最终报告中需明确披露每只股票的风险标签和排除/扣分原因"
+  },
+  "data_sources": {
+    "liquidity": ["交易所行情数据", "东方财富/同花顺市值数据"],
+    "regulatory": ["交易所官网监管信息公开", "巨潮资讯网公告", "上市公司公告"],
+    "pledge": ["中登公司质押数据", "上市公司股东股份质押公告"],
+    "unlocking": ["上市公司限售股解禁公告", "招股说明书/定增预案", "减持计划公告"]
+  },
+  "disclaimer": "本风险标签框架基于公开信息和历史经验构建，不构成投资建议。风险指标具有时效性，实际投资决策需结合最新公告和市场环境动态评估。"
+}

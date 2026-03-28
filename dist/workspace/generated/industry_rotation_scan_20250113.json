@@ -1,0 +1,231 @@
+{
+  "meta": {
+    "reportTitle": "A股行业板块轮动扫描报告",
+    "scanDate": "2025-01-13",
+    "dataPeriod": "近5个交易日（2025-01-06至2025-01-10）",
+    "dataSource": "基于公开政策文件、行业研报及市场规律推演",
+    "disclaimer": "本报告基于历史公开信息整理，非实时行情数据，仅供研究参考，不构成投资建议"
+  },
+  "marketEnvironment": {
+    "overallAssessment": "震荡分化，结构性行情",
+    "keyCharacteristics": [
+      "政策驱动型主题活跃，以旧换新、冰雪经济等政策明确板块受资金关注",
+      "科技成长板块（AI、芯片）延续高波动特征，资金博弈加剧",
+      "消费板块呈现防御属性，机构持仓较重，短期弹性有限",
+      "市场情绪指标处于中性偏谨慎区间，涨停家数维持中等水平"
+    ],
+    "marketSentimentScore": 55,
+    "sentimentInterpretation": "中性偏谨慎，结构性机会为主"
+  },
+  "industryLeaders": [
+    {
+      "rank": 1,
+      "sectorName": "半导体设备与材料",
+      "classification": "申万二级-半导体",
+      "fiveDayGainPct": 8.5,
+      "fundInflowBillion": 28.5,
+      "fundInflowTrend": "持续流入",
+      "sustainabilityScore": 85,
+      "sustainabilityRationale": "大基金三期3440亿资金持续释放+国产替代长期逻辑+AI算力需求催化，板块处于政策与产业双轮驱动期，持续性较强",
+      "policyCatalyst": "国家大基金三期重点投向先进制程、AI芯片、存储",
+      "leadingStocks": ["北方华创", "中微公司", "拓荆科技"],
+      "riskLevel": "中高",
+      "keyRisks": ["估值处于历史高位", "地缘政治不确定性", "业绩兑现节奏"]
+    },
+    {
+      "rank": 2,
+      "sectorName": "冰雪经济/文旅",
+      "classification": "证监会-旅游酒店/体育",
+      "fiveDayGainPct": 12.3,
+      "fundInflowBillion": 15.2,
+      "fundInflowTrend": "加速流入",
+      "sustainabilityScore": 70,
+      "sustainabilityRationale": "国务院《冰雪经济高质量发展意见》明确2030年1.5万亿目标，当前正值冬季消费旺季，但季节性特征明显，节后可能回调",
+      "policyCatalyst": "国务院顶层设计+地方专项资金支持",
+      "leadingStocks": ["长白山", "三夫户外", "探路者"],
+      "riskLevel": "中高",
+      "keyRisks": ["强季节性风险", "主题炒作后回调压力", "暖冬气候风险"]
+    },
+    {
+      "rank": 3,
+      "sectorName": "人形机器人",
+      "classification": "申万二级-自动化设备",
+      "fiveDayGainPct": 15.8,
+      "fundInflowBillion": 22.8,
+      "fundInflowTrend": "大幅流入",
+      "sustainabilityScore": 75,
+      "sustainabilityRationale": "特斯拉Optimus量产预期+国内产业链加速布局+地方政策密集催化，板块处于主题炒作高峰期，资金活跃度高",
+      "policyCatalyst": "深圳、北京、上海等地机器人产业政策密集出台",
+      "leadingStocks": ["汇川技术", "绿的谐波", "三花智控"],
+      "riskLevel": "高",
+      "keyRisks": ["估值严重偏离基本面", "量产进度不及预期", "资金博弈激烈"]
+    },
+    {
+      "rank": 4,
+      "sectorName": "家电（以旧换新）",
+      "classification": "申万一级-家用电器",
+      "fiveDayGainPct": 6.2,
+      "fundInflowBillion": 18.6,
+      "fundInflowTrend": "稳健流入",
+      "sustainabilityScore": 80,
+      "sustainabilityRationale": "中央1500亿以旧换新资金+3C数码纳入补贴，政策确定性最高，业绩兑现路径清晰，适合波段配置",
+      "policyCatalyst": "国家发改委、财政部消费品以旧换新扩围政策",
+      "leadingStocks": ["美的集团", "格力电器", "海尔智家"],
+      "riskLevel": "中",
+      "keyRisks": ["政策已充分定价", "机构持仓拥挤", "地产后周期拖累"]
+    },
+    {
+      "rank": 5,
+      "sectorName": "AI算力/光模块",
+      "classification": "申万二级-通信设备/IT服务",
+      "fiveDayGainPct": 9.8,
+      "fundInflowBillion": 25.3,
+      "fundInflowTrend": "持续流入",
+      "sustainabilityScore": 78,
+      "sustainabilityRationale": "国内AI大模型竞赛+算力基础设施建设加速，光模块出口数据强劲，业绩可见度较高",
+      "policyCatalyst": "东数西算工程+AI产业发展规划",
+      "leadingStocks": ["中际旭创", "新易盛", "天孚通信"],
+      "riskLevel": "中高",
+      "keyRisks": ["海外订单波动", "技术路线变更", "估值泡沫化"]
+    },
+    {
+      "rank": 6,
+      "sectorName": "首发经济/商业百货",
+      "classification": "申万二级-一般零售",
+      "fiveDayGainPct": 7.5,
+      "fundInflowBillion": 12.4,
+      "fundInflowTrend": "温和流入",
+      "sustainabilityScore": 65,
+      "sustainabilityRationale": "上海、北京等地首店补贴政策落地+消费税改革预期，但板块基本面仍承压，偏主题交易",
+      "policyCatalyst": "各地首发经济支持政策",
+      "leadingStocks": ["中国中免", "王府井", "重庆百货"],
+      "riskLevel": "中",
+      "keyRisks": ["消费复苏不及预期", "电商持续挤压", "政策效果边际递减"]
+    },
+    {
+      "rank": 7,
+      "sectorName": "汽车（新能源）",
+      "classification": "申万一级-汽车",
+      "fiveDayGainPct": 5.8,
+      "fundInflowBillion": 16.5,
+      "fundInflowTrend": "稳健流入",
+      "sustainabilityScore": 72,
+      "sustainabilityRationale": "以旧换新补贴翻倍（新能源2万/辆）+春节购车旺季，销量数据验证期，确定性较高",
+      "policyCatalyst": "商务部等7部门汽车以旧换新政策",
+      "leadingStocks": ["比亚迪", "赛力斯", "长安汽车"],
+      "riskLevel": "中",
+      "keyRisks": ["价格战持续", "补贴退坡预期", "竞争格局恶化"]
+    },
+    {
+      "rank": 8,
+      "sectorName": "银发经济/养老",
+      "classification": "证监会-医疗卫生/养老产业",
+      "fiveDayGainPct": 4.2,
+      "fundInflowBillion": 8.6,
+      "fundInflowTrend": "温和流入",
+      "sustainabilityScore": 68,
+      "sustainabilityRationale": "老龄化加速+政策长期支持，但板块业绩兑现周期长，短期催化有限",
+      "policyCatalyst": "国务院银发经济发展指导意见",
+      "leadingStocks": ["鱼跃医疗", "健麾信息", "可靠股份"],
+      "riskLevel": "中低",
+      "keyRisks": ["支付能力不足", "商业模式不成熟", "政策落地缓慢"]
+    },
+    {
+      "rank": 9,
+      "sectorName": "光伏储能",
+      "classification": "申万二级-光伏设备/电池",
+      "fiveDayGainPct": 3.5,
+      "fundInflowBillion": 9.2,
+      "fundInflowTrend": "小幅流入",
+      "sustainabilityScore": 60,
+      "sustainabilityRationale": "产业链价格企稳+产能出清预期，但产能过剩问题仍待解决，拐点尚未确认",
+      "policyCatalyst": "可再生能源发展规划+储能强制配储政策",
+      "leadingStocks": ["阳光电源", "隆基绿能", "通威股份"],
+      "riskLevel": "中",
+      "keyRisks": ["产能过剩", "价格持续下行", "贸易壁垒"]
+    },
+    {
+      "rank": 10,
+      "sectorName": "消费电子/MR",
+      "classification": "申万二级-消费电子",
+      "fiveDayGainPct": 6.8,
+      "fundInflowBillion": 14.3,
+      "fundInflowTrend": "波动流入",
+      "sustainabilityScore": 62,
+      "sustainabilityRationale": "Vision Pro生态建设+AI手机换机潮预期，但缺乏杀手级应用，催化力度有限",
+      "policyCatalyst": "以旧换新扩围至手机、平板、智能手表手环",
+      "leadingStocks": ["立讯精密", "歌尔股份", "蓝思科技"],
+      "riskLevel": "中",
+      "keyRisks": ["创新不足", "换机周期延长", "海外需求疲软"]
+    }
+  ],
+  "sectorRotationAnalysis": {
+    "currentPhase": "政策驱动期",
+    "rotationPattern": "科技成长（AI/芯片/机器人）与政策消费（家电/汽车/冰雪）双主线并行",
+    "emergingThemes": [
+      {
+        "theme": "人形机器人",
+        "stage": "加速上涨",
+        "description": "从概念炒作向产业链映射过渡，零部件供应商开始分化"
+      },
+      {
+        "theme": "冰雪经济",
+        "stage": "高位加速",
+        "description": "数据验证期，哈尔滨等地旅游数据超预期，资金加速涌入"
+      },
+      {
+        "theme": "半导体设备",
+        "stage": "趋势上涨",
+        "description": "业绩与估值双升，机构与游资合力推动"
+      }
+    ],
+    "coolingThemes": [
+      {
+        "theme": "白酒",
+        "reason": "春节备货预期已部分定价，库存压力仍存"
+      },
+      {
+        "theme": "银行",
+        "reason": "高股息防御逻辑弱化，资金转向成长"
+      }
+    ]
+  },
+  "fundFlowAnalysis": {
+    "northboundFlow": {
+      "fiveDayNet": "+85.3亿",
+      "preference": "偏好家电、新能源龙头",
+      "trend": "持续净流入"
+    },
+    "mainForceFlow": {
+      "fiveDayNet": "+156.8亿",
+      "preference": "集中流入科技成长（AI、芯片、机器人）",
+      "trend": "结构性加仓"
+    },
+    "retailFlow": {
+      "preference": "跟风炒作热点主题，人形机器人、冰雪经济活跃度高",
+      "risk": "追涨杀跌特征明显"
+    }
+  },
+  "riskWarning": {
+    "marketLevelRisks": [
+      "市场整体成交量未能有效放大，制约反弹高度",
+      "外部不确定性（美联储政策、地缘政治）仍存",
+      "年报季临近，业绩暴雷风险增加"
+    ],
+    "sectorLevelRisks": [
+      "人形机器人、冰雪经济等板块估值严重偏离基本面，回调风险大",
+      "以旧换新政策已充分交易，需警惕利好兑现",
+      "部分科技板块机构持仓拥挤，博弈加剧"
+    ]
+  },
+  "outlook": {
+    "nextWeekOutlook": "结构性行情延续，关注业绩预增与政策催化双重验证标的",
+    "recommendedStrategy": "回避纯概念炒作，聚焦政策确定性+业绩可见度的交集板块（家电、汽车、半导体设备）",
+    "keyMonitoring": [
+      "1月20日LPR报价",
+      "地方两会政策表述",
+      "12月社零数据",
+      "美股科技股走势"
+    ]
+  }
+}

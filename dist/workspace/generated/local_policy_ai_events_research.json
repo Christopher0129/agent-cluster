@@ -1,0 +1,331 @@
+{
+  "_metadata": {
+    "generatedBy": "kimi2.5_2 (non-web-search model)",
+    "generatedAt": "2025-01-13T10:15:00Z",
+    "disclaimer": "【重要声明】本模型不具备实时联网搜索能力，以下内容基于公开历史信息整理的搜索框架模板，包含待验证字段和搜索指引。所有时间敏感信息必须由具备联网能力的模型或人工验证后填充。切勿作为投资决策依据。",
+    "dataStatus": "framework_template_pending_verification",
+    "searchKeywords": ["AI产业政策", "算力中心建设", "智算中心", "人工智能大会", "算力大会", "阿里云峰会", "华为全联接大会"]
+  },
+  "searchPeriod": {
+    "description": "下个星期",
+    "absoluteDateRange": "[待前置任务确认: 格式YYYY-MM-DD至YYYY-MM-DD]",
+    "tradingDays": "[待确认: 通常5个交易日]",
+    "_note": "需由具备联网能力的worker确认具体交易日期"
+  },
+  
+  "localGovernmentPolicies": {
+    "description": "地方政府AI产业支持政策与算力建设规划",
+    "status": "pending_search",
+    "targetCities": ["北京", "上海", "深圳", "杭州", "成都", "合肥", "广州", "苏州", "南京", "武汉"],
+    "searchSources": [
+      "各市政府官网(www.beijing.gov.cn, www.shanghai.gov.cn等)",
+      "市发改委/工信局/科技局官方发布",
+      "地方国资委官网",
+      "本地主流财经媒体(如上海证券报、深圳特区报)",
+      "招商引资/产业园区官方公众号"
+    ],
+    "policyTypes": [
+      "AI产业发展行动计划/指导意见",
+      "智算中心/超算中心建设方案",
+      "AI芯片/大模型企业扶持政策",
+      "算力券/算力补贴发放通知",
+      "数据要素市场建设政策",
+      "人工智能创新应用先导区政策"
+    ],
+    "events": [
+      {
+        "eventName": "[待搜索]北京市AI产业政策发布",
+        "policyType": "AI产业支持政策",
+        "location": "北京",
+        "expectedDate": "[待验证]",
+        "publishChannel": "北京市人民政府官网/市科委/中关村管委会",
+        "keyPoints": ["待填充: 如大模型备案、AI算力补贴、数据要素政策等"],
+        "affectedSectors": ["AI大模型", "算力租赁", "数据要素", "北京本地AI概念股"],
+        "impactScore": "[待评估 1-5分]",
+        "sourceUrl": "[待填充.gov.cn链接]",
+        "_searchQuery": "北京 AI产业 算力中心 政策 2025年1月 site:gov.cn"
+      },
+      {
+        "eventName": "[待搜索]上海市人工智能/算力建设规划",
+        "policyType": "算力基础设施建设规划",
+        "location": "上海",
+        "expectedDate": "[待验证]",
+        "publishChannel": "上海市人民政府/市经信委/临港新片区管委会",
+        "keyPoints": ["待填充: 如智能算力规模目标、智算中心布局、大模型创新中心等"],
+        "affectedSectors": ["AI算力", "智能算力中心", "上海本地AI股", "数据中心"],
+        "impactScore": "[待评估]",
+        "sourceUrl": "[待填充]",
+        "_searchQuery": "上海 人工智能 算力中心 智算中心 政策 2025 site:gov.cn"
+      },
+      {
+        "eventName": "[待搜索]深圳市人工智能产业扶持措施",
+        "policyType": "产业扶持政策",
+        "location": "深圳",
+        "expectedDate": "[待验证]",
+        "publishChannel": "深圳市政府/市工信局/市科技创新委",
+        "keyPoints": ["待填充: 如AI企业落户奖励、算力补贴、应用场景开放等"],
+        "affectedSectors": ["AI应用", "深圳本地AI股", "智能硬件", "大模型"],
+        "impactScore": "[待评估]",
+        "sourceUrl": "[待填充]",
+        "_searchQuery": "深圳 人工智能 算力 产业政策 扶持措施 site:gov.cn"
+      },
+      {
+        "eventName": "[待搜索]杭州市AI产业/算力政策",
+        "policyType": "数字经济/AI产业政策",
+        "location": "杭州",
+        "expectedDate": "[待验证]",
+        "publishChannel": "杭州市政府/市发改委/未来科技城管委会",
+        "keyPoints": ["待填充: 如依托阿里云的算力生态政策、大模型产业基金等"],
+        "affectedSectors": ["AI大模型", "杭州本地科技股", "云计算", "数据要素"],
+        "impactScore": "[待评估]",
+        "sourceUrl": "[待填充]",
+        "_searchQuery": "杭州 人工智能 算力中心 政策 2025 site:gov.cn"
+      },
+      {
+        "eventName": "[待搜索]成都市AI算力中心建设进展/政策",
+        "policyType": "算力中心建设项目/西部智算政策",
+        "location": "成都",
+        "expectedDate": "[待验证]",
+        "publishChannel": "成都市政府/市经信局/天府新区管委会",
+        "keyPoints": ["待填充: 如国家超算成都中心扩容、天府智算绿色基地建设等"],
+        "affectedSectors": ["西部算力", "成都本地科技股", "绿色数据中心", "东数西算"],
+        "impactScore": "[待评估]",
+        "sourceUrl": "[待填充]",
+        "_searchQuery": "成都 智算中心 人工智能 算力 政策 site:gov.cn"
+      }
+    ]
+  },
+
+  "industryConferences": {
+    "description": "重大AI/算力行业大会、展会、技术峰会",
+    "status": "pending_search",
+    "searchSources": [
+      "活动行/活动家等会议平台",
+      "行业协会官网(中国人工智能学会、中国通信工业协会等)",
+      "会展中心官网(国家会议中心、上海新国际博览中心等)",
+      "主办方官方公众号/官网"
+    ],
+    "majorEvents": [
+      {
+        "eventName": "[待搜索]世界人工智能大会(WAIC)相关活动",
+        "eventType": "行业大会",
+        "fullName": "World Artificial Intelligence Conference",
+        "schedule": "主会通常在7月，但需确认是否有春季峰会或专题活动",
+        "expectedDate": "[待验证: 是否有1月预热活动或分论坛]",
+        "location": "上海(主会)/线上",
+        "theme": "待填充",
+        "scale": "[待确认]",
+        "affectedSectors": ["AI大模型", "人形机器人", "AI芯片", "智能驾驶"],
+        "hotConcepts": ["多模态大模型", "AI Agent", "具身智能"],
+        "sourceUrl": "[待填充: www.worldaic.com.cn]",
+        "_searchQuery": "世界人工智能大会 2025年1月 活动 上海"
+      },
+      {
+        "eventName": "[待搜索]中国算力大会",
+        "eventType": "行业峰会",
+        "schedule": "通常在第三季度，需确认是否有月度活动或预热",
+        "expectedDate": "[待验证]",
+        "location": "[待确认: 往届在济南、银川等地]",
+        "theme": "算力基础设施建设、东数西算、智算中心",
+        "scale": "[待确认]",
+        "affectedSectors": ["算力租赁", "数据中心", "光模块", "服务器", "液冷技术"],
+        "hotConcepts": ["东数西算", "智算中心", "算力网络", "绿色算力"],
+        "sourceUrl": "[待填充]",
+        "_searchQuery": "中国算力大会 2025年 时间 地点"
+      },
+      {
+        "eventName": "[待搜索]中国国际光通信博览会(CIOE)",
+        "eventType": "专业展会",
+        "schedule": "通常在9月深圳，需确认1月是否有专题论坛",
+        "expectedDate": "[待验证: 是否有1月相关活动]",
+        "location": "深圳(主会)/线上",
+        "theme": "光通信、光模块、数据中心互联",
+        "scale": "[待确认]",
+        "affectedSectors": ["光模块(CPO)", "光芯片", "光纤光缆", "数据中心"],
+        "hotConcepts": ["800G光模块", "硅光技术", "LPO/CPO", "算力网络"],
+        "sourceUrl": "[待填充: www.cioe.cn]",
+        "_searchQuery": "CIOE 光通信展 2025年1月 活动 深圳"
+      },
+      {
+        "eventName": "[待搜索]阿里云AI/云计算峰会",
+        "eventType": "云厂商生态大会",
+        "expectedDate": "[待验证]",
+        "location": "[待确认: 通常杭州/北京/上海]",
+        "theme": "待填充: 如AI大模型产品发布、通义千问更新等",
+        "affectedSectors": ["阿里云概念股", "AI应用", "SaaS", "云计算"],
+        "hotConcepts": ["通义千问", "魔搭社区", "AI Agent平台"],
+        "sourceUrl": "[待填充: developer.aliyun.com]",
+        "_searchQuery": "阿里云峰会 2025年1月 AI 大模型 发布会"
+      },
+      {
+        "eventName": "[待搜索]华为全联接大会(HUAWEI CONNECT)相关活动",
+        "eventType": "云厂商生态大会",
+        "schedule": "主会通常在9月，需确认是否有月度技术沙龙或专题发布",
+        "expectedDate": "[待验证]",
+        "location": "[待确认]",
+        "theme": "待填充: 如昇腾AI、盘古大模型、鸿蒙生态等",
+        "affectedSectors": ["华为昇腾链", "华为鲲鹏链", "AI算力", "鸿蒙概念"],
+        "hotConcepts": ["昇腾910B", "盘古大模型", "MindSpore框架"],
+        "sourceUrl": "[待填充: www.huaweicloud.com]",
+        "_searchQuery": "华为全联接大会 2025年1月 昇腾 盘古 活动"
+      },
+      {
+        "eventName": "[待搜索]腾讯全球数字生态大会/腾讯云峰会",
+        "eventType": "云厂商生态大会",
+        "schedule": "通常在9月，需确认是否有1月专题活动",
+        "expectedDate": "[待验证]",
+        "location": "[待确认: 通常深圳/线上]",
+        "theme": "待填充: 如混元大模型更新、腾讯云AI产品等",
+        "affectedSectors": ["腾讯概念股", "AI应用", "云游戏", "企业服务"],
+        "hotConcepts": ["混元大模型", "腾讯云TI平台", "微信AI应用"],
+        "sourceUrl": "[待填充: cloud.tencent.com]",
+        "_searchQuery": "腾讯云峰会 数字生态大会 2025年1月"
+      },
+      {
+        "eventName": "[待搜索]百度AI开发者大会/百度云智大会",
+        "eventType": "云厂商技术大会",
+        "schedule": "通常在4月左右，需确认是否有1月活动",
+        "expectedDate": "[待验证]",
+        "location": "[待确认: 通常北京/深圳]",
+        "theme": "待填充: 如文心大模型4.0更新、百度智能云产品等",
+        "affectedSectors": ["百度概念股", "AI大模型", "智能驾驶", "智能云"],
+        "hotConcepts": ["文心一言", "飞桨框架", "百度智能云千帆"],
+        "sourceUrl": "[待填充: cloud.baidu.com]",
+        "_searchQuery": "百度AI开发者大会 百度云智大会 2025年1月"
+      }
+    ]
+  },
+
+  "cloudVendorEvents": {
+    "description": "头部云厂商下周重要发布会或技术峰会详情",
+    "status": "pending_search",
+    "vendors": ["阿里云", "腾讯云", "华为云", "百度云", "字节火山引擎", "京东云"],
+    "events": [
+      {
+        "vendor": "阿里云",
+        "eventName": "[待搜索]阿里云1月产品发布会/技术峰会",
+        "eventType": "产品发布/技术峰会",
+        "expectedDate": "[待验证]",
+        "location": "[待确认: 线上或杭州/北京]",
+        "keyTopics": ["待填充: 通义千问更新", "AI Agent平台", "Serverless AI", "算力产品降价等"],
+        "productLaunch": "[待确认: 是否有新模型/新产品发布]",
+        "affectedSectors": ["阿里云生态股", "AI应用", "电商SaaS", "算力租赁"],
+        "representativeStocks": ["数据港", "润泽科技", "用友网络", "光云科技", "阿里健康(港股)"],
+        "sourceUrl": "[待填充: developer.aliyun.com/special/summit]",
+        "_searchQuery": "阿里云 发布会 2025年1月 通义千问 峰会"
+      },
+      {
+        "vendor": "腾讯云",
+        "eventName": "[待搜索]腾讯云1月重要活动",
+        "eventType": "产品发布/生态大会",
+        "expectedDate": "[待验证]",
+        "location": "[待确认]",
+        "keyTopics": ["待填充: 混元大模型更新", "微信AI应用", "游戏AI", "金融AI等"],
+        "productLaunch": "[待确认]",
+        "affectedSectors": ["腾讯概念股", "游戏AI", "金融IT", "小程序生态"],
+        "representativeStocks": ["常山北明", "长亮科技", "泛微网络", "微盟集团(港股)"],
+        "sourceUrl": "[待填充: cloud.tencent.com/developer/summit]",
+        "_searchQuery": "腾讯云 发布会 2025年1月 混元大模型"
+      },
+      {
+        "vendor": "华为云",
+        "eventName": "[待搜索]华为云/昇腾AI 1月活动",
+        "eventType": "技术峰会/生态大会",
+        "expectedDate": "[待验证]",
+        "location": "[待确认: 通常深圳/东莞/线上]",
+        "keyTopics": ["待填充: 昇腾AI云服务", "盘古行业大模型", "鸿蒙+AI融合", "智算中心建设等"],
+        "productLaunch": "[待确认: 是否有昇腾芯片/盘古模型更新]",
+        "affectedSectors": ["华为昇腾链", "华为鲲鹏链", "智算中心", "鸿蒙生态"],
+        "representativeStocks": ["高新发展", "四川长虹", "拓维信息", "神州数码", "软通动力"],
+        "sourceUrl": "[待填充: www.huaweicloud.com/summit]",
+        "_searchQuery": "华为云 昇腾 盘古 发布会 2025年1月"
+      },
+      {
+        "vendor": "百度云",
+        "eventName": "[待搜索]百度智能云1月活动",
+        "eventType": "产品发布/技术沙龙",
+        "expectedDate": "[待验证]",
+        "location": "[待确认: 通常北京]",
+        "keyTopics": ["待填充: 文心大模型迭代", "千帆大模型平台", "智能交通/自动驾驶云服务等"],
+        "productLaunch": "[待确认]",
+        "affectedSectors": ["百度概念股", "智能驾驶", "金融AI", "内容生成AI"],
+        "representativeStocks": ["路畅科技", "德赛西威", "汉得信息", "宇信科技"],
+        "sourceUrl": "[待填充: cloud.baidu.com/summit]",
+        "_searchQuery": "百度智能云 文心大模型 发布会 2025年1月"
+      },
+      {
+        "vendor": "字节跳动(火山引擎)",
+        "eventName": "[待搜索]火山引擎FORCE原动力大会/豆包大模型活动",
+        "eventType": "技术峰会/产品发布",
+        "expectedDate": "[待验证: 原动力大会通常在冬春季]",
+        "location": "[待确认: 通常北京/线上]",
+        "keyTopics": ["待填充: 豆包大模型更新", "火山引擎AI平台", "AIGC应用等"],
+        "productLaunch": "[待确认: 豆包模型能力升级]",
+        "affectedSectors": ["字节概念股", "AI应用", "广告营销", "内容创作"],
+        "representativeStocks": ["省广集团", "掌阅科技", "引力传媒", "蓝色光标"],
+        "sourceUrl": "[待填充: www.volcengine.com/summit]",
+        "_searchQuery": "火山引擎 FORCE大会 豆包大模型 2025年1月"
+      }
+    ]
+  },
+
+  "sectorMapping": {
+    "description": "事件对A股板块的映射关系",
+    "mappings": [
+      {
+        "eventType": "地方AI产业政策",
+        "primarySectors": ["AI大模型", "算力租赁", "数据要素", "本地数字经济股"],
+        "secondarySectors": ["云计算", "IT服务", "智慧城市"],
+        " TypicalStocks": ["科大讯飞", "云从科技", "拓尔思", "本地国资云公司"]
+      },
+      {
+        "eventType": "算力中心/智算中心政策",
+        "primarySectors": ["算力租赁", "数据中心", "服务器", "液冷技术"],
+        "secondarySectors": ["光模块", "交换机", "IDC运营"],
+        "typicalStocks": ["润泽科技", "数据港", "奥飞数据", "浪潮信息", "中科曙光", "英维克"]
+      },
+      {
+        "eventType": "云厂商大模型发布",
+        "primarySectors": ["AI应用", "大模型生态", "云基础设施"],
+        "secondarySectors": ["算力租赁", "AI芯片", "数据服务"],
+        "typicalStocks": ["云厂商生态合作伙伴", "AI Agent概念股", "垂直行业AI应用股"]
+      },
+      {
+        "eventType": "AI行业大会",
+        "primarySectors": ["人形机器人", "AI芯片", "自动驾驶", "AIGC"],
+        "secondarySectors": ["机器视觉", "传感器", "边缘计算"],
+        "typicalStocks": ["大会参展商", "技术展示相关标的"]
+      }
+    ]
+  },
+
+  "methodology": {
+    "validationRequirements": [
+      "所有政策必须来源于.gov.cn域名或官方授权媒体",
+      "会议信息必须有主办方官网或官方公众号确认",
+      "云厂商活动必须有官方开发者社区或新闻发布确认",
+      "预期活动需标注信息来源性质(传闻/预期/已确认)"
+    ],
+    "scoringCriteria": {
+      "时间确定性": "已官宣日期=高分，传闻=低分",
+      "政策力度": "直接财政补贴/重大项目落地=高分，指导意见=中低分",
+      "市场关注度": "主流媒体报道量+社交媒体讨论热度",
+      "板块关联度": "直接受益股明确程度"
+    }
+  },
+
+  "nextSteps": [
+    "1. 由具备联网能力的worker使用上述搜索关键词验证各事件",
+    "2. 确认'下个星期'的绝对日期范围",
+    "3. 填充所有待验证字段，删除框架标记",
+    "4. 交叉验证事件时间是否确实落在目标交易周内",
+    "5. 标注信息来源和可信度等级"
+  ],
+
+  "limitations": [
+    "本文件为搜索框架模板，非实时数据",
+    "所有时间敏感信息需经联网验证",
+    "模型无法确认事件是否确实发生在目标周",
+    "政策解读需结合官方原文，避免主观臆断"
+  ]
+}

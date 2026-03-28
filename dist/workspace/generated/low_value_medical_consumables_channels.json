@@ -1,0 +1,86 @@
+[
+  {
+    "metric": "省际联盟集采覆盖",
+    "value": "河南十九省联盟、京津冀3+N联盟、陕西十四省联盟、广东十六省联盟",
+    "unit": "联盟名称",
+    "source_type": "knowledge_base_fallback",
+    "note": "2021-2024年低值耗材省际联盟集采全面推进，覆盖输注穿刺类医用耗材"
+  },
+  {
+    "metric": "省际联盟集采降价幅度",
+    "value": 42,
+    "unit": "%",
+    "source_type": "knowledge_base_fallback",
+    "note": "河南十九省联盟集采中，一次性使用输液器平均降幅约42%，注射器降幅35-50%区间"
+  },
+  {
+    "metric": "中标企业市场份额集中度CR5",
+    "value": 65,
+    "unit": "%",
+    "source_type": "knowledge_base_fallback",
+    "note": "省际联盟集采后，头部企业威高、康德莱、三鑫医疗、江西洪达、山东新华等CR5约60-70%"
+  },
+  {
+    "metric": "三级医院直销占比",
+    "value": 35,
+    "unit": "%",
+    "source_type": "knowledge_base_fallback",
+    "note": "大型三甲医院主要通过医院招标直销，SPD供应链管理模式下直销比例持续提升"
+  },
+  {
+    "metric": "基层医疗机构县域医共体配送",
+    "value": "县域医共体统一采购覆盖率超80%",
+    "unit": "覆盖率",
+    "source_type": "knowledge_base_fallback",
+    "note": "国家卫健委推进紧密型县域医共体建设，低值耗材实行统一招标、统一配送"
+  },
+  {
+    "metric": "出口贸易主要目的地",
+    "value": "东南亚、非洲、拉美、中东",
+    "unit": "地区",
+    "source_type": "knowledge_base_fallback",
+    "note": "中国低值耗材出口以发展中国家为主，东南亚占比约35%，非洲约25%，拉美约20%"
+  },
+  {
+    "metric": "出口额占比",
+    "value": 25,
+    "unit": "%",
+    "source_type": "knowledge_base_fallback",
+    "note": "一次性输注穿刺类耗材出口额约占行业总销售额20-30%，年出口量超150亿支"
+  },
+  {
+    "metric": "出口注册壁垒",
+    "value": "CE认证、FDA 510K、ISO 13485",
+    "unit": "认证类型",
+    "source_type": "knowledge_base_fallback",
+    "note": "欧盟CE认证、美国FDA 510K申报为出口主要壁垒，东南亚多数国家认可CE或自由销售证明"
+  },
+  {
+    "metric": "电商B2B批发渠道占比",
+    "value": 8,
+    "unit": "%",
+    "source_type": "knowledge_base_fallback",
+    "note": "京东健康、阿里健康等B2B平台占比约5-10%，主要覆盖民营医院、诊所、药店等长尾客户"
+  },
+  {
+    "metric": "传统经销商渠道占比",
+    "value": 55,
+    "unit": "%",
+    "source_type": "knowledge_base_fallback",
+    "note": "集采前经销商渠道占比70%以上，集采后压缩至50-60%，仍为主要流通方式"
+  },
+  {
+    "metric": "民营医院及诊所终端直销",
+    "value": 15,
+    "unit": "%",
+    "source_type": "knowledge_base_fallback",
+    "note": "非公立医疗机构通过区域代理商或电商平台采购，价格敏感度高于公立医院"
+  },
+  {
+    "metric": "国际援助与政府采购出口",
+    "value": 12,
+    "unit": "%",
+    "source_type": "knowledge_base_fallback",
+    "note": "WHO、UNICEF等国际组织采购及一带一路沿线国家政府订单占出口额约10-15%"
+  }
+]

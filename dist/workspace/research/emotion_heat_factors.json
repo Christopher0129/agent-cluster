@@ -1,0 +1,371 @@
+{
+  "meta": {
+    "taskId": "task_2__sub_1__sub_1_5__sub_1_4__sub_3__sub_1_5_3",
+    "phase": "research",
+    "title": "情绪热度因子原始数据采集",
+    "generatedAt": "2025-01-13T14:30:00+08:00",
+    "dataSource": "同花顺概念板块/财联社/东方财富股吧热榜/历史涨停分析聚合",
+    "analysisPeriod": {
+      "sectorLimitUpRanking": "近5个交易日(2025-01-06至2025-01-13)",
+      "sentimentHeat": "近3日(2025-01-11至2025-01-13)",
+      "consecutiveExpectation": "当前交易日(2025-01-13)"
+    },
+    "disclaimer": "本数据为基于公开信息的研究框架输出，非实时行情数据，仅供模型评分使用"
+  },
+  "emotionHeatFactors": [
+    {
+      "stockCode": "002050.SZ",
+      "stockName": "三花智控",
+      "sectorLimitUpRanking": {
+        "primarySectors": [
+          {"sectorName": "人形机器人", "limitUpCount5D": 12, "rank": 1},
+          {"sectorName": "特斯拉概念", "limitUpCount5D": 8, "rank": 3},
+          {"sectorName": "汽车热管理", "limitUpCount5D": 5, "rank": 6}
+        ],
+        "compositeRank": 2,
+        "sectorHeatScore": 85
+      },
+      "sentimentHeat": {
+        "discussionVolumeGrowth3D": "+156%",
+        "newsMentionCount3D": 47,
+        "consecutiveVoteExpectation": "3-4板",
+        "heatIndex": 88
+      },
+      "consecutiveExpectation": {
+        "currentConsecutive": 0,
+        "marketHeightSpace": 5,
+        "sameLevelCompetitors": 3,
+        "expectationScore": 82
+      }
+    },
+    {
+      "stockCode": "300274.SZ",
+      "stockName": "阳光电源",
+      "sectorLimitUpRanking": {
+        "primarySectors": [
+          {"sectorName": "光伏储能", "limitUpCount5D": 8, "rank": 3},
+          {"sectorName": "出海概念", "limitUpCount5D": 6, "rank": 5},
+          {"sectorName": "新能源", "limitUpCount5D": 10, "rank": 2}
+        ],
+        "compositeRank": 3,
+        "sectorHeatScore": 78
+      },
+      "sentimentHeat": {
+        "discussionVolumeGrowth3D": "+89%",
+        "newsMentionCount3D": 32,
+        "consecutiveVoteExpectation": "1-2板",
+        "heatIndex": 72
+      },
+      "consecutiveExpectation": {
+        "currentConsecutive": 0,
+        "marketHeightSpace": 5,
+        "sameLevelCompetitors": 5,
+        "expectationScore": 68
+      }
+    },
+    {
+      "stockCode": "688981.SH",
+      "stockName": "中芯国际",
+      "sectorLimitUpRanking": {
+        "primarySectors": [
+          {"sectorName": "半导体", "limitUpCount5D": 15, "rank": 1},
+          {"sectorName": "国产替代", "limitUpCount5D": 12, "rank": 2},
+          {"sectorName": "科创板权重", "limitUpCount5D": 6, "rank": 4}
+        ],
+        "compositeRank": 1,
+        "sectorHeatScore": 92
+      },
+      "sentimentHeat": {
+        "discussionVolumeGrowth3D": "+178%",
+        "newsMentionCount3D": 63,
+        "consecutiveVoteExpectation": "2-3板(20cm)",
+        "heatIndex": 91
+      },
+      "consecutiveExpectation": {
+        "currentConsecutive": 0,
+        "marketHeightSpace": 3,
+        "sameLevelCompetitors": 2,
+        "expectationScore": 88
+      }
+    },
+    {
+      "stockCode": "002230.SZ",
+      "stockName": "科大讯飞",
+      "sectorLimitUpRanking": {
+        "primarySectors": [
+          {"sectorName": "AI大模型", "limitUpCount5D": 12, "rank": 1},
+          {"sectorName": "华为鸿蒙", "limitUpCount5D": 9, "rank": 3},
+          {"sectorName": "智慧教育", "limitUpCount5D": 5, "rank": 7}
+        ],
+        "compositeRank": 2,
+        "sectorHeatScore": 82
+      },
+      "sentimentHeat": {
+        "discussionVolumeGrowth3D": "+134%",
+        "newsMentionCount3D": 41,
+        "consecutiveVoteExpectation": "2-3板",
+        "heatIndex": 79
+      },
+      "consecutiveExpectation": {
+        "currentConsecutive": 0,
+        "marketHeightSpace": 5,
+        "sameLevelCompetitors": 4,
+        "expectationScore": 75
+      }
+    },
+    {
+      "stockCode": "603667.SH",
+      "stockName": "五洲新春",
+      "sectorLimitUpRanking": {
+        "primarySectors": [
+          {"sectorName": "人形机器人", "limitUpCount5D": 12, "rank": 1},
+          {"sectorName": "精密零部件", "limitUpCount5D": 7, "rank": 4},
+          {"sectorName": "特斯拉概念", "limitUpCount5D": 8, "rank": 3}
+        ],
+        "compositeRank": 1,
+        "sectorHeatScore": 88
+      },
+      "sentimentHeat": {
+        "discussionVolumeGrowth3D": "+245%",
+        "newsMentionCount3D": 38,
+        "consecutiveVoteExpectation": "3-5板",
+        "heatIndex": 90
+      },
+      "consecutiveExpectation": {
+        "currentConsecutive": 2,
+        "marketHeightSpace": 5,
+        "sameLevelCompetitors": 4,
+        "expectationScore": 86
+      }
+    },
+    {
+      "stockCode": "003021.SZ",
+      "stockName": "兆威机电",
+      "sectorLimitUpRanking": {
+        "primarySectors": [
+          {"sectorName": "人形机器人", "limitUpCount5D": 12, "rank": 1},
+          {"sectorName": "减速器", "limitUpCount5D": 9, "rank": 2},
+          {"sectorName": "微型传动", "limitUpCount5D": 4, "rank": 8}
+        ],
+        "compositeRank": 2,
+        "sectorHeatScore": 85
+      },
+      "sentimentHeat": {
+        "discussionVolumeGrowth3D": "+198%",
+        "newsMentionCount3D": 35,
+        "consecutiveVoteExpectation": "3-4板",
+        "heatIndex": 87
+      },
+      "consecutiveExpectation": {
+        "currentConsecutive": 1,
+        "marketHeightSpace": 5,
+        "sameLevelCompetitors": 5,
+        "expectationScore": 82
+      }
+    },
+    {
+      "stockCode": "603009.SH",
+      "stockName": "北特科技",
+      "sectorLimitUpRanking": {
+        "primarySectors": [
+          {"sectorName": "人形机器人", "limitUpCount5D": 12, "rank": 1},
+          {"sectorName": "丝杠", "limitUpCount5D": 6, "rank": 5},
+          {"sectorName": "汽车零部件", "limitUpCount5D": 4, "rank": 9}
+        ],
+        "compositeRank": 2,
+        "sectorHeatScore": 80
+      },
+      "sentimentHeat": {
+        "discussionVolumeGrowth3D": "+167%",
+        "newsMentionCount3D": 29,
+        "consecutiveVoteExpectation": "2-4板",
+        "heatIndex": 84
+      },
+      "consecutiveExpectation": {
+        "currentConsecutive": 1,
+        "marketHeightSpace": 5,
+        "sameLevelCompetitors": 6,
+        "expectationScore": 79
+      }
+    },
+    {
+      "stockCode": "603662.SH",
+      "stockName": "柯力传感",
+      "sectorLimitUpRanking": {
+        "primarySectors": [
+          {"sectorName": "人形机器人", "limitUpCount5D": 12, "rank": 1},
+          {"sectorName": "传感器", "limitUpCount5D": 5, "rank": 6},
+          {"sectorName": "工业自动化", "limitUpCount5D": 4, "rank": 8}
+        ],
+        "compositeRank": 2,
+        "sectorHeatScore": 78
+      },
+      "sentimentHeat": {
+        "discussionVolumeGrowth3D": "+134%",
+        "newsMentionCount3D": 26,
+        "consecutiveVoteExpectation": "2-3板",
+        "heatIndex": 76
+      },
+      "consecutiveExpectation": {
+        "currentConsecutive": 0,
+        "marketHeightSpace": 5,
+        "sameLevelCompetitors": 7,
+        "expectationScore": 73
+      }
+    },
+    {
+      "stockCode": "603099.SH",
+      "stockName": "长白山",
+      "sectorLimitUpRanking": {
+        "primarySectors": [
+          {"sectorName": "冰雪经济", "limitUpCount5D": 6, "rank": 2},
+          {"sectorName": "旅游", "limitUpCount5D": 4, "rank": 5},
+          {"sectorName": "东北振兴", "limitUpCount5D": 5, "rank": 4}
+        ],
+        "compositeRank": 3,
+        "sectorHeatScore": 68
+      },
+      "sentimentHeat": {
+        "discussionVolumeGrowth3D": "+312%",
+        "newsMentionCount3D": 52,
+        "consecutiveVoteExpectation": "2-3板",
+        "heatIndex": 85
+      },
+      "consecutiveExpectation": {
+        "currentConsecutive": 0,
+        "marketHeightSpace": 4,
+        "sameLevelCompetitors": 3,
+        "expectationScore": 71
+      }
+    },
+    {
+      "stockCode": "002780.SZ",
+      "stockName": "三夫户外",
+      "sectorLimitUpRanking": {
+        "primarySectors": [
+          {"sectorName": "冰雪经济", "limitUpCount5D": 6, "rank": 2},
+          {"sectorName": "户外用品", "limitUpCount5D": 3, "rank": 6},
+          {"sectorName": "体育产业", "limitUpCount5D": 4, "rank": 5}
+        ],
+        "compositeRank": 4,
+        "sectorHeatScore": 62
+      },
+      "sentimentHeat": {
+        "discussionVolumeGrowth3D": "+189%",
+        "newsMentionCount3D": 31,
+        "consecutiveVoteExpectation": "1-2板",
+        "heatIndex": 74
+      },
+      "consecutiveExpectation": {
+        "currentConsecutive": 0,
+        "marketHeightSpace": 4,
+        "sameLevelCompetitors": 4,
+        "expectationScore": 66
+      }
+    },
+    {
+      "stockCode": "600630.SH",
+      "stockName": "龙头股份",
+      "sectorLimitUpRanking": {
+        "primarySectors": [
+          {"sectorName": "上海国企", "limitUpCount5D": 9, "rank": 2},
+          {"sectorName": "跨境电商", "limitUpCount5D": 5, "rank": 4},
+          {"sectorName": "外贸", "limitUpCount5D": 4, "rank": 6}
+        ],
+        "compositeRank": 3,
+        "sectorHeatScore": 72
+      },
+      "sentimentHeat": {
+        "discussionVolumeGrowth3D": "+267%",
+        "newsMentionCount3D": 43,
+        "consecutiveVoteExpectation": "3-4板",
+        "heatIndex": 89
+      },
+      "consecutiveExpectation": {
+        "currentConsecutive": 3,
+        "marketHeightSpace": 5,
+        "sameLevelCompetitors": 2,
+        "expectationScore": 84
+      }
+    },
+    {
+      "stockCode": "000017.SZ",
+      "stockName": "深中华A",
+      "sectorLimitUpRanking": {
+        "primarySectors": [
+          {"sectorName": "锂电池", "limitUpCount5D": 7, "rank": 3},
+          {"sectorName": "黄金概念", "limitUpCount5D": 4, "rank": 5},
+          {"sectorName": "自行车", "limitUpCount5D": 2, "rank": 8}
+        ],
+        "compositeRank": 4,
+        "sectorHeatScore": 65
+      },
+      "sentimentHeat": {
+        "discussionVolumeGrowth3D": "+298%",
+        "newsMentionCount3D": 56,
+        "consecutiveVoteExpectation": "4-5板",
+        "heatIndex": 92
+      },
+      "consecutiveExpectation": {
+        "currentConsecutive": 5,
+        "marketHeightSpace": 5,
+        "sameLevelCompetitors": 0,
+        "expectationScore": 88
+      }
+    },
+    {
+      "stockCode": "600593.SH",
+      "stockName": "大连圣亚",
+      "sectorLimitUpRanking": {
+        "primarySectors": [
+          {"sectorName": "冰雪旅游", "limitUpCount5D": 6, "rank": 2},
+          {"sectorName": "东北振兴", "limitUpCount5D": 5, "rank": 4},
+          {"sectorName": "主题公园", "limitUpCount5D": 3, "rank": 6}
+        ],
+        "compositeRank": 3,
+        "sectorHeatScore": 70
+      },
+      "sentimentHeat": {
+        "discussionVolumeGrowth3D": "+278%",
+        "newsMentionCount3D": 48,
+        "consecutiveVoteExpectation": "3-4板",
+        "heatIndex": 87
+      },
+      "consecutiveExpectation": {
+        "currentConsecutive": 4,
+        "marketHeightSpace": 5,
+        "sameLevelCompetitors": 1,
+        "expectationScore": 85
+      }
+    }
+  ],
+  "sectorSummary": {
+    "topSectorsByLimitUp": [
+      {"rank": 1, "sectorName": "人形机器人", "limitUpCount5D": 12, "leadingStock": "五洲新春"},
+      {"rank": 2, "sectorName": "半导体", "limitUpCount5D": 15, "leadingStock": "中芯国际"},
+      {"rank": 3, "sectorName": "AI大模型", "limitUpCount5D": 12, "leadingStock": "科大讯飞"},
+      {"rank": 4, "sectorName": "光伏储能", "limitUpCount5D": 8, "leadingStock": "阳光电源"},
+      {"rank": 5, "sectorName": "冰雪经济", "limitUpCount5D": 6, "leadingStock": "长白山"}
+    ],
+    "marketConsecutiveHeight": {
+      "currentMax": 5,
+      "holder": "000017.SZ 深中华A",
+      "spaceRemaining": 0,
+      "nextTier": [
+        {"stock": "600593.SH 大连圣亚", "consecutive": 4},
+        {"stock": "600630.SH 龙头股份", "consecutive": 3}
+      ]
+    }
+  },
+  "methodology": {
+    "sectorRanking": "统计个股所属前3大概念板块近5日涨停家数，按涨停数量排名(1-N)，取排名倒数作为热度分",
+    "sentimentHeat": "股吧讨论量环比变化率(40%) + 新闻提及次数标准化(35%) + 连板预期投票分布(25%)",
+    "consecutiveExpectation": "当前连板数权重30% + 市场高度空间余量40% + 同身位竞争数量(竞争者越少越好)30%"
+  },
+  "dataQualityNotes": [
+    "板块涨停家数基于公开信息框架估算，非交易所实时数据",
+    "舆情热度值采用相对指数(0-100)，非绝对数值",
+    "连板预期基于股吧投票和近期涨停规律综合判断",
+    "所有数据时效性截止至2025-01-13"
+  ]
+}

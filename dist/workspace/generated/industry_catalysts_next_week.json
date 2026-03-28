@@ -1,0 +1,189 @@
+{
+  "disclaimer": "本模型不具备实时联网搜索能力，以下内容包含基于历史规律的常规事件占位符和需联网验证的待定项。实际投资决策必须基于经核实的实时信息。",
+  "dataGeneratedBy": "kimi2_5_2",
+  "task": "采集重点行业催化剂",
+  "catalystsIndustry": [
+    {
+      "date": "2025-01-13至2025-01-17（预计）",
+      "event": "央行月度金融统计数据发布（M2、社融、新增贷款）",
+      "industrySector": "金融/全市场",
+      "relatedStocks": ["券商ETF", "银行板块", "保险股"],
+      "impactType": "数据验证",
+      "eventImportance": "高",
+      "details": "根据历史发布规律，央行通常在每月9-13日发布上月金融数据。若社融增量、M2增速或新增贷款超预期，将强化市场风险偏好；若低于预期，可能引发宽松政策预期。关注M1-M2剪刀差变化对股市流动性的指示意义。",
+      "verificationStatus": "需确认具体发布日期",
+      "source": "中国人民银行官网发布规律（历史数据）"
+    },
+    {
+      "date": "持续进行",
+      "event": "国家大基金三期投资方向落地预期",
+      "industrySector": "芯片半导体",
+      "relatedStocks": ["中芯国际", "北方华创", "中微公司", "拓荆科技", "华海清科"],
+      "impactType": "政策催化",
+      "eventImportance": "高",
+      "details": "大基金三期（注册资本3440亿元，2024年5月成立）重点投向先进制程、AI芯片、存储、设备材料等领域。后续投资标的落地公告可能随时发布，构成板块突发催化。",
+      "verificationStatus": "基于已有政策文件",
+      "source": "国家集成电路产业投资基金公告"
+    },
+    {
+      "date": "持续进行",
+      "event": "以旧换新政策效果月度数据验证",
+      "industrySector": "家电/汽车/消费",
+      "relatedStocks": ["美的集团", "格力电器", "海尔智家", "比亚迪", "赛力斯"],
+      "impactType": "数据验证",
+      "eventImportance": "中-高",
+      "details": "2024年底中央经济工作会议将'大力提振消费'列为2025年首要任务。以旧换新政策（家电、汽车）已全面铺开，每周/每月销量数据发布将成为板块情绪触发器。",
+      "verificationStatus": "基于已有政策文件",
+      "source": "中央经济工作会议政策文件"
+    },
+    {
+      "date": "2025-01月中旬",
+      "event": "冰雪旅游旺季持续+地方冰雪节活动密集",
+      "industrySector": "冰雪经济/文旅",
+      "relatedStocks": ["长白山", "三夫户外", "探路者", "大连圣亚"],
+      "impactType": "季节性事件",
+      "eventImportance": "中",
+      "details": "国务院《关于以冰雪运动高质量发展激发冰雪经济活力的若干意见》明确2027年冰雪经济总规模达1.2万亿元目标。1月中下旬为寒假出游高峰期，地方冰雪节、滑雪赛事等活动密集，持续催化冰雪旅游板块。",
+      "verificationStatus": "基于已有政策文件及季节性规律",
+      "source": "国务院2024年11月政策文件"
+    },
+    {
+      "date": "待验证（需联网确认）",
+      "event": "CES 2025（国际消费电子展）后续产品发布及国内映射",
+      "industrySector": "AI/消费电子/机器人",
+      "relatedStocks": ["AI芯片相关", "机器人概念股", "AR/VR产业链"],
+      "impactType": "技术突破/海外映射",
+      "eventImportance": "高",
+      "details": "CES 2025通常于1月初在拉斯维加斯举行。若下周有重要技术发布（如AI眼镜、人形机器人、自动驾驶突破），将对A股相关概念形成映射催化。需核实CES具体闭幕日期及后续国内厂商跟进动态。",
+      "verificationStatus": "需联网验证",
+      "source": "待搜索：CES 2025官方日程"
+    },
+    {
+      "date": "待验证（需联网确认）",
+      "event": "国务院政策例行吹风会（预期）",
+      "industrySector": "政策敏感板块（地产/基建/消费）",
+      "relatedStocks": ["房地产ETF", "基建板块", "消费龙头"],
+      "impactType": "政策预期",
+      "eventImportance": "高",
+      "details": "若下周国务院新闻办举行政策吹风会，涉及稳增长、房地产金融或消费刺激政策，将对相关板块形成即时催化。需实时监控中国政府网预告。",
+      "verificationStatus": "需联网验证",
+      "source": "待搜索：www.gov.cn/zhengce/zhengceku/"
+    },
+    {
+      "date": "待验证（需联网确认）",
+      "event": "国内成品油价调整窗口",
+      "industrySector": "石油石化/交通运输",
+      "relatedStocks": ["中国石油", "中国石化", "中国海油", "航空股"],
+      "impactType": "价格调整",
+      "eventImportance": "中",
+      "details": "国内成品油价格每10个工作日调整一次。若下周逢调价窗口且存在大幅调整预期，将短期影响石油石化及航空板块情绪。",
+      "verificationStatus": "需联网验证",
+      "source": "待搜索：国家发改委油价调整公告"
+    },
+    {
+      "date": "待验证（需联网确认）",
+      "event": "美股科技股财报季波动映射",
+      "industrySector": "AI/半导体/科技",
+      "relatedStocks": ["AI芯片概念股", "算力租赁", "光模块"],
+      "impactType": "海外映射",
+      "eventImportance": "中-高",
+      "details": "若下周有重要美股科技巨头（如英伟达、微软、特斯拉等）发布业绩预告或出现大幅波动，将对A股AI、机器人、自动驾驶等映射板块产生情绪传导。",
+      "verificationStatus": "需联网验证",
+      "source": "待搜索：美股财报日历"
+    },
+    {
+      "date": "2025年3月预期（提前交易窗口）",
+      "event": "全国两会政策预期预热",
+      "industrySector": "全市场（侧重政策敏感板块）",
+      "relatedStocks": ["新质生产力概念", "国企改革", "科技创新", "消费刺激"],
+      "impactType": "政策预期",
+      "eventImportance": "高",
+      "details": "2025年3月初全国两会召开，1月中下旬开始市场可能提前交易两会政策预期。重点关注'新质生产力'、'扩大内需'、'科技创新'等表述。历史数据显示两会前30个交易日政策敏感板块常有超额收益。",
+      "verificationStatus": "基于历史规律",
+      "source": "历年两会召开时间及市场规律"
+    },
+    {
+      "date": "持续进行",
+      "event": "央企专业化重组进展公告",
+      "industrySector": "国企改革/中特估",
+      "relatedStocks": ["军工集团整合标的", "能源央企", "航运央企"],
+      "impactType": "重组催化",
+      "eventImportance": "高",
+      "details": "国资委持续推进央企专业化整合，涉及军工（航天系、船舶系）、能源、航运等领域。相关上市公司重组进展公告具有突发性和高影响力。",
+      "verificationStatus": "需实时监控公告",
+      "source": "国务院国资委官网"
+    },
+    {
+      "date": "每周固定",
+      "event": "乘用车零售周度数据发布",
+      "industrySector": "汽车/新能源车",
+      "relatedStocks": ["比亚迪", "赛力斯", "理想汽车概念", "零部件板块"],
+      "impactType": "高频数据",
+      "eventImportance": "中",
+      "details": "每周发布上险量及零售数据，是汽车消费景气度的即时反馈指标。数据超预期将提振整车及零部件板块情绪。",
+      "verificationStatus": "基于发布规律",
+      "source": "乘联会每周发布"
+    },
+    {
+      "date": "待验证（需联网确认）",
+      "event": "国际大宗商品价格波动（原油/铜/金）",
+      "industrySector": "资源周期/贵金属",
+      "relatedStocks": ["黄金股", "铜业股", "石油开采", "有色金属ETF"],
+      "impactType": "价格映射",
+      "eventImportance": "中",
+      "details": "中东局势、美联储货币政策表态、美元汇率波动可能引发国际大宗商品价格异动，进而映射至A股资源周期板块。",
+      "verificationStatus": "需联网监控",
+      "source": "国际期货市场实时行情"
+    }
+  ],
+  "highPrioritySectors": [
+    {
+      "sector": "AI/人形机器人",
+      "catalystScore": "9/10",
+      "reason": "CES后续技术发布+美股映射+两会预期三重催化"
+    },
+    {
+      "sector": "芯片半导体",
+      "catalystScore": "8/10",
+      "reason": "大基金三期投资落地预期+国产替代政策持续性+AI算力需求"
+    },
+    {
+      "sector": "消费（以旧换新）",
+      "catalystScore": "7/10",
+      "reason": "政策强度明确+高频数据验证期+春节消费预热"
+    },
+    {
+      "sector": "冰雪经济",
+      "catalystScore": "6/10",
+      "reason": "季节性高峰+政策文件支持+寒假出游高峰"
+    },
+    {
+      "sector": "国企改革",
+      "catalystScore": "7/10",
+      "reason": "重组事件突发性强+中特估估值修复预期+两会政策窗口"
+    }
+  ],
+  "methodology": {
+    "eventImportanceScoring": {
+      "高": "可能引发板块性行情或全市场情绪波动",
+      "中": "对相关细分板块有明显影响",
+      "低": "个股或局部影响"
+    },
+    "impactTypeCategories": [
+      "政策催化",
+      "数据验证",
+      "技术突破",
+      "海外映射",
+      "价格调整",
+      "季节性事件",
+      "重组催化"
+    ]
+  },
+  "limitationNotice": "当前模型不具备实时联网能力，无法获取确切日期、实时政策公告及最新市场动态。标★项目为必须联网验证的关键信息。所有投资决策需以经核实的实时信息为准。",
+  "nextSteps": [
+    "由具备联网能力的worker验证标★项目的具体日期和详情",
+    "实时监控国务院国资委、央行、发改委等官方渠道公告",
+    "跟踪美股科技股动态及CES后续报道",
+    "关注成交量异动板块以确认资金共识"
+  ]
+}

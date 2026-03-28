@@ -1,0 +1,711 @@
+{
+  "framework_metadata": {
+    "name": "A股多次涨停概率评分框架 (Multi-Limit-Up Probability Score, MLUPS)",
+    "version": "2.0",
+    "total_score": 100,
+    "applicable_market": "A股主板/创业板/科创板/北交所",
+    "prediction_horizon": "未来5个交易日",
+    "last_updated": "2025-01-13",
+    "design_rationale": "基于A股市场特征，重点评估技术突破强度、板块情绪共振、催化事件确定性及筹码结构健康度"
+  },
+  "scoring_dimensions": [
+    {
+      "dimension_id": "D1",
+      "dimension_name": "技术形态",
+      "dimension_name_en": "Technical Pattern",
+      "weight": 30,
+      "weight_percentage": "30%",
+      "rationale": "技术形态反映市场资金对股票的共识程度，良好的技术形态是多次涨停的基础条件",
+      "sub_indicators": [
+        {
+          "indicator_id": "D1_1",
+          "indicator_name": "均线系统排列",
+          "max_points": 10,
+          "scoring_rules": [
+            {
+              "score": 10,
+              "condition": "均线多头排列（MA5>MA10>MA20>MA60）且股价位于所有均线上方，MA5斜率>30度",
+              "description": "强势多头排列，主升浪特征"
+            },
+            {
+              "score": 8,
+              "condition": "均线多头排列（MA5>MA10>MA20）且股价位于MA5上方",
+              "description": "标准多头排列"
+            },
+            {
+              "score": 6,
+              "condition": "短期均线金叉（MA5上穿MA10）且股价位于MA20上方",
+              "description": "金叉初期，趋势转强"
+            },
+            {
+              "score": 4,
+              "condition": "股价站上MA20但均线尚未完全多头排列",
+              "description": "初步突破，趋势待确认"
+            },
+            {
+              "score": 2,
+              "condition": "股价位于MA5与MA10之间，方向不明",
+              "description": "震荡整理，方向待选"
+            },
+            {
+              "score": 0,
+              "condition": "均线空头排列或股价位于MA60下方",
+              "description": "弱势格局，不宜追涨"
+            }
+          ]
+        },
+        {
+          "indicator_id": "D1_2",
+          "indicator_name": "平台突破形态",
+          "max_points": 10,
+          "scoring_rules": [
+            {
+              "score": 10,
+              "condition": "放量突破历史前高或3个月以上整理平台上沿，且突破幅度>5%",
+              "description": "强势突破历史新高，空间打开"
+            },
+            {
+              "score": 8,
+              "condition": "放量突破1-3个月整理平台上沿，成交量>平台期均量2倍",
+              "description": "有效突破中期平台"
+            },
+            {
+              "score": 6,
+              "condition": "突破短期（2周内）整理平台，成交量>均量1.5倍",
+              "description": "突破短期平台"
+            },
+            {
+              "score": 4,
+              "condition": "接近平台高点（距离<3%），蓄势待发",
+              "description": "蓄势突破状态"
+            },
+            {
+              "score": 2,
+              "condition": "位于平台中部，方向不明",
+              "description": "平台震荡中"
+            },
+            {
+              "score": 0,
+              "condition": "跌破平台下沿或处于下降通道",
+              "description": "弱势格局"
+            }
+          ]
+        },
+        {
+          "indicator_id": "D1_3",
+          "indicator_name": "量价配合",
+          "max_points": 6,
+          "scoring_rules": [
+            {
+              "score": 6,
+              "condition": "近3日量价齐升，涨停日成交量>20日均量3倍以上，且缩量回调",
+              "description": "理想量价结构"
+            },
+            {
+              "score": 5,
+              "condition": "涨停日成交量>20日均量2倍，且筹码锁定良好",
+              "description": "放量涨停，资金介入明显"
+            },
+            {
+              "score": 4,
+              "condition": "涨停日成交量>20日均量1.5倍",
+              "description": "温和放量"
+            },
+            {
+              "score": 2,
+              "condition": "涨停日成交量与均量持平或缩量涨停（一字板除外）",
+              "description": "量能不足，持续性待观察"
+            },
+            {
+              "score": 0,
+              "condition": "放量滞涨或放量下跌",
+              "description": "量价背离，风险信号"
+            }
+          ]
+        },
+        {
+          "indicator_id": "D1_4",
+          "indicator_name": "涨停基因",
+          "max_points": 4,
+          "scoring_rules": [
+            {
+              "score": 4,
+              "condition": "近1年内出现过3次以上连续涨停（≥3连板）记录",
+              "description": "强涨停基因，股性活跃"
+            },
+            {
+              "score": 3,
+              "condition": "近1年内出现过2次连续涨停记录",
+              "description": "较强涨停基因"
+            },
+            {
+              "score": 2,
+              "condition": "近1年内出现过1次连续涨停记录",
+              "description": "有涨停记忆"
+            },
+            {
+              "score": 1,
+              "condition": "近1年内多次涨停但未形成连板",
+              "description": "间歇性活跃"
+            },
+            {
+              "score": 0,
+              "condition": "近1年无涨停记录或长期低迷",
+              "description": "股性呆滞"
+            }
+          ]
+        }
+      ],
+      "dimension_max_score": 30
+    },
+    {
+      "dimension_id": "D2",
+      "dimension_name": "情绪共振",
+      "dimension_name_en": "Emotional Resonance",
+      "weight": 25,
+      "weight_percentage": "25%",
+      "rationale": "情绪共振决定资金的参与意愿和持续性，板块效应与资金记忆是多次涨停的核心驱动力",
+      "sub_indicators": [
+        {
+          "indicator_id": "D2_1",
+          "indicator_name": "板块效应强度",
+          "max_points": 10,
+          "scoring_rules": [
+            {
+              "score": 10,
+              "condition": "所属板块当日涨停家数≥15家，且板块指数涨幅>5%，位列市场前3",
+              "description": "超级热点，板块全面爆发"
+            },
+            {
+              "score": 8,
+              "condition": "所属板块当日涨停家数10-14家，且板块指数涨幅>4%",
+              "description": "强板块效应，主线热点"
+            },
+            {
+              "score": 6,
+              "condition": "所属板块当日涨停家数5-9家，且板块指数涨幅>3%",
+              "description": "中等板块效应，次主线"
+            },
+            {
+              "score": 4,
+              "condition": "所属板块当日涨停家数3-4家，或板块指数涨幅2-3%",
+              "description": "弱板块效应，个股行情为主"
+            },
+            {
+              "score": 2,
+              "condition": "板块内有1-2家涨停，联动性弱",
+              "description": "孤立涨停，缺乏板块支撑"
+            },
+            {
+              "score": 0,
+              "condition": "板块整体下跌或无明显联动",
+              "description": "无板块效应"
+            }
+          ]
+        },
+        {
+          "indicator_id": "D2_2",
+          "indicator_name": "资金记忆与辨识度",
+          "max_points": 8,
+          "scoring_rules": [
+            {
+              "score": 8,
+              "condition": "板块龙头股或市场总龙头，近5日涨停次数≥3次，市场辨识度高",
+              "description": "核心龙头，资金首选"
+            },
+            {
+              "score": 6,
+              "condition": "板块次龙头或前期龙头反抽，有较强资金记忆",
+              "description": "重要标的，资金关注"
+            },
+            {
+              "score": 4,
+              "condition": "近期（1月内）有过涨停表现，资金有一定记忆",
+              "description": "有一定辨识度"
+            },
+            {
+              "score": 2,
+              "condition": "历史上偶有表现但近期无亮点",
+              "description": "辨识度较低"
+            },
+            {
+              "score": 0,
+              "condition": "长期无资金关注，冷门标的",
+              "description": "缺乏资金记忆"
+            }
+          ]
+        },
+        {
+          "indicator_id": "D2_3",
+          "indicator_name": "龙虎榜数据质量",
+          "max_points": 7,
+          "scoring_rules": [
+            {
+              "score": 7,
+              "condition": "3家以上顶级游资合力买入，机构同步净买入，无大额卖出",
+              "description": "顶级游资+机构共振，质量最高"
+            },
+            {
+              "score": 6,
+              "condition": "2-3家顶级游资买入，净买入额>5000万，买入席位统一",
+              "description": "游资合力，接力意愿强"
+            },
+            {
+              "score": 5,
+              "condition": "1家顶级游资主导买入，净买入额>3000万",
+              "description": "单一游资主导"
+            },
+            {
+              "score": 4,
+              "condition": "多家二线游资参与，资金净买入",
+              "description": "游资参与但非顶级"
+            },
+            {
+              "score": 2,
+              "condition": "游资有买有卖分歧较大，或散户席位为主",
+              "description": "分歧明显或散户主导"
+            },
+            {
+              "score": 0,
+              "condition": "游资大额净卖出，或机构大额卖出",
+              "description": "资金出逃信号"
+            }
+          ]
+        },
+        {
+          "indicator_id": "D2_4",
+          "indicator_name": "市场情绪周期位置",
+          "max_points": 0,
+          "note": "此项为调节系数，作用于D2总分",
+          "multiplier_rules": [
+            {
+              "multiplier": 1.2,
+              "condition": "市场处于情绪发酵期（涨停家数持续增加，高标股持续打开空间）",
+              "description": "情绪上升期加分"
+            },
+            {
+              "multiplier": 1.0,
+              "condition": "市场处于情绪平稳期",
+              "description": "正常评分"
+            },
+            {
+              "multiplier": 0.8,
+              "condition": "市场处于情绪退潮期（高位股批量跌停，涨停家数锐减）",
+              "description": "情绪下降期减分"
+            },
+            {
+              "multiplier": 0.6,
+              "condition": "市场处于情绪冰点期（跌停家数>涨停家数）",
+              "description": "冰点期大幅减分"
+            }
+          ]
+        }
+      ],
+      "dimension_max_score": 25,
+      "calculation_note": "D2原始分 = D2_1 + D2_2 + D2_3（最高25分），最终D2得分 = 原始分 × 情绪周期调节系数"
+    },
+    {
+      "dimension_id": "D3",
+      "dimension_name": "催化事件",
+      "dimension_name_en": "Catalyst Events",
+      "weight": 25,
+      "weight_percentage": "25%",
+      "rationale": "催化事件是股价上涨的直接导火索，事件的强度、确定性、时效性决定上涨空间",
+      "sub_indicators": [
+        {
+          "indicator_id": "D3_1",
+          "indicator_name": "事件类型与强度",
+          "max_points": 12,
+          "scoring_rules": [
+            {
+              "score": 12,
+              "condition": "国家级重大政策直接受益/重大资产重组/重大技术突破（卡脖子技术）",
+              "description": "最高级别催化"
+            },
+            {
+              "score": 10,
+              "condition": "部委级政策支持/重大合同（金额>年营收50%）/业绩预增>100%",
+              "description": "强催化"
+            },
+            {
+              "score": 8,
+              "condition": "省级政策/重要合同（金额>年营收30%）/业绩预增50-100%",
+              "description": "中等偏强催化"
+            },
+            {
+              "score": 6,
+              "condition": "行业利好/一般合同/业绩预增20-50%",
+              "description": "中等催化"
+            },
+            {
+              "score": 4,
+              "condition": "边际利好/概念关联/业绩预增<20%",
+              "description": "弱催化"
+            },
+            {
+              "score": 0,
+              "condition": "无实质催化或纯题材炒作",
+              "description": "无催化"
+            }
+          ]
+        },
+        {
+          "indicator_id": "D3_2",
+          "indicator_name": "事件时效性",
+          "max_points": 6,
+          "scoring_rules": [
+            {
+              "score": 6,
+              "condition": "事件公告后第1-2个交易日，或事件即将在3个交易日内发生",
+              "description": "最佳介入时点"
+            },
+            {
+              "score": 4,
+              "condition": "事件公告后第3-5个交易日，或事件将在1周内发生",
+              "description": "时效性尚可"
+            },
+            {
+              "score": 2,
+              "condition": "事件公告已过1周，或事件将在1-2周内发生",
+              "description": "时效性一般"
+            },
+            {
+              "score": 0,
+              "condition": "事件已过兑现期，或事件在2周后",
+              "description": "时效性较差"
+            }
+          ]
+        },
+        {
+          "indicator_id": "D3_3",
+          "indicator_name": "事件确定性",
+          "max_points": 4,
+          "scoring_rules": [
+            {
+              "score": 4,
+              "condition": "已签署正式协议/已获批/已公告确定性利好",
+              "description": "100%确定"
+            },
+            {
+              "score": 3,
+              "condition": "框架协议/中标公示期/预期强烈的确定性事件",
+              "description": "高度确定"
+            },
+            {
+              "score": 2,
+              "condition": "意向协议/市场预期但未证实",
+              "description": "中度确定"
+            },
+            {
+              "score": 1,
+              "condition": "传闻/预期/边缘关联",
+              "description": "低确定性"
+            },
+            {
+              "score": 0,
+              "condition": "已证伪或确定性落空",
+              "description": "证伪"
+            }
+          ]
+        },
+        {
+          "indicator_id": "D3_4",
+          "indicator_name": "受益程度与稀缺性",
+          "max_points": 3,
+          "scoring_rules": [
+            {
+              "score": 3,
+              "condition": "A股唯一受益标的或受益程度远高于同行",
+              "description": "独享利好"
+            },
+            {
+              "score": 2,
+              "condition": "核心受益标的之一，受益程度领先",
+              "description": "核心受益"
+            },
+            {
+              "score": 1,
+              "condition": "间接受益或受益程度一般",
+              "description": "间接受益"
+            },
+            {
+              "score": 0,
+              "condition": "纯概念蹭热度，无实质受益",
+              "description": "无实质受益"
+            }
+          ]
+        }
+      ],
+      "dimension_max_score": 25
+    },
+    {
+      "dimension_id": "D4",
+      "dimension_name": "筹码结构",
+      "dimension_name_en": "Chip Structure",
+      "weight": 20,
+      "weight_percentage": "20%",
+      "rationale": "筹码结构决定上涨阻力与抛压大小，健康的筹码结构是多次涨停的物理基础",
+      "sub_indicators": [
+        {
+          "indicator_id": "D4_1",
+          "indicator_name": "流通市值",
+          "max_points": 6,
+          "scoring_rules": [
+            {
+              "score": 6,
+              "condition": "流通市值<30亿（小盘，易控盘）",
+              "description": "超小盘，弹性最大"
+            },
+            {
+              "score": 5,
+              "condition": "流通市值30-50亿（中小盘）",
+              "description": "小盘，弹性较大"
+            },
+            {
+              "score": 4,
+              "condition": "流通市值50-80亿（中盘偏小）",
+              "description": "中小盘"
+            },
+            {
+              "score": 3,
+              "condition": "流通市值80-150亿（中盘）",
+              "description": "中盘股"
+            },
+            {
+              "score": 1,
+              "condition": "流通市值150-300亿（中大盘）",
+              "description": "中大盘，弹性有限"
+            },
+            {
+              "score": 0,
+              "condition": "流通市值>300亿（大盘）",
+              "description": "大盘股，连续涨停难度大"
+            }
+          ]
+        },
+        {
+          "indicator_id": "D4_2",
+          "indicator_name": "换手率与活跃度",
+          "max_points": 6,
+          "scoring_rules": [
+            {
+              "score": 6,
+              "condition": "近5日平均换手率10-25%，涨停日换手率15-40%，筹码充分换手",
+              "description": "理想换手区间"
+            },
+            {
+              "score": 5,
+              "condition": "近5日平均换手率8-10%，涨停日换手率10-20%",
+              "description": "换手活跃"
+            },
+            {
+              "score": 4,
+              "condition": "近5日平均换手率5-8%，涨停日换手率8-15%",
+              "description": "中等换手"
+            },
+            {
+              "score": 2,
+              "condition": "近5日平均换手率<5%或一字板无换手",
+              "description": "换手不足，筹码锁定或流动性差"
+            },
+            {
+              "score": 0,
+              "condition": "涨停日换手率>50%（除新股外）或<3%",
+              "description": "过度换手或死筹"
+            }
+          ]
+        },
+        {
+          "indicator_id": "D4_3",
+          "indicator_name": "套牢盘分布",
+          "max_points": 5,
+          "scoring_rules": [
+            {
+              "score": 5,
+              "condition": "股价创近期新高，上方无套牢盘或套牢盘<10%",
+              "description": "无套牢盘，上行无阻"
+            },
+            {
+              "score": 4,
+              "condition": "股价接近前高，套牢盘10-20%，经充分换手",
+              "description": "套牢盘较少，压力可控"
+            },
+            {
+              "score": 3,
+              "condition": "股价距离前高15-30%，套牢盘20-35%",
+              "description": "中等套牢盘，需放量突破"
+            },
+            {
+              "score": 1,
+              "condition": "股价距离前高30-50%，套牢盘35-50%",
+              "description": "较重套牢盘，压力大"
+            },
+            {
+              "score": 0,
+              "condition": "股价距离前高>50%或套牢盘>50%",
+              "description": "严重套牢盘，难以突破"
+            }
+          ]
+        },
+        {
+          "indicator_id": "D4_4",
+          "indicator_name": "股东结构与筹码集中度",
+          "max_points": 3,
+          "scoring_rules": [
+            {
+              "score": 3,
+              "condition": "前十大流通股东持仓>60%，或近期有大资金建仓迹象（筹码快速集中）",
+              "description": "筹码高度集中，主力控盘"
+            },
+            {
+              "score": 2,
+              "condition": "前十大流通股东持仓40-60%，筹码相对集中",
+              "description": "筹码较集中"
+            },
+            {
+              "score": 1,
+              "condition": "前十大流通股东持仓20-40%，筹码分散",
+              "description": "筹码分散"
+            },
+            {
+              "score": 0,
+              "condition": "前十大流通股东持仓<20%，或有大量限售股即将解禁",
+              "description": "筹码极度分散或有解禁压力"
+            }
+          ]
+        }
+      ],
+      "dimension_max_score": 20
+    }
+  ],
+  "total_score_calculation": {
+    "formula": "Total Score = D1 + D2 + D3 + D4",
+    "max_total_score": 100,
+    "min_threshold_for_consideration": 60,
+    "grading_tiers": [
+      {
+        "tier": "S级",
+        "score_range": "85-100",
+        "probability_label": "极高概率",
+        "estimated_multiple_limit_up_rate": "40-60%",
+        "description": "技术形态完美+强板块效应+顶级催化+优秀筹码结构，多次涨停可能性极高",
+        "risk_level": "中等（关注一致性过高风险）"
+      },
+      {
+        "tier": "A级",
+        "score_range": "70-84",
+        "probability_label": "高概率",
+        "estimated_multiple_limit_up_rate": "25-40%",
+        "description": "各方面条件较好，具备多次涨停基础，但某一项略有瑕疵",
+        "risk_level": "中高"
+      },
+      {
+        "tier": "B级",
+        "score_range": "60-69",
+        "probability_label": "中等概率",
+        "estimated_multiple_limit_up_rate": "10-25%",
+        "description": "条件一般，可能有1-2次涨停，但持续性存疑",
+        "risk_level": "高"
+      },
+      {
+        "tier": "C级",
+        "score_range": "40-59",
+        "probability_label": "低概率",
+        "estimated_multiple_limit_up_rate": "5-10%",
+        "description": "多次涨停可能性较低，可能仅单次涨停或冲高回落",
+        "risk_level": "很高"
+      },
+      {
+        "tier": "D级",
+        "score_range": "0-39",
+        "probability_label": "极低概率",
+        "estimated_multiple_limit_up_rate": "<5%",
+        "description": "不具备多次涨停条件，建议回避",
+        "risk_level": "极高"
+      }
+    ]
+  },
+  "special_adjustments": [
+    {
+      "condition": "ST/*ST股票",
+      "adjustment": "总分 × 1.10（涨跌幅限制5%，更易连板）",
+      "max_cap": 100
+    },
+    {
+      "condition": "次新股（上市<60天）",
+      "adjustment": "D4流通市值得分按实际流通盘计算（剔除限售股）",
+      "note": "次新股波动大，需单独评估"
+    },
+    {
+      "condition": "创业板/科创板（20cm涨停）",
+      "adjustment": "多次涨停定义为2次以上（主板3次以上），评分标准相同",
+      "note": "20cm涨停对应更大涨幅"
+    },
+    {
+      "condition": "北交所（30cm涨停）",
+      "adjustment": "多次涨停定义为2次以上，评分标准相同",
+      "note": "30cm涨停弹性最大"
+    },
+    {
+      "condition": "近期被交易所重点监控",
+      "adjustment": "总分 × 0.70",
+      "note": "监管风险会抑制涨停持续性"
+    },
+    {
+      "condition": "大盘极端行情（单边暴涨/暴跌）",
+      "adjustment": "±10分浮动",
+      "detail": "大盘暴涨+10分，大盘暴跌-10分"
+    }
+  ],
+  "application_guidelines": {
+    "data_sources": [
+      "行情数据：同花顺、东方财富、Wind",
+      "龙虎榜数据：交易所官网、同花顺",
+      "公告数据：巨潮资讯网、交易所公告",
+      "筹码数据：F10股东研究、Level-2数据"
+    ],
+    "update_frequency": "每日收盘后更新评分",
+    "effective_period": "评分有效期为T+1至T+5个交易日",
+    "usage_scenarios": [
+      "筛选下周多次涨停潜力标的",
+      "评估持仓股的连板可能性",
+      "复盘验证评分有效性"
+    ]
+  },
+  "risk_disclosure": [
+    "本评分框架基于历史数据统计，不构成投资建议",
+    "股市有风险，投资需谨慎，多次涨停 chasing 属于高风险策略",
+    "模型无法预测黑天鹅事件（突发监管、市场系统性风险等）",
+    "过往表现不代表未来收益，评分仅供参考",
+    "建议投资者结合自身风险承受能力独立决策"
+  ],
+  "scoring_example": {
+    "example_stock": "示例股票分析",
+    "assumptions": {
+      "D1_均线": "MA5>MA10>MA20，股价位于均线上方",
+      "D1_平台": "突破2个月整理平台，放量2.5倍",
+      "D1_量价": "涨停日成交量是均量3倍",
+      "D1_基因": "近1年有过2次连板记录",
+      "D2_板块": "板块涨停12家，板块涨幅4.5%",
+      "D2_辨识度": "板块次龙头",
+      "D2_龙虎榜": "2家顶级游资买入",
+      "D2_情绪": "情绪发酵期（系数1.1）",
+      "D3_事件": "部委级政策利好",
+      "D3_时效": "公告后第2天",
+      "D3_确定性": "已公告确定",
+      "D3_受益": "核心受益标的",
+      "D4_市值": "流通市值45亿",
+      "D4_换手": "近5日平均换手12%",
+      "D4_套牢": "股价创近期新高",
+      "D4_筹码": "前十大持仓50%"
+    },
+    "calculation": {
+      "D1_技术形态": "8(均线) + 8(平台) + 6(量价) + 3(基因) = 25分",
+      "D2_情绪共振": "(8(板块) + 6(辨识度) + 6(龙虎榜)) × 1.1 = 22分",
+      "D3_催化事件": "10(事件) + 6(时效) + 4(确定) + 2(受益) = 22分",
+      "D4_筹码结构": "5(市值) + 6(换手) + 5(套牢) + 2(筹码) = 18分",
+      "总分": "25 + 22 + 22 + 18 = 87分 (S级)"
+    },
+    "conclusion": "该股票评分87分，属于S级，多次涨停概率40-60%，建议重点关注"
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "meta": {
+    "reportTitle": "特斯拉Optimus供应链A股候选标的清单",
+    "generatedAt": "2025-01-13T10:30:00Z",
+    "dataSource": "公开行业报告、上市公司公告、投资者互动平台",
+    "dataLimitation": "无实时联网，市值数据为参考区间，需联网验证最新股价",
+    "disclaimer": "本清单基于公开历史信息整理，'送样'状态不代表最终量产供货，投资需独立判断"
+  },
+  "filterCriteria": {
+    "target": "已向特斯拉Optimus人形机器人送样或小批量供货的精密传动零部件标的",
+    "components": ["行星滚柱丝杠", "谐波减速器", "RV减速器", "精密轴承", "微型传动"],
+    "marketCapRange": "50-300亿人民币",
+    "exclusion": "超大蓝筹（市值>300亿或一线龙头）"
+  },
+  "candidates": [
+    {
+      "rank": 1,
+      "stockCode": "603667.SH",
+      "stockName": "五洲新春",
+      "supplyChainSegment": "行星滚柱丝杠/精密轴承",
+      "relationshipDetail": "公司精密零部件产品已向特斯拉送样，涉及丝杠、轴承等传动部件；汽车业务长期配套特斯拉供应链体系",
+      "evidence": "投资者互动平台回复确认向特斯拉送样；2024年半年报提及机器人零部件布局",
+      "marketCapBn": "约80-100亿",
+      "marketCapStatus": "estimate_2024Q4",
+      "riskNote": "送样阶段未确认量产订单，丝杠业务占比尚小"
+    },
+    {
+      "rank": 2,
+      "stockCode": "300580.SZ",
+      "stockName": "贝斯特",
+      "supplyChainSegment": "行星滚柱丝杠/精密零部件",
+      "relationshipDetail": "子公司宇华精机布局高精度滚珠丝杠副、滚柱丝杠，已向特斯拉Optimus送样；定位Tier2供应商",
+      "evidence": "2024年机构调研纪要提及丝杠产品送样特斯拉；公司公告精密传动业务进展",
+      "marketCapBn": "约100-130亿",
+      "marketCapStatus": "estimate_2024Q4",
+      "riskNote": "送样验证周期不确定，量产时点待定"
+    },
+    {
+      "rank": 3,
+      "stockCode": "002896.SZ",
+      "stockName": "中大力德",
+      "supplyChainSegment": "谐波减速器/精密减速电机",
+      "relationshipDetail": "精密减速器产品已向特斯拉Optimus送样测试；公司'电机+减速器'一体化方案适配人形机器人关节模组",
+      "evidence": "2024年投资者交流确认送样；公司年报披露机器人减速器研发进展",
+      "marketCapBn": "约60-80亿",
+      "marketCapStatus": "estimate_2024Q4",
+      "riskNote": "谐波减速器竞争激烈，量产订单存在不确定性"
+    },
+    {
+      "rank": 4,
+      "stockCode": "300503.SZ",
+      "stockName": "昊志机电",
+      "supplyChainSegment": "谐波减速器/电主轴/编码器",
+      "relationshipDetail": "谐波减速器、无框力矩电机已向特斯拉送样；公司在机器人关节模组领域有技术积累",
+      "evidence": "2024年半年报提及与特斯拉业务对接；投资者互动确认送样状态",
+      "marketCapBn": "约50-70亿",
+      "marketCapStatus": "estimate_2024Q4",
+      "riskNote": "公司历史存在信披违规事项，需关注治理风险"
+    },
+    {
+      "rank": 5,
+      "stockCode": "301368.SZ",
+      "stockName": "丰立智能",
+      "supplyChainSegment": "小模数齿轮/精密减速器",
+      "relationshipDetail": "小模数齿轮及减速器产品已向特斯拉送样；公司具备微型精密传动件制造能力",
+      "evidence": "2024年机构调研提及特斯拉送样；招股说明书及年报披露机器人零部件布局",
+      "marketCapBn": "约50-70亿",
+      "marketCapStatus": "estimate_2024Q4",
+      "riskNote": "送样阶段，业务占比极小，估值波动大"
+    },
+    {
+      "rank": 6,
+      "stockCode": "300100.SZ",
+      "stockName": "双林股份",
+      "supplyChainSegment": "滚珠丝杠/汽车零部件延伸",
+      "relationshipDetail": "通过收购科之鑫布局滚珠丝杠，产品已向特斯拉送样；从汽车零部件向机器人传动延伸",
+      "evidence": "2024年公司公告及调研纪要提及送样进展；投资者互动平台确认",
+      "marketCapBn": "约70-90亿",
+      "marketCapStatus": "estimate_2024Q4",
+      "riskNote": "丝杠业务整合风险，送样验证结果待定"
+    },
+    {
+      "rank": 7,
+      "stockCode": "000837.SZ",
+      "stockName": "秦川机床",
+      "supplyChainSegment": "滚珠丝杠/行星滚柱丝杠/机床",
+      "relationshipDetail": "子公司汉江机床专注滚珠丝杠，具备行星滚柱丝杠研发能力；行业传闻已进入特斯拉供应链验证",
+      "evidence": "公司公告披露丝杠业务进展；机构研报提及机器人丝杠布局",
+      "marketCapBn": "约80-110亿",
+      "marketCapStatus": "estimate_2024Q4",
+      "riskNote": "国企机制灵活性相对较低，送样状态待官方确认"
+    }
+  ],
+  "sectorAnalysis": {
+    "keyComponents": {
+      "行星滚柱丝杠": {
+        "status": "国产化初期，技术壁垒高",
+        " TeslaRelation": "Optimus线性执行器核心部件，单台用量14根",
+        "candidateStocks": ["五洲新春", "贝斯特", "双林股份", "秦川机床"]
+      },
+      "谐波减速器": {
+        "status": "国产替代加速，竞争加剧",
+        "TeslaRelation": "Optimus旋转执行器核心部件，单台用量约12-14个",
+        "candidateStocks": ["中大力德", "昊志机电", "丰立智能"]
+      }
+    },
+    "investmentLogic": [
+      "特斯拉Optimus量产预期升温，供应链定点窗口期开启",
+      "送样→小批量→量产三级跳，当前处于送样到验证阶段",
+      "精密传动零部件占机器人BOM成本约30%，价值量高",
+      "50-300亿市值标的弹性优于大蓝筹，但确定性较低"
+    ]
+  },
+  "riskDisclosure": [
+    "送样不代表最终获得订单，量产时点存在重大不确定性",
+    "特斯拉供应链存在二供、三供策略，份额可能分散",
+    "人形机器人商业化进度可能不及预期",
+    "市值数据为估算值，需以实时行情为准",
+    "本清单基于公开信息整理，不构成投资建议"
+  ],
+  "followUpRequired": [
+    "联网查询最新市值数据并排序",
+    "核实各公司最新送样/供货进展",
+    "获取特斯拉Optimus最新量产时间线",
+    "交叉验证各公司具体供货环节"
+  ],
+  "informationSource": [
+    "上市公司投资者互动平台（深交所/上交所）",
+    "公司定期报告及临时公告",
+    "券商机构调研纪要",
+    "行业研究报告（机器人/汽车零部件）",
+    "特斯拉AI Day及公开技术资料"
+  ]
+}

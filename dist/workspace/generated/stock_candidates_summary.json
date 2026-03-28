@@ -1,0 +1,57 @@
+{
+  "task_id": "task_2__sub_1__sub_1_3__sub_1_3_c__sub_2__sub_5",
+  "phase": "research",
+  "output_type": "候选股筛选与ST排除验证（框架+示例）",
+  "candidates": [
+    {
+      "rank": 1,
+      "code": "300XXX（示例）",
+      "name": "XX储能（示例）",
+      "sector": "电化学储能",
+      "catalyst": "地方两会储能规划政策+电力现货市场配套规则",
+      "catalyst_time": "2025年X月X日-X月X日",
+      "impact_level": "高",
+      "st_status_verified": false,
+      "limit_up_history_verified": false,
+      "note": "需验证实时ST状态及近20日涨停记录"
+    },
+    {
+      "rank": 2,
+      "code": "002XXX（示例）",
+      "name": "XX锂业（示例）",
+      "sector": "锂电池原材料",
+      "catalyst": "新能源车购置税减免延续+12月排产数据超预期",
+      "catalyst_time": "政策持续期，数据下周发布",
+      "impact_level": "中-高",
+      "st_status_verified": false,
+      "limit_up_history_verified": false,
+      "note": "需验证实时ST状态及近20日涨停记录"
+    },
+    {
+      "rank": 3,
+      "code": "600XXX（示例）",
+      "name": "XX光伏（示例）",
+      "sector": "光伏设备/BC电池",
+      "catalyst": "能源电子产业指导意见细则+光伏行业协会年度会议",
+      "catalyst_time": "下周三行业峰会",
+      "impact_level": "高",
+      "st_status_verified": false,
+      "limit_up_history_verified": false,
+      "note": "需验证实时ST状态及近20日涨停记录"
+    },
+    {
+      "rank": 4,
+      "code": "300XXX/688XXX（示例）",
+      "name": "XX智驾（示例）",
+      "sector": "智能驾驶零部件",
+      "catalyst": "智能网联汽车准入试点名单公布预期",
+      "catalyst_time": "随时可能发布",
+      "impact_level": "中",
+      "st_status_verified": false,
+      "limit_up_history_verified": false,
+      "note": "需验证实时ST状态及近20日涨停记录，注意688科创板20%涨跌幅"
+    }
+  ],
+  "verification_status": "pending_realtime_data",
+  "disclaimer": "本文件为研究框架及示例数据，所有具体股票代码及状态需通过实时行情系统验证，不构成投资建议"
+}

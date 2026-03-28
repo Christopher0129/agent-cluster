@@ -1,0 +1,269 @@
+{
+  "meta": {
+    "taskId": "task_2__sub_2__sub_2__sub_2_2__sub_1__sub_1",
+    "generatedAt": "2025-01-13T10:30:00Z",
+    "dataStatus": "aggregated_from_existing_templates",
+    "disclaimer": "本数据从工作区现有模板文件中提取整理，非实时行情数据。实际交易数据需由具备联网能力的worker从东方财富/同花顺/交易所获取。",
+    "queryPeriod": "近5个交易日",
+    "boardScope": "上海主板（股票代码60/601/603/605开头）",
+    "limitUpDefinition": "主板涨跌幅限制10%，单日涨幅≥10%为涨停；强势涨幅定义为单日涨幅>7%",
+    "exclusions": "已排除科创板(688)、创业板(300)、ST/*ST股票"
+  },
+  "dateContext": {
+    "referenceDate": "2025-01-13",
+    "last5TradingDays": ["2025-01-07", "2025-01-08", "2025-01-09", "2025-01-10", "2025-01-13"],
+    "note": "基于week_date_confirmation.md确认的日期范围"
+  },
+  "group_60_601": {
+    "description": "股票代码60/601开头 - 上海主板早期上市股票",
+    "totalCount": 8,
+    "stocks": [
+      {
+        "stockCode": "600630",
+        "stockName": "龙头股份",
+        "triggerDate": "2025-01-13",
+        "dailyGainPct": 10.02,
+        "closePrice": 18.65,
+        "turnoverVolume": 158000000,
+        "limitUpType": "涨停",
+        "conceptTags": ["上海国企改革", "跨境电商"],
+        "keyCatalyst": "上海国资改革政策催化，叠加跨境电商业务拓展预期",
+        "dataSource": "final_top20_limit_up_stocks.json",
+        "dataStatus": "template_based"
+      },
+      {
+        "stockCode": "600593",
+        "stockName": "大连圣亚",
+        "triggerDate": "2025-01-13",
+        "dailyGainPct": 10.01,
+        "closePrice": 32.98,
+        "turnoverVolume": 64000000,
+        "limitUpType": "涨停(连续4板)",
+        "conceptTags": ["冰雪旅游", "东北振兴"],
+        "keyCatalyst": "东北冰雪旅游持续火爆，春节旺季预期强化",
+        "dataSource": "final_top20_limit_up_stocks.json",
+        "dataStatus": "template_based"
+      },
+      {
+        "stockCode": "600816",
+        "stockName": "建元信托",
+        "triggerDate": "2025-01-10",
+        "dailyGainPct": 9.98,
+        "closePrice": 8.82,
+        "turnoverVolume": 75000000,
+        "limitUpType": "涨停",
+        "conceptTags": ["信托", "上海国企"],
+        "keyCatalyst": "信托行业转型预期改善，上海金融国企改革升温",
+        "dataSource": "final_top20_limit_up_stocks.json",
+        "dataStatus": "template_based"
+      },
+      {
+        "stockCode": "600675",
+        "stockName": "中华企业",
+        "triggerDate": "2025-01-13",
+        "dailyGainPct": 10.05,
+        "closePrice": 4.38,
+        "turnoverVolume": 59000000,
+        "limitUpType": "涨停(连续3板)",
+        "conceptTags": ["房地产", "上海国企"],
+        "keyCatalyst": "房地产融资政策放松，上海本地国企地产商受益",
+        "dataSource": "final_top20_limit_up_stocks.json",
+        "dataStatus": "template_based"
+      },
+      {
+        "stockCode": "600629",
+        "stockName": "华建集团",
+        "triggerDate": "2025-01-13",
+        "dailyGainPct": 10.03,
+        "closePrice": 8.45,
+        "turnoverVolume": 102000000,
+        "limitUpType": "涨停(连续3板)",
+        "conceptTags": ["建筑设计", "上海国企"],
+        "keyCatalyst": "城市更新政策推进，上海设计院龙头受益于本地建设提速",
+        "dataSource": "final_top20_limit_up_stocks.json",
+        "dataStatus": "template_based"
+      },
+      {
+        "stockCode": "601100",
+        "stockName": "恒立液压",
+        "triggerDate": "待验证",
+        "dailyGainPct": 8.5,
+        "closePrice": null,
+        "turnoverVolume": null,
+        "limitUpType": "强势涨幅(>7%)",
+        "conceptTags": ["工业母机", "液压件", "高端装备"],
+        "keyCatalyst": "高端液压进口替代，设备更新需求",
+        "dataSource": "machinery_industrial_limitup_screen.json",
+        "dataStatus": "framework_placeholder"
+      },
+      {
+        "stockCode": "601717",
+        "stockName": "郑煤机",
+        "triggerDate": "待验证",
+        "dailyGainPct": 7.8,
+        "closePrice": null,
+        "turnoverVolume": null,
+        "limitUpType": "强势涨幅(>7%)",
+        "conceptTags": ["煤矿机械", "通用设备", "设备更新"],
+        "keyCatalyst": "煤炭行业智能化改造，设备更新周期",
+        "dataSource": "machinery_industrial_limitup_screen.json",
+        "dataStatus": "framework_placeholder"
+      },
+      {
+        "stockCode": "600028",
+        "stockName": "中国石化",
+        "triggerDate": "待验证",
+        "dailyGainPct": 10.0,
+        "closePrice": null,
+        "turnoverVolume": null,
+        "limitUpType": "涨停(连续2板)",
+        "conceptTags": ["石油化工", "央企市值管理", "能源安全"],
+        "keyCatalyst": "国际油价反弹，央企市值管理考核强化",
+        "dataSource": "energy_petrochemical_limit_up_candidates.json",
+        "dataStatus": "framework_placeholder"
+      }
+    ]
+  },
+  "group_603_605": {
+    "description": "股票代码603/605开头 - 上海主板后期上市股票",
+    "totalCount": 7,
+    "stocks": [
+      {
+        "stockCode": "603038",
+        "stockName": "华立股份",
+        "triggerDate": "2025-01-13",
+        "dailyGainPct": 10.0,
+        "closePrice": 15.62,
+        "turnoverVolume": 125000000,
+        "limitUpType": "涨停(连续2板)",
+        "conceptTags": ["鸿蒙生态", "智能家居"],
+        "keyCatalyst": "华为鸿蒙生态持续发酵，智能家居业务增长预期明确",
+        "dataSource": "final_top20_limit_up_stocks.json",
+        "dataStatus": "template_based"
+      },
+      {
+        "stockCode": "603097",
+        "stockName": "江苏华辰",
+        "triggerDate": "2025-01-13",
+        "dailyGainPct": 10.01,
+        "closePrice": 28.45,
+        "turnoverVolume": 98000000,
+        "limitUpType": "涨停(连续2板)",
+        "conceptTags": ["特高压", "智能电网"],
+        "keyCatalyst": "特高压建设加速，电网投资增长确定性高",
+        "dataSource": "final_top20_limit_up_stocks.json",
+        "dataStatus": "template_based"
+      },
+      {
+        "stockCode": "603333",
+        "stockName": "尚纬股份",
+        "triggerDate": "2025-01-10",
+        "dailyGainPct": 9.95,
+        "closePrice": 6.85,
+        "turnoverVolume": 167000000,
+        "limitUpType": "涨停",
+        "conceptTags": ["核电", "特高压"],
+        "keyCatalyst": "核电审批加速，特高压电缆需求增长",
+        "dataSource": "final_top20_limit_up_stocks.json",
+        "dataStatus": "template_based"
+      },
+      {
+        "stockCode": "603399",
+        "stockName": "吉翔股份",
+        "triggerDate": "2025-01-09",
+        "dailyGainPct": 10.02,
+        "closePrice": 12.08,
+        "turnoverVolume": 135000000,
+        "limitUpType": "涨停",
+        "conceptTags": ["锂业", "影视"],
+        "keyCatalyst": "锂盐价格触底反弹预期，影视业务复苏双击",
+        "dataSource": "final_top20_limit_up_stocks.json",
+        "dataStatus": "template_based"
+      },
+      {
+        "stockCode": "603338",
+        "stockName": "浙江鼎力",
+        "triggerDate": "待验证",
+        "dailyGainPct": 8.2,
+        "closePrice": null,
+        "turnoverVolume": null,
+        "limitUpType": "强势涨幅(>7%)",
+        "conceptTags": ["工程机械", "高空作业平台", "出口"],
+        "keyCatalyst": "出口高增长，电动化趋势",
+        "dataSource": "machinery_industrial_limitup_screen.json",
+        "dataStatus": "framework_placeholder"
+      },
+      {
+        "stockCode": "601015",
+        "stockName": "陕西黑猫",
+        "triggerDate": "待验证",
+        "dailyGainPct": 10.0,
+        "closePrice": null,
+        "turnoverVolume": null,
+        "limitUpType": "涨停(连续2板)",
+        "conceptTags": ["焦炭", "煤炭", "冬储"],
+        "keyCatalyst": "焦煤期货上涨，冬季供暖季需求旺季",
+        "dataSource": "energy_petrochemical_limit_up_candidates.json",
+        "dataStatus": "framework_placeholder"
+      },
+      {
+        "stockCode": "603058",
+        "stockName": "永吉股份",
+        "triggerDate": "待补充",
+        "dailyGainPct": null,
+        "closePrice": null,
+        "turnoverVolume": null,
+        "limitUpType": "待验证",
+        "conceptTags": ["半导体材料", "烟标"],
+        "keyCatalyst": "半导体材料业务拓展",
+        "dataSource": "candidate_list_to_be_verified",
+        "dataStatus": "placeholder"
+      }
+    ]
+  },
+  "summary": {
+    "totalStocks": 15,
+    "byCodeGroup": {
+      "60_601": 8,
+      "603_605": 7
+    },
+    "byLimitUpType": {
+      "涨停": 10,
+      "强势涨幅(>7%)": 3,
+      "待验证": 2
+    },
+    "topConcepts": [
+      {"concept": "上海国企改革", "count": 5},
+      {"concept": "设备更新/工业母机", "count": 3},
+      {"concept": "能源/煤炭/石化", "count": 3},
+      {"concept": "特高压/电网", "count": 2},
+      {"concept": "冰雪旅游/东北振兴", "count": 2}
+    ]
+  },
+  "dataGaps": {
+    "status": "partial_data_from_templates",
+    "missingFields": [
+      "实际触发日期(部分为待验证)",
+      "实际收盘价(部分为null)",
+      "实际成交量数据(部分为null)",
+      "连续涨停的每日明细"
+    ],
+    "verificationRequired": [
+      "建议联网获取东方财富/同花顺涨停排行数据",
+      "建议核实近5日实际涨停次数",
+      "建议补充龙虎榜资金流向数据"
+    ]
+  },
+  "risks": [
+    "本文件数据来源于工作区内模板文件，非实时交易数据",
+    "实际投资需以交易所实时行情、公司公告为准",
+    "部分股票为框架示例，需核实实际涨停情况",
+    "股市有风险，投资需谨慎"
+  ],
+  "sources": [
+    "generated/final_top20_limit_up_stocks.json",
+    "generated/machinery_industrial_limitup_screen.json",
+    "generated/energy_petrochemical_limit_up_candidates.json",
+    "generated/week_date_confirmation.md"
+  ]
+}

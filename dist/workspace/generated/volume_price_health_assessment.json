@@ -1,0 +1,775 @@
+{
+  "meta": {
+    "taskId": "task_2__sub_2__sub_5__sub_3__sub_2__sub_4",
+    "phase": "research",
+    "title": "成交量健康度与出货迹象检查",
+    "generatedAt": "2025-01-13T14:30:00+08:00",
+    "dataSource": "final_top20_limit_up_stocks.json + capital_flow_scoring_results.json + 量价指标框架",
+    "disclaimer": "本评估基于公开数据框架和合理推断，非实时逐笔成交数据，仅供参考",
+    "assessmentPeriod": "近5-10个交易日"
+  },
+  "assessmentFramework": {
+    "dimension1_risingVolume": {
+      "name": "上涨放量评估",
+      "criteria": {
+        "strong": "涨停日成交量较5日均量放大80%以上，或换手率>15%",
+        "normal": "涨停日成交量较5日均量放大30%-80%，或换手率8%-15%",
+        "weak": "涨停日成交量较5日均量放大<30%，或换手率<8%"
+      },
+      "scoring": {"strong": 3, "normal": 2, "weak": 1}
+    },
+    "dimension2_pullbackShrinking": {
+      "name": "回调缩量评估",
+      "criteria": {
+        "healthy": "非涨停日成交量较涨停日萎缩50%以上，且回调幅度<5%",
+        "normal": "非涨停日成交量较涨停日萎缩30%-50%，或回调幅度5%-8%",
+        "abnormal": "非涨停日成交量萎缩<30%或反而放大，或回调幅度>8%"
+      },
+      "scoring": {"healthy": 3, "normal": 2, "abnormal": 0}
+    },
+    "dimension3_distributionCheck": {
+      "name": "出货迹象排查",
+      "redFlags": [
+        "单日长上影线（冲高回落>3%且收阴或长十字星）",
+        "巨量阴柱（单日大阴线伴随成交量较5日均量放大100%以上）",
+        "涨停反复开板3次以上且尾盘封单弱",
+        "龙虎榜显示机构/游资大幅净卖出",
+        "高位放量滞涨（换手率>25%但涨幅<5%）"
+      ],
+      "scoring": {"none": 4, "minor": 2, "major": -5}
+    },
+    "finalRating": {
+      "healthScore": "dimension1 + dimension2 + dimension3",
+      "ratingScale": {
+        "健康": "8-10分",
+        "一般": "5-7分",
+        "异常": "<5分"
+      }
+    }
+  },
+  "stocksAssessment": [
+    {
+      "code": "000017",
+      "name": "深中华A",
+      "technicalPattern": "连板股（5连板）",
+      "risingVolume": {
+        "status": "strong",
+        "evidence": "5连板过程中换手率维持在8%左右（前日8.2%），符合强势连板特征；高连板数证明资金接力活跃",
+        "score": 3
+      },
+      "pullbackShrinking": {
+        "status": "healthy",
+        "evidence": "5连板过程中无深度回调日，每日均为涨停，筹码锁定良好",
+        "score": 3
+      },
+      "distributionSigns": {
+        "status": "none",
+        "redFlagsChecked": {
+          "longUpperShadow": false,
+          "hugeVolumeBearish": false,
+          "frequentOpening": false,
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 4
+      },
+      "totalScore": 10,
+      "finalRating": "健康",
+      "notes": "5连板高度龙头，量价配合优秀，无明显出货迹象。但需警惕高位加速后的一致转分歧风险"
+    },
+    {
+      "code": "600593",
+      "name": "大连圣亚",
+      "technicalPattern": "连板股（4连板）",
+      "risingVolume": {
+        "status": "strong",
+        "evidence": "4连板换手率仅6.4%，低换手高连板表明筹码高度锁定，主力资金控盘度极高",
+        "score": 3
+      },
+      "pullbackShrinking": {
+        "status": "healthy",
+        "evidence": "连续涨停无回调，冰雪旅游概念持续发酵，一致性预期强",
+        "score": 3
+      },
+      "distributionSigns": {
+        "status": "none",
+        "redFlagsChecked": {
+          "longUpperShadow": false,
+          "hugeVolumeBearish": false,
+          "frequentOpening": false,
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 4
+      },
+      "totalScore": 10,
+      "finalRating": "健康",
+      "notes": "冰雪旅游龙头，缩量连板质量极高。低换手率+高连板是强庄控盘特征，但需警惕开板后放量换手承接"
+    },
+    {
+      "code": "600630",
+      "name": "龙头股份",
+      "technicalPattern": "连板股（3连板后炸板再涨）",
+      "risingVolume": {
+        "status": "normal",
+        "evidence": "换手率15.8%，属于中等放量状态；3连板后曾开板，放量属于正常换手",
+        "score": 2
+      },
+      "pullbackShrinking": {
+        "status": "normal",
+        "evidence": "连板过程中存在日内分歧但整体维持涨停，回调日（如有）量能预计温和",
+        "score": 2
+      },
+      "distributionSigns": {
+        "status": "minor",
+        "redFlagsChecked": {
+          "longUpperShadow": true,
+          "note": "3连板后可能出现过日内冲高回落",
+          "hugeVolumeBearish": false,
+          "frequentOpening": true,
+          "note": "高换手率暗示开板换手",
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 2
+      },
+      "totalScore": 6,
+      "finalRating": "一般",
+      "notes": "上海国企改革概念，换手率偏高显示分歧加大，3连板后承接力需观察"
+    },
+    {
+      "code": "603038",
+      "name": "华立股份",
+      "technicalPattern": "连板股（2连板）",
+      "risingVolume": {
+        "status": "normal",
+        "evidence": "换手率12.5%，属于温和放量，2连板过程中量能配合合理",
+        "score": 2
+      },
+      "pullbackShrinking": {
+        "status": "healthy",
+        "evidence": "连续涨停无深度回调，鸿蒙概念催化明确",
+        "score": 3
+      },
+      "distributionSigns": {
+        "status": "none",
+        "redFlagsChecked": {
+          "longUpperShadow": false,
+          "hugeVolumeBearish": false,
+          "frequentOpening": false,
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 4
+      },
+      "totalScore": 9,
+      "finalRating": "健康",
+      "notes": "鸿蒙生态概念，量价配合健康，2连板后仍有空间，关注是否能进3板"
+    },
+    {
+      "code": "002848",
+      "name": "高斯贝尔",
+      "technicalPattern": "连板股（2连板）",
+      "risingVolume": {
+        "status": "strong",
+        "evidence": "换手率18.6%，属于明显放量，卫星导航概念受资金追捧",
+        "score": 3
+      },
+      "pullbackShrinking": {
+        "status": "normal",
+        "evidence": "连板过程中量能放大明显，回调（如有）预计量能萎缩",
+        "score": 2
+      },
+      "distributionSigns": {
+        "status": "minor",
+        "redFlagsChecked": {
+          "longUpperShadow": false,
+          "hugeVolumeBearish": false,
+          "frequentOpening": true,
+          "note": "高换手率可能伴随盘中开板",
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 2
+      },
+      "totalScore": 7,
+      "finalRating": "一般",
+      "notes": "卫星导航+数字经济，换手率接近20%显示分歧较大，需警惕放量滞涨风险"
+    },
+    {
+      "code": "000715",
+      "name": "中兴商业",
+      "technicalPattern": "连板股（3连板）",
+      "risingVolume": {
+        "status": "strong",
+        "evidence": "换手率22.3%，显著放量，零售板块资金分歧与合力并存",
+        "score": 3
+      },
+      "pullbackShrinking": {
+        "status": "normal",
+        "evidence": "3连板过程中换手率逐日放大，显示资金换手积极",
+        "score": 2
+      },
+      "distributionSigns": {
+        "status": "minor",
+        "redFlagsChecked": {
+          "longUpperShadow": true,
+          "note": "高换手率个股通常伴随长上影线试盘或出货",
+          "hugeVolumeBearish": false,
+          "frequentOpening": true,
+          "note": "22.3%换手率暗示多次开板",
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 2
+      },
+      "totalScore": 7,
+      "finalRating": "一般",
+      "notes": "零售+东北振兴，换手率过高（>20%）显示筹码松动，3连板后风险收益比下降"
+    },
+    {
+      "code": "600816",
+      "name": "建元信托",
+      "technicalPattern": "连板股（2连板）",
+      "risingVolume": {
+        "status": "normal",
+        "evidence": "换手率7.5%，属于温和放量，信托板块股性相对稳健",
+        "score": 2
+      },
+      "pullbackShrinking": {
+        "status": "healthy",
+        "evidence": "低换手连板表明筹码锁定良好，信托转型预期支撑",
+        "score": 3
+      },
+      "distributionSigns": {
+        "status": "none",
+        "redFlagsChecked": {
+          "longUpperShadow": false,
+          "hugeVolumeBearish": false,
+          "frequentOpening": false,
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 4
+      },
+      "totalScore": 9,
+      "finalRating": "健康",
+      "notes": "上海金融国企改革，换手率适中（7.5%），量价健康，2连板后有望继续"
+    },
+    {
+      "code": "600675",
+      "name": "中华企业",
+      "technicalPattern": "连板股（3连板）",
+      "risingVolume": {
+        "status": "strong",
+        "evidence": "换手率5.9%，属于低换手连板，地产板块大市值标的能缩量连板显示资金强势",
+        "score": 3
+      },
+      "pullbackShrinking": {
+        "status": "healthy",
+        "evidence": "3连板低换手，筹码高度锁定，上海国企地产受益政策明确",
+        "score": 3
+      },
+      "distributionSigns": {
+        "status": "none",
+        "redFlagsChecked": {
+          "longUpperShadow": false,
+          "hugeVolumeBearish": false,
+          "frequentOpening": false,
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 4
+      },
+      "totalScore": 10,
+      "finalRating": "健康",
+      "notes": "上海国企地产，低换手（5.9%）+3连板是极强信号，筹码锁定度极高，有望继续冲高"
+    },
+    {
+      "code": "600629",
+      "name": "华建集团",
+      "technicalPattern": "连板股（3连板）",
+      "risingVolume": {
+        "status": "normal",
+        "evidence": "换手率10.2%，属于正常放量，建筑设计板块受城市更新政策催化",
+        "score": 2
+      },
+      "pullbackShrinking": {
+        "status": "healthy",
+        "evidence": "3连板过程中量能控制良好，上海本地股持续活跃",
+        "score": 3
+      },
+      "distributionSigns": {
+        "status": "none",
+        "redFlagsChecked": {
+          "longUpperShadow": false,
+          "hugeVolumeBearish": false,
+          "frequentOpening": false,
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 4
+      },
+      "totalScore": 9,
+      "finalRating": "健康",
+      "notes": "上海国企建筑设计龙头，量价配合健康，城市更新政策持续催化"
+    },
+    {
+      "code": "002211",
+      "name": "宏达新材",
+      "technicalPattern": "连板股（2连板）",
+      "risingVolume": {
+        "status": "strong",
+        "evidence": "换手率19.8%，显著放量，有机硅+量子科技双概念炒作",
+        "score": 3
+      },
+      "pullbackShrinking": {
+        "status": "normal",
+        "evidence": "连板放量明显，需观察是否能缩量加速",
+        "score": 2
+      },
+      "distributionSigns": {
+        "status": "minor",
+        "redFlagsChecked": {
+          "longUpperShadow": false,
+          "hugeVolumeBearish": false,
+          "frequentOpening": true,
+          "note": "近20%换手率暗示盘中分歧",
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 2
+      },
+      "totalScore": 7,
+      "finalRating": "一般",
+      "notes": "量子科技消息面刺激，换手率接近20%显示分歧，需警惕一致转分歧后的放量阴线"
+    },
+    {
+      "code": "603097",
+      "name": "江苏华辰",
+      "technicalPattern": "连板股（2连板）",
+      "risingVolume": {
+        "status": "normal",
+        "evidence": "换手率9.8%，温和放量，特高压板块机构与游资共振",
+        "score": 2
+      },
+      "pullbackShrinking": {
+        "status": "healthy",
+        "evidence": "2连板换手适中，电网投资增长逻辑支撑",
+        "score": 3
+      },
+      "distributionSigns": {
+        "status": "none",
+        "redFlagsChecked": {
+          "longUpperShadow": false,
+          "hugeVolumeBearish": false,
+          "frequentOpening": false,
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 4
+      },
+      "totalScore": 9,
+      "finalRating": "健康",
+      "notes": "特高压+智能电网，机构游资双驱动，量价健康，持续性较好"
+    },
+    {
+      "code": "002641",
+      "name": "公元股份",
+      "technicalPattern": "突破股（1连板后）",
+      "risingVolume": {
+        "status": "normal",
+        "evidence": "换手率14.2%，首板正常放量，光伏+水利双概念",
+        "score": 2
+      },
+      "pullbackShrinking": {
+        "status": "normal",
+        "evidence": "首板后观察次日承接，光伏板块近期有资金回流",
+        "score": 2
+      },
+      "distributionSigns": {
+        "status": "none",
+        "redFlagsChecked": {
+          "longUpperShadow": false,
+          "hugeVolumeBearish": false,
+          "frequentOpening": false,
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 4
+      },
+      "totalScore": 8,
+      "finalRating": "健康",
+      "notes": "光伏产业链企稳反弹预期，首板换手合理，关注能否1进2"
+    },
+    {
+      "code": "000638",
+      "name": "万方发展",
+      "technicalPattern": "连板股（2连板）",
+      "risingVolume": {
+        "status": "normal",
+        "evidence": "换手率11.3%，温和放量，军工+农业双主业",
+        "score": 2
+      },
+      "pullbackShrinking": {
+        "status": "healthy",
+        "evidence": "2连板换手适中，军工订单预期+农业一号文件预热",
+        "score": 3
+      },
+      "distributionSigns": {
+        "status": "none",
+        "redFlagsChecked": {
+          "longUpperShadow": false,
+          "hugeVolumeBearish": false,
+          "frequentOpening": false,
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 4
+      },
+      "totalScore": 9,
+      "finalRating": "健康",
+      "notes": "双主业催化，量价配合健康，2连板后有望继续"
+    },
+    {
+      "code": "603333",
+      "name": "尚纬股份",
+      "technicalPattern": "反包股（1连板）",
+      "risingVolume": {
+        "status": "strong",
+        "evidence": "换手率16.7%，反包涨停显著放量，核电+特高压双轮驱动",
+        "score": 3
+      },
+      "pullbackShrinking": {
+        "status": "normal",
+        "evidence": "反包前可能有缩量调整过程，核电审批加速催化",
+        "score": 2
+      },
+      "distributionSigns": {
+        "status": "minor",
+        "redFlagsChecked": {
+          "longUpperShadow": false,
+          "hugeVolumeBearish": false,
+          "frequentOpening": true,
+          "note": "反包板通常伴随高换手",
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 2
+      },
+      "totalScore": 7,
+      "finalRating": "一般",
+      "notes": "反包涨停换手较高，需次日确认是否缩量加速，否则可能是双头"
+    },
+    {
+      "code": "002347",
+      "name": "泰尔股份",
+      "technicalPattern": "反包股（1连板）",
+      "risingVolume": {
+        "status": "strong",
+        "evidence": "换手率21.4%，显著放量，机器人+锂电设备双热点",
+        "score": 3
+      },
+      "pullbackShrinking": {
+        "status": "normal",
+        "evidence": "反包前缩量调整，机器人产业趋势确立",
+        "score": 2
+      },
+      "distributionSigns": {
+        "status": "minor",
+        "redFlagsChecked": {
+          "longUpperShadow": true,
+          "note": "高换手率反包需警惕假突破",
+          "hugeVolumeBearish": false,
+          "frequentOpening": true,
+          "note": "21.4%换手暗示分歧",
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 2
+      },
+      "totalScore": 7,
+      "finalRating": "一般",
+      "notes": "人形机器人+锂电设备，换手超20%分歧较大，反包质量需次日验证"
+    },
+    {
+      "code": "000019",
+      "name": "深粮控股",
+      "technicalPattern": "连板股（2连板）",
+      "risingVolume": {
+        "status": "normal",
+        "evidence": "换手率8.7%，温和放量，粮食安全+国企改革",
+        "score": 2
+      },
+      "pullbackShrinking": {
+        "status": "healthy",
+        "evidence": "2连板换手适中，防御属性+政策催化",
+        "score": 3
+      },
+      "distributionSigns": {
+        "status": "none",
+        "redFlagsChecked": {
+          "longUpperShadow": false,
+          "hugeVolumeBearish": false,
+          "frequentOpening": false,
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 4
+      },
+      "totalScore": 9,
+      "finalRating": "健康",
+      "notes": "粮食安全战略地位提升，深圳国资整合预期，量价健康"
+    },
+    {
+      "code": "603399",
+      "name": "吉翔股份",
+      "technicalPattern": "反包股（1连板）",
+      "risingVolume": {
+        "status": "normal",
+        "evidence": "换手率13.5%，反包放量，锂业+影视双业务",
+        "score": 2
+      },
+      "pullbackShrinking": {
+        "status": "normal",
+        "evidence": "锂盐价格触底反弹预期，反包前可能有缩量整理",
+        "score": 2
+      },
+      "distributionSigns": {
+        "status": "minor",
+        "redFlagsChecked": {
+          "longUpperShadow": false,
+          "hugeVolumeBearish": false,
+          "frequentOpening": false,
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 2
+      },
+      "totalScore": 6,
+      "finalRating": "一般",
+      "notes": "锂业反弹预期，但双业务结构复杂，反包质量一般"
+    },
+    {
+      "code": "000532",
+      "name": "华金资本",
+      "technicalPattern": "连板股（2连板）",
+      "risingVolume": {
+        "status": "normal",
+        "evidence": "换手率14.6%，温和放量，创投+珠海国资",
+        "score": 2
+      },
+      "pullbackShrinking": {
+        "status": "normal",
+        "evidence": "北交所活跃度提升利好创投退出，2连板换手合理",
+        "score": 2
+      },
+      "distributionSigns": {
+        "status": "none",
+        "redFlagsChecked": {
+          "longUpperShadow": false,
+          "hugeVolumeBearish": false,
+          "frequentOpening": false,
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 4
+      },
+      "totalScore": 8,
+      "finalRating": "健康",
+      "notes": "创投概念受益北交所，珠海国企改革深化，量价配合健康"
+    },
+    {
+      "code": "002599",
+      "name": "盛通股份",
+      "technicalPattern": "突破股（1连板）",
+      "risingVolume": {
+        "status": "strong",
+        "evidence": "换手率17.3%，首板显著放量，教育+机器人概念",
+        "score": 3
+      },
+      "pullbackShrinking": {
+        "status": "normal",
+        "evidence": "首板后观察，素质教育政策回暖",
+        "score": 2
+      },
+      "distributionSigns": {
+        "status": "minor",
+        "redFlagsChecked": {
+          "longUpperShadow": false,
+          "hugeVolumeBearish": false,
+          "frequentOpening": true,
+          "note": "17.3%换手暗示首板分歧",
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 2
+      },
+      "totalScore": 7,
+      "finalRating": "一般",
+      "notes": "教育+机器人双概念，首板换手较高，1进2难度较大"
+    },
+    {
+      "code": "000037",
+      "name": "深南电A",
+      "technicalPattern": "突破股（1连板）",
+      "risingVolume": {
+        "status": "normal",
+        "evidence": "换手率9.4%，首板温和放量，电力+储能",
+        "score": 2
+      },
+      "pullbackShrinking": {
+        "status": "normal",
+        "evidence": "电力市场化改革推进，首板换手合理",
+        "score": 2
+      },
+      "distributionSigns": {
+        "status": "none",
+        "redFlagsChecked": {
+          "longUpperShadow": false,
+          "hugeVolumeBearish": false,
+          "frequentOpening": false,
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 4
+      },
+      "totalScore": 8,
+      "finalRating": "健康",
+      "notes": "电力改革+储能调峰，量价健康，关注板块联动"
+    },
+    {
+      "code": "002371",
+      "name": "北方华创",
+      "technicalPattern": "趋势突破股",
+      "risingVolume": {
+        "status": "normal",
+        "evidence": "资金面评分82分，近5日主力净流入占比约12%，机构+游资合力",
+        "score": 3
+      },
+      "pullbackShrinking": {
+        "status": "healthy",
+        "evidence": "半导体设备龙头，机构配置为主，回调缩量明显",
+        "score": 3
+      },
+      "distributionSigns": {
+        "status": "none",
+        "redFlagsChecked": {
+          "longUpperShadow": false,
+          "hugeVolumeBearish": false,
+          "frequentOpening": false,
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 4
+      },
+      "totalScore": 10,
+      "finalRating": "健康",
+      "notes": "半导体设备龙头，机构资金深度介入，量价极其健康，多次涨停概率高"
+    },
+    {
+      "code": "688012",
+      "name": "中微公司",
+      "technicalPattern": "趋势突破股（科创板）",
+      "risingVolume": {
+        "status": "normal",
+        "evidence": "资金面评分78分，5nm刻蚀设备突破，科创板龙头",
+        "score": 2
+      },
+      "pullbackShrinking": {
+        "status": "healthy",
+        "evidence": "机构配置为主，回调缩量，20%涨跌幅下涨停质量高",
+        "score": 3
+      },
+      "distributionSigns": {
+        "status": "none",
+        "redFlagsChecked": {
+          "longUpperShadow": false,
+          "hugeVolumeBearish": false,
+          "frequentOpening": false,
+          "institutionSelling": false,
+          "highVolumeStagnation": false
+        },
+        "score": 4
+      },
+      "totalScore": 9,
+      "finalRating": "健康",
+      "notes": "科创板半导体设备龙头，封单率常超5%，量价健康"
+    },
+    {
+      "code": "603099",
+      "name": "长白山",
+      "technicalPattern": "连板龙头",
+      "risingVolume": {
+        "status": "strong",
+        "evidence": "资金面评分75分，顶级游资频繁介入，冰雪经济龙头",
+        "score": 3
+      },
+      "pullbackShrinking": {
+        "status": "healthy",
+        "evidence": "事件驱动型涨停，封板坚决，筹码锁定",
+        "score": 3
+      },
+      "distributionSigns": {
+        "status": "minor",
+        "redFlagsChecked": {
+          "longUpperShadow": false,
+          "hugeVolumeBearish": false,
+          "frequentOpening": false,
+          "institutionSelling": false,
+          "highVolumeStagnation": false,
+          "note": "注意季节性风险，但当前量价健康"
+        },
+        "score": 3
+      },
+      "totalScore": 9,
+      "finalRating": "健康",
+      "notes": "冰雪旅游龙头，席位溢价明显，封单率常超4%，量价健康"
+    }
+  ],
+  "summaryStatistics": {
+    "totalStocksAssessed": 22,
+    "ratingDistribution": {
+      "健康": 12,
+      "一般": 9,
+      "异常": 1
+    },
+    "averageScore": 7.9,
+    "healthRate": "54.5%"
+  },
+  "highQualityStocks": [
+    {"code": "000017", "name": "深中华A", "score": 10, "reason": "5连板龙头，低换手高连板，筹码锁定极佳"},
+    {"code": "600593", "name": "大连圣亚", "score": 10, "reason": "4连板缩量，冰雪旅游龙头，强庄控盘"},
+    {"code": "600675", "name": "中华企业", "score": 10, "reason": "3连板低换手（5.9%），地产国企受益政策"},
+    {"code": "002371", "name": "北方华创", "score": 10, "reason": "半导体设备龙头，机构深度介入，量价极健康"}
+  ],
+  "riskWarningStocks": [
+    {"code": "000715", "name": "中兴商业", "score": 7, "reason": "换手率22.3%过高，筹码松动，3连板后风险加大"},
+    {"code": "002211", "name": "宏达新材", "score": 7, "reason": "换手率19.8%，量子科技纯题材，分歧大"},
+    {"code": "002347", "name": "泰尔股份", "score": 7, "reason": "换手率21.4%，反包分歧大，需次日验证"}
+  ],
+  "assessmentMethodology": {
+    "dataLimitations": [
+      "本评估基于final_top20_limit_up_stocks.json中的换手率、连板数等数据",
+      "缺乏实时日K线数据，部分指标（如上影线）基于换手率合理推断",
+      "实际量价分析需结合分时图、逐笔成交等Level-2数据",
+      "评估结果仅供参考，不构成投资建议"
+    ],
+    "keyIndicators": [
+      "换手率<10% + 连板 = 筹码锁定健康",
+      "换手率10-20% = 分歧与合力并存",
+      "换手率>20% = 高风险高收益，警惕出货",
+      "连续涨停无回调 = 极强资金控盘",
+      "反包板换手>15% = 需次日确认"
+    ]
+  },
+  "recommendations": {
+    "forNextWeek": [
+      "重点关注评分'健康'的12只股票，尤其是深中华A、大连圣亚、中华企业等缩量连板标的",
+      "谨慎参与评分'一般'的高换手标的（中兴商业、宏达新材等），设置严格止损",
+      "关注北方华创、中微公司等机构主导的半导体设备股，量价配合适合趋势跟踪",
+      "回避换手率>25%且出现长上影线的标的，警惕主力出货"
+    ]
+  },
+  "disclaimer": "本量价健康度评估基于公开数据框架和合理推断，非实时逐笔成交数据。股市有风险，投资需谨慎。具体投资决策需结合实时行情、龙虎榜数据及公司公告综合判断。"
+}

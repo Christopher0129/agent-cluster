@@ -1,0 +1,22 @@
+{
+  "metadata": {
+    "research_phase": "policy_sector_identification",
+    "data_status": "PENDING_DATA_INPUT",
+    "note": "需要联网worker提供近30天内国家级/部委级政策文件数据",
+    "required_fields": [
+      "policy_publish_date",
+      "policy_source",
+      "policy_title",
+      "core_summary",
+      "beneficiary_sector",
+      "benefit_logic",
+      "certainty_rating"
+    ]
+  },
+  "policy_sectors_list": [],
+  "certainty_rating_criteria": {
+    "high": "政策明确点名支持且有具体资金/项目/量化目标",
+    "medium": "政策明确支持但具体措施待细化",
+    "low": "间接受益或市场预期炒作，政策未直接点名"
+  }
+}

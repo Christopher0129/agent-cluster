@@ -1,0 +1,123 @@
+{
+  "reportMeta": {
+    "taskId": "task_2__sub_1__sub_1_3__sub_1_3_e__sub_4__sub_4_3",
+    "phase": "research",
+    "title": "政策催化剂事件搜索",
+    "generatedBy": "kimi2.5_2",
+    "generationTime": "2025-01-13T12:00:00Z",
+    "dataSource": "workspace_existing_files_analysis",
+    "limitationNotice": "本模型不具备实时联网能力，以下内容基于工作区已有研究文件整理。实时政策需由具备联网能力的worker进一步验证。",
+    "nextWeekDateRange": {
+      "weekStart": "2025-01-20",
+      "weekEnd": "2025-01-26",
+      "tradingDays": ["2025-01-20", "2025-01-21", "2025-01-22", "2025-01-23", "2025-01-24"],
+      "note": "基于参考日期2025-01-13推算的下周交易日期"
+    }
+  },
+  "policyCatalystCandidates": [
+    {
+      "stock_code": "002371.SZ",
+      "stock_name": "北方华创",
+      "catalyst_type": "政策",
+      "catalyst_description": "国家集成电路产业投资基金三期（大基金三期）于2024年5月正式成立，注册资本3440亿元，超前两期总和，重点投向先进制程、AI芯片、存储、半导体设备/材料/EDA。2025年Q1预计进入实质投资阶段，下周关注首批投资项目披露及地方配套政策跟进。公司作为半导体设备平台型龙头（刻蚀/薄膜/PVD设备全覆盖），将直接受益于国产替代加速和设备采购资金到位。",
+      "expected_event_date": "2025-01-20至2025-01-26",
+      "policy_source": "国家集成电路产业投资基金/工信部/发改委",
+      "relevance_score": 9,
+      "scoreRationale": ["大基金三期为近年半导体领域最大规模产业政策", "设备环节为国产替代核心瓶颈", "Q1为传统政策落地和资金拨付高峰期", "公司订单饱满，业绩兑现确定性高"],
+      "riskFactors": ["估值处于历史较高分位", "地缘政治管制风险", "业绩兑现节奏可能不及预期"],
+      "supportingFiles": ["chip_sector_research.json", "next_week_policy_catalyst_search_report.json"]
+    },
+    {
+      "stock_code": "002085.SZ",
+      "stock_name": "万丰奥威",
+      "catalyst_type": "政策/产品",
+      "catalyst_description": "低空经济已写入2024年政府工作报告，多地（深圳、广州、合肥等）出台eVTOL商业化试点政策及产业基金支持。公司拥有钻石DA40/DA50系列飞机及V2000X eVTOL原型机，钻石飞机持有EASA/FAA/CAAC三重适航认证，已与多家运营商签署意向订单。下周关注地方两会期间低空经济专项政策发布及公司eVTOL研发进展公告。",
+      "expected_event_date": "2025-01-20至2025-01-26",
+      "policy_source": "国务院/工信部/民航局/地方政府",
+      "relevance_score": 8,
+      "scoreRationale": ["低空经济为2024-2025年核心产业政策方向", "公司拥有实质性飞机制造业务+适航认证，非纯概念炒作", "1月下旬为地方两会密集期，政策催化概率高", "eVTOL商业化试点城市扩容预期"],
+      "riskFactors": ["市值偏大（约280-320亿）对连续涨停形成制约", "前期涨幅较大存在获利盘", "eVTOL商业化时间不确定", "适航审批进度存在变数"],
+      "supportingFiles": ["evtol_aircraft_manufacturing_screening.json"]
+    },
+    {
+      "stock_code": "603667.SH",
+      "stock_name": "五洲新春",
+      "catalyst_type": "峰会/产品",
+      "catalyst_description": "人形机器人产业进入去伪存真阶段，特斯拉Optimus量产预期临近，国内厂商（宇树、优必选、傅利叶）产品迭代加速。公司作为人形机器人执行器精密零部件（轴承、丝杠）核心供应商，产品已送样特斯拉等潜在客户。下周关注：1）特斯拉Optimus官方技术更新/视频发布；2）工信部及地方政府（深圳、北京、上海）机器人产业支持政策/补贴跟进；3）CES 2025后续技术扩散效应及国内厂商新品发布。",
+      "expected_event_date": "2025-01-20至2025-01-26",
+      "policy_source": "工信部/科技部/地方政府",
+      "relevance_score": 8,
+      "scoreRationale": ["人形机器人是2024-2025年A股核心主题投资方向", "执行器零部件为价值链最高环节", "特斯拉Optimus及国内厂商技术迭代持续释放产业信号", "市值适中（约140亿流通市值），机构与游资混合参与"],
+      "riskFactors": ["估值已反映部分机器人预期", "丝杠量产进度存在不确定性", "客户验证周期较长", "板块历史上多次出现单日涨停后次日分化，连板率低于纯情绪题材"],
+      "supportingFiles": ["humanoid_robot_leading_stocks_research.json", "humanoid_robot_theme_scan.json"]
+    },
+    {
+      "stock_code": "688012.SH",
+      "stock_name": "中微公司",
+      "catalyst_type": "政策",
+      "catalyst_description": "大基金三期重点投向先进制程设备，公司作为国内刻蚀设备龙头（5nm及以下先进制程突破，CCP/ICP双轮驱动），将持续受益于国产替代加速。同时，下周关注：1）美国出口管制政策最新动态及国内反制措施；2）晶圆厂设备招标公告；3）地方集成电路产业配套政策发布（上海、北京、深圳等地）。",
+      "expected_event_date": "2025-01-20至2025-01-26",
+      "policy_source": "国家集成电路产业投资基金/工信部/发改委/上海市经信委",
+      "relevance_score": 8,
+      "scoreRationale": ["刻蚀设备为半导体制造核心环节，国产替代迫切性高", "大基金三期资金规模超前两期总和", "5nm及以下先进制程突破具有战略意义", "公司技术领先，订单能见度高"],
+      "riskFactors": ["研发投入持续，国际竞争加剧", "地缘政治风险可能导致供应链扰动", "先进制程客户验证周期长"],
+      "supportingFiles": ["chip_sector_research.json"]
+    },
+    {
+      "stock_code": "002097.SZ",
+      "stock_name": "山河智能",
+      "catalyst_type": "政策/产品",
+      "catalyst_description": "低空经济政策密集期，公司通过子公司博云新材等布局航空材料与整机制造，SA60L轻型运动飞机已获CAAC型号合格证，参股公司参与eVTOL研发，同时参与大众汽车飞行汽车项目合作。市值适中（约65-85亿），股价位置相对较低，易受资金推动。下周关注地方低空经济示范区政策及公司航空装备业务进展公告。",
+      "expected_event_date": "2025-01-20至2025-01-26",
+      "policy_source": "工信部/民航局/湖南省政府/地方政府",
+      "relevance_score": 7,
+      "scoreRationale": ["市值适中便于资金操作", "既有航空装备业务又有eVTOL概念", "参与大众飞行汽车项目具有话题性", "工程机械板块提供业绩托底", "地方两会期间湖南省装备制造政策预期"],
+      "riskFactors": ["航空装备非主营业务占比有限", "工程机械行业周期下行压力", "eVTOL业务处于早期阶段", "与纯粹eVTOL标的相比概念属性较强"],
+      "supportingFiles": ["evtol_aircraft_manufacturing_screening.json"]
+    }
+  ],
+  "sectorCatalystSummary": {
+    "aiCompute": {
+      "sectorName": "人工智能（算力、大模型）",
+      "keyCatalysts": ["大基金三期首批投资项目披露", "工信部AI算力基础设施专项政策", "发改委数字经济/算力枢纽政策", "地方智算中心建设招标"],
+      "representativeStocks": ["北方华创", "中微公司", "中芯国际", "通富微电"],
+      "policyIntensity": "★★★★★"
+    },
+    "lowAltitudeEconomy": {
+      "sectorName": "低空经济（eVTOL、通航）",
+      "keyCatalysts": ["地方两会低空经济专项政策", "eVTOL适航认证进展", "低空飞行示范区扩容", "产业基金设立公告"],
+      "representativeStocks": ["万丰奥威", "山河智能"],
+      "policyIntensity": "★★★★☆"
+    },
+    "humanoidRobot": {
+      "sectorName": "人形机器人（AI大模型应用）",
+      "keyCatalysts": ["特斯拉Optimus技术更新", "国内厂商（宇树/优必选）新品发布", "工信部机器人产业支持政策", "地方智能制造补贴"],
+      "representativeStocks": ["五洲新春", "北特科技", "柯力传感", "中大力德"],
+      "policyIntensity": "★★★★☆"
+    },
+    "semiconductorEquipment": {
+      "sectorName": "半导体设备/材料国产替代",
+      "keyCatalysts": ["大基金三期设备环节投资", "晶圆厂设备招标", "美国出口管制反制政策", "地方集成电路产业配套"],
+      "representativeStocks": ["北方华创", "中微公司", "拓荆科技", "华海清科"],
+      "policyIntensity": "★★★★★"
+    }
+  },
+  "dataLimitations": [
+    "本模型不具备实时联网能力，无法访问政府官网获取最新政策发布预告",
+    "无法确认下周具体哪些日期有国务院政策例行吹风会",
+    "无法获取实时的行业峰会/产品发布会日程",
+    "军工（订单、装备采购）相关催化剂在现有工作区文件中缺乏详细数据，需补充研究",
+    "所有日期推算基于参考日期2025-01-13，如实际当前日期不同需重新校准"
+  ],
+  "recommendationsForVerification": {
+    "withWebAccess": [
+      "访问中国政府网(www.gov.cn)查询国务院下周政策吹风会预告",
+      "搜索site:miit.gov.cn 机器人/低空经济/AI算力 政策 2025年1月",
+      "查看地方两会（上海、广东、北京、深圳等）政府工作报告是否提及相关产业",
+      "访问上交所/深交所公告，查看上述公司是否有重大合同/投资/业绩预告公告",
+      "搜索CES 2025及国内机器人展会后续技术发布动态"
+    ]
+  },
+  "riskDisclosure": "本报告基于工作区已有静态文件整理，不构成投资建议。股市有风险，投资需谨慎。所有政策信息需经联网验证，实际政策发布时间、力度存在不确定性。",
+  "complianceNote": "已排除ST/*ST股票，所有候选股均为A股主板/创业板正常交易股票。信息来源为公开行业研究文件，非内幕信息。"
+}

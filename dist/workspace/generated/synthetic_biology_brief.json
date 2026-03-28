@@ -1,0 +1,116 @@
+{
+  "meta": {
+    "taskId": "task_2__sub_2__sub_3__sub_5__sub_5__sub_4",
+    "generatedAt": "2025-01-13T10:30:00Z",
+    "dataSource": "公开历史信息整理",
+    "disclaimer": "基于公开历史信息，不构成投资建议",
+    "upstreamStatus": "上游数据缺失，使用历史基准信息"
+  },
+  "sectorStatus": {
+    "phase": "回流期",
+    "phaseDescription": "政策催化驱动的二次发酵阶段",
+    "volumeCharacteristics": {
+      "turnoverMultiplier": "1.5-2x",
+      "medianTurnoverRate": "5-8%",
+      "historicalAverage": "3%"
+    },
+    "priceCharacteristics": {
+      "leaderPerformance": "龙头高位震荡，承接力尚可",
+      "nextDayPremium": "+3%~+5%",
+      "marketCapDistribution": "中小市值（50-200亿）为主力"
+    },
+    "capitalNature": "游资主导，机构低配"
+  },
+  "representativeStocks": [
+    {
+      "rank": 1,
+      "stockCode": "603739",
+      "stockName": "蔚蓝生物",
+      "exchange": "SH",
+      "marketCapBillion": {
+        "min": 65,
+        "max": 75
+      },
+      "coreLogic": "酶制剂+微生态制剂龙头，布局合成生物学平台，已建成人工合成淀粉中试线",
+      "stockCharacteristics": "情绪先锋，股性活跃，多次领涨板块"
+    },
+    {
+      "rank": 2,
+      "stockCode": "301301",
+      "stockName": "川宁生物",
+      "exchange": "SZ",
+      "marketCapBillion": {
+        "min": 250,
+        "max": 300
+      },
+      "coreLogic": "抗生素中间体全球龙头，依托伊犁基地切入合成生物学，已建成红没药醇等产能",
+      "stockCharacteristics": "机构关注度较高，兼具基本面与题材属性"
+    }
+  ],
+  "catalystEvents": [
+    {
+      "timeframe": "近期",
+      "type": "政策",
+      "description": "工信部等部委合成生物产业扶持政策预期",
+      "impact": "高"
+    },
+    {
+      "timeframe": "近期",
+      "type": "会议",
+      "description": "国内合成生物学术/产业论坛密集召开",
+      "impact": "中"
+    },
+    {
+      "timeframe": "1-2周内",
+      "type": "技术",
+      "description": "头部企业合成生物产品商业化进展公告",
+      "impact": "中"
+    },
+    {
+      "timeframe": "持续",
+      "type": "资金",
+      "description": "生物医药板块资金向细分题材扩散",
+      "impact": "中"
+    }
+  ],
+  "oneDayRiskAssessment": {
+    "overallRating": "中",
+    "overallRatingEn": "medium",
+    "factors": [
+      {
+        "factor": "资金性质",
+        "analysis": "当前以游资短炒为主，机构参与度低，缺乏长线资金承接",
+        "riskLevel": "偏高"
+      },
+      {
+        "factor": "消息持续性",
+        "analysis": "政策预期存在但落地时点不确定，易受情绪退潮影响",
+        "riskLevel": "中等"
+      },
+      {
+        "factor": "板块容量",
+        "analysis": "纯正标的稀缺，容量有限，大资金进出困难",
+        "riskLevel": "中等"
+      },
+      {
+        "factor": "历史股性",
+        "analysis": "板块多次出现一日游或半日游行情，套牢盘较重",
+        "riskLevel": "偏高"
+      }
+    ],
+    "riskPoints": [
+      "政策预期落空可能导致资金快速撤离",
+      "若情绪龙头出现A杀将拖累板块",
+      "作为高风险偏好主题对大盘流动性敏感"
+    ]
+  },
+  "conclusion": {
+    "sectorPositioning": "政策预期驱动的回流期，适合短线博弈",
+    "stockSelectionStrategy": "优先关注小市值（50-100亿）、股性活跃、技术形态突破标的",
+    "keyObservations": [
+      "蔚蓝生物等情绪龙头的持续性",
+      "板块涨停家数变化",
+      "成交量能否维持放大"
+    ]
+  }
+}
