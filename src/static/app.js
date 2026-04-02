@@ -9,6 +9,11 @@ import {
   resolveAgentGraphParentId,
   summarizeAgentActivity
 } from "./agent-graph-layout.js";
+import { createBotUi } from "./bot-ui.js";
+import { createConnectivityUi } from "./connectivity-ui.js";
+import { describeOperationEvent as describeOperationEventMessage } from "./operation-events.js";
+import { createRunConsoleUi } from "./run-console-ui.js";
+import { createWorkspaceUi } from "./workspace-ui.js";
 
 const saveStatus = document.querySelector("#saveStatus");
 const saveButton = document.querySelector("#saveButton");
@@ -42,6 +47,8 @@ const configHint = document.querySelector("#configHint");
 const planOutput = document.querySelector("#planOutput");
 const workerOutput = document.querySelector("#workerOutput");
 const synthesisOutput = document.querySelector("#synthesisOutput");
+const traceOutput = document.querySelector("#traceOutput");
+const sessionOutput = document.querySelector("#sessionOutput");
 const liveOutput = document.querySelector("#liveOutput");
 const agentVizSummary = document.querySelector("#agentVizSummary");
 const agentVizTimer = document.querySelector("#agentVizTimer");
@@ -183,6 +190,76 @@ const agentVizState = {
   selectedAgentId: "",
   hoveredAgentId: ""
 };
+const traceUiState = {
+  spans: new Map(),
+  session: null
+};
+const runConsoleUi = createRunConsoleUi({
+  workerOutput,
+  traceOutput,
+  sessionOutput,
+  traceUiState,
+  escapeHtml,
+  escapeAttribute,
+  renderList
+});
+const workspaceUi = createWorkspaceUi({
+  elements: {
+    workspaceDirInput,
+    pickWorkspaceButton,
+    refreshWorkspaceButton,
+    workspaceTreeOutput,
+    importWorkspaceFilesInput,
+    importWorkspaceFilesButton,
+    workspaceImportTargetInput,
+    workspaceFilePathInput,
+    readWorkspaceFileButton,
+    workspaceFileOutput
+  },
+  setSaveStatus
+});
+const botUi = createBotUi({
+  state: botUiState,
+  elements: {
+    botConfigStatus,
+    botInstallDirInput,
+    botCommandPrefixInput,
+    botAutoStartInput,
+    botProgressUpdatesInput,
+    botCustomCommandInput,
+    botPresetList,
+    botInstallOutput,
+    startAllBotsButton,
+    stopAllBotsButton,
+    refreshBotRuntimeButton,
+    runCustomBotInstallButton,
+    copyBotCommandsButton
+  },
+  escapeHtml,
+  escapeAttribute,
+  normalizeStringList,
+  formatTimestamp,
+  getWorkspaceDirValue: workspaceUi.getDirValue,
+  loadWorkspaceSummary: workspaceUi.loadSummary,
+  saveSettings
+});
+const connectivityUi = createConnectivityUi({
+  state: schemeUiState,
+  elements: {
+    schemeConnectivityStatus,
+    schemeConnectivityList,
+    schemeConnectivityRetestButton,
+    modelList
+  },
+  escapeHtml,
+  escapeAttribute,
+  getCurrentScheme,
+  setModelTestStatus,
+  collectSecrets,
+  collectModelFromCard,
+  runModelConnectivityTest,
+  formatModelTestRetryStatus
+});
 
 function escapeHtml(value) {
   return String(value)
@@ -868,223 +945,6 @@ function captureCurrentSchemeDraft() {
   return currentScheme;
 }
 
-function ensureSchemeConnectivityState(schemeId, models = []) {
-  const normalizedSchemeId = String(schemeId || "").trim();
-  if (!normalizedSchemeId) {
-    return {
-      tone: "neutral",
-      message: "等待检测",
-      results: []
-    };
-  }
-
-  const existing = schemeUiState.connectivityBySchemeId.get(normalizedSchemeId) || {
-    tone: "neutral",
-    message: "等待检测",
-    results: []
-  };
-  const existingById = new Map(existing.results.map((item) => [item.id, item]));
-  const normalizedResults = (Array.isArray(models) ? models : []).map((model) => ({
-    id: model.id || "",
-    label: model.label || model.id || "未命名模型",
-    tone: existingById.get(model.id)?.tone || "neutral",
-    status: existingById.get(model.id)?.status || "未测试",
-    detail: existingById.get(model.id)?.detail || ""
-  }));
-
-  const next = {
-    tone: existing.tone || "neutral",
-    message: existing.message || "等待检测",
-    results: normalizedResults
-  };
-  schemeUiState.connectivityBySchemeId.set(normalizedSchemeId, next);
-  return next;
-}
-
-function updateSchemeConnectivityEntry(schemeId, modelId, patch = {}) {
-  const scheme = schemeUiState.schemes.find((item) => item.id === schemeId);
-  const state = ensureSchemeConnectivityState(schemeId, scheme?.models || []);
-  const index = state.results.findIndex((item) => item.id === modelId);
-  if (index === -1) {
-    return state;
-  }
-
-  state.results[index] = {
-    ...state.results[index],
-    ...patch
-  };
-  schemeUiState.connectivityBySchemeId.set(schemeId, state);
-  return state;
-}
-
-function buildConnectivityDisplay(payload = {}) {
-  const degraded = Boolean(payload?.degraded);
-  const workflowMode = String(payload?.diagnostics?.workflowProbe?.mode || "").trim();
-  const summary = String(payload?.summary || "").trim();
-  const reply = String(payload?.reply || "").trim();
-  const parts = [];
-
-  if (summary) {
-    parts.push(summary);
-  }
-  if (workflowMode === "fallback" && !degraded) {
-    parts.push("Workflow probe used compatibility fallback.");
-  }
-  if (reply) {
-    parts.push(`Basic reply: ${reply}`);
-  }
-
-  return {
-    tone: degraded ? "warning" : "ok",
-    status: degraded ? "可用(降级)" : "可用",
-    detail: parts.join(" ")
-  };
-}
-
-function getConnectivityCounts(results = []) {
-  const counts = {
-    total: Array.isArray(results) ? results.length : 0,
-    ok: 0,
-    warning: 0,
-    error: 0,
-    testing: 0,
-    neutral: 0
-  };
-
-  for (const item of Array.isArray(results) ? results : []) {
-    const tone = String(item?.tone || "neutral").trim();
-    if (tone === "ok") {
-      counts.ok += 1;
-      continue;
-    }
-    if (tone === "warning") {
-      counts.warning += 1;
-      continue;
-    }
-    if (tone === "error") {
-      counts.error += 1;
-      continue;
-    }
-    if (tone === "testing") {
-      counts.testing += 1;
-      continue;
-    }
-    counts.neutral += 1;
-  }
-
-  counts.available = counts.ok + counts.warning;
-  counts.completed = counts.ok + counts.warning + counts.error;
-  return counts;
-}
-
-function buildConnectivitySummaryMessage(results = []) {
-  const counts = getConnectivityCounts(results);
-  if (!counts.total) {
-    return {
-      tone: "neutral",
-      message: "当前方案没有模型",
-      counts
-    };
-  }
-
-  if (counts.testing > 0) {
-    return {
-      tone: "testing",
-      message: `并发检测中 ${counts.completed}/${counts.total} · 可用 ${counts.available} · 失败 ${counts.error}`,
-      counts
-    };
-  }
-
-  if (counts.error > 0 || counts.warning > 0) {
-    return {
-      tone: "warning",
-      message: `检测完成 · 可用 ${counts.available}/${counts.total} · 降级 ${counts.warning} · 失败 ${counts.error}`,
-      counts
-    };
-  }
-
-  if (counts.ok === counts.total) {
-    return {
-      tone: "ok",
-      message: `检测完成 · 全部可用 ${counts.ok}/${counts.total}`,
-      counts
-    };
-  }
-
-  return {
-    tone: "neutral",
-    message: "等待检测",
-    counts
-  };
-}
-
-function sortConnectivityResults(results = []) {
-  const rank = {
-    error: 0,
-    testing: 1,
-    warning: 2,
-    ok: 3,
-    neutral: 4
-  };
-
-  return [...results].sort((left, right) => {
-    const toneDelta =
-      (rank[String(left?.tone || "neutral")] ?? 99) -
-      (rank[String(right?.tone || "neutral")] ?? 99);
-    if (toneDelta !== 0) {
-      return toneDelta;
-    }
-
-    return String(left?.label || left?.id || "").localeCompare(
-      String(right?.label || right?.id || ""),
-      "zh-CN"
-    );
-  });
-}
-
-function renderSchemeConnectivityListLegacy() {
-  if (!schemeConnectivityList || !schemeConnectivityStatus) {
-    return;
-  }
-
-  const currentScheme = getCurrentScheme();
-  if (!currentScheme) {
-    schemeConnectivityStatus.textContent = "无方案";
-    schemeConnectivityStatus.dataset.tone = "neutral";
-    schemeConnectivityList.innerHTML = "<p class=\"placeholder\">请先添加至少一个方案。</p>";
-    return;
-  }
-
-  const state = ensureSchemeConnectivityState(currentScheme.id, currentScheme.models);
-  const modelById = new Map((currentScheme.models || []).map((model) => [model.id, model]));
-  schemeConnectivityStatus.textContent = state.message || "等待检测";
-  schemeConnectivityStatus.dataset.tone = state.tone || "neutral";
-
-  if (!state.results.length) {
-    schemeConnectivityList.innerHTML = "<p class=\"placeholder\">当前方案还没有可检测的模型。</p>";
-    return;
-  }
-
-  schemeConnectivityList.innerHTML = state.results
-    .map((result) => {
-      const model = modelById.get(result.id) || {};
-      const meta = [model.provider, model.model].filter(Boolean).join(" / ");
-      return [
-        `<article class="scheme-connectivity-row" data-tone="${escapeAttribute(result.tone || "neutral")}">`,
-        `  <div class="scheme-connectivity-head">`,
-        `    <div class="scheme-connectivity-title">`,
-        `      <strong>${escapeHtml(result.label || result.id || "未命名模型")}</strong>`,
-        `      <span class="scheme-connectivity-meta">${escapeHtml(meta || result.id || "")}</span>`,
-        "    </div>",
-        `    <span class="chip" data-tone="${escapeAttribute(result.tone || "neutral")}">${escapeHtml(result.status || "未测试")}</span>`,
-        "  </div>",
-        `  <p class="scheme-connectivity-copy">${escapeHtml(result.detail || "等待连接测试结果。")}</p>`,
-        "</article>"
-      ].join("");
-    })
-    .join("");
-}
-
 function syncCurrentSchemeHint() {
   if (!schemeHint) {
     return;
@@ -1139,25 +999,6 @@ function renderSchemeControls() {
     removeSchemeButton.disabled = schemeUiState.schemes.length <= 1;
   }
   syncCurrentSchemeHint();
-}
-
-function applyStoredConnectivityToVisibleModelCards() {
-  const currentScheme = getCurrentScheme();
-  if (!currentScheme) {
-    return;
-  }
-
-  const state = ensureSchemeConnectivityState(currentScheme.id, currentScheme.models);
-  const byId = new Map(state.results.map((result) => [result.id, result]));
-  for (const card of Array.from(modelList.querySelectorAll(".model-card"))) {
-    const modelId = card.querySelector("[data-model-id]")?.value.trim() || "";
-    const result = byId.get(modelId);
-    if (!result) {
-      setModelTestStatus(card, "未测试");
-      continue;
-    }
-    setModelTestStatus(card, result.status || "未测试", result.tone || "neutral");
-  }
 }
 
 function renderCurrentSchemeModels() {
@@ -1269,530 +1110,10 @@ function updateControllerOptions(preferredValue = "") {
   controllerSelect.value = nextValue;
 }
 
-function getBotInstallDirValue() {
-  return botInstallDirInput?.value.trim() || botUiState.defaultInstallDir || "bot-connectors";
-}
-
-function getBotCommandPrefixValue() {
-  return botCommandPrefixInput?.value.trim() || "/agent";
-}
-
-function setBotInstallOutput(message) {
-  if (!botInstallOutput) {
-    return;
-  }
-
-  botInstallOutput.textContent = message;
-}
-
-function getBotPresetById(presetId) {
-  return botUiState.presets.find((preset) => preset.id === String(presetId || "").trim()) || null;
-}
-
-function getBotPresetConfig(presetId) {
-  return botUiState.presetConfigById.get(String(presetId || "").trim()) || {
-    envText: ""
-  };
-}
-
-function normalizeBotEnvName(value) {
-  return String(value || "").trim();
-}
-
-function parseBotEnvText(envText) {
-  const values = new Map();
-
-  for (const line of String(envText || "").split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) {
-      continue;
-    }
-
-    const match = trimmed.match(/^([\w.-]+)\s*=\s*(.*)$/);
-    if (!match) {
-      continue;
-    }
-
-    values.set(match[1], match[2] ?? "");
-  }
-
-  return values;
-}
-
-function getBotPresetFields(preset) {
-  return Array.isArray(preset?.fields)
-    ? preset.fields.filter((field) => normalizeBotEnvName(field?.envName))
-    : [];
-}
-
-function getBotPresetFieldEnvNames(preset) {
-  return getBotPresetFields(preset).map((field) => normalizeBotEnvName(field.envName));
-}
-
-function getAllBotStructuredEnvNames() {
-  const names = new Set();
-
-  for (const preset of botUiState.presets) {
-    for (const envName of getBotPresetFieldEnvNames(preset)) {
-      names.add(envName);
-    }
-  }
-
-  return names;
-}
-
-function buildSecretValueMap(secrets = []) {
-  const values = new Map();
-
-  for (const entry of Array.isArray(secrets) ? secrets : []) {
-    const name = normalizeBotEnvName(entry?.name);
-    if (!name) {
-      continue;
-    }
-
-    values.set(name, String(entry?.value ?? ""));
-  }
-
-  return values;
-}
-
-function stripStructuredBotEnvText(envText, knownNames = []) {
-  const blocked = new Set(
-    Array.from(knownNames || [])
-      .map((name) => normalizeBotEnvName(name))
-      .filter(Boolean)
-  );
-
-  if (!blocked.size) {
-    return String(envText || "").trim();
-  }
-
-  return String(envText || "")
-    .split(/\r?\n/)
-    .filter((line) => {
-      const match = line.trim().match(/^([\w.-]+)\s*=/);
-      return !match || !blocked.has(match[1]);
-    })
-    .join("\n")
-    .trim();
-}
-
-function sanitizeBotPresetConfig(presetId, value) {
-  const preset = getBotPresetById(presetId);
-  return {
-    envText: stripStructuredBotEnvText(String(value?.envText || ""), getBotPresetFieldEnvNames(preset))
-  };
-}
-
-function resolveBotAdvancedEnvPlaceholder(preset) {
-  const hiddenNames = new Set(getBotPresetFieldEnvNames(preset));
-  const hints = (Array.isArray(preset?.envHints) ? preset.envHints : []).filter((hint) => {
-    const parsed = parseBotEnvText(hint);
-    const firstName = Array.from(parsed.keys())[0] || "";
-    return !firstName || !hiddenNames.has(firstName);
-  });
-
-  return hints.join("\n") || "HTTP_PROXY=http://127.0.0.1:7890\nCUSTOM_FLAG=1";
-}
-
-function resolveBotFieldDefaultValue(field) {
-  if (field?.defaultValue != null) {
-    return String(field.defaultValue);
-  }
-
-  if (field?.type === "toggle") {
-    return String(field?.falseValue ?? "0");
-  }
-
-  return "";
-}
-
-function resolveBotFieldValue(presetId, field, presetConfig = getBotPresetConfig(presetId)) {
-  const envName = normalizeBotEnvName(field?.envName);
-  if (!envName) {
-    return resolveBotFieldDefaultValue(field);
-  }
-
-  if (botUiState.secretValueByName.has(envName)) {
-    return botUiState.secretValueByName.get(envName);
-  }
-
-  const legacyValues = parseBotEnvText(presetConfig?.envText);
-  if (legacyValues.has(envName)) {
-    return legacyValues.get(envName);
-  }
-
-  return resolveBotFieldDefaultValue(field);
-}
-
-function readBotFieldValue(input) {
-  if (!input) {
-    return "";
-  }
-
-  if (input.dataset.fieldType === "toggle") {
-    return input.checked ? input.dataset.trueValue || "1" : input.dataset.falseValue || "0";
-  }
-
-  return input.value;
-}
-
-function syncBotSecretValuesFromDom(source = null) {
-  const inputs =
-    source && source.matches?.("[data-bot-field]")
-      ? [source]
-      : Array.from(botPresetList?.querySelectorAll("[data-bot-field]") || []);
-
-  for (const input of inputs) {
-    const envName = normalizeBotEnvName(input.dataset.fieldName);
-    if (!envName) {
-      continue;
-    }
-
-    botUiState.secretValueByName.set(envName, String(readBotFieldValue(input) ?? ""));
-  }
-}
-
-function collectBotSecretEntries() {
-  const result = [];
-
-  for (const preset of botUiState.presets) {
-    const presetConfig = getBotPresetConfig(preset.id);
-    const legacyValues = parseBotEnvText(presetConfig.envText);
-
-    for (const field of getBotPresetFields(preset)) {
-      const envName = normalizeBotEnvName(field?.envName);
-      if (!envName) {
-        continue;
-      }
-
-      const input = botPresetList?.querySelector(
-        `[data-bot-field][data-preset-id="${preset.id}"][data-field-name="${envName}"]`
-      );
-      const defaultValue = resolveBotFieldDefaultValue(field);
-      const value = String(
-        input
-          ? readBotFieldValue(input)
-          : botUiState.secretValueByName.get(envName) ?? legacyValues.get(envName) ?? defaultValue
-      );
-      const hasStoredValue = botUiState.secretValueByName.has(envName);
-
-      if (!hasStoredValue && !legacyValues.has(envName) && value === defaultValue) {
-        continue;
-      }
-
-      result.push({
-        name: envName,
-        value
-      });
-    }
-  }
-
-  return result;
-}
-
-function mergeSecretEntries(...collections) {
-  const merged = new Map();
-
-  for (const collection of collections) {
-    for (const entry of Array.isArray(collection) ? collection : []) {
-      const name = normalizeBotEnvName(entry?.name);
-      if (!name) {
-        continue;
-      }
-
-      merged.set(name, {
-        name,
-        value: String(entry?.value ?? "")
-      });
-    }
-  }
-
-  return Array.from(merged.values());
-}
-
-function filterVisibleSharedSecrets(secrets = []) {
-  const hiddenNames = getAllBotStructuredEnvNames();
-
-  return (Array.isArray(secrets) ? secrets : []).filter((entry) => {
-    const name = normalizeBotEnvName(entry?.name);
-    return !name || !hiddenNames.has(name);
-  });
-}
-
-function renderBotStructuredField(preset, field, presetConfig) {
-  const envName = normalizeBotEnvName(field?.envName);
-  if (!envName) {
-    return "";
-  }
-
-  const label = field.label || envName;
-  const descriptionParts = [];
-  if (field.description) {
-    descriptionParts.push(String(field.description));
-  }
-  descriptionParts.push("本地加密保存");
-  const fieldHint = descriptionParts.join(" · ");
-  const requiredTag = field.required
-    ? '<span class="bot-field-required" aria-label="必填">必填</span>'
-    : "";
-
-  if (field.type === "toggle") {
-    const currentValue = resolveBotFieldValue(preset.id, field, presetConfig);
-    const checked = currentValue === String(field.trueValue ?? "1");
-    return `
-      <div class="field toggle-field bot-preset-field bot-preset-field-wide">
-        <span>${escapeHtml(label)}${requiredTag}</span>
-        <div class="toggle-control">
-          <input
-            data-bot-field
-            data-preset-id="${escapeAttribute(preset.id)}"
-            data-field-name="${escapeAttribute(envName)}"
-            data-field-type="toggle"
-            data-true-value="${escapeAttribute(String(field.trueValue ?? "1"))}"
-            data-false-value="${escapeAttribute(String(field.falseValue ?? "0"))}"
-            type="checkbox"
-            ${checked ? "checked" : ""}
-          />
-          <span>${escapeHtml(fieldHint)}</span>
-        </div>
-      </div>
-    `;
-  }
-
-  const inputType = field.type === "password" ? "password" : "text";
-  const autocomplete = field.type === "password" ? "new-password" : "off";
-  return `
-    <label class="field bot-preset-field">
-      <span>${escapeHtml(label)}${requiredTag}</span>
-      <input
-        data-bot-field
-        data-preset-id="${escapeAttribute(preset.id)}"
-        data-field-name="${escapeAttribute(envName)}"
-        data-field-type="${escapeAttribute(field.type || "text")}"
-        type="${escapeAttribute(inputType)}"
-        autocomplete="${escapeAttribute(autocomplete)}"
-        placeholder="${escapeAttribute(field.placeholder || "")}"
-        value="${escapeAttribute(resolveBotFieldValue(preset.id, field, presetConfig))}"
-      />
-      <small class="field-hint">${escapeHtml(fieldHint)}</small>
-    </label>
-  `;
-}
-
-function collectEnabledBotPresetIdsFromDom() {
-  return Array.from(botPresetList?.querySelectorAll("[data-bot-enabled]:checked") || [])
-    .map((input) => input.value.trim())
-    .filter(Boolean);
-}
-
-function collectBotPresetConfigsFromDom() {
-  const result = {};
-  for (const textarea of Array.from(botPresetList?.querySelectorAll("[data-bot-env]") || [])) {
-    const presetId = textarea.dataset.presetId || "";
-    if (!presetId) {
-      continue;
-    }
-    result[presetId] = {
-      envText: textarea.value
-    };
-  }
-  return result;
-}
-
-function syncEnabledBotPresetIds(sourceIds = null) {
-  botUiState.enabledPresetIds = new Set(
-    normalizeStringList(sourceIds == null ? collectEnabledBotPresetIdsFromDom() : sourceIds)
-  );
-}
-
-function syncBotPresetConfigs(source = null) {
-  const raw = source && typeof source === "object" ? source : collectBotPresetConfigsFromDom();
-  botUiState.presetConfigById = new Map(
-    Object.entries(raw).map(([presetId, value]) => [
-      presetId,
-      {
-        envText: String(value?.envText || "")
-      }
-    ])
-  );
-}
-
-function resolveBotPresetStatus(presetId) {
-  if (botUiState.installingPresetId === presetId) {
-    return {
-      message: "安装中...",
-      tone: "warning"
-    };
-  }
-
-  return botUiState.installStatusById.get(presetId) || {
-    message: "未安装",
-    tone: "neutral"
-  };
-}
-
-function resolveBotRuntimeStatus(presetId) {
-  const runtime = botUiState.runtimeById.get(presetId);
-  if (!runtime) {
-    return {
-      message: "未启动",
-      tone: "neutral",
-      detail: ""
-    };
-  }
-
-  const startedAt = runtime.startedAt ? formatTimestamp(runtime.startedAt) : "";
-  switch (runtime.status) {
-    case "running":
-      return {
-        message: runtime.pid ? `运行中 · PID ${runtime.pid}` : "运行中",
-        tone: "ok",
-        detail: startedAt ? `启动时间：${startedAt}` : ""
-      };
-    case "stopping":
-      return {
-        message: "停止中...",
-        tone: "warning",
-        detail: ""
-      };
-    case "failed":
-      return {
-        message: "运行失败",
-        tone: "error",
-        detail: runtime.lastError || ""
-      };
-    default:
-      return {
-        message: "未启动",
-        tone: "neutral",
-        detail: runtime.lastOutput || ""
-      };
-  }
-}
-
-function renderBotPresetList(preferredEnabledIds = null, preferredPresetConfigs = null) {
-  if (!botPresetList) {
-    return;
-  }
-
-  if (botPresetList.children.length) {
-    syncBotSecretValuesFromDom();
-  }
-
-  if (preferredEnabledIds != null) {
-    syncEnabledBotPresetIds(preferredEnabledIds);
-  } else if (botPresetList.children.length) {
-    syncEnabledBotPresetIds();
-  }
-
-  if (preferredPresetConfigs != null) {
-    syncBotPresetConfigs(preferredPresetConfigs);
-  } else if (botPresetList.children.length) {
-    syncBotPresetConfigs();
-  }
-
-  if (!botUiState.presets.length) {
-    botPresetList.innerHTML = '<p class="placeholder">暂无可用 Bot 预设。</p>';
-    return;
-  }
-
-  const enabledIds = botUiState.enabledPresetIds;
-  botPresetList.innerHTML = botUiState.presets
-    .map((preset) => {
-      const status = resolveBotPresetStatus(preset.id);
-      const runtime = resolveBotRuntimeStatus(preset.id);
-      const presetConfig = getBotPresetConfig(preset.id);
-      const structuredFields = getBotPresetFields(preset);
-      const extraEnvText = stripStructuredBotEnvText(
-        presetConfig.envText,
-        getBotPresetFieldEnvNames(preset)
-      );
-      const tags = Array.isArray(preset.tags) ? preset.tags : [];
-      const disabled = Boolean(botUiState.installingPresetId);
-      return `
-        <article class="bot-preset-card" data-preset-id="${escapeAttribute(preset.id)}">
-          <div class="bot-preset-head">
-            <div class="bot-preset-title">
-              <h3>${escapeHtml(preset.label)}</h3>
-              <div class="bot-preset-meta">
-                <span class="chip">${escapeHtml(preset.channel || "Bot")}</span>
-                <span class="chip">${escapeHtml(preset.source || "预设")}</span>
-                ${tags.map((tag) => `<span class="badge">${escapeHtml(tag)}</span>`).join("")}
-              </div>
-            </div>
-            <div class="bot-preset-meta">
-              <span class="bot-preset-status" data-tone="${escapeAttribute(status.tone)}">${escapeHtml(status.message)}</span>
-              <span class="bot-preset-status" data-tone="${escapeAttribute(runtime.tone)}">${escapeHtml(runtime.message)}</span>
-            </div>
-          </div>
-          <p class="bot-preset-desc">${escapeHtml(preset.description || "未提供说明。")}</p>
-          <pre class="bot-preset-command">${escapeHtml(preset.installCommand || "")}</pre>
-          <div class="bot-preset-runtime">
-            ${
-              structuredFields.length
-                ? `
-                  <div class="bot-preset-field-grid">
-                    ${structuredFields
-                      .map((field) => renderBotStructuredField(preset, field, presetConfig))
-                      .join("")}
-                  </div>
-                  <p class="bot-preset-note">这些参数会加密保存到本地，不会明文写入配置文件。</p>
-                `
-                : ""
-            }
-            <label class="field">
-              <span>${structuredFields.length ? "附加环境变量（高级）" : "环境变量（每行一个 KEY=VALUE）"}</span>
-              <textarea
-                data-bot-env
-                data-preset-id="${escapeAttribute(preset.id)}"
-                placeholder="${escapeAttribute(resolveBotAdvancedEnvPlaceholder(preset))}"
-              >${escapeHtml(extraEnvText)}</textarea>
-              ${
-                structuredFields.length
-                  ? '<small class="field-hint">只在需要额外代理、日志或高级变量时填写；上面的结构化字段不需要重复写在这里。</small>'
-                  : ""
-              }
-            </label>
-            ${runtime.detail ? `<p class="meta-row">${escapeHtml(runtime.detail)}</p>` : ""}
-          </div>
-          <div class="bot-preset-actions">
-            <label class="bot-preset-toggle">
-              <input
-                data-bot-enabled
-                type="checkbox"
-                value="${escapeAttribute(preset.id)}"
-                ${enabledIds.has(preset.id) ? "checked" : ""}
-              />
-              <span>纳入默认配置</span>
-            </label>
-            <div class="panel-actions">
-              <button
-                data-bot-install
-                type="button"
-                class="small"
-                ${disabled ? "disabled" : ""}
-              >
-                一键安装
-              </button>
-              <button data-bot-start type="button" class="ghost small">启动</button>
-              <button data-bot-stop type="button" class="ghost danger small">停止</button>
-              <button data-bot-copy type="button" class="ghost small">复制命令</button>
-              <button data-bot-docs type="button" class="ghost small">打开文档</button>
-            </div>
-          </div>
-        </article>
-      `;
-    })
-    .join("");
-}
-
 function collectSettingsPayload() {
-  syncEnabledBotPresetIds();
-  syncBotPresetConfigs();
-  syncBotSecretValuesFromDom();
   captureCurrentSchemeDraft();
   const currentScheme = getCurrentScheme();
+  const botSettings = botUi.collectSettings();
 
   return {
     server: {
@@ -1808,24 +1129,9 @@ function collectSettingsPayload() {
       delegateMaxDepth: delegateMaxDepthInput?.value,
       phaseParallel: collectPhaseParallelSettings()
     },
-    workspace: {
-      dir: workspaceDirInput.value.trim()
-    },
-    bot: {
-      installDir: getBotInstallDirValue(),
-      commandPrefix: getBotCommandPrefixValue(),
-      autoStart: Boolean(botAutoStartInput?.checked),
-      progressUpdates: botProgressUpdatesInput?.checked !== false,
-      customCommand: botCustomCommandInput?.value.trim() || "",
-      enabledPresets: Array.from(botUiState.enabledPresetIds),
-      presetConfigs: Object.fromEntries(
-        Array.from(botUiState.presetConfigById.entries()).map(([presetId, value]) => [
-          presetId,
-          sanitizeBotPresetConfig(presetId, value)
-        ])
-      )
-    },
-    secrets: mergeSecretEntries(collectSecrets(), collectBotSecretEntries()),
+    workspace: workspaceUi.collectSettings(),
+    bot: botSettings,
+    secrets: mergeSecretEntries(collectSecrets(), botUi.collectSecretEntries()),
     schemes: schemeUiState.schemes.map((scheme) => ({
       id: scheme.id,
       label: scheme.label,
@@ -1838,7 +1144,6 @@ function collectSettingsPayload() {
 
 function renderSettings(settings) {
   knownModelConfigs.clear();
-  botUiState.secretValueByName = buildSecretValueMap(settings.secrets || []);
   portInput.value = settings.server?.port ?? 4040;
   parallelInput.value = settings.cluster?.maxParallel ?? 3;
   if (subordinateParallelInput) {
@@ -1855,22 +1160,8 @@ function renderSettings(settings) {
       input.value = settings.cluster?.phaseParallel?.[phase] ?? "";
     }
   }
-  workspaceDirInput.value = settings.workspace?.dir || "./workspace";
-  if (botInstallDirInput) {
-    botInstallDirInput.value = settings.bot?.installDir || botUiState.defaultInstallDir;
-  }
-  if (botCommandPrefixInput) {
-    botCommandPrefixInput.value = settings.bot?.commandPrefix || "/agent";
-  }
-  if (botAutoStartInput) {
-    botAutoStartInput.checked = Boolean(settings.bot?.autoStart);
-  }
-  if (botProgressUpdatesInput) {
-    botProgressUpdatesInput.checked = settings.bot?.progressUpdates !== false;
-  }
-  if (botCustomCommandInput) {
-    botCustomCommandInput.value = settings.bot?.customCommand || "";
-  }
+  workspaceUi.applySettings(settings.workspace || {});
+  botUi.applySettings(settings.bot || {}, settings.secrets || []);
 
   const inputSchemes =
     Array.isArray(settings.schemes) && settings.schemes.length
@@ -1888,7 +1179,7 @@ function renderSettings(settings) {
       : inputSchemes[0]?.id || "";
 
   secretList.innerHTML = "";
-  for (const secret of filterVisibleSharedSecrets(settings.secrets || [])) {
+  for (const secret of botUi.filterVisibleSharedSecrets(settings.secrets || [])) {
     secretList.append(createSecretRow(secret));
   }
   if (!secretList.children.length) {
@@ -1897,55 +1188,10 @@ function renderSettings(settings) {
 
   renderSchemeControls();
   renderCurrentSchemeModels();
-  renderBotPresetList(settings.bot?.enabledPresets || [], settings.bot?.presetConfigs || {});
 }
 
 function renderPlan(plan) {
   planOutput.textContent = JSON.stringify(plan, null, 2);
-}
-
-function renderWorkers(executions) {
-  if (!executions?.length) {
-    workerOutput.innerHTML = '<p class="placeholder">暂无工作模型结果。</p>';
-    return;
-  }
-
-  workerOutput.innerHTML = executions
-    .map((execution) => {
-      const output = execution.output || {};
-      return `
-        <section class="worker-card">
-          <div class="worker-head">
-            <strong>${escapeHtml(execution.workerLabel || execution.workerId || "工作模型")}</strong>
-            <span class="badge ${escapeHtml(execution.status || "unknown")}">${escapeHtml(execution.status || "unknown")}</span>
-          </div>
-          <p class="meta-row">公开思考摘要：${escapeHtml(output.thinkingSummary || "未提供")}</p>
-          <p>${escapeHtml(output.summary || "未返回摘要。")}</p>
-          <h3>关键发现</h3>
-          ${renderList(output.keyFindings, "未提供关键发现。")}
-          <h3>风险</h3>
-          ${renderList(output.risks, "未提供风险。")}
-          <h3>组长委派说明</h3>
-          ${renderList(output.delegationNotes, output.subordinateCount ? "未提供委派说明。" : "本任务未创建下属 agent。")}
-          <h3>下属 Agent</h3>
-          ${renderList(
-            (output.subordinateResults || []).map(
-              (item) => `${item.agentLabel || item.agentId}: ${item.summary || item.status || "无摘要"}`
-            ),
-            "未创建下属 agent。"
-          )}
-          <h3>后续动作</h3>
-          ${renderList(output.followUps, "未提供后续动作。")}
-          <h3>验证状态</h3>
-          <p>${escapeHtml(output.verificationStatus || "not_applicable")}</p>
-          <h3>执行命令</h3>
-          ${renderList(output.executedCommands, "未执行命令。")}
-          <h3>生成文件</h3>
-          ${renderList(output.generatedFiles, "未生成文件。")}
-        </section>
-      `;
-    })
-    .join("");
 }
 
 function renderSynthesis(result, timings) {
@@ -2858,7 +2104,7 @@ function updateAgentGraphFromEvent(event) {
                   ? "主控流程执行失败"
                   : event.detail || "主控正在更新计划"
     });
-    appendAgentNote(controller.id, event.planStrategy || event.detail || describeOperationEvent(event), timestamp);
+    appendAgentNote(controller.id, event.planStrategy || event.detail || describeOperationEventMessage(event, { formatDelay }), timestamp);
 
     if (event.stage === "planning_done" && Array.isArray(event.planTasks)) {
       for (const task of event.planTasks) {
@@ -2980,146 +2226,25 @@ function updateAgentGraphFromEvent(event) {
     case "workspace_write":
     case "workspace_command":
       agent.status = "running";
-      agent.action = describeOperationEvent(event);
+      agent.action = describeOperationEventMessage(event, { formatDelay });
       break;
     default:
       break;
   }
 
-  appendAgentNote(agent.id, event.thinkingSummary || event.detail || describeOperationEvent(event), timestamp);
+  appendAgentNote(agent.id, event.thinkingSummary || event.detail || describeOperationEventMessage(event, { formatDelay }), timestamp);
   renderAgentGraph();
 }
 
 function getWorkspaceDirValue() {
-  return workspaceDirInput.value.trim();
-}
-
-function buildWorkspaceQuery(workspaceDir) {
-  const normalizedDir = String(workspaceDir || "").trim();
-  return normalizedDir ? `?workspaceDir=${encodeURIComponent(normalizedDir)}` : "";
-}
-
-function normalizeRelativeImportPath(value) {
-  return String(value || "")
-    .trim()
-    .replaceAll("\\", "/")
-    .replace(/^\/+/, "")
-    .replace(/\/+$/, "");
-}
-
-function joinRelativePath(left, right) {
-  const normalizedLeft = normalizeRelativeImportPath(left);
-  const normalizedRight = normalizeRelativeImportPath(right);
-  if (!normalizedLeft) {
-    return normalizedRight;
-  }
-  if (!normalizedRight) {
-    return normalizedLeft;
-  }
-  return `${normalizedLeft}/${normalizedRight}`;
-}
-
-function arrayBufferToBase64(buffer) {
-  const bytes = new Uint8Array(buffer);
-  const chunkSize = 0x8000;
-  let binary = "";
-
-  for (let index = 0; index < bytes.length; index += chunkSize) {
-    const chunk = bytes.subarray(index, index + chunkSize);
-    binary += String.fromCharCode(...chunk);
-  }
-
-  return btoa(binary);
-}
-
-async function fileToBase64(file) {
-  const buffer = await file.arrayBuffer();
-  return arrayBufferToBase64(buffer);
-}
-
-function describeOperationEvent(event) {
-  const actor = event.agentLabel || event.modelLabel || event.modelId || "";
-  switch (event.stage) {
-    case "submitted":
-      return "请求已提交，等待后端处理。";
-    case "model_test_retry":
-      return `模型 ${event.modelId || ""} 正在重试，第 ${event.attempt}/${event.maxRetries} 次，${formatDelay(event.nextDelayMs)} 后再次请求。`;
-    case "model_test_done":
-      return "模型连接测试完成。";
-    case "model_test_failed":
-      return `模型连接测试失败：${event.detail || "未知错误"}`;
-    case "planning_start":
-      return `主控 Agent ${actor} 正在拆解任务。`;
-    case "planning_done":
-      return `主控 Agent 已生成计划，共 ${event.taskCount ?? 0} 个子任务。`;
-    case "planning_retry":
-      return `主控 Agent ${actor} 正在重试，第 ${event.attempt}/${event.maxRetries} 次，${formatDelay(event.nextDelayMs)} 后再次请求。`;
-    case "cancel_requested":
-      return event.detail || "已收到终止任务请求，正在停止运行。";
-    case "phase_start":
-      return `进入 ${event.phase || ""} 阶段。`;
-    case "phase_done":
-      return `已完成 ${event.phase || ""} 阶段。`;
-    case "worker_start":
-      return `组长 Agent ${actor} 开始执行：${event.taskTitle || event.taskId || "子任务"}`;
-    case "worker_done":
-      return `组长 Agent ${actor} 已完成：${event.taskTitle || event.taskId || "子任务"}`;
-    case "workspace_list":
-      return `${actor} 已查看目录：${event.detail || ""}`;
-    case "workspace_read":
-      return `${actor} 已读取文件：${event.detail || ""}`;
-    case "workspace_write":
-      return `${actor} 已写入文件：${(event.generatedFiles || []).join(", ") || event.detail || ""}`;
-    case "workspace_command":
-      return `${actor} 已执行命令：${event.detail || ""}，退出码 ${event.exitCode ?? "n/a"}`;
-    case "worker_retry":
-      return `组长 Agent ${actor} 正在重试，第 ${event.attempt}/${event.maxRetries} 次，${formatDelay(event.nextDelayMs)} 后再次请求。`;
-    case "worker_failed":
-      return `组长 Agent ${actor} 执行失败：${event.detail || "未知错误"}`;
-    case "leader_delegate_start":
-      return `组长 Agent ${actor} 正在思考如何分配下属任务。`;
-    case "leader_delegate_done":
-      return `组长 Agent ${actor} 已完成下属任务分配。`;
-    case "leader_delegate_retry":
-      return `组长 Agent ${actor} 的分配方案正在重试，第 ${event.attempt}/${event.maxRetries} 次。`;
-    case "subagent_created":
-      return `已创建下属 Agent ${actor}：${event.taskTitle || event.detail || "等待执行"}`;
-    case "subagent_start":
-      return `下属 Agent ${actor} 开始执行：${event.taskTitle || event.taskId || "子任务"}`;
-    case "subagent_done":
-      return `下属 Agent ${actor} 已完成：${event.taskTitle || event.taskId || "子任务"}`;
-    case "subagent_retry":
-      return `下属 Agent ${actor} 正在重试，第 ${event.attempt}/${event.maxRetries} 次，${formatDelay(event.nextDelayMs)} 后再次请求。`;
-    case "subagent_failed":
-      return `下属 Agent ${actor} 执行失败：${event.detail || "未知错误"}`;
-    case "leader_synthesis_start":
-      return `组长 Agent ${actor} 正在回收并汇总下属结果。`;
-    case "leader_synthesis_retry":
-      return `组长 Agent ${actor} 的汇总过程正在重试，第 ${event.attempt}/${event.maxRetries} 次。`;
-    case "validation_gate_failed":
-      return event.detail || "验证阶段未通过。";
-    case "synthesis_start":
-      return `主控 Agent ${actor} 正在汇总结果。`;
-    case "synthesis_retry":
-      return `主控 Agent ${actor} 正在重试，第 ${event.attempt}/${event.maxRetries} 次，${formatDelay(event.nextDelayMs)} 后再次请求。`;
-    case "cluster_done":
-      return `集群运行完成，总耗时 ${event.totalMs ?? "n/a"} ms。`;
-    case "cluster_cancelled":
-      return `任务已终止：${event.detail || "运行已被手动取消。"}`;
-    case "cluster_failed":
-      return `集群运行失败：${event.detail || "未知错误"}`;
-    default:
-      if (event.detail) {
-        return event.detail;
-      }
-      if (event.message) {
-        return event.message;
-      }
-      return "收到新的运行事件。";
-  }
+  return workspaceUi.getDirValue();
 }
 
 function appendLiveEvent(event) {
+  if (event.stage === "session_update" || String(event.stage || "").startsWith("trace_")) {
+    return;
+  }
+
   if (liveOutput.querySelector(".placeholder")) {
     liveOutput.innerHTML = "";
   }
@@ -3129,7 +2254,7 @@ function appendLiveEvent(event) {
   item.dataset.tone = event.tone || "neutral";
   item.innerHTML = `
     <div class="feed-time">${escapeHtml(formatTimestamp(event.timestamp) || "--:--:--")}</div>
-    <div class="feed-message">${escapeHtml(describeOperationEvent(event))}</div>
+    <div class="feed-message">${escapeHtml(describeOperationEventMessage(event, { formatDelay }))}</div>
   `;
   liveOutput.append(item);
 
@@ -3298,427 +2423,19 @@ function batchAddModels() {
 }
 
 async function loadWorkspaceSummary() {
-  workspaceTreeOutput.textContent = "正在读取工作区...";
-  try {
-    const response = await fetch(`/api/workspace${buildWorkspaceQuery(getWorkspaceDirValue())}`);
-    const payload = await response.json();
-    if (!payload.ok) {
-      throw new Error(payload.error);
-    }
-
-    const treeText = payload.workspace.tree?.length ? payload.workspace.tree.join("\n") : "(工作区为空)";
-    workspaceTreeOutput.textContent = `根目录：${payload.workspace.resolvedDir}\n\n${treeText}`;
-  } catch (error) {
-    workspaceTreeOutput.textContent = `读取工作区失败：${error.message}`;
-  }
+  return workspaceUi.loadSummary();
 }
 
 async function readWorkspaceFilePreview() {
-  const filePath = workspaceFilePathInput.value.trim();
-  if (!filePath) {
-    workspaceFileOutput.textContent = "请输入要读取的相对路径。";
-    workspaceFilePathInput.focus();
-    return;
-  }
-
-  workspaceFileOutput.textContent = "正在读取文件...";
-  try {
-    const query = new URLSearchParams({
-      path: filePath
-    });
-    if (getWorkspaceDirValue()) {
-      query.set("workspaceDir", getWorkspaceDirValue());
-    }
-    const response = await fetch(`/api/workspace/file?${query.toString()}`);
-    const payload = await response.json();
-    if (!payload.ok) {
-      throw new Error(payload.error);
-    }
-
-    const file = payload.file || {};
-    const suffix = file.truncated ? "\n\n[内容过长，已截断]" : "";
-    workspaceFileOutput.textContent = `${file.content || ""}${suffix}`;
-  } catch (error) {
-    workspaceFileOutput.textContent = `读取文件失败：${error.message}`;
-  }
+  return workspaceUi.readFilePreview();
 }
 
 async function pickWorkspaceFolder() {
-  pickWorkspaceButton.disabled = true;
-  setSaveStatus("正在打开文件夹选择器...", "neutral");
-
-  try {
-    const response = await fetch("/api/system/pick-folder", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        currentDir: getWorkspaceDirValue()
-      })
-    });
-    const payload = await response.json();
-    if (!payload.ok) {
-      throw new Error(payload.error);
-    }
-
-    if (!payload.path) {
-      setSaveStatus("未选择文件夹。", "neutral");
-      return;
-    }
-
-    workspaceDirInput.value = payload.path;
-    setSaveStatus("已选择工作区目录。点击“保存配置”即可持久化。", "ok");
-    await loadWorkspaceSummary();
-  } catch (error) {
-    setSaveStatus(`选择文件夹失败：${error.message}`, "error");
-  } finally {
-    pickWorkspaceButton.disabled = false;
-  }
+  return workspaceUi.pickFolder();
 }
 
 async function importWorkspaceFiles() {
-  const selectedFiles = Array.from(importWorkspaceFilesInput.files || []);
-  if (!selectedFiles.length) {
-    setSaveStatus("请先选择要导入的文件。", "error");
-    importWorkspaceFilesInput.focus();
-    return;
-  }
-
-  const workspaceDir = getWorkspaceDirValue();
-  const targetDir = normalizeRelativeImportPath(workspaceImportTargetInput.value);
-  importWorkspaceFilesButton.disabled = true;
-  importWorkspaceFilesInput.disabled = true;
-  setSaveStatus(`正在导入 ${selectedFiles.length} 个文件...`, "neutral");
-
-  try {
-    const files = await Promise.all(
-      selectedFiles.map(async (file) => ({
-        path: joinRelativePath(targetDir, file.webkitRelativePath || file.name),
-        contentBase64: await fileToBase64(file)
-      }))
-    );
-
-    const response = await fetch("/api/workspace/import", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        workspaceDir,
-        files
-      })
-    });
-    const payload = await response.json();
-    if (!payload.ok) {
-      throw new Error(payload.error);
-    }
-
-    const firstPath = payload.written?.[0]?.path || files[0]?.path || "";
-    if (firstPath) {
-      workspaceFilePathInput.value = firstPath;
-      workspaceFileOutput.textContent = `已导入 ${payload.written.length} 个文件，正在预览 ${firstPath}...`;
-    } else {
-      workspaceFileOutput.textContent = "文件已导入。";
-    }
-
-    await loadWorkspaceSummary();
-    if (firstPath) {
-      await readWorkspaceFilePreview();
-    }
-    setSaveStatus(`已导入 ${payload.written.length} 个文件到工作区。`, "ok");
-  } catch (error) {
-    setSaveStatus(`导入文件失败：${error.message}`, "error");
-    workspaceFileOutput.textContent = `导入文件失败：${error.message}`;
-  } finally {
-    importWorkspaceFilesButton.disabled = false;
-    importWorkspaceFilesInput.disabled = false;
-    importWorkspaceFilesInput.value = "";
-  }
-}
-
-async function copyTextToClipboard(text) {
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(text);
-    return;
-  }
-
-  const scratch = document.createElement("textarea");
-  scratch.value = text;
-  scratch.setAttribute("readonly", "readonly");
-  scratch.style.position = "fixed";
-  scratch.style.opacity = "0";
-  document.body.append(scratch);
-  scratch.select();
-  document.execCommand("copy");
-  scratch.remove();
-}
-
-async function loadBotPresets() {
-  setBotConfigStatus("正在加载 Bot 预设...", "neutral");
-
-  try {
-    const response = await fetch("/api/bot/presets");
-    const payload = await response.json();
-    if (!payload.ok) {
-      throw new Error(payload.error);
-    }
-
-    botUiState.presets = Array.isArray(payload.presets) ? payload.presets : [];
-    botUiState.defaultInstallDir = botUiState.presets[0]?.defaultInstallDir || botUiState.defaultInstallDir;
-    renderBotPresetList(Array.from(botUiState.enabledPresetIds));
-    setBotConfigStatus(`已加载 ${botUiState.presets.length} 个 Bot 预设`, "ok");
-  } catch (error) {
-    botUiState.presets = [];
-    renderBotPresetList([]);
-    setBotConfigStatus(`Bot 预设加载失败：${error.message}`, "error");
-  }
-}
-
-async function loadBotRuntimeStatus() {
-  try {
-    const response = await fetch("/api/bot/runtime");
-    const payload = await response.json();
-    if (!response.ok || payload.ok === false) {
-      throw new Error(payload.error || `HTTP ${response.status}`);
-    }
-
-    botUiState.runtimeById = new Map(
-      (payload.runtime?.bots || []).map((item) => [item.id, item])
-    );
-
-    const runningCount = (payload.runtime?.bots || []).filter((item) => item.status === "running").length;
-    setBotConfigStatus(runningCount ? `已启动 ${runningCount} 个 Bot` : "Bot 连接器未启动", runningCount ? "ok" : "neutral");
-    renderBotPresetList();
-  } catch (error) {
-    setBotConfigStatus(`读取 Bot 运行状态失败：${error.message}`, "error");
-  }
-}
-
-async function ensureBotAutoStart() {
-  try {
-    const response = await fetch("/api/bot/runtime/ensure-auto-start", {
-      method: "POST"
-    });
-    const payload = await response.json();
-    if (!response.ok || payload.ok === false) {
-      throw new Error(payload.error || `HTTP ${response.status}`);
-    }
-
-    botUiState.runtimeById = new Map(
-      (payload.snapshot?.bots || []).map((item) => [item.id, item])
-    );
-    renderBotPresetList();
-  } catch (error) {
-    setBotConfigStatus(`Bot 自动启动失败：${error.message}`, "error");
-  }
-}
-
-async function copyBotCommand(commandText, label = "Bot 命令") {
-  try {
-    await copyTextToClipboard(commandText);
-    setBotInstallOutput(commandText);
-    setBotConfigStatus(`${label}已复制到剪贴板`, "ok");
-  } catch (error) {
-    setBotInstallOutput(commandText);
-    setBotConfigStatus(`复制失败，请手动复制输出区内容：${error.message}`, "error");
-  }
-}
-
-async function copySelectedBotCommands() {
-  const enabledIds = Array.from(botUiState.enabledPresetIds);
-  const presets = (enabledIds.length
-    ? enabledIds.map((presetId) => getBotPresetById(presetId)).filter(Boolean)
-    : botUiState.presets
-  ).filter(Boolean);
-
-  if (!presets.length) {
-    setBotConfigStatus("没有可复制的 Bot 命令。", "error");
-    return;
-  }
-
-  const joined = presets
-    .map((preset) => `# ${preset.label}\n${preset.installCommand}`)
-    .join("\n\n");
-  await copyBotCommand(joined, `${presets.length} 条 Bot 命令`);
-}
-
-async function installBotPreset(presetId) {
-  const preset = getBotPresetById(presetId);
-  if (!preset) {
-    setBotConfigStatus("未找到对应的 Bot 预设。", "error");
-    return;
-  }
-
-  botUiState.installingPresetId = presetId;
-  botUiState.installStatusById.set(presetId, {
-    message: "安装中...",
-    tone: "warning"
-  });
-  renderBotPresetList();
-  setBotConfigStatus(`正在安装 ${preset.label}...`, "warning");
-  setBotInstallOutput(`正在执行：${preset.installCommand}`);
-
-  try {
-    const response = await fetch("/api/bot/install", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        workspaceDir: getWorkspaceDirValue(),
-        installDir: getBotInstallDirValue(),
-        presetId
-      })
-    });
-    const payload = await response.json();
-    if (!response.ok || payload.ok === false) {
-      throw new Error(payload.error || `HTTP ${response.status}`);
-    }
-
-    botUiState.installStatusById.set(presetId, {
-      message: "已安装",
-      tone: "ok"
-    });
-    setBotInstallOutput(
-      `目标目录：${payload.targetDir}\n命令：${payload.command}\n\n${payload.output || "(无输出)"}`
-    );
-    setBotConfigStatus(`${preset.label} 已安装到 ${payload.targetRelativeDir}`, "ok");
-    await loadWorkspaceSummary();
-    await loadBotRuntimeStatus();
-  } catch (error) {
-    botUiState.installStatusById.set(presetId, {
-      message: "安装失败",
-      tone: "error"
-    });
-    setBotInstallOutput(`安装失败：${error.message}`);
-    setBotConfigStatus(`${preset.label} 安装失败：${error.message}`, "error");
-  } finally {
-    botUiState.installingPresetId = "";
-    renderBotPresetList();
-  }
-}
-
-async function runCustomBotInstall() {
-  const command = botCustomCommandInput?.value.trim() || "";
-  if (!command) {
-    setBotConfigStatus("请先填写自定义安装命令。", "error");
-    botCustomCommandInput?.focus();
-    return;
-  }
-
-  runCustomBotInstallButton.disabled = true;
-  setBotConfigStatus("正在执行自定义 Bot 命令...", "warning");
-  setBotInstallOutput(`正在执行：${command}`);
-
-  try {
-    const response = await fetch("/api/bot/install-custom", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        workspaceDir: getWorkspaceDirValue(),
-        installDir: getBotInstallDirValue(),
-        command
-      })
-    });
-    const payload = await response.json();
-    if (!response.ok || payload.ok === false) {
-      throw new Error(payload.error || `HTTP ${response.status}`);
-    }
-
-    setBotInstallOutput(
-      `目标目录：${payload.targetDir}\n命令：${payload.command}\n\n${payload.output || "(无输出)"}`
-    );
-    setBotConfigStatus(`自定义 Bot 命令已执行到 ${payload.targetRelativeDir}`, "ok");
-    await loadWorkspaceSummary();
-  } catch (error) {
-    setBotInstallOutput(`自定义命令执行失败：${error.message}`);
-    setBotConfigStatus(`自定义命令执行失败：${error.message}`, "error");
-  } finally {
-    runCustomBotInstallButton.disabled = false;
-  }
-}
-
-async function startBotRuntime(botId = "") {
-  const requestBody = botId ? { botId } : {};
-  const button = botId ? null : startAllBotsButton;
-  if (button) {
-    button.disabled = true;
-  }
-
-  try {
-    syncEnabledBotPresetIds();
-    syncBotPresetConfigs();
-    await saveSettings();
-
-    const response = await fetch("/api/bot/runtime/start", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(requestBody)
-    });
-    const payload = await response.json();
-    if (!response.ok || payload.ok === false) {
-      throw new Error(payload.error || `HTTP ${response.status}`);
-    }
-
-    botUiState.runtimeById = new Map(
-      (payload.snapshot?.bots || []).map((item) => [item.id, item])
-    );
-    setBotConfigStatus(botId ? `${botId} 已启动` : "已启动默认 Bot 连接器", "ok");
-    setBotInstallOutput(
-      botId
-        ? `已启动连接器：${botId}`
-        : `已启动：${(payload.started || []).join(", ") || "默认 Bot 连接器"}`
-    );
-    renderBotPresetList();
-  } catch (error) {
-    setBotConfigStatus(`启动 Bot 失败：${error.message}`, "error");
-    setBotInstallOutput(`启动 Bot 失败：${error.message}`);
-  } finally {
-    if (button) {
-      button.disabled = false;
-    }
-  }
-}
-
-async function stopBotRuntime(botId = "") {
-  const requestBody = botId ? { botId } : {};
-  const button = botId ? null : stopAllBotsButton;
-  if (button) {
-    button.disabled = true;
-  }
-
-  try {
-    const response = await fetch("/api/bot/runtime/stop", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(requestBody)
-    });
-    const payload = await response.json();
-    if (!response.ok || payload.ok === false) {
-      throw new Error(payload.error || `HTTP ${response.status}`);
-    }
-
-    botUiState.runtimeById = new Map(
-      (payload.runtime?.bots || []).map((item) => [item.id, item])
-    );
-    setBotConfigStatus(botId ? `${botId} 已停止` : "已停止全部 Bot", "ok");
-    setBotInstallOutput(botId ? `已停止连接器：${botId}` : "已停止全部 Bot 连接器。");
-    renderBotPresetList();
-  } catch (error) {
-    setBotConfigStatus(`停止 Bot 失败：${error.message}`, "error");
-    setBotInstallOutput(`停止 Bot 失败：${error.message}`);
-  } finally {
-    if (button) {
-      button.disabled = false;
-    }
-  }
+  return workspaceUi.importFiles();
 }
 
 async function loadSettings() {
@@ -3734,9 +2451,9 @@ async function loadSettings() {
     renderSettings(payload.settings);
     configHint.textContent = `配置文件：${payload.settingsPath}`;
     setSaveStatus("本地配置已加载。", "ok");
-    await loadWorkspaceSummary();
-    await ensureBotAutoStart();
-    await loadBotRuntimeStatus();
+    await workspaceUi.loadSummary();
+    await botUi.ensureAutoStart();
+    await botUi.loadRuntimeStatus();
     await runCurrentSchemeConnectivityTests({ force: true });
   } catch (error) {
     setSaveStatus(`加载配置失败：${error.message}`, "error");
@@ -3764,9 +2481,9 @@ async function saveSettings() {
     renderSettings(payload.settings);
     configHint.textContent = `配置文件：${payload.settingsPath}`;
     setSaveStatus("配置已保存，API Key 已加密存储。若修改了端口，请重启程序后生效。", "ok");
-    await loadWorkspaceSummary();
-    await ensureBotAutoStart();
-    await loadBotRuntimeStatus();
+    await workspaceUi.loadSummary();
+    await botUi.ensureAutoStart();
+    await botUi.loadRuntimeStatus();
     await runCurrentSchemeConnectivityTests({ force: true });
   } catch (error) {
     setSaveStatus(`保存配置失败：${error.message}`, "error");
@@ -3867,9 +2584,12 @@ async function runCluster() {
   const operationId = createOperationId("cluster");
   resetLiveFeed();
   resetAgentGraph();
+  runConsoleUi.resetTracePanels();
   agentGraphState.operationId = operationId;
   beginOperation(operationId, (event) => {
     updateAgentGraphFromEvent(event);
+    runConsoleUi.updateTraceStateFromEvent(event);
+    runConsoleUi.updateSessionStateFromEvent(event);
     appendLiveEvent(event);
     setRunStateFromEvent(event);
   });
@@ -3908,8 +2628,14 @@ async function runCluster() {
     }
 
     renderPlan(payload.plan);
-    renderWorkers(payload.executions);
+    runConsoleUi.renderWorkers(payload.executions);
     renderSynthesis(payload.synthesis, payload.timings);
+    if (payload.session) {
+      runConsoleUi.updateSessionStateFromEvent({
+        stage: "cluster_done",
+        session: payload.session
+      });
+    }
     runState.textContent = "已完成";
   } catch (error) {
     if (requestController.signal.aborted) {
@@ -4029,452 +2755,29 @@ async function runModelConnectivityTest(model, hooks = {}) {
   }
 }
 
-async function testSingleModelLegacy(card) {
-  const button = card.querySelector("[data-model-test]");
-  const model = collectModelFromCard(card);
-
-  button.disabled = true;
-  setModelTestStatus(card, "测试中...", "testing");
-
-  try {
-    const payload = await runModelConnectivityTest(model, {
-      secrets: collectSecrets(),
-      onEvent(event) {
-        if (event.stage === "submitted") {
-          setModelTestStatus(card, "已提交测试请求...", "testing");
-          return;
-        }
-
-        if (event.stage === "model_test_retry") {
-          setModelTestStatus(card, formatModelTestRetryStatus(event), "testing");
-          return;
-        }
-
-        if (event.stage === "model_test_failed") {
-          setModelTestStatus(card, `连接失败：${event.detail || "未知错误"}`, "error");
-        }
-      }
-    });
-    const summary = payload.summary ? `（${payload.summary}）` : "";
-    const reply = payload.reply ? `，基础返回：${payload.reply}` : "";
-    const detail = `可用${summary}${reply}`;
-    setModelTestStatus(card, detail, "ok");
-    const currentScheme = getCurrentScheme();
-    if (currentScheme?.id) {
-      updateSchemeConnectivityEntry(currentScheme.id, model.id, {
-        tone: "ok",
-        status: "可用",
-        detail
-      });
-      renderSchemeConnectivityList();
-    }
-  } catch (error) {
-    const detail = `连接失败：${error.message}`;
-    setModelTestStatus(card, detail, "error");
-    const currentScheme = getCurrentScheme();
-    if (currentScheme?.id) {
-      updateSchemeConnectivityEntry(currentScheme.id, model.id, {
-        tone: "error",
-        status: "失败",
-        detail
-      });
-      renderSchemeConnectivityList();
-    }
-  } finally {
-    button.disabled = false;
-  }
+function ensureSchemeConnectivityState(schemeId, models = []) {
+  return connectivityUi.ensureState(schemeId, models);
 }
 
-async function runCurrentSchemeConnectivityTestsLegacy(options = {}) {
-  const { force = false } = options;
-  captureCurrentSchemeDraft();
-  const currentScheme = getCurrentScheme();
-  if (!currentScheme?.id) {
-    renderSchemeConnectivityList();
-    return;
-  }
-
-  const existingState = ensureSchemeConnectivityState(currentScheme.id, currentScheme.models);
-  const shouldSkip =
-    !force &&
-    existingState.results.length === currentScheme.models.length &&
-    existingState.results.every((item) => item.status && item.status !== "未测试" && item.status !== "检测中");
-  if (shouldSkip) {
-    renderSchemeConnectivityList();
-    return;
-  }
-
-  const runToken = Date.now();
-  schemeUiState.connectivityRunToken = runToken;
-  const secrets = collectSecrets();
-  const total = currentScheme.models.length;
-  if (!total) {
-    schemeUiState.connectivityBySchemeId.set(currentScheme.id, {
-      tone: "neutral",
-      message: "当前方案没有模型",
-      results: []
-    });
-    renderSchemeConnectivityList();
-    return;
-  }
-
-  schemeUiState.connectivityBySchemeId.set(currentScheme.id, {
-    tone: "warning",
-    message: `检测中 0/${total}`,
-    results: currentScheme.models.map((model) => ({
-      id: model.id || "",
-      label: model.label || model.id || "未命名模型",
-      tone: "testing",
-      status: "排队中",
-      detail: "等待开始检测。"
-    }))
-  });
-  renderSchemeConnectivityList();
-  applyStoredConnectivityToVisibleModelCards();
-  if (schemeConnectivityRetestButton) {
-    schemeConnectivityRetestButton.disabled = true;
-  }
-
-  let completed = 0;
-  let passed = 0;
-
-  try {
-    for (const model of currentScheme.models) {
-      if (schemeUiState.connectivityRunToken !== runToken) {
-        return;
-      }
-
-      updateSchemeConnectivityEntry(currentScheme.id, model.id, {
-        tone: "testing",
-        status: "检测中",
-        detail: "正在发送连接测试请求..."
-      });
-      renderSchemeConnectivityList();
-      applyStoredConnectivityToVisibleModelCards();
-
-      try {
-        const payload = await runModelConnectivityTest(model, {
-          secrets,
-          onEvent(event) {
-            if (schemeUiState.connectivityRunToken !== runToken) {
-              return;
-            }
-
-            if (event.stage === "model_test_retry") {
-              updateSchemeConnectivityEntry(currentScheme.id, model.id, {
-                tone: "testing",
-                status: "重试中",
-                detail: formatModelTestRetryStatus(event)
-              });
-              renderSchemeConnectivityList();
-              applyStoredConnectivityToVisibleModelCards();
-            }
-          }
-        });
-        const summary = payload.summary ? `（${payload.summary}）` : "";
-        const reply = payload.reply ? `，基础返回：${payload.reply}` : "";
-        updateSchemeConnectivityEntry(currentScheme.id, model.id, {
-          tone: "ok",
-          status: "可用",
-          detail: `可用${summary}${reply}`
-        });
-        passed += 1;
-      } catch (error) {
-        updateSchemeConnectivityEntry(currentScheme.id, model.id, {
-          tone: "error",
-          status: "失败",
-          detail: `连接失败：${error.message}`
-        });
-      }
-
-      completed += 1;
-      const tone = completed === total && passed === total ? "ok" : completed === total ? "warning" : "warning";
-      const message =
-        completed === total
-          ? `检测完成 ${passed}/${total} 可用`
-          : `检测中 ${completed}/${total}`;
-      const nextState = ensureSchemeConnectivityState(currentScheme.id, currentScheme.models);
-      schemeUiState.connectivityBySchemeId.set(currentScheme.id, {
-        ...nextState,
-        tone,
-        message
-      });
-      renderSchemeConnectivityList();
-      applyStoredConnectivityToVisibleModelCards();
-    }
-  } finally {
-    if (schemeUiState.connectivityRunToken === runToken && schemeConnectivityRetestButton) {
-      schemeConnectivityRetestButton.disabled = false;
-    }
-  }
-}
-
-function syncSchemeConnectivitySummaryState(schemeId) {
-  const scheme = schemeUiState.schemes.find((item) => item.id === schemeId);
-  const state = ensureSchemeConnectivityState(schemeId, scheme?.models || []);
-  const summary = buildConnectivitySummaryMessage(state.results);
-  const next = {
-    ...state,
-    tone: summary.tone,
-    message: summary.message
-  };
-  schemeUiState.connectivityBySchemeId.set(schemeId, next);
-  return next;
+function updateSchemeConnectivityEntry(schemeId, modelId, patch = {}) {
+  return connectivityUi.updateEntry(schemeId, modelId, patch);
 }
 
 function renderSchemeConnectivityList() {
-  if (!schemeConnectivityList || !schemeConnectivityStatus) {
-    return;
-  }
+  return connectivityUi.renderList();
+}
 
-  const currentScheme = getCurrentScheme();
-  if (!currentScheme) {
-    schemeConnectivityStatus.textContent = "无方案";
-    schemeConnectivityStatus.dataset.tone = "neutral";
-    schemeConnectivityList.innerHTML = "<p class=\"placeholder\">请先添加至少一个方案。</p>";
-    return;
-  }
-
-  const state = syncSchemeConnectivitySummaryState(currentScheme.id);
-  const summary = buildConnectivitySummaryMessage(state.results);
-  const modelById = new Map((currentScheme.models || []).map((model) => [model.id, model]));
-  const sortedResults = sortConnectivityResults(state.results);
-  const progressPercent = summary.counts.total
-    ? Math.round((summary.counts.completed / summary.counts.total) * 100)
-    : 0;
-  const overviewCards = [
-    { label: "总数", value: summary.counts.total, tone: "neutral" },
-    { label: "可用", value: summary.counts.available, tone: "ok" },
-    { label: "降级", value: summary.counts.warning, tone: "warning" },
-    { label: "失败", value: summary.counts.error, tone: "error" },
-    { label: "检测中", value: summary.counts.testing, tone: "testing" }
-  ];
-
-  schemeConnectivityStatus.textContent = summary.message || "等待检测";
-  schemeConnectivityStatus.dataset.tone = summary.tone || "neutral";
-
-  if (!sortedResults.length) {
-    schemeConnectivityList.innerHTML = "<p class=\"placeholder\">当前方案还没有可检测的模型。</p>";
-    return;
-  }
-
-  schemeConnectivityList.innerHTML = [
-    '<section class="scheme-connectivity-overview">',
-    '  <div class="scheme-connectivity-progress">',
-    `    <div class="scheme-connectivity-progress-bar" aria-hidden="true"><span style="width:${progressPercent}%"></span></div>`,
-    `    <p class="scheme-connectivity-progress-copy">${escapeHtml(summary.message || "等待检测")}</p>`,
-    "  </div>",
-    '  <div class="scheme-connectivity-stats">',
-    overviewCards
-      .map(
-        (item) =>
-          `<span class="scheme-connectivity-stat" data-tone="${escapeAttribute(item.tone)}">${escapeHtml(item.label)} ${escapeHtml(item.value)}</span>`
-      )
-      .join(""),
-    "  </div>",
-    "</section>",
-    '<section class="scheme-connectivity-results">',
-    sortedResults
-      .map((result) => {
-        const model = modelById.get(result.id) || {};
-        const meta = [model.provider, model.model].filter(Boolean).join(" / ");
-        return [
-          `<article class="scheme-connectivity-row" data-tone="${escapeAttribute(result.tone || "neutral")}">`,
-          '  <div class="scheme-connectivity-head">',
-          '    <div class="scheme-connectivity-title">',
-          `      <strong>${escapeHtml(result.label || result.id || "未命名模型")}</strong>`,
-          `      <span class="scheme-connectivity-meta">${escapeHtml(meta || result.id || "")}</span>`,
-          "    </div>",
-          `    <span class="chip" data-tone="${escapeAttribute(result.tone || "neutral")}">${escapeHtml(result.status || "未测试")}</span>`,
-          "  </div>",
-          `  <p class="scheme-connectivity-copy">${escapeHtml(result.detail || "等待连接测试结果。")}</p>`,
-          "</article>"
-        ].join("");
-      })
-      .join(""),
-    "</section>"
-  ].join("");
+function applyStoredConnectivityToVisibleModelCards() {
+  return connectivityUi.applyStoredStatusesToVisibleCards();
 }
 
 async function testSingleModel(card) {
-  const button = card.querySelector("[data-model-test]");
-  const model = collectModelFromCard(card);
-
-  button.disabled = true;
-  setModelTestStatus(card, "测试中...", "testing");
-
-  try {
-    const payload = await runModelConnectivityTest(model, {
-      secrets: collectSecrets(),
-      onEvent(event) {
-        if (event.stage === "submitted") {
-          setModelTestStatus(card, "已提交测试请求...", "testing");
-          return;
-        }
-
-        if (event.stage === "model_test_retry") {
-          setModelTestStatus(card, formatModelTestRetryStatus(event), "testing");
-          return;
-        }
-
-        if (event.stage === "model_test_failed") {
-          setModelTestStatus(card, `连接失败：${event.detail || "未知错误"}`, "error");
-        }
-      }
-    });
-    const display = buildConnectivityDisplay(payload);
-    setModelTestStatus(card, display.detail || display.status, display.tone);
-    const currentScheme = getCurrentScheme();
-    if (currentScheme?.id) {
-      updateSchemeConnectivityEntry(currentScheme.id, model.id, display);
-      renderSchemeConnectivityList();
-    }
-  } catch (error) {
-    const detail = `连接失败：${error.message}`;
-    setModelTestStatus(card, detail, "error");
-    const currentScheme = getCurrentScheme();
-    if (currentScheme?.id) {
-      updateSchemeConnectivityEntry(currentScheme.id, model.id, {
-        tone: "error",
-        status: "失败",
-        detail
-      });
-      renderSchemeConnectivityList();
-    }
-  } finally {
-    button.disabled = false;
-  }
+  return connectivityUi.testSingleModel(card);
 }
 
 async function runCurrentSchemeConnectivityTests(options = {}) {
-  const { force = false } = options;
   captureCurrentSchemeDraft();
-  const currentScheme = getCurrentScheme();
-  if (!currentScheme?.id) {
-    renderSchemeConnectivityList();
-    return;
-  }
-
-  const existingState = ensureSchemeConnectivityState(currentScheme.id, currentScheme.models);
-  const shouldSkip =
-    !force &&
-    existingState.results.length === currentScheme.models.length &&
-    existingState.results.every(
-      (item) =>
-        item.status &&
-        item.status !== "未测试" &&
-        item.status !== "检测中" &&
-        item.status !== "排队中"
-    );
-  if (shouldSkip) {
-    renderSchemeConnectivityList();
-    return;
-  }
-
-  const runToken = Date.now();
-  schemeUiState.connectivityRunToken = runToken;
-  const secrets = collectSecrets();
-  const total = currentScheme.models.length;
-
-  if (!total) {
-    schemeUiState.connectivityBySchemeId.set(currentScheme.id, {
-      tone: "neutral",
-      message: "当前方案没有模型",
-      results: []
-    });
-    renderSchemeConnectivityList();
-    return;
-  }
-
-  const initialResults = currentScheme.models.map((model) => ({
-    id: model.id || "",
-    label: model.label || model.id || "未命名模型",
-    tone: "testing",
-    status: "检测中",
-    detail: "正在发送连接测试请求..."
-  }));
-  schemeUiState.connectivityBySchemeId.set(currentScheme.id, {
-    tone: "testing",
-    message: `并发检测中 0/${total}`,
-    results: initialResults
-  });
-  renderSchemeConnectivityList();
-  applyStoredConnectivityToVisibleModelCards();
-  if (schemeConnectivityRetestButton) {
-    schemeConnectivityRetestButton.disabled = true;
-  }
-
-  try {
-    await Promise.allSettled(
-      currentScheme.models.map(async (model) => {
-        if (schemeUiState.connectivityRunToken !== runToken) {
-          return;
-        }
-
-        updateSchemeConnectivityEntry(currentScheme.id, model.id, {
-          tone: "testing",
-          status: "检测中",
-          detail: "正在发送连接测试请求..."
-        });
-        renderSchemeConnectivityList();
-        applyStoredConnectivityToVisibleModelCards();
-
-        try {
-          const payload = await runModelConnectivityTest(model, {
-            secrets,
-            onEvent(event) {
-              if (schemeUiState.connectivityRunToken !== runToken) {
-                return;
-              }
-
-              if (event.stage === "model_test_retry") {
-                updateSchemeConnectivityEntry(currentScheme.id, model.id, {
-                  tone: "testing",
-                  status: "重试中",
-                  detail: formatModelTestRetryStatus(event)
-                });
-                renderSchemeConnectivityList();
-                applyStoredConnectivityToVisibleModelCards();
-              }
-            }
-          });
-
-          if (schemeUiState.connectivityRunToken !== runToken) {
-            return;
-          }
-
-          updateSchemeConnectivityEntry(currentScheme.id, model.id, buildConnectivityDisplay(payload));
-        } catch (error) {
-          if (schemeUiState.connectivityRunToken !== runToken) {
-            return;
-          }
-
-          updateSchemeConnectivityEntry(currentScheme.id, model.id, {
-            tone: "error",
-            status: "失败",
-            detail: `连接失败：${error.message}`
-          });
-        }
-
-        if (schemeUiState.connectivityRunToken !== runToken) {
-          return;
-        }
-
-        syncSchemeConnectivitySummaryState(currentScheme.id);
-        renderSchemeConnectivityList();
-        applyStoredConnectivityToVisibleModelCards();
-      })
-    );
-  } finally {
-    if (schemeUiState.connectivityRunToken === runToken) {
-      syncSchemeConnectivitySummaryState(currentScheme.id);
-      renderSchemeConnectivityList();
-      applyStoredConnectivityToVisibleModelCards();
-    }
-    if (schemeUiState.connectivityRunToken === runToken && schemeConnectivityRetestButton) {
-      schemeConnectivityRetestButton.disabled = false;
-    }
-  }
+  return connectivityUi.runCurrentSchemeConnectivityTests(options);
 }
 
 consoleNav?.addEventListener("click", (event) => {
@@ -4521,45 +2824,25 @@ modelList.addEventListener("input", (event) => {
   if (!card) {
     return;
   }
-
   updateModelCardTitle(card);
   updateControllerOptions();
-  setModelTestStatus(card, "未测试");
+  setModelTestStatus(card, "???");
   captureCurrentSchemeDraft();
-  const currentScheme = getCurrentScheme();
   const modelId = card.querySelector("[data-model-id]")?.value.trim() || "";
-  if (currentScheme?.id && modelId) {
-    updateSchemeConnectivityEntry(currentScheme.id, modelId, {
-      tone: "neutral",
-      status: "未测试",
-      detail: "配置已修改，请重新检测。"
-    });
-  }
-  renderSchemeConnectivityList();
+  connectivityUi.markModelDirty(modelId);
 });
-
 modelList.addEventListener("change", (event) => {
   const card = event.target.closest(".model-card");
   if (!card) {
     return;
   }
-
   updateModelCardFields(card, { applyDefaults: true });
   updateControllerOptions();
-  setModelTestStatus(card, "未测试");
+  setModelTestStatus(card, "???");
   captureCurrentSchemeDraft();
-  const currentScheme = getCurrentScheme();
   const modelId = card.querySelector("[data-model-id]")?.value.trim() || "";
-  if (currentScheme?.id && modelId) {
-    updateSchemeConnectivityEntry(currentScheme.id, modelId, {
-      tone: "neutral",
-      status: "未测试",
-      detail: "配置已修改，请重新检测。"
-    });
-  }
-  renderSchemeConnectivityList();
+  connectivityUi.markModelDirty(modelId);
 });
-
 schemeSelect?.addEventListener("change", async (event) => {
   switchCurrentScheme(event.target.value);
   await runCurrentSchemeConnectivityTests();
@@ -4683,91 +2966,17 @@ batchKeysList?.addEventListener("paste", (event) => {
   setBatchKeyRows(values);
   getBatchKeyInputs()[Math.max(0, values.length - 1)]?.focus();
 });
-botPresetList?.addEventListener("change", (event) => {
-  if (event.target.closest("[data-bot-enabled]")) {
-    syncEnabledBotPresetIds();
-    return;
-  }
-  if (event.target.closest("[data-bot-field]")) {
-    syncBotSecretValuesFromDom(event.target);
-    return;
-  }
-  if (event.target.closest("[data-bot-env]")) {
-    syncBotPresetConfigs();
-  }
-});
-botPresetList?.addEventListener("input", (event) => {
-  if (event.target.closest("[data-bot-field]")) {
-    syncBotSecretValuesFromDom(event.target);
-    return;
-  }
-  if (event.target.closest("[data-bot-env]")) {
-    syncBotPresetConfigs();
-  }
-});
-botPresetList?.addEventListener("click", async (event) => {
-  const installButton = event.target.closest("[data-bot-install]");
-  if (installButton) {
-    const presetId = installButton.closest("[data-preset-id]")?.dataset.presetId || "";
-    await installBotPreset(presetId);
-    return;
-  }
-
-  const startButton = event.target.closest("[data-bot-start]");
-  if (startButton) {
-    const presetId = startButton.closest("[data-preset-id]")?.dataset.presetId || "";
-    await startBotRuntime(presetId);
-    return;
-  }
-
-  const stopButton = event.target.closest("[data-bot-stop]");
-  if (stopButton) {
-    const presetId = stopButton.closest("[data-preset-id]")?.dataset.presetId || "";
-    await stopBotRuntime(presetId);
-    return;
-  }
-
-  const copyButton = event.target.closest("[data-bot-copy]");
-  if (copyButton) {
-    const presetId = copyButton.closest("[data-preset-id]")?.dataset.presetId || "";
-    const preset = getBotPresetById(presetId);
-    if (preset?.installCommand) {
-      await copyBotCommand(preset.installCommand, `${preset.label} 命令`);
-    }
-    return;
-  }
-
-  const docsButton = event.target.closest("[data-bot-docs]");
-  if (!docsButton) {
-    return;
-  }
-
-  const presetId = docsButton.closest("[data-preset-id]")?.dataset.presetId || "";
-  const preset = getBotPresetById(presetId);
-  if (preset?.docsUrl) {
-    window.open(preset.docsUrl, "_blank", "noopener,noreferrer");
-  }
-});
-pickWorkspaceButton.addEventListener("click", pickWorkspaceFolder);
-refreshWorkspaceButton.addEventListener("click", loadWorkspaceSummary);
-importWorkspaceFilesButton.addEventListener("click", importWorkspaceFiles);
-readWorkspaceFileButton.addEventListener("click", readWorkspaceFilePreview);
 saveButton.addEventListener("click", saveSettings);
 reloadButton.addEventListener("click", loadSettings);
 exitAppButton?.addEventListener("click", exitApplication);
 runButton.addEventListener("click", runCluster);
 cancelButton?.addEventListener("click", cancelClusterRun);
-runCustomBotInstallButton?.addEventListener("click", runCustomBotInstall);
-copyBotCommandsButton?.addEventListener("click", copySelectedBotCommands);
-startAllBotsButton?.addEventListener("click", () => startBotRuntime());
-stopAllBotsButton?.addEventListener("click", () => stopBotRuntime());
-refreshBotRuntimeButton?.addEventListener("click", loadBotRuntimeStatus);
 saveStatusClose?.addEventListener("click", hideSaveToast);
 
 async function initializeApp() {
   restoreConsolePanel();
   try {
-    await loadBotPresets();
+    await botUi.loadPresets();
   } finally {
     await loadSettings();
   }
@@ -4778,6 +2987,8 @@ setBatchKeyRows([""]);
 updateBatchFields({ applyDefaults: true });
 bindAgentVizInteractions();
 renderCapabilityOptions(batchCapabilityList, []);
+workspaceUi.bindEvents();
+botUi.bindEvents();
 if (cancelButton) {
   cancelButton.disabled = true;
 }

@@ -14,7 +14,9 @@ const WORKSPACE_TOOL_SCHEMA_LINES = [
   'Tool schema 2: {"action":"read_files","paths":["relative/path"],"reason":"string"}',
   'Tool schema 3: {"action":"write_files","files":[{"path":"relative/path","content":"string"}],"reason":"string"}',
   'Tool schema 4: {"action":"run_command","command":"string","args":["string"],"cwd":"relative/path","reason":"string"}',
-  'Final schema: {"action":"final","thinkingSummary":"string","summary":"string","keyFindings":["string"],"risks":["string"],"deliverables":["string"],"confidence":"low|medium|high","followUps":["string"],"generatedFiles":["relative/path"],"verificationStatus":"not_applicable|passed|failed"}'
+  'Tool schema 5: {"action":"recall_memory","query":"string","limit":3,"tags":["string"],"reason":"string"}',
+  'Tool schema 6: {"action":"remember","title":"string","content":"string","tags":["string"],"reason":"string"}',
+  'Final schema: {"action":"final","thinkingSummary":"string","summary":"string","keyFindings":["string"],"risks":["string"],"deliverables":["string"],"confidence":"low|medium|high","followUps":["string"],"generatedFiles":["relative/path"],"verificationStatus":"not_applicable|passed|failed","toolUsage":["string"],"memoryReads":0,"memoryWrites":0}'
 ];
 
 function safeArray(value) {
@@ -45,6 +47,14 @@ function normalizeVerificationStatus(value, fallback = "not_applicable") {
   return fallback;
 }
 
+function normalizeInteger(value, fallback = 0) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < 0) {
+    return fallback;
+  }
+  return Math.floor(number);
+}
+
 function buildRuntimeWorkerIdentity(worker) {
   return {
     agentId: worker.runtimeId || worker.id,
@@ -57,6 +67,27 @@ function buildRuntimeWorkerIdentity(worker) {
   };
 }
 
+function renderSessionMemorySnapshot(entries) {
+  const normalized = Array.isArray(entries) ? entries.slice(0, 6) : [];
+  if (!normalized.length) {
+    return "[]";
+  }
+
+  return JSON.stringify(
+    normalized.map((entry) => ({
+      id: entry.id,
+      title: entry.title,
+      content: entry.content,
+      tags: entry.tags,
+      createdAt: entry.createdAt,
+      agentLabel: entry.agentLabel,
+      taskTitle: entry.taskTitle
+    })),
+    null,
+    2
+  );
+}
+
 function buildWorkspaceWorkerPrompt({
   originalTask,
   clusterPlan,
@@ -65,12 +96,13 @@ function buildWorkspaceWorkerPrompt({
   dependencyOutputs,
   workspaceRoot,
   workspaceTreeLines,
-  toolHistory
+  toolHistory,
+  sessionMemory
 }) {
   return {
     instructions: [
       `You are ${worker.label}, a specialist worker inside a multi-model cluster.`,
-      "You can directly inspect and modify files inside the configured workspace root.",
+      "You can directly inspect and modify files inside the configured workspace root, and you can read/write session memory for the current run.",
       `Web search is ${worker.webSearch ? "available" : "not available"} for this model.`,
       "Stay scoped to the assigned task, and read files before editing existing code when needed.",
       "If current public facts or source verification are required and web search is available, use it before finalizing claims.",
@@ -88,6 +120,7 @@ function buildWorkspaceWorkerPrompt({
       dependencyOutputs.length
         ? `Dependency outputs:\n${JSON.stringify(dependencyOutputs, null, 2)}`
         : "Dependency outputs:\n[]",
+      `Session memory snapshot:\n${renderSessionMemorySnapshot(sessionMemory)}`,
       `Workspace root:\n${workspaceRoot}`,
       `Workspace tree snapshot:\n${renderWorkspaceTree(workspaceTreeLines)}`,
       `Tool history:\n${renderToolHistory(toolHistory)}`
@@ -95,7 +128,7 @@ function buildWorkspaceWorkerPrompt({
   };
 }
 
-function normalizeWorkspaceFinalResult(parsed, rawText, generatedFiles, history) {
+function normalizeWorkspaceFinalResult(parsed, rawText, generatedFiles, history, counters = {}) {
   const commandHistory = history.filter((entry) => entry.action === "run_command");
   const verifiedGeneratedFiles = uniqueStrings(generatedFiles);
   return {
@@ -111,6 +144,9 @@ function normalizeWorkspaceFinalResult(parsed, rawText, generatedFiles, history)
     generatedFiles: uniqueStrings([...(parsed?.generatedFiles || []), ...verifiedGeneratedFiles]),
     verifiedGeneratedFiles,
     workspaceActions: history.map((entry) => entry.action),
+    toolUsage: uniqueStrings([...(parsed?.toolUsage || []), ...history.map((entry) => entry.action)]),
+    memoryReads: normalizeInteger(parsed?.memoryReads, normalizeInteger(counters.memoryReads)),
+    memoryWrites: normalizeInteger(parsed?.memoryWrites, normalizeInteger(counters.memoryWrites)),
     verificationStatus: normalizeVerificationStatus(parsed?.verificationStatus),
     executedCommands: commandHistory.map((entry) =>
       [entry.request.command, ...(entry.request.args || [])].join(" ").trim()
@@ -130,6 +166,9 @@ function createToolError(message, rawText) {
     generatedFiles: [],
     verifiedGeneratedFiles: [],
     workspaceActions: [],
+    toolUsage: [],
+    memoryReads: 0,
+    memoryWrites: 0,
     verificationStatus: "failed",
     executedCommands: []
   };
@@ -142,6 +181,8 @@ function normalizeToolAction(parsed) {
     action === "read_files" ||
     action === "write_files" ||
     action === "run_command" ||
+    action === "recall_memory" ||
+    action === "remember" ||
     action === "final"
   ) {
     return action;
@@ -156,6 +197,7 @@ function normalizeToolAction(parsed) {
 
 async function requestWorkspaceJsonRepair({
   provider,
+  invokeModel,
   worker,
   task,
   rawText,
@@ -175,7 +217,11 @@ async function requestWorkspaceJsonRepair({
     });
   }
 
-  const response = await provider.invoke({
+  const response = await invokeModel({
+    provider,
+    worker,
+    task,
+    purpose: "worker_json_repair",
     instructions: [
       "You repair invalid JSON emitted by a workspace agent.",
       "Return valid JSON only.",
@@ -188,7 +234,6 @@ async function requestWorkspaceJsonRepair({
       "Repair the following invalid workspace-agent output into valid JSON.",
       `Original output:\n${rawText}`
     ].join("\n\n"),
-    purpose: "worker_json_repair",
     onRetry,
     signal
   });
@@ -198,6 +243,7 @@ async function requestWorkspaceJsonRepair({
 
 async function parseWorkspaceActionPayload({
   provider,
+  invokeModel,
   worker,
   task,
   rawText,
@@ -212,6 +258,7 @@ async function parseWorkspaceActionPayload({
     try {
       parsed = await requestWorkspaceJsonRepair({
         provider,
+        invokeModel,
         worker,
         task,
         rawText,
@@ -231,6 +278,7 @@ async function parseWorkspaceActionPayload({
 
   parsed = await requestWorkspaceJsonRepair({
     provider,
+    invokeModel,
     worker,
     task,
     rawText,
@@ -247,12 +295,15 @@ async function parseWorkspaceActionPayload({
 
 export async function runWorkspaceToolLoop({
   provider,
+  invokeModel,
   worker,
   task,
   originalTask,
   clusterPlan,
   dependencyOutputs,
   workspaceRoot,
+  sessionRuntime = null,
+  parentSpanId = "",
   onRetry,
   onEvent,
   signal
@@ -261,7 +312,22 @@ export async function runWorkspaceToolLoop({
   const workspaceTree = await getWorkspaceTree(workspaceRoot);
   const toolHistory = [];
   const generatedFiles = [];
+  const toolCounters = {
+    memoryReads: 0,
+    memoryWrites: 0
+  };
   let lastRawText = "";
+  const invokeWorkerModel =
+    typeof invokeModel === "function"
+      ? invokeModel
+      : async ({ provider: activeProvider, instructions, input, purpose, onRetry: activeOnRetry, signal: activeSignal }) =>
+          activeProvider.invoke({
+            instructions,
+            input,
+            purpose,
+            onRetry: activeOnRetry,
+            signal: activeSignal
+          });
 
   for (let turn = 0; turn < MAX_TOOL_TURNS; turn += 1) {
     throwIfAborted(signal);
@@ -273,15 +339,20 @@ export async function runWorkspaceToolLoop({
       dependencyOutputs,
       workspaceRoot,
       workspaceTreeLines: workspaceTree.lines,
-      toolHistory
+      toolHistory,
+      sessionMemory: sessionRuntime?.buildSnapshot?.().memory?.recent || []
     });
 
-    const response = await provider.invoke({
+    const response = await invokeWorkerModel({
+      provider,
+      worker,
+      task,
+      purpose: "worker_execution",
       instructions: prompt.instructions,
       input: prompt.input,
-      purpose: "worker_execution",
       onRetry,
-      signal
+      signal,
+      parentSpanId
     });
 
     lastRawText = response.text;
@@ -290,6 +361,7 @@ export async function runWorkspaceToolLoop({
     try {
       const result = await parseWorkspaceActionPayload({
         provider,
+        invokeModel: invokeWorkerModel,
         worker,
         task,
         rawText: response.text,
@@ -308,12 +380,21 @@ export async function runWorkspaceToolLoop({
     }
 
     if (action === "final") {
-      return normalizeWorkspaceFinalResult(parsed, response.text, generatedFiles, toolHistory);
+      return normalizeWorkspaceFinalResult(parsed, response.text, generatedFiles, toolHistory, toolCounters);
     }
 
     if (action === "list_files") {
       throwIfAborted(signal);
       const targetPath = String(parsed?.path || ".").trim() || ".";
+      const toolSpanId = sessionRuntime?.beginToolCall?.({
+        ...buildRuntimeWorkerIdentity(worker),
+        taskId: task.id,
+        taskTitle: task.title,
+        parentSpanId,
+        spanKind: "tool",
+        toolAction: "list_files",
+        spanLabel: `list_files · ${targetPath}`
+      });
       const result = await listWorkspacePath(workspaceRoot, targetPath);
       toolHistory.push({
         action,
@@ -323,6 +404,12 @@ export async function runWorkspaceToolLoop({
         },
         result
       });
+      if (toolSpanId) {
+        sessionRuntime.completeToolCall(toolSpanId, {
+          detail: `Listed workspace path: ${targetPath}`,
+          resultCount: Array.isArray(result?.entries) ? result.entries.length : 0
+        });
+      }
       if (typeof onEvent === "function") {
         onEvent({
           type: "status",
@@ -340,6 +427,15 @@ export async function runWorkspaceToolLoop({
     if (action === "read_files") {
       throwIfAborted(signal);
       const paths = safeArray(parsed?.paths).slice(0, 6);
+      const toolSpanId = sessionRuntime?.beginToolCall?.({
+        ...buildRuntimeWorkerIdentity(worker),
+        taskId: task.id,
+        taskTitle: task.title,
+        parentSpanId,
+        spanKind: "tool",
+        toolAction: "read_files",
+        spanLabel: `read_files · ${paths.length} file(s)`
+      });
       const result = await readWorkspaceFiles(workspaceRoot, paths);
       toolHistory.push({
         action,
@@ -349,6 +445,12 @@ export async function runWorkspaceToolLoop({
         },
         result
       });
+      if (toolSpanId) {
+        sessionRuntime.completeToolCall(toolSpanId, {
+          detail: `Read ${paths.length} workspace file(s).`,
+          resultCount: result.length
+        });
+      }
       if (typeof onEvent === "function") {
         onEvent({
           type: "status",
@@ -366,6 +468,15 @@ export async function runWorkspaceToolLoop({
     if (action === "write_files") {
       throwIfAborted(signal);
       const files = Array.isArray(parsed?.files) ? parsed.files : [];
+      const toolSpanId = sessionRuntime?.beginToolCall?.({
+        ...buildRuntimeWorkerIdentity(worker),
+        taskId: task.id,
+        taskTitle: task.title,
+        parentSpanId,
+        spanKind: "tool",
+        toolAction: "write_files",
+        spanLabel: `write_files · ${files.length} file(s)`
+      });
       const result = await writeWorkspaceFiles(workspaceRoot, files);
       generatedFiles.push(...result.map((entry) => entry.path));
       toolHistory.push({
@@ -376,6 +487,12 @@ export async function runWorkspaceToolLoop({
         },
         result
       });
+      if (toolSpanId) {
+        sessionRuntime.completeToolCall(toolSpanId, {
+          detail: `Wrote ${result.length} workspace file(s).`,
+          resultCount: result.length
+        });
+      }
       if (typeof onEvent === "function") {
         onEvent({
           type: "status",
@@ -393,25 +510,38 @@ export async function runWorkspaceToolLoop({
 
     if (action === "run_command") {
       throwIfAborted(signal);
-      const result = await runWorkspaceCommand(
-        workspaceRoot,
-        String(parsed?.command || ""),
-        Array.isArray(parsed?.args) ? parsed.args : [],
-        {
-          cwd: String(parsed?.cwd || ".").trim() || ".",
-          signal
-        }
-      );
+      const command = String(parsed?.command || "");
+      const args = Array.isArray(parsed?.args) ? parsed.args : [];
+      const cwd = String(parsed?.cwd || ".").trim() || ".";
+      const toolSpanId = sessionRuntime?.beginToolCall?.({
+        ...buildRuntimeWorkerIdentity(worker),
+        taskId: task.id,
+        taskTitle: task.title,
+        parentSpanId,
+        spanKind: "tool",
+        toolAction: "run_command",
+        spanLabel: `run_command · ${command}`
+      });
+      const result = await runWorkspaceCommand(workspaceRoot, command, args, {
+        cwd,
+        signal
+      });
       toolHistory.push({
         action,
         request: {
-          command: String(parsed?.command || ""),
-          args: Array.isArray(parsed?.args) ? parsed.args.map((item) => String(item)) : [],
-          cwd: String(parsed?.cwd || ".").trim() || ".",
+          command,
+          args: args.map((item) => String(item)),
+          cwd,
           reason: String(parsed?.reason || "")
         },
         result
       });
+      if (toolSpanId) {
+        sessionRuntime.completeToolCall(toolSpanId, {
+          detail: `${result.command} ${(result.args || []).join(" ").trim()}`.trim(),
+          exitCode: result.exitCode
+        });
+      }
       if (typeof onEvent === "function") {
         onEvent({
           type: "status",
@@ -424,6 +554,69 @@ export async function runWorkspaceToolLoop({
           exitCode: result.exitCode
         });
       }
+      continue;
+    }
+
+    if (action === "recall_memory") {
+      throwIfAborted(signal);
+      const query = String(parsed?.query || "").trim();
+      const tags = safeArray(parsed?.tags);
+      const limit = normalizeInteger(parsed?.limit, 3) || 3;
+      const result = sessionRuntime?.recall?.(
+        {
+          query,
+          tags,
+          limit
+        },
+        {
+          ...buildRuntimeWorkerIdentity(worker),
+          taskId: task.id,
+          taskTitle: task.title,
+          parentSpanId
+        }
+      ) || [];
+      toolCounters.memoryReads += 1;
+      toolHistory.push({
+        action,
+        request: {
+          query,
+          tags,
+          limit,
+          reason: String(parsed?.reason || "")
+        },
+        result
+      });
+      continue;
+    }
+
+    if (action === "remember") {
+      throwIfAborted(signal);
+      const title = String(parsed?.title || "").trim() || task.title;
+      const content = String(parsed?.content || "").trim();
+      const tags = safeArray(parsed?.tags);
+      const result = sessionRuntime?.remember?.(
+        {
+          title,
+          content,
+          tags
+        },
+        {
+          ...buildRuntimeWorkerIdentity(worker),
+          taskId: task.id,
+          taskTitle: task.title,
+          parentSpanId
+        }
+      );
+      toolCounters.memoryWrites += 1;
+      toolHistory.push({
+        action,
+        request: {
+          title,
+          tags,
+          reason: String(parsed?.reason || "")
+        },
+        result
+      });
       continue;
     }
   }

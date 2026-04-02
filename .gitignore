@@ -1,0 +1,30 @@
+# Secrets and local runtime settings
+.env
+.env.*
+!.env.example
+runtime.settings.json
+runtime.settings.*.json
+.agent-cluster.key
+cluster.config.json
+dist/runtime.settings.json
+
+# Local workspaces and generated outputs
+workspace/
+dist/workspace/
+bot-connectors/
+.tmp-cluster-cancel-*/
+
+# Logs and temporary files
+*.log
+logs/
+*.tmp
+*.temp
+
+# Build/package artifacts created locally
+build/
+dist/clean-package/
+dist/*.zip
+
+# OS/editor noise
+.DS_Store
+Thumbs.db

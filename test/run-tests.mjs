@@ -10,6 +10,7 @@ import {
   loadRuntimeConfig,
   saveEditableSettings
 } from "../src/config.mjs";
+import { createSessionRuntime } from "../src/session/runtime.mjs";
 import { postJson } from "../src/providers/http-client.mjs";
 import { testModelConnectivity } from "../src/providers/connectivity-test.mjs";
 import { createProviderForModel } from "../src/providers/factory.mjs";
@@ -21,73 +22,8 @@ import {
   resolveAgentGraphParentId,
   summarizeAgentActivity
 } from "../src/static/agent-graph-layout.js";
-
-class FakeProvider {
-  constructor(queue) {
-    this.queue = [...queue];
-  }
-
-  async invoke(options = {}) {
-    if (!this.queue.length) {
-      throw new Error("No more fake responses available.");
-    }
-    const next = this.queue.shift();
-    if (typeof next === "function") {
-      return next(options);
-    }
-    return { text: next };
-  }
-}
-
-function waitForDelay(ms, signal) {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
-      cleanup();
-      resolve();
-    }, ms);
-
-    const onAbort = () => {
-      cleanup();
-      const error = new Error("aborted");
-      error.name = "AbortError";
-      error.cancelled = true;
-      reject(error);
-    };
-
-    const cleanup = () => {
-      clearTimeout(timer);
-      signal?.removeEventListener("abort", onAbort);
-    };
-
-    signal?.addEventListener("abort", onAbort, { once: true });
-  });
-}
-
-class DelayedJsonProvider {
-  constructor(payload, delayMs, tracker = null) {
-    this.payload = payload;
-    this.delayMs = delayMs;
-    this.tracker = tracker;
-  }
-
-  async invoke({ signal } = {}) {
-    if (this.tracker) {
-      this.tracker.current += 1;
-      this.tracker.max = Math.max(this.tracker.max, this.tracker.current);
-    }
-
-    try {
-      await waitForDelay(this.delayMs, signal);
-      return {
-        text: JSON.stringify(this.payload)
-      };
-    } finally {
-      if (this.tracker) {
-        this.tracker.current -= 1;
-      }
-    }
-  }
-}
+import { runWorkspaceToolLoop } from "../src/workspace/agent-loop.mjs";
+import { DelayedJsonProvider, FakeProvider, waitForDelay } from "./helpers/providers.mjs";
 
 function runJsonTests() {
   const parsed = parseJsonFromText('{"hello":"world","items":[1,2]}');
@@ -1786,6 +1722,346 @@ async function runSettingsTests() {
   }
 }
 
+function runSessionRuntimeTests() {
+  const events = [];
+  const session = createSessionRuntime({
+    emitEvent(event) {
+      events.push(event);
+    }
+  });
+  const model = {
+    id: "session_worker",
+    label: "Session Worker",
+    provider: "openai-responses",
+    model: "gpt-5.4-mini",
+    pricing: {
+      inputPer1kUsd: 0.01,
+      outputPer1kUsd: 0.02
+    }
+  };
+
+  const call = session.beginProviderCall(model, {
+    agentId: "leader:session_worker",
+    agentLabel: "Session Worker",
+    agentKind: "leader",
+    taskId: "task_session",
+    taskTitle: "Session Test",
+    purpose: "worker_execution"
+  });
+  session.recordRetry(
+    model,
+    {
+      attempt: 1,
+      maxRetries: 3,
+      nextDelayMs: 500,
+      status: 502,
+      message: "temporary upstream failure"
+    },
+    {
+      agentId: "leader:session_worker",
+      agentLabel: "Session Worker",
+      taskId: "task_session",
+      taskTitle: "Session Test",
+      parentSpanId: call.spanId
+    }
+  );
+  session.completeProviderCall(
+    model,
+    call.spanId,
+    {
+      usage: {
+        prompt_tokens: 100,
+        completion_tokens: 40,
+        total_tokens: 140
+      }
+    },
+    {
+      detail: "Session provider call completed."
+    }
+  );
+
+  session.remember(
+    {
+      title: "Important note",
+      content: "Remember the counterexample in the second dependency output.",
+      tags: ["research", "counterexample"]
+    },
+    {
+      agentId: "leader:session_worker",
+      agentLabel: "Session Worker",
+      taskId: "task_session",
+      taskTitle: "Session Test"
+    }
+  );
+  const recalled = session.recall(
+    {
+      query: "counterexample",
+      limit: 2
+    },
+    {
+      agentId: "leader:session_worker",
+      agentLabel: "Session Worker",
+      taskId: "task_session",
+      taskTitle: "Session Test"
+    }
+  );
+  const snapshot = session.buildSnapshot();
+
+  assert.equal(snapshot.totals.providerCalls, 1);
+  assert.equal(snapshot.totals.retries, 1);
+  assert.equal(snapshot.totals.inputTokens, 100);
+  assert.equal(snapshot.totals.outputTokens, 40);
+  assert.equal(snapshot.totals.totalTokens, 140);
+  assert.equal(snapshot.totals.estimatedCostUsd, 0.0018);
+  assert.equal(snapshot.totals.memoryWrites, 1);
+  assert.equal(snapshot.totals.memoryReads, 1);
+  assert.equal(snapshot.memory.count, 1);
+  assert.equal(recalled.length, 1);
+  assert.equal(recalled[0].title, "Important note");
+  assert.equal(events.some((event) => event.stage === "trace_span_start"), true);
+  assert.equal(events.some((event) => event.stage === "memory_write"), true);
+}
+
+function runSessionCircuitBreakerTests() {
+  const session = createSessionRuntime();
+  const model = {
+    id: "flaky_worker",
+    label: "Flaky Worker",
+    provider: "openai-chat",
+    model: "kimi-test",
+    circuitBreakerThreshold: 2,
+    circuitBreakerCooldownMs: 50
+  };
+
+  const firstCall = session.beginProviderCall(model, {
+    purpose: "worker_execution"
+  });
+  session.failProviderCall(model, firstCall.spanId, new Error("first failure"));
+
+  const secondCall = session.beginProviderCall(model, {
+    purpose: "worker_execution"
+  });
+  session.failProviderCall(model, secondCall.spanId, new Error("second failure"));
+
+  assert.equal(session.getCircuitState(model.id).state, "open");
+  assert.throws(
+    () =>
+      session.beginProviderCall(model, {
+        purpose: "worker_execution"
+      }),
+    /circuit breaker/
+  );
+}
+
+async function runWorkspaceToolLayerMemoryTests() {
+  const workspaceRoot = await mkdtemp(join(process.cwd(), ".tmp-workspace-tool-layer-"));
+  const session = createSessionRuntime();
+  const provider = new FakeProvider([
+    JSON.stringify({
+      action: "remember",
+      title: "Shared note",
+      content: "Remember the counterexample from the dependency output.",
+      tags: ["shared", "research"]
+    }),
+    JSON.stringify({
+      action: "recall_memory",
+      query: "counterexample",
+      limit: 2
+    }),
+    JSON.stringify({
+      action: "final",
+      thinkingSummary: "Used session memory tools.",
+      summary: "Memory tool layer completed successfully.",
+      keyFindings: ["Stored and recalled a session note."],
+      risks: [],
+      deliverables: [],
+      confidence: "high",
+      followUps: [],
+      toolUsage: ["remember", "recall_memory"],
+      memoryReads: 1,
+      memoryWrites: 1,
+      verificationStatus: "not_applicable"
+    })
+  ]);
+
+  try {
+    const result = await runWorkspaceToolLoop({
+      provider,
+      worker: {
+        id: "worker_memory",
+        label: "Worker Memory",
+        provider: "mock",
+        model: "mock-model",
+        agentKind: "leader"
+      },
+      task: {
+        id: "task_memory",
+        title: "Use session memory",
+        phase: "research"
+      },
+      originalTask: "Use session memory inside the worker tool layer.",
+      clusterPlan: {
+        strategy: "Exercise the remember and recall tools."
+      },
+      dependencyOutputs: [],
+      workspaceRoot,
+      sessionRuntime: session
+    });
+
+    assert.equal(result.summary, "Memory tool layer completed successfully.");
+    assert.equal(result.memoryReads, 1);
+    assert.equal(result.memoryWrites, 1);
+    assert.deepEqual(result.toolUsage, ["remember", "recall_memory"]);
+    assert.equal(session.buildSnapshot().memory.count, 1);
+  } finally {
+    await rm(workspaceRoot, { recursive: true, force: true });
+  }
+}
+
+async function runLegacyDistSettingsFallbackTests() {
+  const projectDir = await mkdtemp(join(process.cwd(), ".tmp-config-legacy-dist-"));
+  const legacySettingsDir = join(projectDir, "dist");
+
+  try {
+    await writeFile(
+      join(projectDir, "cluster.config.json"),
+      `${JSON.stringify(
+        {
+          server: { port: 4040 },
+          cluster: { controller: "controller", maxParallel: 2 },
+          workspace: { dir: "./workspace" },
+          models: {
+            controller: {
+              provider: "openai-responses",
+              model: "gpt-5.4",
+              baseUrl: "https://api.openai.com/v1",
+              apiKeyEnv: "OPENAI_API_KEY",
+              label: "Controller"
+            },
+            worker: {
+              provider: "openai-chat",
+              model: "kimi",
+              baseUrl: "https://api.moonshot.cn/v1",
+              apiKeyEnv: "MOONSHOT_API_KEY",
+              label: "Worker"
+            }
+          }
+        },
+        null,
+        2
+      )}\n`,
+      "utf8"
+    );
+
+    await mkdir(legacySettingsDir, { recursive: true });
+    await writeFile(
+      join(legacySettingsDir, "runtime.settings.json"),
+      `${JSON.stringify(
+        {
+          server: { port: 5151 },
+          cluster: {
+            activeSchemeId: "legacy_scheme",
+            activeSchemeLabel: "Legacy Scheme",
+            controller: "legacy_controller",
+            maxParallel: 7,
+            subordinateMaxParallel: 4,
+            groupLeaderMaxDelegates: 2,
+            delegateMaxDepth: 3
+          },
+          workspace: {
+            dir: "./legacy-workspace"
+          },
+          bot: {
+            installDir: "legacy-bots",
+            customCommand: "",
+            enabledPresets: ["feishu"],
+            commandPrefix: "/agent",
+            autoStart: false,
+            progressUpdates: true,
+            presetConfigs: {}
+          },
+          models: {
+            legacy_controller: {
+              provider: "openai-responses",
+              model: "gpt-5.4",
+              baseUrl: "https://api.openai.com/v1",
+              apiKeyEnv: "OPENAI_API_KEY",
+              authStyle: "bearer",
+              label: "Legacy Controller",
+              specialties: ["controller"]
+            },
+            legacy_worker: {
+              provider: "openai-chat",
+              model: "kimi-k2.5",
+              baseUrl: "https://api.moonshot.cn/v1",
+              apiKeyEnv: "MOONSHOT_API_KEY",
+              authStyle: "bearer",
+              label: "Legacy Worker",
+              specialties: ["research"]
+            }
+          },
+          schemes: {
+            legacy_scheme: {
+              label: "Legacy Scheme",
+              controller: "legacy_controller",
+              models: {
+                legacy_controller: {
+                  provider: "openai-responses",
+                  model: "gpt-5.4",
+                  baseUrl: "https://api.openai.com/v1",
+                  apiKeyEnv: "OPENAI_API_KEY",
+                  authStyle: "bearer",
+                  label: "Legacy Controller",
+                  specialties: ["controller"]
+                },
+                legacy_worker: {
+                  provider: "openai-chat",
+                  model: "kimi-k2.5",
+                  baseUrl: "https://api.moonshot.cn/v1",
+                  apiKeyEnv: "MOONSHOT_API_KEY",
+                  authStyle: "bearer",
+                  label: "Legacy Worker",
+                  specialties: ["research"]
+                }
+              }
+            }
+          },
+          secrets: {
+            OPENAI_API_KEY: "legacy-openai-key",
+            MOONSHOT_API_KEY: "legacy-moonshot-key"
+          }
+        },
+        null,
+        2
+      )}\n`,
+      "utf8"
+    );
+
+    const editable = getEditableSettings(projectDir);
+    assert.equal(editable.settingsPath, join(projectDir, "dist", "runtime.settings.json"));
+    assert.equal(editable.settings.server.port, 5151);
+    assert.equal(editable.settings.cluster.activeSchemeId, "legacy_scheme");
+    assert.equal(editable.settings.cluster.controller, "legacy_controller");
+    assert.equal(editable.settings.workspace.dir, "./legacy-workspace");
+    assert.equal(editable.settings.models.length, 2);
+    assert.equal(editable.settings.models[0].apiKeyValue, "legacy-openai-key");
+    assert.equal(editable.settings.models[1].apiKeyValue, "legacy-moonshot-key");
+
+    const runtime = loadRuntimeConfig(projectDir);
+    assert.equal(runtime.settingsPath, join(projectDir, "dist", "runtime.settings.json"));
+    assert.equal(runtime.server.port, 5151);
+    assert.equal(runtime.cluster.activeSchemeId, "legacy_scheme");
+    assert.equal(runtime.cluster.controller, "legacy_controller");
+    assert.equal(runtime.cluster.maxParallel, 7);
+    assert.equal(runtime.workspace.dir, "./legacy-workspace");
+    assert.equal(runtime.models.legacy_controller.role, "controller");
+    assert.equal(process.env.OPENAI_API_KEY, "legacy-openai-key");
+    assert.equal(process.env.MOONSHOT_API_KEY, "legacy-moonshot-key");
+  } finally {
+    await rm(projectDir, { recursive: true, force: true });
+  }
+}
+
 async function runBlankClusterSettingFallbackTests() {
   const projectDir = await mkdtemp(join(process.cwd(), ".tmp-config-blank-fallback-"));
 
@@ -2824,6 +3100,47 @@ async function runWorkspaceServerRouteTests() {
   }
 }
 
+async function runStaticAssetRouteTests() {
+  const projectDir = await mkdtemp(join(process.cwd(), ".tmp-static-assets-"));
+  const requestedAssets = [];
+
+  try {
+    const server = createAppServer({
+      projectDir,
+      staticAssetLoader: async (assetPath) => {
+        requestedAssets.push(assetPath);
+        return `asset:${assetPath}`;
+      }
+    });
+
+    await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const port = server.address().port;
+
+    try {
+      let response = await fetch(`http://127.0.0.1:${port}/assets/agent-graph-layout.js`);
+      let body = await response.text();
+      assert.equal(response.status, 200);
+      assert.equal(body, "asset:agent-graph-layout.js");
+
+      response = await fetch(`http://127.0.0.1:${port}/assets/nested/panel.js`);
+      body = await response.text();
+      assert.equal(response.status, 200);
+      assert.equal(body, "asset:nested/panel.js");
+
+      response = await fetch(`http://127.0.0.1:${port}/assets/%2e%2e/package.json`);
+      const payload = await response.json();
+      assert.equal(response.status, 404);
+      assert.equal(payload.ok, false);
+
+      assert.deepEqual(requestedAssets, ["agent-graph-layout.js", "nested/panel.js"]);
+    } finally {
+      await new Promise((resolve) => server.close(resolve));
+    }
+  } finally {
+    await rm(projectDir, { recursive: true, force: true });
+  }
+}
+
 async function runHttpRetryTests() {
   let attempts = 0;
   const retryEvents = [];
@@ -3608,6 +3925,8 @@ async function main() {
   runAccessPolicyTests();
   runProviderCatalogSupportTests();
   runAgentGraphLayoutTests();
+  runSessionRuntimeTests();
+  runSessionCircuitBreakerTests();
   await runOrchestratorTests();
   await runCodingManagerWorkflowTests();
   await runHierarchicalDelegationTests();
@@ -3619,7 +3938,9 @@ async function main() {
   await runImplicitDelegateCountInferenceTests();
   await runExplicitZeroDelegateRecoveryTests();
   await runZeroDelegateLeaderExecutionTests();
+  await runWorkspaceToolLayerMemoryTests();
   await runSettingsTests();
+  await runLegacyDistSettingsFallbackTests();
   await runBlankClusterSettingFallbackTests();
   await runSchemeSettingsTests();
   await runWorkspaceToolLoopTests();
@@ -3629,6 +3950,7 @@ async function main() {
   await runResearchConcurrencyTests();
   await runCustomPhaseConcurrencyTests();
   await runWorkspaceServerRouteTests();
+  await runStaticAssetRouteTests();
   await runHttpRetryTests();
   await runHttpHtmlGatewaySummaryTests();
   await runHttpHtmlNonApiSummaryTests();

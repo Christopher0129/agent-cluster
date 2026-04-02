@@ -1,19 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { runClusterAnalysis } from "../src/cluster/orchestrator.mjs";
-
-class FakeProvider {
-  constructor(queue) {
-    this.queue = [...queue];
-  }
-
-  async invoke() {
-    if (!this.queue.length) {
-      throw new Error("No more fake responses available.");
-    }
-    return { text: this.queue.shift() };
-  }
-}
+import { FakeProvider } from "./helpers/providers.mjs";
 
 test("runClusterAnalysis plans, executes workers, and synthesizes", async () => {
   const config = {

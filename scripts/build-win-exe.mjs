@@ -20,7 +20,7 @@ const entryPath = join(srcDir, "sea-main.mjs");
 const configuredBaseConfig = String(process.env.AGENT_CLUSTER_BASE_CONFIG || "").trim();
 const baseConfigPath = configuredBaseConfig
   ? resolve(projectDir, configuredBaseConfig)
-  : join(projectDir, "cluster.config.json");
+  : join(projectDir, "cluster.config.blank.json");
 
 function toPosixPath(value) {
   return value.replaceAll("\\", "/");
@@ -169,6 +169,7 @@ async function writeSeaConfig() {
     "cluster.config.json": baseConfigPath,
     "static/index.html": join(srcDir, "static", "index.html"),
     "static/app.js": join(srcDir, "static", "app.js"),
+    "static/agent-graph-layout.js": join(srcDir, "static", "agent-graph-layout.js"),
     "static/provider-catalog.js": join(srcDir, "static", "provider-catalog.js"),
     "static/style.css": join(srcDir, "static", "style.css")
   };

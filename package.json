@@ -7,7 +7,10 @@
   "scripts": {
     "start": "node src/server.mjs",
     "dev": "node --watch src/server.mjs",
-    "test": "node test/run-tests.mjs",
+    "check": "node --check src/server.mjs && node --check src/app.mjs && node --check src/cluster/orchestrator.mjs && node --check src/static/app.js",
+    "test:smoke": "node test/run-tests.mjs",
+    "test:unit": "node --test test/*.test.mjs",
+    "test": "npm run test:smoke && npm run test:unit",
     "build:win-exe": "node scripts/build-win-exe.mjs"
   },
   "engines": {

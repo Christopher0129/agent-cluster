@@ -5,6 +5,7 @@ import {
   materializeSavedSettingsSync,
   serializeSavedSettingsSync
 } from "./security/secrets.mjs";
+import { applySecretMapToProcessEnv } from "./security/process-env.mjs";
 import {
   isSupportedProvider,
   listProviderDefinitions,
@@ -432,8 +433,26 @@ function resolveSettingsPath(projectDir, options = {}) {
       : resolve(projectDir, options.settingsPath);
   }
 
-  const configuredPath = process.env.AGENT_CLUSTER_SETTINGS || DEFAULT_SETTINGS_PATH;
-  return isAbsolute(configuredPath) ? configuredPath : resolve(projectDir, configuredPath);
+  const configuredPath = String(process.env.AGENT_CLUSTER_SETTINGS || "").trim();
+  if (configuredPath) {
+    return isAbsolute(configuredPath) ? configuredPath : resolve(projectDir, configuredPath);
+  }
+
+  const defaultSettingsPath = resolve(projectDir, DEFAULT_SETTINGS_PATH);
+  if (existsSync(defaultSettingsPath)) {
+    return defaultSettingsPath;
+  }
+
+  const legacyCandidates = [
+    resolve(projectDir, "dist", "runtime.settings.json")
+  ];
+  for (const candidate of legacyCandidates) {
+    if (candidate !== defaultSettingsPath && existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return defaultSettingsPath;
 }
 
 function loadBaseConfig(projectDir, options = {}) {
@@ -455,18 +474,6 @@ function loadBaseConfig(projectDir, options = {}) {
     configPath,
     parsed: JSON.parse(readFileSync(configPath, "utf8"))
   };
-}
-
-function applySecretsToEnv(secrets) {
-  if (!secrets || typeof secrets !== "object") {
-    return;
-  }
-
-  for (const [name, value] of Object.entries(secrets)) {
-    if (name && typeof value === "string") {
-      process.env[name] = value;
-    }
-  }
 }
 
 function mergeBaseConfigWithSettings(baseConfig, savedSettings) {
@@ -735,15 +742,32 @@ export function loadSavedSettings(projectDir, options = {}) {
   };
 }
 
+export function resolveConfigBundle(projectDir, options = {}) {
+  const { configPath, parsed: baseConfig } = loadBaseConfig(projectDir, options);
+  const { settingsPath, settings } = loadSavedSettings(projectDir, options);
+  const mergedConfig = mergeBaseConfigWithSettings(baseConfig, settings);
+
+  return {
+    configPath,
+    settingsPath,
+    baseConfig,
+    settings,
+    mergedConfig
+  };
+}
+
+export function applyResolvedSecrets(bundle) {
+  applySecretMapToProcessEnv(bundle?.settings?.secrets);
+  return bundle;
+}
+
 export function getEditableSettings(projectDir, options = {}) {
   const envPath = resolve(projectDir, ".env");
   loadEnvFile(envPath);
 
-  const { configPath, parsed: baseConfig } = loadBaseConfig(projectDir, options);
-  const { settingsPath, settings } = loadSavedSettings(projectDir, options);
-  applySecretsToEnv(settings?.secrets);
-
-  const mergedConfig = mergeBaseConfigWithSettings(baseConfig, settings);
+  const { configPath, settingsPath, settings, mergedConfig } = applyResolvedSecrets(
+    resolveConfigBundle(projectDir, options)
+  );
   const runtimeConfig = loadRuntimeConfig(projectDir, options);
   const schemes = extractConfiguredSchemes(mergedConfig).map((scheme) => ({
     id: scheme.id,
@@ -794,14 +818,14 @@ export async function saveEditableSettings(projectDir, payload, options = {}) {
   const envPath = resolve(projectDir, ".env");
   loadEnvFile(envPath);
 
-  const { parsed: baseConfig } = loadBaseConfig(projectDir, options);
+  const { baseConfig } = resolveConfigBundle(projectDir, options);
   const normalized = normalizeSavedSettingsPayload(payload, baseConfig);
   const settingsPath = resolveSettingsPath(projectDir, options);
   const persisted = serializeSavedSettingsSync(settingsPath, normalized);
 
   await mkdir(dirname(settingsPath), { recursive: true });
   await writeFile(settingsPath, `${JSON.stringify(persisted, null, 2)}\n`, "utf8");
-  applySecretsToEnv(normalized.secrets);
+  applySecretMapToProcessEnv(normalized.secrets);
 
   return {
     settingsPath,
@@ -814,11 +838,9 @@ export function loadRuntimeConfig(projectDir, options = {}) {
   const envPath = resolve(projectDir, ".env");
   loadEnvFile(envPath);
 
-  const { configPath, parsed: baseConfig } = loadBaseConfig(projectDir, options);
-  const { settingsPath, settings } = loadSavedSettings(projectDir, options);
-  applySecretsToEnv(settings?.secrets);
-
-  const parsed = mergeBaseConfigWithSettings(baseConfig, settings);
+  const { configPath, settingsPath, settings, mergedConfig: parsed } = applyResolvedSecrets(
+    resolveConfigBundle(projectDir, options)
+  );
   const configuredSchemes = extractConfiguredSchemes(parsed);
   if (!configuredSchemes.length) {
     throw new Error(`Config file ${configPath} must include either a "models" object or a non-empty "schemes" object.`);

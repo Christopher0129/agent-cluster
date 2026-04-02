@@ -9,6 +9,11 @@ import { parseJsonFromText } from "../utils/json-output.mjs";
 import { getWorkspaceTree } from "../workspace/fs.mjs";
 import { runWorkspaceToolLoop } from "../workspace/agent-loop.mjs";
 import { isAbortError, throwIfAborted } from "../utils/abort.mjs";
+import { createSessionRuntime } from "../session/runtime.mjs";
+import {
+  buildRetryPayload,
+  invokeProviderWithSession
+} from "./provider-session.mjs";
 
 const PHASE_ORDER = ["research", "implementation", "validation", "handoff"];
 const DEFAULT_SUBORDINATE_MAX_PARALLEL = 3;
@@ -760,6 +765,9 @@ function normalizeWorkerResult(parsed, rawText, extras = {}) {
     ]),
     workspaceActions: uniqueArray([...(parsed?.workspaceActions || []), ...(extras.workspaceActions || [])]),
     executedCommands: uniqueArray([...(parsed?.executedCommands || []), ...(extras.executedCommands || [])]),
+    toolUsage: uniqueArray([...(parsed?.toolUsage || []), ...(extras.toolUsage || [])]),
+    memoryReads: Math.max(0, Number(parsed?.memoryReads ?? extras.memoryReads ?? 0) || 0),
+    memoryWrites: Math.max(0, Number(parsed?.memoryWrites ?? extras.memoryWrites ?? 0) || 0),
     verificationStatus: normalizeVerificationStatus(parsed?.verificationStatus || extras.verificationStatus),
     delegationNotes: uniqueArray([...(parsed?.delegationNotes || []), ...(extras.delegationNotes || [])]),
     subordinateCount: Number(extras.subordinateCount || 0),
@@ -789,26 +797,65 @@ function createStructuredFallback(label, rawText, error) {
   };
 }
 
-function buildRetryPayload({ stage, model, retry, taskId = "", taskTitle = "" }) {
-  return {
-    type: "retry",
-    stage,
-    tone: "warning",
-    modelId: model.id,
-    modelLabel: model.displayLabel || model.label,
-    agentId: model.runtimeId || model.id,
-    agentLabel: model.displayLabel || model.label,
-    agentKind: model.agentKind || "leader",
-    parentAgentId: model.parentAgentId || "",
-    parentAgentLabel: model.parentAgentLabel || "",
-    taskId,
-    taskTitle,
-    attempt: retry.attempt,
-    maxRetries: retry.maxRetries,
-    nextDelayMs: retry.nextDelayMs,
-    status: retry.status,
-    detail: retry.message
+async function invokeProviderWithSessionLegacy({
+  sessionRuntime,
+  provider,
+  agent,
+  task = null,
+  parentSpanId = "",
+  purpose,
+  instructions,
+  input,
+  onRetry,
+  signal,
+  allowEmptyText = false
+}) {
+  if (!sessionRuntime) {
+    return provider.invoke({
+      instructions,
+      input,
+      purpose,
+      onRetry,
+      signal,
+      allowEmptyText
+    });
+  }
+
+  const baseMeta = {
+    ...buildAgentEventBase(agent, task),
+    parentSpanId,
+    purpose,
+    spanLabel: `${agent.displayLabel || agent.label || agent.id} · ${purpose}`
   };
+  const { spanId } = sessionRuntime.beginProviderCall(agent, baseMeta);
+
+  try {
+    const response = await provider.invoke({
+      instructions,
+      input,
+      purpose,
+      signal,
+      allowEmptyText,
+      onRetry(retry) {
+        sessionRuntime.recordRetry(agent, retry, {
+          ...baseMeta,
+          parentSpanId: spanId
+        });
+        if (typeof onRetry === "function") {
+          onRetry(retry);
+        }
+      }
+    });
+
+    sessionRuntime.completeProviderCall(agent, spanId, response.raw, {
+      ...baseMeta,
+      detail: `Provider call completed for ${purpose}.`
+    });
+    return response;
+  } catch (error) {
+    sessionRuntime.failProviderCall(agent, spanId, error, baseMeta);
+    throw error;
+  }
 }
 
 function resolveSubordinateConcurrency(agent, task, config, requestedCount) {
@@ -860,6 +907,8 @@ async function executeSingleTask({
   completedResults,
   providerRegistry,
   config,
+  sessionRuntime,
+  parentSpanId = "",
   onEvent,
   signal
 }) {
@@ -934,7 +983,8 @@ async function executeSingleTask({
     provider,
     agentTask,
     dependencyOutputs,
-    emitLifecycle = true
+    emitLifecycle = true,
+    taskSpanId = ""
   }) {
     throwIfAborted(signal);
     const lifecycle = resolveLifecycleStages(agent);
@@ -966,12 +1016,29 @@ async function executeSingleTask({
       if (config.workspace?.resolvedDir) {
         parsed = await runWorkspaceToolLoop({
           provider,
+          invokeModel(options) {
+            return invokeProviderWithSession({
+              sessionRuntime,
+              provider: options.provider,
+              agent: options.worker,
+              task: options.task,
+              parentSpanId: options.parentSpanId || taskSpanId,
+              purpose: options.purpose,
+              instructions: options.instructions,
+              input: options.input,
+              onRetry: options.onRetry,
+              signal: options.signal,
+              buildAgentEventBase
+            });
+          },
           worker: agent,
           task: agentTask,
           originalTask,
           clusterPlan: plan,
           dependencyOutputs,
           workspaceRoot: config.workspace.resolvedDir,
+          sessionRuntime,
+          parentSpanId: taskSpanId,
           onRetry(retry) {
             emitAgentEvent(
               onEvent,
@@ -993,11 +1060,17 @@ async function executeSingleTask({
           signal
         });
       } else {
-        const response = await provider.invoke({
+        const response = await invokeProviderWithSession({
+          sessionRuntime,
+          provider,
+          agent,
+          task: agentTask,
+          parentSpanId: taskSpanId,
           instructions: prompt.instructions,
           input: prompt.input,
           purpose: agent.agentKind === "subordinate" ? "subordinate_execution" : "worker_execution",
           signal,
+          buildAgentEventBase,
           onRetry(retry) {
             emitAgentEvent(
               onEvent,
@@ -1050,6 +1123,18 @@ async function executeSingleTask({
         output
       };
 
+      sessionRuntime?.remember(
+        {
+          title: `${agent.displayLabel || agent.label} · ${agentTask.title}`,
+          content: output.summary || output.thinkingSummary || rawText,
+          tags: uniqueArray([agentTask.phase, agent.id, agent.agentKind || "leader"])
+        },
+        {
+          ...buildAgentEventBase(agent, agentTask),
+          parentSpanId: taskSpanId
+        }
+      );
+
       if (emitLifecycle) {
         emitAgentEvent(
           onEvent,
@@ -1096,8 +1181,15 @@ async function executeSingleTask({
     delegateCount,
     depthRemaining,
     defaultToRequested,
-    preferDelegation
+    preferDelegation,
+    parentSpanId = ""
   }) {
+    const delegationSpanId = sessionRuntime?.startSpan({
+      ...buildAgentEventBase(agent, agentTask),
+      parentSpanId,
+      spanKind: "delegation",
+      spanLabel: `${agent.displayLabel || agent.label} · delegation`
+    });
     emitAgentEvent(
       onEvent,
       agent,
@@ -1120,41 +1212,64 @@ async function executeSingleTask({
       depthRemaining
     });
 
-    const response = await provider.invoke({
-      instructions: prompt.instructions,
-      input: prompt.input,
-      purpose: "leader_delegation",
-      signal,
-      onRetry(retry) {
-        emitAgentEvent(
-          onEvent,
-          agent,
-          {
-            ...buildRetryPayload({
-              stage: "leader_delegate_retry",
-              model: agent,
-              retry,
-              taskId: agentTask.id,
-              taskTitle: agentTask.title
-            }),
-            agentKind: agent.agentKind || "leader"
-          },
-          agentTask
-        );
-      }
-    });
-
-    let parsed;
     try {
-      parsed = parseJsonFromText(response.text);
-    } catch {
-      parsed = null;
-    }
+      const response = await invokeProviderWithSession({
+        sessionRuntime,
+        provider,
+        agent,
+        task: agentTask,
+        parentSpanId: delegationSpanId || parentSpanId,
+        instructions: prompt.instructions,
+        input: prompt.input,
+        purpose: "leader_delegation",
+        signal,
+        buildAgentEventBase,
+        onRetry(retry) {
+          emitAgentEvent(
+            onEvent,
+            agent,
+            {
+              ...buildRetryPayload({
+                stage: "leader_delegate_retry",
+                model: agent,
+                retry,
+                taskId: agentTask.id,
+                taskTitle: agentTask.title
+              }),
+              agentKind: agent.agentKind || "leader"
+            },
+            agentTask
+          );
+        }
+      });
 
-    return normalizeDelegationPlan(parsed, delegateCount, {
-      defaultToRequested,
-      preferDelegation
-    });
+      let parsed;
+      try {
+        parsed = parseJsonFromText(response.text);
+      } catch {
+        parsed = null;
+      }
+
+      const normalized = normalizeDelegationPlan(parsed, delegateCount, {
+        defaultToRequested,
+        preferDelegation
+      });
+      if (delegationSpanId) {
+        sessionRuntime.endSpan(delegationSpanId, {
+          status: "ok",
+          detail: `Planned ${normalized.subtasks.length} delegated child task(s).`
+        });
+      }
+      return normalized;
+    } catch (error) {
+      if (delegationSpanId) {
+        sessionRuntime.endSpan(delegationSpanId, {
+          status: isAbortError(error) ? "warning" : "error",
+          detail: error.message
+        });
+      }
+      throw error;
+    }
   }
 
   async function synthesizeLeaderResult({
@@ -1164,8 +1279,15 @@ async function executeSingleTask({
     dependencyOutputs,
     subordinateExecutions,
     delegationPlan,
-    startedAt
+    startedAt,
+    parentSpanId = ""
   }) {
+    const synthesisSpanId = sessionRuntime?.startSpan({
+      ...buildAgentEventBase(agent, agentTask),
+      parentSpanId,
+      spanKind: "delegation_synthesis",
+      spanLabel: `${agent.displayLabel || agent.label} · child synthesis`
+    });
     emitAgentEvent(
       onEvent,
       agent,
@@ -1187,11 +1309,17 @@ async function executeSingleTask({
       subordinateResults: subordinateExecutions.map(summarizeExecutionForDependency)
     });
 
-    const response = await provider.invoke({
+    const response = await invokeProviderWithSession({
+      sessionRuntime,
       instructions: prompt.instructions,
       input: prompt.input,
+      provider,
+      agent,
+      task: agentTask,
+      parentSpanId: synthesisSpanId || parentSpanId,
       purpose: "leader_synthesis",
       signal,
+      buildAgentEventBase,
       onRetry(retry) {
         emitAgentEvent(
           onEvent,
@@ -1257,6 +1385,15 @@ async function executeSingleTask({
         verifiedGeneratedFiles: mergedVerifiedGeneratedFiles,
         workspaceActions: mergedWorkspaceActions,
         executedCommands: mergedCommands,
+        toolUsage: subordinateExecutions.flatMap((execution) => execution.output?.toolUsage || []),
+        memoryReads: subordinateExecutions.reduce(
+          (sum, execution) => sum + Number(execution.output?.memoryReads || 0),
+          0
+        ),
+        memoryWrites: subordinateExecutions.reduce(
+          (sum, execution) => sum + Number(execution.output?.memoryWrites || 0),
+          0
+        ),
         subordinateCount: totalDescendantCount,
         subordinateResults: subordinateExecutions.map(summarizeSubordinateExecution),
         verificationStatus: normalizeVerificationStatus(parsed?.verificationStatus || derivedVerification)
@@ -1265,6 +1402,27 @@ async function executeSingleTask({
         actualGeneratedFiles: mergedVerifiedGeneratedFiles
       }
     );
+
+    const status = subordinateExecutions.some((execution) => execution.status === "failed")
+      ? "failed"
+      : "completed";
+    sessionRuntime?.remember(
+      {
+        title: `${agent.displayLabel || agent.label} · ${agentTask.title}`,
+        content: output.summary || output.thinkingSummary || response.text,
+        tags: uniqueArray([agentTask.phase, agent.id, "leader_synthesis"])
+      },
+      {
+        ...buildAgentEventBase(agent, agentTask),
+        parentSpanId: synthesisSpanId || parentSpanId
+      }
+    );
+    if (synthesisSpanId) {
+      sessionRuntime.endSpan(synthesisSpanId, {
+        status: status === "failed" ? "error" : "ok",
+        detail: `Synthesized ${subordinateExecutions.length} child result(s).`
+      });
+    }
 
     return {
       taskId: agentTask.id,
@@ -1275,7 +1433,7 @@ async function executeSingleTask({
       agentLabel: agent.displayLabel || agent.label,
       agentKind: agent.agentKind || "leader",
       phase: agentTask.phase,
-      status: subordinateExecutions.some((execution) => execution.status === "failed") ? "failed" : "completed",
+      status,
       startedAt,
       endedAt,
       durationMs: endedAt - startedAt,
@@ -1303,11 +1461,18 @@ async function executeSingleTask({
     preferredDelegateCount = 0,
     depthRemaining = 0,
     defaultToRequested = false,
-    emitLifecycle = true
+    emitLifecycle = true,
+    parentSpanId: inheritedParentSpanId = ""
   }) {
     throwIfAborted(signal);
     const lifecycle = resolveLifecycleStages(agent);
     const startedAt = Date.now();
+    const taskSpanId = sessionRuntime?.startSpan({
+      ...buildAgentEventBase(agent, agentTask),
+      parentSpanId: inheritedParentSpanId || parentSpanId,
+      spanKind: agent.agentKind === "subordinate" ? "subtask" : "task",
+      spanLabel: `${agent.displayLabel || agent.label} · ${agentTask.title}`
+    });
 
     if (emitLifecycle) {
       emitAgentEvent(
@@ -1338,7 +1503,8 @@ async function executeSingleTask({
           provider,
           agentTask,
           dependencyOutputs,
-          emitLifecycle: false
+          emitLifecycle: false,
+          taskSpanId: taskSpanId || inheritedParentSpanId || parentSpanId
         });
 
         if (emitLifecycle) {
@@ -1353,6 +1519,15 @@ async function executeSingleTask({
             },
             agentTask
           );
+        }
+        if (taskSpanId) {
+          sessionRuntime.endSpan(taskSpanId, {
+            status: directResult.status === "failed" ? "error" : "ok",
+            detail:
+              directResult.output.summary ||
+              directResult.output.thinkingSummary ||
+              "Task completed."
+          });
         }
         return directResult;
       }
@@ -1370,7 +1545,8 @@ async function executeSingleTask({
           agentTask.phase,
           branchFactor,
           depthRemaining
-        )
+        ),
+        parentSpanId: taskSpanId || inheritedParentSpanId || parentSpanId
       });
 
       if (!delegationPlan.subtasks.length) {
@@ -1379,7 +1555,8 @@ async function executeSingleTask({
           provider,
           agentTask,
           dependencyOutputs,
-          emitLifecycle: false
+          emitLifecycle: false,
+          taskSpanId: taskSpanId || inheritedParentSpanId || parentSpanId
         });
 
         if (emitLifecycle) {
@@ -1394,6 +1571,15 @@ async function executeSingleTask({
             },
             agentTask
           );
+        }
+        if (taskSpanId) {
+          sessionRuntime.endSpan(taskSpanId, {
+            status: directResult.status === "failed" ? "error" : "ok",
+            detail:
+              directResult.output.summary ||
+              directResult.output.thinkingSummary ||
+              "Task completed without delegation."
+          });
         }
         return directResult;
       }
@@ -1455,7 +1641,8 @@ async function executeSingleTask({
             dependencyOutputs,
             preferredDelegateCount: childPreferredDelegateCount,
             depthRemaining: Math.max(0, depthRemaining - 1),
-            defaultToRequested: false
+            defaultToRequested: false,
+            parentSpanId: taskSpanId || inheritedParentSpanId || parentSpanId
           });
         }
       );
@@ -1467,7 +1654,8 @@ async function executeSingleTask({
         dependencyOutputs,
         subordinateExecutions,
         delegationPlan,
-        startedAt
+        startedAt,
+        parentSpanId: taskSpanId || inheritedParentSpanId || parentSpanId
       });
 
       if (emitLifecycle) {
@@ -1483,13 +1671,34 @@ async function executeSingleTask({
           agentTask
         );
       }
+      if (taskSpanId) {
+        sessionRuntime.endSpan(taskSpanId, {
+          status: result.status === "failed" ? "error" : "ok",
+          detail:
+            result.output.summary ||
+            result.output.thinkingSummary ||
+            "Delegated task completed."
+        });
+      }
       return result;
     } catch (error) {
       if (isAbortError(error)) {
+        if (taskSpanId) {
+          sessionRuntime.endSpan(taskSpanId, {
+            status: "warning",
+            detail: error.message
+          });
+        }
         throw error;
       }
 
       const result = buildFailureResult(agent, agentTask, error, startedAt);
+      if (taskSpanId) {
+        sessionRuntime.endSpan(taskSpanId, {
+          status: "error",
+          detail: error.message
+        });
+      }
       if (emitLifecycle) {
         emitAgentEvent(
           onEvent,
@@ -1514,11 +1723,21 @@ async function executeSingleTask({
     dependencyOutputs,
     preferredDelegateCount,
     depthRemaining: maxDelegationDepth,
-    defaultToRequested: preferredDelegateCount > 0
+    defaultToRequested: preferredDelegateCount > 0,
+    parentSpanId
   });
 }
 
-async function executePlan(plan, originalTask, config, providerRegistry, onEvent, signal) {
+async function executePlan(
+  plan,
+  originalTask,
+  config,
+  providerRegistry,
+  sessionRuntime,
+  parentSpanId,
+  onEvent,
+  signal
+) {
   const pending = new Map(plan.tasks.map((task) => [task.id, task]));
   const running = new Map();
   const completedResults = new Map();
@@ -1570,6 +1789,8 @@ async function executePlan(plan, originalTask, config, providerRegistry, onEvent
           completedResults,
           providerRegistry,
           config,
+          sessionRuntime,
+          parentSpanId,
           onEvent,
           signal
         }).then((result) => ({ taskId: task.id, result }));
@@ -1636,162 +1857,252 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
 
   throwIfAborted(signal);
   const startedAt = Date.now();
+  const sessionRuntime = createSessionRuntime({
+    emitEvent(payload) {
+      emitEvent(onEvent, payload);
+    }
+  });
   const controllerId = config.cluster.controller;
   const controller = config.models[controllerId];
   const controllerProvider = providerRegistry.get(controllerId);
   if (!controllerProvider) {
     throw new Error(`No provider found for controller "${controllerId}".`);
   }
-
-  const workers = workerListFromConfig(config);
-  const workspaceSummary = config.workspace?.resolvedDir
-    ? await getWorkspaceTree(config.workspace.resolvedDir)
-    : null;
-  const planningPrompt = buildPlanningRequest({
-    task: originalTask,
-    workers,
-    maxParallel: config.cluster.maxParallel,
-    workspaceSummary,
-    delegateMaxDepth: config.cluster.delegateMaxDepth,
-    delegateBranchFactor: config.cluster.groupLeaderMaxDelegates
+  const operationSpanId = sessionRuntime.startSpan({
+    ...buildAgentEventBase(controller, null),
+    spanKind: "operation",
+    spanLabel: `Cluster run · ${originalTask.slice(0, 72) || "task"}`
   });
 
-  emitEvent(onEvent, {
-    type: "status",
-    stage: "planning_start",
-    tone: "neutral",
-    agentId: controller.id,
-    agentLabel: controller.label,
-    agentKind: "controller",
-    modelId: controller.id,
-    modelLabel: controller.label
-  });
-
-  const planningResponse = await controllerProvider.invoke({
-    instructions: planningPrompt.instructions,
-    input: planningPrompt.input,
-    purpose: "planning",
-    signal,
-    onRetry(retry) {
-      emitEvent(
-        onEvent,
-        buildRetryPayload({
-          stage: "planning_retry",
-          model: controller,
-          retry
-        })
-      );
-    }
-  });
-
-  let rawPlan;
   try {
-    rawPlan = parseJsonFromText(planningResponse.text);
-  } catch {
-    rawPlan = null;
-  }
+    const workers = workerListFromConfig(config);
+    const workspaceSummary = config.workspace?.resolvedDir
+      ? await getWorkspaceTree(config.workspace.resolvedDir)
+      : null;
+    const planningPrompt = buildPlanningRequest({
+      task: originalTask,
+      workers,
+      maxParallel: config.cluster.maxParallel,
+      workspaceSummary,
+      delegateMaxDepth: config.cluster.delegateMaxDepth,
+      delegateBranchFactor: config.cluster.groupLeaderMaxDelegates
+    });
+    const planningSpanId = sessionRuntime.startSpan({
+      ...buildAgentEventBase(controller, null),
+      parentSpanId: operationSpanId,
+      spanKind: "planning",
+      spanLabel: `${controller.label} · planning`
+    });
 
-  const groupLeaderMaxDelegates = resolveGroupLeaderMaxDelegates(config);
-  const plan = normalizePlan(
-    rawPlan,
-    workers,
-    originalTask,
-    config.cluster.maxParallel,
-    groupLeaderMaxDelegates,
-    config.cluster.delegateMaxDepth
-  );
+    emitEvent(onEvent, {
+      type: "status",
+      stage: "planning_start",
+      tone: "neutral",
+      agentId: controller.id,
+      agentLabel: controller.label,
+      agentKind: "controller",
+      modelId: controller.id,
+      modelLabel: controller.label
+    });
 
-  emitEvent(onEvent, {
-    type: "status",
-    stage: "planning_done",
-    tone: "ok",
-    agentId: controller.id,
-    agentLabel: controller.label,
-    agentKind: "controller",
-    modelId: controller.id,
-    modelLabel: controller.label,
-    taskCount: plan.tasks.length,
-    detail: plan.strategy,
-    planStrategy: plan.strategy,
-    planTasks: plan.tasks.map((taskItem) => ({
-      id: taskItem.id,
-      title: taskItem.title,
-      phase: taskItem.phase,
-      assignedWorker: taskItem.assignedWorker,
-      delegateCount: taskItem.delegateCount
-    }))
-  });
+    const planningResponse = await invokeProviderWithSession({
+      sessionRuntime,
+      provider: controllerProvider,
+      agent: controller,
+      parentSpanId: planningSpanId,
+      instructions: planningPrompt.instructions,
+      input: planningPrompt.input,
+      purpose: "planning",
+      signal,
+      buildAgentEventBase,
+      onRetry(retry) {
+        emitEvent(
+          onEvent,
+          buildRetryPayload({
+            stage: "planning_retry",
+            model: controller,
+            retry
+          })
+        );
+      }
+    });
 
-  const executions = await executePlan(plan, originalTask, config, providerRegistry, onEvent, signal);
-
-  const synthesisPrompt = buildSynthesisRequest({
-    task: originalTask,
-    plan,
-    executions
-  });
-
-  emitEvent(onEvent, {
-    type: "status",
-    stage: "synthesis_start",
-    tone: "neutral",
-    agentId: controller.id,
-    agentLabel: controller.label,
-    agentKind: "controller",
-    modelId: controller.id,
-    modelLabel: controller.label
-  });
-
-  const synthesisResponse = await controllerProvider.invoke({
-    instructions: synthesisPrompt.instructions,
-    input: synthesisPrompt.input,
-    purpose: "synthesis",
-    signal,
-    onRetry(retry) {
-      emitEvent(
-        onEvent,
-        buildRetryPayload({
-          stage: "synthesis_retry",
-          model: controller,
-          retry
-        })
-      );
+    let rawPlan;
+    try {
+      rawPlan = parseJsonFromText(planningResponse.text);
+    } catch {
+      rawPlan = null;
     }
-  });
 
-  let synthesisParsed;
-  try {
-    synthesisParsed = parseJsonFromText(synthesisResponse.text);
-  } catch {
-    synthesisParsed = null;
-  }
+    const groupLeaderMaxDelegates = resolveGroupLeaderMaxDelegates(config);
+    const plan = normalizePlan(
+      rawPlan,
+      workers,
+      originalTask,
+      config.cluster.maxParallel,
+      groupLeaderMaxDelegates,
+      config.cluster.delegateMaxDepth
+    );
+    sessionRuntime.endSpan(planningSpanId, {
+      status: "ok",
+      detail: `Planned ${plan.tasks.length} task(s).`
+    });
+    sessionRuntime.remember(
+      {
+        title: "Cluster planning",
+        content: plan.strategy,
+        tags: ["planning", controller.id]
+      },
+      {
+        ...buildAgentEventBase(controller, null),
+        parentSpanId: planningSpanId
+      }
+    );
 
-  const normalizedSynthesis = normalizeSynthesis(synthesisParsed, synthesisResponse.text);
-  const totalMs = Date.now() - startedAt;
-  emitEvent(onEvent, {
-    type: "complete",
-    stage: "cluster_done",
-    tone: "ok",
-    agentId: controller.id,
-    agentLabel: controller.label,
-    agentKind: "controller",
-    modelId: controller.id,
-    modelLabel: controller.label,
-    totalMs,
-    finalAnswer: normalizedSynthesis.finalAnswer,
-    executiveSummary: normalizedSynthesis.executiveSummary
-  });
+    emitEvent(onEvent, {
+      type: "status",
+      stage: "planning_done",
+      tone: "ok",
+      agentId: controller.id,
+      agentLabel: controller.label,
+      agentKind: "controller",
+      modelId: controller.id,
+      modelLabel: controller.label,
+      taskCount: plan.tasks.length,
+      detail: plan.strategy,
+      planStrategy: plan.strategy,
+      planTasks: plan.tasks.map((taskItem) => ({
+        id: taskItem.id,
+        title: taskItem.title,
+        phase: taskItem.phase,
+        assignedWorker: taskItem.assignedWorker,
+        delegateCount: taskItem.delegateCount
+      }))
+    });
 
-  return {
-    plan,
-    executions,
-    synthesis: normalizedSynthesis,
-    controller: {
-      id: controller.id,
-      label: controller.label,
-      model: controller.model
-    },
-    timings: {
-      totalMs
+    const executions = await executePlan(
+      plan,
+      originalTask,
+      config,
+      providerRegistry,
+      sessionRuntime,
+      operationSpanId,
+      onEvent,
+      signal
+    );
+
+    const synthesisPrompt = buildSynthesisRequest({
+      task: originalTask,
+      plan,
+      executions
+    });
+    const synthesisSpanId = sessionRuntime.startSpan({
+      ...buildAgentEventBase(controller, null),
+      parentSpanId: operationSpanId,
+      spanKind: "synthesis",
+      spanLabel: `${controller.label} · synthesis`
+    });
+
+    emitEvent(onEvent, {
+      type: "status",
+      stage: "synthesis_start",
+      tone: "neutral",
+      agentId: controller.id,
+      agentLabel: controller.label,
+      agentKind: "controller",
+      modelId: controller.id,
+      modelLabel: controller.label
+    });
+
+    const synthesisResponse = await invokeProviderWithSession({
+      sessionRuntime,
+      provider: controllerProvider,
+      agent: controller,
+      parentSpanId: synthesisSpanId,
+      instructions: synthesisPrompt.instructions,
+      input: synthesisPrompt.input,
+      purpose: "synthesis",
+      signal,
+      buildAgentEventBase,
+      onRetry(retry) {
+        emitEvent(
+          onEvent,
+          buildRetryPayload({
+            stage: "synthesis_retry",
+            model: controller,
+            retry
+          })
+        );
+      }
+    });
+
+    let synthesisParsed;
+    try {
+      synthesisParsed = parseJsonFromText(synthesisResponse.text);
+    } catch {
+      synthesisParsed = null;
     }
-  };
+
+    const normalizedSynthesis = normalizeSynthesis(synthesisParsed, synthesisResponse.text);
+    sessionRuntime.endSpan(synthesisSpanId, {
+      status: "ok",
+      detail: "Controller synthesis completed."
+    });
+    sessionRuntime.remember(
+      {
+        title: "Cluster synthesis",
+        content: normalizedSynthesis.finalAnswer,
+        tags: ["synthesis", controller.id]
+      },
+      {
+        ...buildAgentEventBase(controller, null),
+        parentSpanId: synthesisSpanId
+      }
+    );
+
+    const totalMs = Date.now() - startedAt;
+    sessionRuntime.endSpan(operationSpanId, {
+      status: "ok",
+      detail: normalizedSynthesis.finalAnswer || "Cluster run completed."
+    });
+    sessionRuntime.publishSessionUpdate("Cluster run completed.");
+    emitEvent(onEvent, {
+      type: "complete",
+      stage: "cluster_done",
+      tone: "ok",
+      agentId: controller.id,
+      agentLabel: controller.label,
+      agentKind: "controller",
+      modelId: controller.id,
+      modelLabel: controller.label,
+      totalMs,
+      finalAnswer: normalizedSynthesis.finalAnswer,
+      executiveSummary: normalizedSynthesis.executiveSummary,
+      session: sessionRuntime.buildSnapshot()
+    });
+
+    return {
+      plan,
+      executions,
+      synthesis: normalizedSynthesis,
+      controller: {
+        id: controller.id,
+        label: controller.label,
+        model: controller.model
+      },
+      timings: {
+        totalMs
+      },
+      session: sessionRuntime.buildSnapshot()
+    };
+  } catch (error) {
+    sessionRuntime.endSpan(operationSpanId, {
+      status: isAbortError(error) ? "warning" : "error",
+      detail: error.message
+    });
+    sessionRuntime.publishSessionUpdate(
+      isAbortError(error) ? "Cluster run cancelled." : "Cluster run failed."
+    );
+    throw error;
+  }
 }
