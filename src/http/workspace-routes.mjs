@@ -7,6 +7,7 @@ import {
   getWorkspaceTree,
   writeWorkspaceFiles
 } from "../workspace/fs.mjs";
+import { clearClusterRunCache } from "../workspace/cache.mjs";
 import { readRequestBody, sendJson } from "./common.mjs";
 
 export function resolveWorkspaceRequestContext(projectDir, runtimeConfigOptions, overrideDir = "") {
@@ -143,6 +144,26 @@ export async function handleWorkspaceImport(request, response, projectDir, runti
       ok: true,
       workspace,
       written
+    });
+  } catch (error) {
+    sendJson(response, 400, {
+      ok: false,
+      error: error.message
+    });
+  }
+}
+
+export async function handleWorkspaceCacheClear(request, response, projectDir, runtimeConfigOptions) {
+  try {
+    const body = await readRequestBody(request);
+    const workspaceDir = String(body?.workspaceDir || "").trim();
+    const workspace = resolveWorkspaceRequestContext(projectDir, runtimeConfigOptions, workspaceDir);
+    const cache = await clearClusterRunCache(workspace.resolvedDir);
+
+    sendJson(response, 200, {
+      ok: true,
+      workspace,
+      cache
     });
   } catch (error) {
     sendJson(response, 400, {

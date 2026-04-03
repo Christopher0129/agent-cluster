@@ -1,11 +1,48 @@
+function interpolate(template, values = {}) {
+  return String(template || "").replace(/\{(\w+)\}/g, (_, key) => String(values[key] ?? ""));
+}
+
+function createFallbackTranslator() {
+  const catalog = {
+    "workspace.loadingSummary": "正在读取工作区...",
+    "workspace.emptyTree": "(工作区为空)",
+    "workspace.summaryPrefix": "根目录：{rootDir}\n\n{tree}",
+    "workspace.summaryLoadFailed": "读取工作区失败：{error}",
+    "workspace.readPathRequired": "请输入要读取的相对路径。",
+    "workspace.readingFile": "正在读取文件...",
+    "workspace.readFileFailed": "读取文件失败：{error}",
+    "workspace.truncatedSuffix": "\n\n[内容过长，已截断]",
+    "workspace.pickingFolder": "正在打开文件夹选择器...",
+    "workspace.folderNotSelected": "未选择文件夹。",
+    "workspace.folderSelected": "已选择工作区目录，点击“保存配置”即可持久化。",
+    "workspace.folderPickFailed": "选择文件夹失败：{error}",
+    "workspace.importSelectRequired": "请先选择要导入的文件。",
+    "workspace.importingFiles": "正在导入 {count} 个文件...",
+    "workspace.importedPreview": "已导入 {count} 个文件，正在预览 {path}...",
+    "workspace.importedDone": "文件已导入。",
+    "workspace.importedStatus": "已导入 {count} 个文件到工作区。",
+    "workspace.importFailed": "导入文件失败：{error}",
+    "workspace.clearingCache": "正在清除集群运行缓存...",
+    "workspace.cacheCleared": "已清除集群缓存：删除 {files} 个文件，{dirs} 个目录。",
+    "workspace.cacheAlreadyEmpty": "未发现可清除的集群缓存。",
+    "workspace.cacheClearFailed": "清除集群缓存失败：{error}",
+    "workspace.cacheClearConfirm": "确定要删除集群运行缓存吗？这会移除工作区中的分工材料缓存。",
+    "workspace.cachePreviewCleared": "集群运行缓存已清除。"
+  };
+
+  return (key, values = {}) => interpolate(catalog[key] ?? key, values);
+}
+
 export function createWorkspaceUi({
   elements,
-  setSaveStatus
+  setSaveStatus,
+  translate = createFallbackTranslator()
 }) {
   const {
     workspaceDirInput,
     pickWorkspaceButton,
     refreshWorkspaceButton,
+    clearWorkspaceCacheButton,
     workspaceTreeOutput,
     importWorkspaceFilesInput,
     importWorkspaceFilesButton,
@@ -85,18 +122,25 @@ export function createWorkspaceUi({
 
   async function loadSummary() {
     if (workspaceTreeOutput) {
-      workspaceTreeOutput.textContent = "正在读取工作区...";
+      workspaceTreeOutput.textContent = translate("workspace.loadingSummary");
     }
 
     try {
       const payload = await fetchJson(`/api/workspace${buildWorkspaceQuery(getDirValue())}`);
-      const treeText = payload.workspace.tree?.length ? payload.workspace.tree.join("\n") : "(工作区为空)";
+      const treeText = payload.workspace.tree?.length
+        ? payload.workspace.tree.join("\n")
+        : translate("workspace.emptyTree");
       if (workspaceTreeOutput) {
-        workspaceTreeOutput.textContent = `根目录：${payload.workspace.resolvedDir}\n\n${treeText}`;
+        workspaceTreeOutput.textContent = translate("workspace.summaryPrefix", {
+          rootDir: payload.workspace.resolvedDir,
+          tree: treeText
+        });
       }
     } catch (error) {
       if (workspaceTreeOutput) {
-        workspaceTreeOutput.textContent = `读取工作区失败：${error.message}`;
+        workspaceTreeOutput.textContent = translate("workspace.summaryLoadFailed", {
+          error: error.message
+        });
       }
     }
   }
@@ -105,14 +149,14 @@ export function createWorkspaceUi({
     const filePath = workspaceFilePathInput?.value.trim() || "";
     if (!filePath) {
       if (workspaceFileOutput) {
-        workspaceFileOutput.textContent = "请输入要读取的相对路径。";
+        workspaceFileOutput.textContent = translate("workspace.readPathRequired");
       }
       workspaceFilePathInput?.focus();
       return;
     }
 
     if (workspaceFileOutput) {
-      workspaceFileOutput.textContent = "正在读取文件...";
+      workspaceFileOutput.textContent = translate("workspace.readingFile");
     }
 
     try {
@@ -125,13 +169,15 @@ export function createWorkspaceUi({
 
       const payload = await fetchJson(`/api/workspace/file?${query.toString()}`);
       const file = payload.file || {};
-      const suffix = file.truncated ? "\n\n[内容过长，已截断]" : "";
+      const suffix = file.truncated ? translate("workspace.truncatedSuffix") : "";
       if (workspaceFileOutput) {
         workspaceFileOutput.textContent = `${file.content || ""}${suffix}`;
       }
     } catch (error) {
       if (workspaceFileOutput) {
-        workspaceFileOutput.textContent = `读取文件失败：${error.message}`;
+        workspaceFileOutput.textContent = translate("workspace.readFileFailed", {
+          error: error.message
+        });
       }
     }
   }
@@ -140,7 +186,7 @@ export function createWorkspaceUi({
     if (pickWorkspaceButton) {
       pickWorkspaceButton.disabled = true;
     }
-    setSaveStatus("正在打开文件夹选择器...", "neutral");
+    setSaveStatus(translate("workspace.pickingFolder"), "neutral");
 
     try {
       const payload = await fetchJson("/api/system/pick-folder", {
@@ -154,17 +200,22 @@ export function createWorkspaceUi({
       });
 
       if (!payload.path) {
-        setSaveStatus("未选择文件夹。", "neutral");
+        setSaveStatus(translate("workspace.folderNotSelected"), "neutral");
         return;
       }
 
       if (workspaceDirInput) {
         workspaceDirInput.value = payload.path;
       }
-      setSaveStatus("已选择工作区目录，点击“保存配置”即可持久化。", "ok");
+      setSaveStatus(translate("workspace.folderSelected"), "ok");
       await loadSummary();
     } catch (error) {
-      setSaveStatus(`选择文件夹失败：${error.message}`, "error");
+      setSaveStatus(
+        translate("workspace.folderPickFailed", {
+          error: error.message
+        }),
+        "error"
+      );
     } finally {
       if (pickWorkspaceButton) {
         pickWorkspaceButton.disabled = false;
@@ -175,7 +226,7 @@ export function createWorkspaceUi({
   async function importFiles() {
     const selectedFiles = Array.from(importWorkspaceFilesInput?.files || []);
     if (!selectedFiles.length) {
-      setSaveStatus("请先选择要导入的文件。", "error");
+      setSaveStatus(translate("workspace.importSelectRequired"), "error");
       importWorkspaceFilesInput?.focus();
       return;
     }
@@ -188,7 +239,12 @@ export function createWorkspaceUi({
     if (importWorkspaceFilesInput) {
       importWorkspaceFilesInput.disabled = true;
     }
-    setSaveStatus(`正在导入 ${selectedFiles.length} 个文件...`, "neutral");
+    setSaveStatus(
+      translate("workspace.importingFiles", {
+        count: selectedFiles.length
+      }),
+      "neutral"
+    );
 
     try {
       const files = await Promise.all(
@@ -215,21 +271,32 @@ export function createWorkspaceUi({
           workspaceFilePathInput.value = firstPath;
         }
         if (workspaceFileOutput) {
-          workspaceFileOutput.textContent = `已导入 ${payload.written.length} 个文件，正在预览 ${firstPath}...`;
+          workspaceFileOutput.textContent = translate("workspace.importedPreview", {
+            count: payload.written.length,
+            path: firstPath
+          });
         }
       } else if (workspaceFileOutput) {
-        workspaceFileOutput.textContent = "文件已导入。";
+        workspaceFileOutput.textContent = translate("workspace.importedDone");
       }
 
       await loadSummary();
       if (firstPath) {
         await readFilePreview();
       }
-      setSaveStatus(`已导入 ${payload.written.length} 个文件到工作区。`, "ok");
+      setSaveStatus(
+        translate("workspace.importedStatus", {
+          count: payload.written.length
+        }),
+        "ok"
+      );
     } catch (error) {
-      setSaveStatus(`导入文件失败：${error.message}`, "error");
+      const errorMessage = translate("workspace.importFailed", {
+        error: error.message
+      });
+      setSaveStatus(errorMessage, "error");
       if (workspaceFileOutput) {
-        workspaceFileOutput.textContent = `导入文件失败：${error.message}`;
+        workspaceFileOutput.textContent = errorMessage;
       }
     } finally {
       if (importWorkspaceFilesButton) {
@@ -242,9 +309,69 @@ export function createWorkspaceUi({
     }
   }
 
+  async function clearClusterCache() {
+    const confirmed = window.confirm(translate("workspace.cacheClearConfirm"));
+    if (!confirmed) {
+      return;
+    }
+
+    if (clearWorkspaceCacheButton) {
+      clearWorkspaceCacheButton.disabled = true;
+    }
+    setSaveStatus(translate("workspace.clearingCache"), "neutral");
+
+    try {
+      const payload = await fetchJson("/api/workspace/cache/clear", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          workspaceDir: getDirValue()
+        })
+      });
+
+      const cache = payload.cache || {};
+      const message = cache.existed
+        ? translate("workspace.cacheCleared", {
+            files: cache.removedFiles ?? 0,
+            dirs: cache.removedDirectories ?? 0
+          })
+        : translate("workspace.cacheAlreadyEmpty");
+
+      setSaveStatus(message, "ok");
+      if (workspaceFileOutput) {
+        workspaceFileOutput.textContent = translate("workspace.cachePreviewCleared");
+      }
+      await loadSummary();
+    } catch (error) {
+      const errorMessage = translate("workspace.cacheClearFailed", {
+        error: error.message
+      });
+      setSaveStatus(errorMessage, "error");
+      if (workspaceFileOutput) {
+        workspaceFileOutput.textContent = errorMessage;
+      }
+    } finally {
+      if (clearWorkspaceCacheButton) {
+        clearWorkspaceCacheButton.disabled = false;
+      }
+    }
+  }
+
+  function refreshLocale() {
+    if (workspaceTreeOutput && !workspaceTreeOutput.textContent.trim()) {
+      workspaceTreeOutput.textContent = translate("workspace.loadingSummary");
+    }
+    if (workspaceFileOutput && !workspaceFileOutput.textContent.trim()) {
+      workspaceFileOutput.textContent = translate("workspace.readPathRequired");
+    }
+  }
+
   function bindEvents() {
     pickWorkspaceButton?.addEventListener("click", pickFolder);
     refreshWorkspaceButton?.addEventListener("click", loadSummary);
+    clearWorkspaceCacheButton?.addEventListener("click", clearClusterCache);
     importWorkspaceFilesButton?.addEventListener("click", importFiles);
     readWorkspaceFileButton?.addEventListener("click", readFilePreview);
   }
@@ -257,6 +384,8 @@ export function createWorkspaceUi({
     importFiles,
     loadSummary,
     pickFolder,
-    readFilePreview
+    readFilePreview,
+    clearClusterCache,
+    refreshLocale
   };
 }

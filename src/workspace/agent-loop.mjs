@@ -55,6 +55,22 @@ function normalizeInteger(value, fallback = 0) {
   return Math.floor(number);
 }
 
+function normalizeTaskRequirements(task = {}) {
+  const requirements =
+    task?.requirements && typeof task.requirements === "object" ? task.requirements : {};
+  const phase = String(task?.phase || requirements.phase || "implementation").trim().toLowerCase() || "implementation";
+
+  return {
+    phase,
+    allowsWorkspaceWrite: Boolean(
+      requirements.allowsWorkspaceWrite ?? (phase === "implementation")
+    ),
+    allowsWorkspaceCommand: Boolean(
+      requirements.allowsWorkspaceCommand ?? (phase === "implementation" || phase === "validation")
+    )
+  };
+}
+
 function buildRuntimeWorkerIdentity(worker) {
   return {
     agentId: worker.runtimeId || worker.id,
@@ -308,6 +324,7 @@ export async function runWorkspaceToolLoop({
   onEvent,
   signal
 }) {
+  const taskRequirements = normalizeTaskRequirements(task);
   throwIfAborted(signal);
   const workspaceTree = await getWorkspaceTree(workspaceRoot);
   const toolHistory = [];
@@ -468,6 +485,32 @@ export async function runWorkspaceToolLoop({
     if (action === "write_files") {
       throwIfAborted(signal);
       const files = Array.isArray(parsed?.files) ? parsed.files : [];
+      if (!taskRequirements.allowsWorkspaceWrite) {
+        toolHistory.push({
+          action,
+          blocked: true,
+          request: {
+            files: files.map((file) => ({ path: String(file?.path || "") })),
+            reason: String(parsed?.reason || "")
+          },
+          result: {
+            blocked: true,
+            message: "Workspace writes are not allowed for this task."
+          }
+        });
+        if (typeof onEvent === "function") {
+          onEvent({
+            type: "status",
+            stage: "workspace_tool_blocked",
+            tone: "warning",
+            ...buildRuntimeWorkerIdentity(worker),
+            taskId: task.id,
+            taskTitle: task.title,
+            detail: "Blocked write_files because workspace writes are out of scope for this task."
+          });
+        }
+        continue;
+      }
       const toolSpanId = sessionRuntime?.beginToolCall?.({
         ...buildRuntimeWorkerIdentity(worker),
         taskId: task.id,
@@ -513,6 +556,34 @@ export async function runWorkspaceToolLoop({
       const command = String(parsed?.command || "");
       const args = Array.isArray(parsed?.args) ? parsed.args : [];
       const cwd = String(parsed?.cwd || ".").trim() || ".";
+      if (!taskRequirements.allowsWorkspaceCommand) {
+        toolHistory.push({
+          action,
+          blocked: true,
+          request: {
+            command,
+            args: args.map((item) => String(item)),
+            cwd,
+            reason: String(parsed?.reason || "")
+          },
+          result: {
+            blocked: true,
+            message: "Workspace commands are not allowed for this task."
+          }
+        });
+        if (typeof onEvent === "function") {
+          onEvent({
+            type: "status",
+            stage: "workspace_tool_blocked",
+            tone: "warning",
+            ...buildRuntimeWorkerIdentity(worker),
+            taskId: task.id,
+            taskTitle: task.title,
+            detail: "Blocked run_command because workspace commands are out of scope for this task."
+          });
+        }
+        continue;
+      }
       const toolSpanId = sessionRuntime?.beginToolCall?.({
         ...buildRuntimeWorkerIdentity(worker),
         taskId: task.id,

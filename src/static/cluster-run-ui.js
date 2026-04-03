@@ -137,7 +137,11 @@ export function getRunStateTextForEvent(event, translate = createFallbackTransla
     case "subagent_retry":
     case "leader_delegate_retry":
     case "leader_synthesis_retry":
-      return translate("run.state.retrying", event);
+      return translate("run.state.retrying", {
+        attempt: event.attempt,
+        maxRetries: event.maxRetries,
+        nextDelayMs: event.nextDelayMs
+      });
     case "leader_delegate_start":
       return translate("run.state.delegating");
     case "subagent_start":

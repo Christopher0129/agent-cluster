@@ -61,6 +61,13 @@
               <p id="consolePanelDescription" class="muted section-copy">设置全局并发、主控模型和委派深度。</p>
             </div>
             <div class="panel-actions">
+              <label class="field language-switch">
+                <span id="languageLabel">语言</span>
+                <select id="languageSelect">
+                  <option value="zh-CN">中文</option>
+                  <option value="en-US">English</option>
+                </select>
+              </label>
               <button id="reloadButton" type="button" class="ghost">重新加载</button>
               <button id="exitAppButton" type="button" class="ghost danger">退出程序</button>
               <button id="saveButton" type="button">保存配置</button>
@@ -376,6 +383,7 @@
 
             <section
               class="console-panel"
+              id="workspace"
               data-console-panel="workspace"
               data-panel-kicker="Workspace"
               data-panel-title="工作区"
@@ -391,6 +399,7 @@
                   <div class="panel-actions">
                     <button id="pickWorkspaceButton" type="button" class="ghost small">选择文件夹</button>
                     <button id="refreshWorkspaceButton" type="button" class="ghost small">刷新工作区</button>
+                    <button id="clearWorkspaceCacheButton" type="button" class="ghost danger small">清除缓存</button>
                   </div>
                 </div>
                 <div class="field-grid">
@@ -508,7 +517,7 @@
                     <span class="chip">Trace</span>
                   </div>
                   <div id="traceOutput" class="trace-list">
-                    <p class="placeholder">杩愯鍚庝細鍦ㄨ繖閲屾樉绀?trace 鍜岃皟鐢ㄩ摼銆?/p>
+                    <p class="placeholder">运行后会在这里显示 trace 和调用链。</p>
                   </div>
                 </article>
 
@@ -518,7 +527,7 @@
                     <span class="chip">Session</span>
                   </div>
                   <div id="sessionOutput" class="session-summary">
-                    <p class="placeholder">杩愯鍚庝細鍦ㄨ繖閲屾樉绀鸿蹇嗐€乼oken/cost 鍜?retry / circuit breaker 鐘舵€併€?/p>
+                    <p class="placeholder">运行后会在这里显示记忆、token/cost 和 retry / circuit breaker 状态。</p>
                   </div>
                 </article>
               </section>

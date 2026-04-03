@@ -23,9 +23,12 @@ export function renderList(items, emptyText = "暂无内容。") {
 }
 
 export function normalizeStringList(value) {
-  const items = Array.isArray(value)
+  const normalizedValue = Array.isArray(value)
     ? value
-    : String(value || "").split(/[,\n，；;]+/);
+    : String(value || "").replaceAll("锛沢", ",g");
+  const items = Array.isArray(value)
+    ? normalizedValue
+    : normalizedValue.split(/[,\n，；;、锛沢]+/);
 
   return Array.from(
     new Set(

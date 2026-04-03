@@ -22,6 +22,7 @@ import {
   handleOperationSnapshot
 } from "./http/cluster-routes.mjs";
 import {
+  handleWorkspaceCacheClear,
   handleFolderPick,
   handleWorkspaceFileRead,
   handleWorkspaceFileWrite,
@@ -173,6 +174,11 @@ export function createAppServer({
 
       if (request.method === "POST" && url.pathname === "/api/workspace/import") {
         await handleWorkspaceImport(request, response, projectDir, runtimeConfigOptions);
+        return;
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/workspace/cache/clear") {
+        await handleWorkspaceCacheClear(request, response, projectDir, runtimeConfigOptions);
         return;
       }
 

@@ -9,8 +9,11 @@ cluster.config.json
 dist/runtime.settings.json
 
 # Local workspaces and generated outputs
+# Ignore all local workspace content and generated cluster materials.
 workspace/
+workspace/**
 dist/workspace/
+dist/workspace/**
 bot-connectors/
 .tmp-cluster-cancel-*/
 
@@ -23,6 +26,7 @@ logs/
 # Build/package artifacts created locally
 build/
 dist/clean-package/
+dist/*.exe
 dist/*.zip
 
 # OS/editor noise

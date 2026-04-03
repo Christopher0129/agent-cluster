@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import { dirname, join, relative, resolve } from "node:path";
 import process from "node:process";
@@ -17,6 +17,7 @@ const seaConfigPath = join(buildDir, "sea-config.json");
 const outputExeName = process.env.AGENT_CLUSTER_EXE_NAME || "AgentClusterWorkbench.exe";
 const outputExePath = join(distDir, outputExeName);
 const entryPath = join(srcDir, "sea-main.mjs");
+const staticDir = join(srcDir, "static");
 const configuredBaseConfig = String(process.env.AGENT_CLUSTER_BASE_CONFIG || "").trim();
 const baseConfigPath = configuredBaseConfig
   ? resolve(projectDir, configuredBaseConfig)
@@ -164,15 +165,45 @@ async function ensureCleanDirs() {
   await rm(outputExePath, { force: true });
 }
 
-async function writeSeaConfig() {
-  const assets = {
+async function collectFilesRecursive(dirPath) {
+  const entries = await readdir(dirPath, { withFileTypes: true });
+  const results = [];
+
+  for (const entry of entries) {
+    const absolutePath = join(dirPath, entry.name);
+    if (entry.isDirectory()) {
+      results.push(...(await collectFilesRecursive(absolutePath)));
+      continue;
+    }
+    if (entry.isFile()) {
+      results.push(absolutePath);
+    }
+  }
+
+  return results;
+}
+
+export async function collectStaticAssets() {
+  const files = await collectFilesRecursive(staticDir);
+  return Object.fromEntries(
+    files
+      .map((filePath) => {
+        const relativePath = toPosixPath(relative(staticDir, filePath));
+        return [`static/${relativePath}`, filePath];
+      })
+      .sort(([left], [right]) => left.localeCompare(right))
+  );
+}
+
+export async function buildSeaAssets() {
+  return {
     "cluster.config.json": baseConfigPath,
-    "static/index.html": join(srcDir, "static", "index.html"),
-    "static/app.js": join(srcDir, "static", "app.js"),
-    "static/agent-graph-layout.js": join(srcDir, "static", "agent-graph-layout.js"),
-    "static/provider-catalog.js": join(srcDir, "static", "provider-catalog.js"),
-    "static/style.css": join(srcDir, "static", "style.css")
+    ...(await collectStaticAssets())
   };
+}
+
+async function writeSeaConfig() {
+  const assets = await buildSeaAssets();
 
   const config = {
     main: bundlePath,
@@ -210,7 +241,9 @@ async function main() {
   console.log(`Built Windows executable: ${outputExePath}`);
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}

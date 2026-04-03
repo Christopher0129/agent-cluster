@@ -914,6 +914,10 @@ export function createBotUi({
     refreshBotRuntimeButton?.addEventListener("click", loadRuntimeStatus);
   }
 
+  function refreshLocale() {
+    renderPresetList();
+  }
+
   return {
     applySettings,
     bindEvents,
@@ -923,6 +927,7 @@ export function createBotUi({
     loadPresets,
     loadRuntimeStatus,
     ensureAutoStart,
-    setConfigStatus
+    setConfigStatus,
+    refreshLocale
   };
 }

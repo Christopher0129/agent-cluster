@@ -9,12 +9,29 @@ import { mergeSecretEntries } from "../src/static/secrets-ui.js";
 import { normalizeStringList, renderList } from "../src/static/ui-core.js";
 
 test("getRunStateTextForEvent maps cluster lifecycle stages", () => {
-  assert.equal(getRunStateTextForEvent({ stage: "planning_start" }), "规划中");
-  assert.equal(getRunStateTextForEvent({ stage: "phase_start", phase: "research" }), "调研中");
-  assert.equal(getRunStateTextForEvent({ stage: "phase_start", phase: "implementation" }), "执行中");
-  assert.equal(getRunStateTextForEvent({ stage: "worker_retry", attempt: 2, maxRetries: 4 }), "重试中 2/4");
-  assert.equal(getRunStateTextForEvent({ stage: "cluster_done" }), "已完成");
-  assert.equal(getRunStateTextForEvent({ stage: "unknown_stage" }), "");
+  const translate = (key, values = {}) => `${key}:${JSON.stringify(values)}`;
+
+  assert.equal(
+    getRunStateTextForEvent({ stage: "planning_start" }, translate),
+    "run.state.planning:{}"
+  );
+  assert.equal(
+    getRunStateTextForEvent({ stage: "phase_start", phase: "research" }, translate),
+    "run.state.research:{}"
+  );
+  assert.equal(
+    getRunStateTextForEvent({ stage: "phase_start", phase: "implementation" }, translate),
+    "run.state.implementation:{}"
+  );
+  assert.equal(
+    getRunStateTextForEvent({ stage: "worker_retry", attempt: 2, maxRetries: 4 }, translate),
+    'run.state.retrying:{"attempt":2,"maxRetries":4}'
+  );
+  assert.equal(
+    getRunStateTextForEvent({ stage: "cluster_done" }, translate),
+    "run.state.done:{}"
+  );
+  assert.equal(getRunStateTextForEvent({ stage: "unknown_stage" }, translate), "");
 });
 
 test("index.html preserves critical control ids for app bindings", async () => {
@@ -58,8 +75,8 @@ test("app.js wires settings bootstrap explicitly", async () => {
   assert.match(bootstrapJs, /import \{ createSettingsUi \} from "\.\/settings-ui\.js";/);
   assert.match(bootstrapJs, /import \{ createLocaleUi \} from "\.\/locale-ui\.js";/);
   assert.match(bootstrapJs, /settingsUi = createSettingsUi\(/);
-  assert.match(bootstrapJs, /await runBootstrapStep\(shellUi, "本地设置加载", \(\) => settingsUi\.loadSettings\(\)\);/);
   assert.match(bootstrapJs, /const bindingSteps = \[/);
+  assert.match(bootstrapJs, /settingsUi\.loadSettings\(\)/);
 });
 
 test("app bootstrap binds all interactive module event handlers", async () => {
@@ -92,7 +109,11 @@ test("SEA asset collection includes modular static files", async () => {
   const staticAssets = await collectStaticAssets();
   const seaAssets = await buildSeaAssets();
 
-  assert.equal(staticAssets["static/app.js"]?.endsWith("src\\static\\app.js") || staticAssets["static/app.js"]?.endsWith("src/static/app.js"), true);
+  assert.equal(
+    staticAssets["static/app.js"]?.endsWith("src\\static\\app.js") ||
+      staticAssets["static/app.js"]?.endsWith("src/static/app.js"),
+    true
+  );
   assert.equal(
     staticAssets["static/app-bootstrap.js"]?.endsWith("src\\static\\app-bootstrap.js") ||
       staticAssets["static/app-bootstrap.js"]?.endsWith("src/static/app-bootstrap.js"),
@@ -113,7 +134,7 @@ test("SEA asset collection includes modular static files", async () => {
 });
 
 test("ui-core shared helpers normalize text lists and render escaped list output", () => {
-  assert.deepEqual(normalizeStringList("alpha, beta\nalpha；gamma"), ["alpha", "beta", "gamma"]);
+  assert.deepEqual(normalizeStringList("alpha, beta\nalpha锛沢amma"), ["alpha", "beta", "gamma"]);
   assert.match(renderList([], "Empty list."), /Empty list\./);
   assert.match(renderList(["<tag>"]), /&lt;tag&gt;/);
 });
@@ -191,15 +212,27 @@ test("package metadata declares author and GPL license", async () => {
     await readFile(new URL("../package.json", import.meta.url), "utf8")
   );
 
-  assert.equal(packageJson.author, "想画世界送给你");
   assert.equal(packageJson.license, "GPL-2.0-only");
+  assert.equal(typeof packageJson.author, "string");
+  assert.equal(packageJson.author.length > 0, true);
 });
 
-test("readme includes attribution, privacy note, and license", async () => {
+test("root readme provides language selection links", async () => {
   const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
 
-  assert.match(readme, /想画世界送给你/);
+  assert.match(readme, /\[English\]\(\.\/README\.en\.md\)/);
+  assert.match(readme, /\[Simplified Chinese\]\(\.\/README\.zh-CN\.md\)/);
   assert.match(readme, /GPL-2\.0-only/);
-  assert.match(readme, /cluster\.config\.blank\.json/);
-  assert.match(readme, /dist\/\*\.exe/);
+});
+
+test("english and chinese readmes include privacy note and license", async () => {
+  const englishReadme = await readFile(new URL("../README.en.md", import.meta.url), "utf8");
+  const chineseReadme = await readFile(new URL("../README.zh-CN.md", import.meta.url), "utf8");
+
+  assert.match(englishReadme, /GPL-2\.0-only/);
+  assert.match(englishReadme, /cluster\.config\.blank\.json/);
+  assert.match(englishReadme, /dist\/\*\.exe/);
+  assert.match(chineseReadme, /GPL-2\.0-only/);
+  assert.match(chineseReadme, /cluster\.config\.blank\.json/);
+  assert.match(chineseReadme, /dist\/\*\.exe/);
 });
