@@ -952,7 +952,7 @@ export function createAgentVizUi({
       });
       appendAgentNote(
         controller.id,
-        event.planStrategy || event.detail || describeOperationEventMessage(event, { formatDelay }),
+        event.planStrategy || describeOperationEventMessage(event, { formatDelay }) || event.detail || "",
         timestamp
       );
 
@@ -1074,6 +1074,7 @@ export function createAgentVizUi({
       case "workspace_read":
       case "workspace_write":
       case "workspace_command":
+      case "workspace_tool_blocked":
         agent.status = "running";
         agent.action = describeOperationEventMessage(event, { formatDelay });
         break;
@@ -1083,7 +1084,7 @@ export function createAgentVizUi({
 
     appendAgentNote(
       agent.id,
-      event.thinkingSummary || event.detail || describeOperationEventMessage(event, { formatDelay }),
+      event.thinkingSummary || describeOperationEventMessage(event, { formatDelay }) || event.detail || "",
       timestamp
     );
     renderGraph();

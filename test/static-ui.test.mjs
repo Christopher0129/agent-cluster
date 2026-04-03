@@ -5,6 +5,7 @@ import { buildSeaAssets, collectStaticAssets } from "../scripts/build-win-exe.mj
 import { createAppState } from "../src/static/app-state.js";
 import { getRunStateTextForEvent } from "../src/static/cluster-run-ui.js";
 import { formatModelTestRetryStatus } from "../src/static/model-connectivity-service.js";
+import { describeOperationEvent } from "../src/static/operation-events.js";
 import { mergeSecretEntries } from "../src/static/secrets-ui.js";
 import { normalizeStringList, renderList } from "../src/static/ui-core.js";
 
@@ -32,6 +33,34 @@ test("getRunStateTextForEvent maps cluster lifecycle stages", () => {
     "run.state.done:{}"
   );
   assert.equal(getRunStateTextForEvent({ stage: "unknown_stage" }, translate), "");
+});
+
+test("describeOperationEvent localizes workspace tool blocked events instead of exposing raw English detail", () => {
+  const blockedCommandText = describeOperationEvent(
+    {
+      stage: "workspace_tool_blocked",
+      agentLabel: "验证 Agent",
+      detail: "Blocked run_command because workspace commands are out of scope for this task."
+    },
+    {
+      formatDelay: (value) => `${value ?? 0} ms`
+    }
+  );
+  const blockedWriteText = describeOperationEvent(
+    {
+      stage: "workspace_tool_blocked",
+      agentLabel: "验证 Agent",
+      detail: "Blocked write_files because workspace writes are out of scope for this task."
+    },
+    {
+      formatDelay: (value) => `${value ?? 0} ms`
+    }
+  );
+
+  assert.match(blockedCommandText, /不允许执行工作区命令/);
+  assert.doesNotMatch(blockedCommandText, /Blocked run_command/);
+  assert.match(blockedWriteText, /不允许写入工作区文件/);
+  assert.doesNotMatch(blockedWriteText, /Blocked write_files/);
 });
 
 test("index.html preserves critical control ids for app bindings", async () => {
