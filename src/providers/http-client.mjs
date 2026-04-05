@@ -54,6 +54,108 @@ function isCodexLikeModel(modelConfig) {
   return /codex/i.test(String(modelConfig?.model || modelConfig?.id || ""));
 }
 
+const DEFAULT_TIMEOUT_MS = 210000;
+const DEFAULT_RETRY_ATTEMPTS = 10;
+const MOONSHOT_ORCHESTRATION_TIMEOUT_MS = 90000;
+const MOONSHOT_SHORT_ORCHESTRATION_TIMEOUT_MS = 75000;
+const MOONSHOT_ORCHESTRATION_RETRY_ATTEMPTS = 2;
+const MOONSHOT_SHORT_ORCHESTRATION_RETRY_ATTEMPTS = 1;
+const MOONSHOT_ORCHESTRATION_RETRY_BASE_MS = 900;
+const MOONSHOT_SHORT_ORCHESTRATION_RETRY_BASE_MS = 600;
+const MOONSHOT_ORCHESTRATION_RETRY_MAX_MS = 4000;
+const MOONSHOT_SHORT_ORCHESTRATION_RETRY_MAX_MS = 2500;
+
+function normalizePurpose(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function isMoonshotModel(modelConfig) {
+  const provider = String(modelConfig?.provider || "")
+    .trim()
+    .toLowerCase();
+  const baseUrl = String(modelConfig?.baseUrl || "")
+    .trim()
+    .toLowerCase();
+  return (
+    provider === "kimi-chat" ||
+    provider === "kimi-coding" ||
+    baseUrl.includes("api.moonshot.cn")
+  );
+}
+
+function isShortOrchestrationPurpose(purpose) {
+  return purpose === "leader_delegation" || purpose === "leader_synthesis" || purpose === "subordinate_execution";
+}
+
+function isOrchestrationPurpose(purpose) {
+  return (
+    isShortOrchestrationPurpose(purpose) ||
+    purpose === "worker_execution" ||
+    purpose === "planning" ||
+    purpose === "synthesis"
+  );
+}
+
+export function resolveRequestPolicy(modelConfig, hooks = {}) {
+  const purpose = normalizePurpose(hooks?.purpose);
+  const moonshotModel = isMoonshotModel(modelConfig);
+  const shortOrchestrationPurpose = isShortOrchestrationPurpose(purpose);
+  const orchestrationPurpose = isOrchestrationPurpose(purpose);
+  const explicitTimeout = Number(modelConfig?.timeoutMs);
+  const explicitRetryAttempts = Number(modelConfig?.retryAttempts);
+  const explicitRetryBaseMs = Number(modelConfig?.retryBaseMs);
+  const explicitRetryMaxMs = Number(modelConfig?.retryMaxMs);
+
+  let timeoutMs = Math.max(1000, explicitTimeout || DEFAULT_TIMEOUT_MS);
+  if (!Number.isFinite(explicitTimeout) && moonshotModel && orchestrationPurpose) {
+    timeoutMs = shortOrchestrationPurpose
+      ? MOONSHOT_SHORT_ORCHESTRATION_TIMEOUT_MS
+      : MOONSHOT_ORCHESTRATION_TIMEOUT_MS;
+  }
+
+  let retryAttempts = Number.isFinite(explicitRetryAttempts) && explicitRetryAttempts >= 0
+    ? Math.floor(explicitRetryAttempts)
+    : DEFAULT_RETRY_ATTEMPTS;
+  if (!Number.isFinite(explicitRetryAttempts) && moonshotModel && orchestrationPurpose) {
+    retryAttempts = shortOrchestrationPurpose
+      ? MOONSHOT_SHORT_ORCHESTRATION_RETRY_ATTEMPTS
+      : MOONSHOT_ORCHESTRATION_RETRY_ATTEMPTS;
+  }
+
+  let retryBaseMs = Number.isFinite(explicitRetryBaseMs) && explicitRetryBaseMs > 0
+    ? explicitRetryBaseMs
+    : isCodexLikeModel(modelConfig)
+      ? 1500
+      : 800;
+  if (!Number.isFinite(explicitRetryBaseMs) && moonshotModel && orchestrationPurpose) {
+    retryBaseMs = shortOrchestrationPurpose
+      ? MOONSHOT_SHORT_ORCHESTRATION_RETRY_BASE_MS
+      : MOONSHOT_ORCHESTRATION_RETRY_BASE_MS;
+  }
+
+  let retryMaxMs = Number.isFinite(explicitRetryMaxMs) && explicitRetryMaxMs > 0
+    ? explicitRetryMaxMs
+    : isCodexLikeModel(modelConfig)
+      ? 15000
+      : 10000;
+  if (!Number.isFinite(explicitRetryMaxMs) && moonshotModel && orchestrationPurpose) {
+    retryMaxMs = shortOrchestrationPurpose
+      ? MOONSHOT_SHORT_ORCHESTRATION_RETRY_MAX_MS
+      : MOONSHOT_ORCHESTRATION_RETRY_MAX_MS;
+  }
+
+  return {
+    timeoutMs,
+    retryAttempts,
+    retryBaseMs,
+    retryMaxMs,
+    purpose,
+    moonshotModel,
+    shortOrchestrationPurpose,
+    orchestrationPurpose
+  };
+}
+
 function isRetryableStatus(status) {
   return [408, 409, 425, 429, 500, 502, 503, 504, 520, 521, 522, 523, 524, 529].includes(status);
 }
@@ -77,33 +179,6 @@ function isRetryableNetworkError(error) {
   );
 }
 
-function resolveRetryAttempts(modelConfig) {
-  const explicit = Number(modelConfig.retryAttempts);
-  if (Number.isFinite(explicit) && explicit >= 0) {
-    return Math.floor(explicit);
-  }
-
-  return 10;
-}
-
-function resolveRetryBaseMs(modelConfig) {
-  const explicit = Number(modelConfig.retryBaseMs);
-  if (Number.isFinite(explicit) && explicit > 0) {
-    return explicit;
-  }
-
-  return isCodexLikeModel(modelConfig) ? 1500 : 800;
-}
-
-function resolveRetryMaxMs(modelConfig) {
-  const explicit = Number(modelConfig.retryMaxMs);
-  if (Number.isFinite(explicit) && explicit > 0) {
-    return explicit;
-  }
-
-  return isCodexLikeModel(modelConfig) ? 15000 : 10000;
-}
-
 function parseRetryAfterMs(headerValue) {
   const value = String(headerValue || "").trim();
   if (!value) {
@@ -123,9 +198,9 @@ function parseRetryAfterMs(headerValue) {
   return 0;
 }
 
-function computeRetryDelayMs(modelConfig, attempt, error) {
-  const baseMs = resolveRetryBaseMs(modelConfig);
-  const maxMs = resolveRetryMaxMs(modelConfig);
+function computeRetryDelayMs(requestPolicy, attempt, error) {
+  const baseMs = Math.max(50, Number(requestPolicy?.retryBaseMs) || 800);
+  const maxMs = Math.max(baseMs, Number(requestPolicy?.retryMaxMs) || 10000);
   const exponentialMs = Math.min(maxMs, baseMs * 2 ** attempt);
   const jitterMs = Math.round(exponentialMs * 0.2 * Math.random());
   const retryAfterMs = Math.min(maxMs, Math.max(0, Number(error?.retryAfterMs || 0)));
@@ -237,7 +312,8 @@ async function postJsonOnce(url, body, modelConfig, hooks = {}) {
   throwIfAborted(externalSignal);
 
   const controller = new AbortController();
-  const timeoutMs = Math.max(1000, Number(modelConfig.timeoutMs || 210000));
+  const requestPolicy = resolveRequestPolicy(modelConfig, hooks);
+  const timeoutMs = requestPolicy.timeoutMs;
   let timedOut = false;
   const timer = setTimeout(() => {
     timedOut = true;
@@ -312,7 +388,8 @@ async function postJsonOnce(url, body, modelConfig, hooks = {}) {
 
 export async function postJson(url, body, modelConfig, hooks = {}) {
   throwIfAborted(hooks.signal);
-  const retries = resolveRetryAttempts(modelConfig);
+  const requestPolicy = resolveRequestPolicy(modelConfig, hooks);
+  const retries = requestPolicy.retryAttempts;
   let lastError = null;
 
   for (let attempt = 0; attempt <= retries; attempt += 1) {
@@ -331,7 +408,7 @@ export async function postJson(url, body, modelConfig, hooks = {}) {
         throw error;
       }
 
-      const backoffMs = computeRetryDelayMs(modelConfig, attempt, error);
+      const backoffMs = computeRetryDelayMs(requestPolicy, attempt, error);
       if (typeof hooks.onRetry === "function") {
         hooks.onRetry({
           attempt: attempt + 1,

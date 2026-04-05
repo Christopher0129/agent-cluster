@@ -223,13 +223,17 @@ export function createWorkspaceUi({
 
     refreshInFlight = true;
     try {
-      await loadSummary({ showLoading: nextOptions.showLoading });
-      if (nextOptions.includePreview) {
-        try {
-          await readFilePreview({ silent: nextOptions.silentPreview });
-        } catch {
-          // Keep the tree refreshed even if the current preview file is unreadable.
+      try {
+        await loadSummary({ showLoading: nextOptions.showLoading });
+        if (nextOptions.includePreview) {
+          try {
+            await readFilePreview({ silent: nextOptions.silentPreview });
+          } catch {
+            // Keep the tree refreshed even if the current preview file is unreadable.
+          }
         }
+      } catch {
+        // loadSummary already rendered the failure state in the workspace panel.
       }
     } finally {
       refreshInFlight = false;

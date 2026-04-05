@@ -99,6 +99,16 @@ test("describeOperationEvent localizes workspace web search states", () => {
   assert.match(blockedText, /当前任务不允许网页搜索/);
 });
 
+test("describeOperationEvent renders workspace JSON repair as a completed auto-fix", () => {
+  const repairText = describeOperationEvent({
+    stage: "workspace_json_repair",
+    agentLabel: "调研下属03 · kimi code"
+  });
+
+  assert.match(repairText, /自动修复|鑷姩淇/);
+  assert.doesNotMatch(repairText, /正在修复/);
+});
+
 test("describeOperationEvent localizes worker fallback events", () => {
   const fallbackText = describeOperationEvent({
     stage: "worker_fallback",
@@ -323,6 +333,12 @@ test("cluster run UI finalizes local cancellation immediately and syncs backend 
   assert.match(runUiJs, /finishOperation\(\{ closeDelayMs: 0 \}\);/);
   assert.match(runUiJs, /setSaveStatus\?\.\(translate\("run\.cancel\.renderRemote"\), "ok"\);/);
   assert.match(runUiJs, /setSaveStatus\?\.\(translate\("run\.cancel\.renderRemoteFailed"\), "warning"\);/);
+  assert.match(runUiJs, /onOperationEvent = null/);
+  assert.match(runUiJs, /onOperationStart = null/);
+  assert.match(runUiJs, /onOperationFinish = null/);
+  assert.match(runUiJs, /onOperationEvent\?\.\(event, currentOperationId\)/);
+  assert.match(runUiJs, /onOperationStart\?\.\(operationId\)/);
+  assert.match(runUiJs, /onOperationFinish\?\.\(finishedOperationId\)/);
 });
 
 test("multi-agent chatroom prioritizes participant count and filters non-conversation events", async () => {
@@ -580,6 +596,15 @@ test("workspace UI keeps the clear-cache button wired", async () => {
   const workspaceJs = await readFile(new URL("../src/static/workspace-ui.js", import.meta.url), "utf8");
 
   assert.match(workspaceJs, /function clearClusterCache\(/);
+  assert.match(workspaceJs, /const REALTIME_REFRESH_INTERVAL_MS = 2500;/);
+  assert.match(workspaceJs, /function refreshWorkspaceState\(/);
+  assert.match(workspaceJs, /function handleOperationEvent\(/);
+  assert.match(workspaceJs, /function startRealtimeRefresh\(/);
+  assert.match(workspaceJs, /function stopRealtimeRefresh\(/);
+  assert.match(workspaceJs, /workspaceDirInput\?\.addEventListener\("change"/);
+  assert.match(workspaceJs, /workspaceFilePathInput\?\.addEventListener\("change"/);
+  assert.match(workspaceJs, /stage === "workspace_write"/);
+  assert.match(workspaceJs, /generatedFiles\[0\]/);
   assert.match(workspaceJs, /const FOLDER_PICK_POLL_INTERVAL_MS = 400;/);
   assert.match(workspaceJs, /\/api\/system\/pick-folder\?jobId=/);
   assert.match(workspaceJs, /payload\.status === "pending"/);
@@ -606,6 +631,14 @@ test("bot and scheme UI expose refreshLocale for runtime language switching", as
   assert.match(botJs, /function refreshLocale\(/);
   assert.match(schemesJs, /function refreshLocale\(/);
   assert.match(connectivityJs, /function refreshLocale\(/);
+});
+
+test("app bootstrap wires workspace realtime refresh to cluster-run lifecycle", async () => {
+  const bootstrapJs = await readFile(new URL("../src/static/app-bootstrap.js", import.meta.url), "utf8");
+
+  assert.match(bootstrapJs, /onOperationEvent:\s*\(event\)\s*=>\s*workspaceUi\.handleOperationEvent\(event\)/);
+  assert.match(bootstrapJs, /onOperationStart:\s*\(\)\s*=>\s*workspaceUi\.startRealtimeRefresh\(\)/);
+  assert.match(bootstrapJs, /onOperationFinish:\s*\(\)\s*=>\s*workspaceUi\.stopRealtimeRefresh\(\)/);
 });
 
 test("critical static UI modules remain importable as ES modules", async () => {

@@ -340,15 +340,48 @@ function hasExplicitDelegateCount(value) {
   return trimmed !== "";
 }
 
+function hasBroadDelegationSignal(text) {
+  return /(compare|survey|batch(?:es)?|multiple|parallel|delegate|split|across|recursive|non-overlapping|several|workstreams?|source\s+buckets?|evidence\s+batches?|multiple\s+sources?|multi-source|cross-market|cross-country|cross-region|matrix|\u591a\u4e2a|\u5e76\u884c|\u62c6\u5206|\u6279\u91cf|\u9012\u5f52|\u59d4\u6d3e|\u591a\u6765\u6e90|\u591a\u5e02\u573a|\u591a\u56fd\u5bb6|\u591a\u5730\u533a|\u5de5\u4f5c\u6d41|\u6e90\u6876|\u8bc1\u636e\u6279\u6b21)/.test(
+    text
+  );
+}
+
+function hasDelegationAvoidanceSignal(text) {
+  return /(do not split|don't split|without splitting|without delegation|keep (?:the work )?centralized|keep (?:it )?centralized|single topic|single question|single path|direct verification|direct summary|no child agents|avoid delegation|\u4e0d\u8981\u62c6\u5206|\u65e0\u9700\u62c6\u5206|\u4e0d\u8981\u5206\u5de5|\u96c6\u4e2d\u5904\u7406|\u5355\u70b9\u6838\u5b9e|\u5355\u4e00\u4e3b\u9898|\u5355\u4e2a\u95ee\u9898)/.test(
+    text
+  );
+}
+
+function taskLooksDirectResearch(task) {
+  const text = textBlob(task?.title, task?.instructions, task?.expectedOutput);
+  const compactText = text.replace(/\s+/g, " ").trim();
+  const hasResearchSignal = /(verify|fact-check|check|confirm|lookup|summarize|summarise|brief|concise|latest|current|today|announcement|quote|market|source|news|verify the latest|one topic|one question|\u6838\u5b9e|\u67e5\u8bc1|\u786e\u8ba4|\u67e5\u627e|\u603b\u7ed3|\u7b80\u8981|\u7b80\u77ed|\u6700\u65b0|\u5f53\u524d|\u4eca\u65e5|\u516c\u544a|\u65b0\u95fb|\u884c\u60c5|\u6765\u6e90|\u4e00\u4e2a\u95ee\u9898|\u5355\u4e2a\u4e3b\u9898)/.test(
+    text
+  );
+  const hasDirectSignal = /(directly|handle directly|quick|brief|concise|short answer|single answer|one question|single question|one topic|single topic|just|only|\u76f4\u63a5|\u5feb\u901f|\u7b80\u8981|\u7b80\u77ed|\u53ea\u9700|\u4ec5\u9700|\u5355\u4e2a\u95ee\u9898|\u4e00\u4e2a\u95ee\u9898|\u5355\u4e2a\u4e3b\u9898)/.test(
+    text
+  );
+  const hasAvoidanceSignal = hasDelegationAvoidanceSignal(text);
+
+  return (
+    hasResearchSignal &&
+    Boolean(compactText) &&
+    (hasAvoidanceSignal || hasDirectSignal || compactText.length <= 140) &&
+    (!hasBroadDelegationSignal(text) || hasAvoidanceSignal)
+  );
+}
+
 function taskLooksAtomic(task, phase) {
   const normalizedPhase = normalizePhase(phase, "implementation");
   const text = textBlob(task?.title, task?.instructions, task?.expectedOutput);
   const compactText = text.replace(/\s+/g, " ").trim();
-  const hasScaleSignal = /(compare|survey|collect|batch|multiple|parallel|delegate|split|across|recursive|non-overlapping|several|\u591a\u4e2a|\u5e76\u884c|\u62c6\u5206|\u6279\u91cf|\u9012\u5f52|\u59d4\u6d3e)/.test(
-    text
-  );
+  const hasScaleSignal = hasBroadDelegationSignal(text);
 
   if (normalizedPhase === "handoff") {
+    return true;
+  }
+
+  if (normalizedPhase === "research" && taskLooksDirectResearch(task)) {
     return true;
   }
 
@@ -382,6 +415,9 @@ function inferPlannedDelegateCount(task, phase, groupLeaderMaxDelegates, delegat
 
   const normalizedPhase = normalizePhase(phase, "implementation");
   const text = textBlob(task?.title, task?.instructions, task?.expectedOutput);
+  if (normalizedPhase === "research" && taskLooksDirectResearch(task)) {
+    return 0;
+  }
   let suggested = 1;
 
   if (normalizedPhase === "research" || normalizedPhase === "implementation") {
@@ -390,7 +426,7 @@ function inferPlannedDelegateCount(task, phase, groupLeaderMaxDelegates, delegat
     suggested = 0;
   }
 
-  if (/(compare|survey|collect|batch|multiple|parallel|delegate|split|analyze directly and return the result)/.test(text)) {
+  if (/(compare|survey|batch|multiple|parallel|delegate|split|source\s+buckets?|evidence\s+batches?|multiple\s+sources?|analyze directly and return the result|\u6e90\u6876|\u8bc1\u636e\u6279\u6b21)/.test(text)) {
     suggested = Math.max(suggested, 2);
   }
   if (/(small|atomic|single file|single document|one file|directly)/.test(text)) {
@@ -1077,6 +1113,38 @@ function normalizeWorkerProvider(worker) {
   return safeString(worker?.provider).toLowerCase();
 }
 
+function normalizeExcludedIdSet(values) {
+  const result = new Set();
+  for (const value of Array.isArray(values) ? values : []) {
+    const normalized = safeString(value);
+    if (normalized) {
+      result.add(normalized);
+    }
+  }
+  return result;
+}
+
+function scoreFailureIsolation(candidate, failedWorker) {
+  const candidateBaseUrl = normalizeWorkerBaseUrl(candidate);
+  const failedBaseUrl = normalizeWorkerBaseUrl(failedWorker);
+  const candidateProvider = normalizeWorkerProvider(candidate);
+  const failedProvider = normalizeWorkerProvider(failedWorker);
+  const sameBaseUrl = Boolean(candidateBaseUrl && failedBaseUrl && candidateBaseUrl === failedBaseUrl);
+  const sameProvider = Boolean(candidateProvider && failedProvider && candidateProvider === failedProvider);
+
+  if (!sameBaseUrl && !sameProvider) {
+    return 0;
+  }
+  if (!sameBaseUrl) {
+    return 1;
+  }
+  if (!sameProvider) {
+    return 2;
+  }
+
+  return 3;
+}
+
 function createControllerRuntimeAgent(modelConfig, currentRuntimeAgent = null) {
   return {
     ...modelConfig,
@@ -1151,12 +1219,15 @@ function rankFallbackControllers({
   models,
   primaryController,
   purpose,
-  providerRegistry
+  providerRegistry,
+  excludeModelIds = null
 }) {
+  const excludedModelIds = normalizeExcludedIdSet(excludeModelIds);
   const candidates = (Array.isArray(models) ? models : []).filter(
     (modelConfig) =>
       modelConfig?.id &&
       modelConfig.id !== primaryController?.id &&
+      !excludedModelIds.has(modelConfig.id) &&
       providerRegistry?.get(modelConfig.id)
   );
   const controllerSpecialists = candidates.filter((modelConfig) =>
@@ -1166,6 +1237,12 @@ function rankFallbackControllers({
 
   return eligibleCandidates
     .sort((left, right) => {
+      const leftIsolation = scoreFailureIsolation(left, primaryController);
+      const rightIsolation = scoreFailureIsolation(right, primaryController);
+      if (leftIsolation !== rightIsolation) {
+        return leftIsolation - rightIsolation;
+      }
+
       const leftScore = scoreControllerCandidateForPurpose(left, purpose, primaryController);
       const rightScore = scoreControllerCandidateForPurpose(right, purpose, primaryController);
 
@@ -1183,8 +1260,10 @@ function rankFallbackWorkersForTask({
   phase,
   task,
   capabilityRoutingPolicy,
-  providerRegistry
+  providerRegistry,
+  excludeWorkerIds = null
 }) {
+  const excludedWorkerIds = normalizeExcludedIdSet(excludeWorkerIds);
   const eligibleWorkers = filterWorkersForTask(
     Array.isArray(workers) ? workers : [],
     phase,
@@ -1199,9 +1278,16 @@ function rankFallbackWorkersForTask({
       (worker) =>
         worker?.id &&
         worker.id !== primaryWorker?.id &&
+        !excludedWorkerIds.has(worker.id) &&
         providerRegistry?.get(worker.id)
     )
     .sort((left, right) => {
+      const leftIsolation = scoreFailureIsolation(left, primaryWorker);
+      const rightIsolation = scoreFailureIsolation(right, primaryWorker);
+      if (leftIsolation !== rightIsolation) {
+        return leftIsolation - rightIsolation;
+      }
+
       const leftScore =
         scoreWorkerForTask(left, phase, task, capabilityRoutingPolicy) +
         (normalizeWorkerBaseUrl(left) && normalizeWorkerBaseUrl(left) !== primaryBaseUrl ? 6 : 0) +
@@ -3244,39 +3330,39 @@ async function executeSingleTask({
   }
 
   const preferredDelegateCount = normalizeDelegateCount(task.delegateCount, branchFactor);
-  const fallbackWorkers = rankFallbackWorkersForTask({
-    workers: allWorkers,
-    primaryWorker,
-    phase: normalizePhase(task.phase, inferPhase(task, primaryWorker)),
-    task,
-    capabilityRoutingPolicy,
-    providerRegistry
-  });
-  const executionCandidates = [primaryWorker, ...fallbackWorkers];
+  const taskPhase = normalizePhase(task.phase, inferPhase(task, primaryWorker));
+  const maxWorkerAttempts =
+    1 +
+    rankFallbackWorkersForTask({
+      workers: allWorkers,
+      primaryWorker,
+      phase: taskPhase,
+      task,
+      capabilityRoutingPolicy,
+      providerRegistry
+    }).length;
   let leaderAgent = createLeaderRuntimeAgent(primaryWorker, task);
   let currentTask = task;
   let lastResult = null;
+  let currentWorker = primaryWorker;
+  let currentProvider = primaryProvider;
+  const attemptedWorkerIds = new Set();
 
-  for (let attemptIndex = 0; attemptIndex < executionCandidates.length; attemptIndex += 1) {
-    const currentWorker = executionCandidates[attemptIndex];
-    const currentProvider =
-      currentWorker.id === primaryWorker.id
-        ? primaryProvider
-        : providerRegistry.get(currentWorker.id);
+  for (;;) {
     if (!currentProvider) {
-      continue;
+      return lastResult;
     }
 
     attemptChildAgentReservations = 0;
     currentTask =
-      attemptIndex === 0
+      currentWorker.id === primaryWorker.id && !attemptedWorkerIds.size
         ? task
         : {
             ...task,
             assignedWorker: currentWorker.id
           };
     leaderAgent =
-      attemptIndex === 0
+      currentWorker.id === primaryWorker.id && !attemptedWorkerIds.size
         ? leaderAgent
         : rebindRuntimeAgent(leaderAgent, currentWorker);
 
@@ -3292,8 +3378,8 @@ async function executeSingleTask({
     });
 
     lastResult = result;
-    const hasMoreCandidates = attemptIndex < executionCandidates.length - 1;
-    if (!result.retryableProviderFailure || !hasMoreCandidates) {
+    attemptedWorkerIds.add(currentWorker.id);
+    if (!result.retryableProviderFailure) {
       return result;
     }
 
@@ -3301,7 +3387,19 @@ async function executeSingleTask({
       runAgentBudget.releaseChildAgents(attemptChildAgentReservations);
     }
 
-    const nextWorker = executionCandidates[attemptIndex + 1];
+    const nextWorker = rankFallbackWorkersForTask({
+      workers: allWorkers,
+      primaryWorker: currentWorker,
+      phase: taskPhase,
+      task: currentTask,
+      capabilityRoutingPolicy,
+      providerRegistry,
+      excludeWorkerIds: Array.from(attemptedWorkerIds)
+    })[0];
+    if (!nextWorker) {
+      return result;
+    }
+
     emitAgentEvent(
       onEvent,
       leaderAgent,
@@ -3318,11 +3416,14 @@ async function executeSingleTask({
         previousWorkerLabel: currentWorker.label,
         fallbackWorkerId: nextWorker.id,
         fallbackWorkerLabel: nextWorker.label,
-        attempt: attemptIndex + 1,
-        maxAttempts: executionCandidates.length
+        attempt: attemptedWorkerIds.size,
+        maxAttempts: maxWorkerAttempts
       },
       currentTask
     );
+
+    currentWorker = nextWorker;
+    currentProvider = providerRegistry.get(nextWorker.id);
   }
 
   return lastResult;
@@ -3753,20 +3854,35 @@ export async function runClusterAnalysis({
     }) {
       const primaryController = activeController;
       const primaryProvider = activeControllerProvider;
-      const fallbackControllers = rankFallbackControllers({
-        models: controllerModels,
-        primaryController,
-        purpose,
-        providerRegistry
-      }).map((modelConfig) => rebindControllerRuntimeAgent(primaryController, modelConfig));
-      const stageCandidates = [primaryController, ...fallbackControllers];
+      const maxControllerAttempts =
+        1 +
+        rankFallbackControllers({
+          models: controllerModels,
+          primaryController,
+          purpose,
+          providerRegistry
+        }).length;
+      const attemptedControllerIds = new Set();
       let lastError = null;
 
-      for (let attemptIndex = 0; attemptIndex < stageCandidates.length; attemptIndex += 1) {
-        const stageController = stageCandidates[attemptIndex];
-        const stageProvider =
-          attemptIndex === 0 ? primaryProvider : providerRegistry.get(stageController.id);
+      let stageController = primaryController;
+      let stageProvider = primaryProvider;
+
+      for (;;) {
         if (!stageProvider) {
+          attemptedControllerIds.add(stageController.id);
+          const nextControllerModel = rankFallbackControllers({
+            models: controllerModels,
+            primaryController: stageController,
+            purpose,
+            providerRegistry,
+            excludeModelIds: Array.from(attemptedControllerIds)
+          })[0];
+          if (!nextControllerModel) {
+            break;
+          }
+          stageController = rebindControllerRuntimeAgent(primaryController, nextControllerModel);
+          stageProvider = providerRegistry.get(stageController.id);
           continue;
         }
 
@@ -3834,13 +3950,24 @@ export async function runClusterAnalysis({
           }
 
           lastError = error;
+          attemptedControllerIds.add(stageController.id);
           const failure = classifyProviderTaskError(error, stageController, sessionRuntime);
-          const hasMoreCandidates = attemptIndex < stageCandidates.length - 1;
-          if (!failure.retryableProviderFailure || !hasMoreCandidates) {
+          if (!failure.retryableProviderFailure) {
             throw error;
           }
 
-          const nextController = stageCandidates[attemptIndex + 1];
+          const nextControllerModel = rankFallbackControllers({
+            models: controllerModels,
+            primaryController: stageController,
+            purpose,
+            providerRegistry,
+            excludeModelIds: Array.from(attemptedControllerIds)
+          })[0];
+          if (!nextControllerModel) {
+            throw error;
+          }
+          const nextController = rebindControllerRuntimeAgent(primaryController, nextControllerModel);
+
           forwardClusterEvent({
             ...buildAgentEventBase(nextController, null),
             type: "status",
@@ -3856,9 +3983,12 @@ export async function runClusterAnalysis({
             fallbackControllerId: nextController.id,
             fallbackControllerLabel: nextController.label,
             purpose,
-            attempt: attemptIndex + 1,
-            maxAttempts: stageCandidates.length
+            attempt: attemptedControllerIds.size,
+            maxAttempts: maxControllerAttempts
           });
+
+          stageController = nextController;
+          stageProvider = providerRegistry.get(nextController.id);
         }
       }
 

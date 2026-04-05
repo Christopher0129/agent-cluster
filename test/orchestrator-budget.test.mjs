@@ -115,6 +115,177 @@ test("runClusterAnalysis keeps simple tasks on a minimal agent budget", async ()
   assert.equal(result.executions[0].output.subordinateCount, 0);
 });
 
+test("runClusterAnalysis keeps direct single-topic research centralized when delegateCount is omitted", async () => {
+  const events = [];
+  const config = {
+    cluster: {
+      controller: "controller",
+      maxParallel: 3,
+      groupLeaderMaxDelegates: 3,
+      delegateMaxDepth: 1
+    },
+    models: {
+      controller: {
+        id: "controller",
+        label: "Controller",
+        model: "gpt-5.4",
+        provider: "mock"
+      },
+      research_leader: {
+        id: "research_leader",
+        label: "Research Leader",
+        model: "gpt-5.4",
+        provider: "mock",
+        webSearch: true,
+        specialties: ["research"]
+      }
+    }
+  };
+
+  const providerRegistry = new Map([
+    [
+      "controller",
+      new FakeProvider([
+        JSON.stringify({
+          objective: "Verify one latest topic directly",
+          strategy: "Keep the task centralized because it is a single-topic direct verification request.",
+          tasks: [
+            {
+              id: "verify_topic",
+              phase: "research",
+              title: "Verify one latest topic",
+              assignedWorker: "research_leader",
+              instructions:
+                "Verify the latest market facts for one topic, check the source, keep the work centralized, and return a concise summary for the user.",
+              dependsOn: []
+            }
+          ]
+        }),
+        JSON.stringify({
+          finalAnswer: "Direct research verification completed.",
+          executiveSummary: ["The task stayed on one research leader."],
+          consensus: ["Single-topic direct verification should not spawn child agents."],
+          disagreements: [],
+          nextActions: []
+        })
+      ])
+    ],
+    ["research_leader", new FakeProvider([buildWorkerOutput("Verified the latest topic directly.")])]
+  ]);
+
+  const result = await runClusterAnalysis({
+    task: "Verify the latest facts for one topic and return a concise summary.",
+    config,
+    providerRegistry,
+    onEvent(event) {
+      events.push(event);
+    }
+  });
+
+  assert.equal(result.plan.tasks.length, 1);
+  assert.equal(result.plan.tasks[0].delegateCount, 0);
+  assert.equal(result.executions[0].output.subordinateCount, 0);
+  assert.equal(events.some((event) => event.stage === "subagent_created"), false);
+});
+
+test("runClusterAnalysis still infers delegation for broad multi-batch research when delegateCount is omitted", async () => {
+  const events = [];
+  const config = {
+    cluster: {
+      controller: "controller",
+      maxParallel: 3,
+      groupLeaderMaxDelegates: 3,
+      delegateMaxDepth: 1
+    },
+    models: {
+      controller: {
+        id: "controller",
+        label: "Controller",
+        model: "gpt-5.4",
+        provider: "mock"
+      },
+      research_leader: {
+        id: "research_leader",
+        label: "Research Leader",
+        model: "gpt-5.4",
+        provider: "mock",
+        webSearch: true,
+        specialties: ["research"]
+      }
+    }
+  };
+
+  const providerRegistry = new Map([
+    [
+      "controller",
+      new FakeProvider([
+        JSON.stringify({
+          objective: "Collect broad evidence across multiple source buckets",
+          strategy: "Delegate the work because it spans multiple evidence batches.",
+          tasks: [
+            {
+              id: "broad_research",
+              phase: "research",
+              title: "Collect broad evidence",
+              assignedWorker: "research_leader",
+              instructions:
+                "Collect multiple evidence batches across two source buckets, compare the findings, and summarize the result.",
+              dependsOn: []
+            }
+          ]
+        }),
+        JSON.stringify({
+          finalAnswer: "Broad research delegation completed.",
+          executiveSummary: ["The leader inferred delegation even without an explicit delegateCount."],
+          consensus: ["Broad multi-batch research still fans out."],
+          disagreements: [],
+          nextActions: []
+        })
+      ])
+    ],
+    [
+      "research_leader",
+      new FakeProvider([
+        JSON.stringify({
+          thinkingSummary: "Split this broad research into two evidence buckets.",
+          delegationSummary: "Bucket A and bucket B cover separate source clusters.",
+          subtasks: [
+            {
+              id: "bucket_a",
+              title: "Evidence bucket A",
+              instructions: "Collect source bucket A.",
+              expectedOutput: "Bucket A evidence."
+            },
+            {
+              id: "bucket_b",
+              title: "Evidence bucket B",
+              instructions: "Collect source bucket B.",
+              expectedOutput: "Bucket B evidence."
+            }
+          ]
+        }),
+        buildWorkerOutput("Bucket A completed."),
+        buildWorkerOutput("Bucket B completed."),
+        buildLeaderSynthesis("Merged both evidence buckets.")
+      ])
+    ]
+  ]);
+
+  const result = await runClusterAnalysis({
+    task: "Collect broad evidence across multiple source buckets and compare the results.",
+    config,
+    providerRegistry,
+    onEvent(event) {
+      events.push(event);
+    }
+  });
+
+  assert.equal(result.plan.tasks.length, 1);
+  assert.equal(result.plan.tasks[0].delegateCount, 2);
+  assert.equal(result.executions[0].output.subordinateCount, 2);
+  assert.equal(events.some((event) => event.stage === "subagent_created"), true);
+});
+
 test("runClusterAnalysis allows larger delegation budgets for complex work", async () => {
   const config = {
     cluster: {

@@ -1234,6 +1234,131 @@ test("runClusterAnalysis falls back to a compatible worker after a retryable pro
   );
 });
 
+test("runClusterAnalysis prefers an isolated fallback worker over a stronger same-gateway candidate", async () => {
+  const events = [];
+  const config = {
+    cluster: {
+      controller: "controller",
+      maxParallel: 4
+    },
+    models: {
+      controller: {
+        id: "controller",
+        label: "Controller",
+        model: "gpt-5.4",
+        provider: "mock"
+      },
+      research_primary: {
+        id: "research_primary",
+        label: "Research Primary",
+        model: "kimi-k2.5",
+        provider: "kimi-chat",
+        baseUrl: "https://api.moonshot.cn/v1",
+        webSearch: true,
+        specialties: ["research"]
+      },
+      research_same_gateway: {
+        id: "research_same_gateway",
+        label: "Research Same Gateway",
+        model: "kimi-k2.5",
+        provider: "kimi-chat",
+        baseUrl: "https://api.moonshot.cn/v1",
+        webSearch: true,
+        specialties: [
+          "research",
+          "web research",
+          "data extraction",
+          "cross-checking",
+          "analysis",
+          "long context reading"
+        ]
+      },
+      research_isolated: {
+        id: "research_isolated",
+        label: "Research Isolated",
+        model: "gpt-5.4-mini",
+        provider: "openai-chat",
+        baseUrl: "https://api.openai.com/v1",
+        webSearch: true,
+        specialties: ["research"]
+      }
+    }
+  };
+
+  const retryableProviderError = new Error(
+    "Request to https://api.moonshot.cn/v1/chat/completions timed out after 90000 ms"
+  );
+  retryableProviderError.status = 408;
+  retryableProviderError.retryable = true;
+
+  const providerRegistry = new Map([
+    [
+      "controller",
+      new FakeProvider([
+        JSON.stringify({
+          objective: "Collect fresh market facts",
+          strategy: "Prefer a failure-isolated backup if the primary provider stalls.",
+          tasks: [
+            {
+              id: "task_1",
+              phase: "research",
+              title: "Latest market facts",
+              assignedWorker: "research_primary",
+              instructions: "Directly verify the latest market facts and summarize them.",
+              dependsOn: []
+            }
+          ]
+        }),
+        JSON.stringify({
+          finalAnswer: "Failure-isolated fallback completed successfully.",
+          executiveSummary: ["The run switched to a different provider and gateway after the primary Moonshot path stalled."],
+          consensus: ["Failure-domain isolation takes priority over same-gateway specialization."],
+          disagreements: [],
+          nextActions: []
+        })
+      ])
+    ],
+    [
+      "research_primary",
+      new FakeProvider([
+        async () => {
+          throw retryableProviderError;
+        }
+      ])
+    ],
+    [
+      "research_same_gateway",
+      new FakeProvider([buildWorkerOutput("Same-gateway fallback should not be selected first.")])
+    ],
+    [
+      "research_isolated",
+      new FakeProvider([buildWorkerOutput("Isolated fallback completed the research task.")])
+    ]
+  ]);
+
+  const result = await runClusterAnalysis({
+    task: "Directly verify the latest market facts and summarize them.",
+    config,
+    providerRegistry,
+    onEvent(event) {
+      events.push(event);
+    }
+  });
+
+  assert.equal(result.executions.length, 1);
+  assert.equal(result.executions[0].workerId, "research_isolated");
+  assert.equal(result.executions[0].status, "completed");
+  assert.equal(
+    events.some(
+      (event) =>
+        event.stage === "worker_fallback" &&
+        event.previousWorkerId === "research_primary" &&
+        event.fallbackWorkerId === "research_isolated"
+    ),
+    true
+  );
+});
+
 test("runClusterAnalysis releases child-agent budget before retrying a failed delegated task on a fallback worker", async () => {
   const events = [];
   const config = {
