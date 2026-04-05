@@ -299,7 +299,7 @@ function buildEnglishPatches(elements, root) {
     createPatch(() => fieldLabel("multiAgentMessageWindowInput"), "textContent", "Message Window", "消息窗口"),
     createPatch(() => fieldLabel("multiAgentSummarizeInput"), "textContent", "Summarize Long Messages", "长消息摘要化"),
     createPatch(() => fieldLabel("multiAgentIncludeSystemInput"), "textContent", "Include System Messages", "包含系统消息"),
-    createPatch(() => root.querySelector("#multiAgentSettingsHint"), "textContent", "When enabled, the app records collaboration messages, phase handoffs, and the final session snapshot. Group chat keeps parallel execution, sequential mode serializes top-level tasks, and workflow mode strengthens phase handoffs.", "开启后会记录协作消息、阶段接力和最终会话快照。群聊模式保留并行，顺序模式会串行化顶层任务，工作流模式会强化跨阶段交接。"),
+    createPatch(() => root.querySelector("#multiAgentSettingsHint"), "textContent", "When enabled, the app records collaboration messages, phase handoffs, and the final session snapshot. Group chat keeps parallel execution, sequential mode serializes top-level tasks, and nested tool flow strengthens staged handoffs and artifact contracts.", "开启后会记录协作消息、阶段接力和最终会话快照。群聊模式保留并行，顺序模式会串行化顶层任务，嵌套工具流模式会强化阶段交接与产物链路。"),
 
     createPatch(() => panel("connectivity"), "dataset.panelKicker", "Connectivity", "通联"),
     createPatch(() => panel("connectivity"), "dataset.panelTitle", "Model Connectivity", "模型通联"),

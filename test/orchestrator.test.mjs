@@ -487,6 +487,192 @@ test("runClusterAnalysis localizes multi-agent session messages when outputLocal
   );
 });
 
+test("runClusterAnalysis expands group chat mode into discussion-style collaboration messages", async () => {
+  const config = {
+    cluster: {
+      controller: "controller",
+      maxParallel: 3
+    },
+    multiAgent: {
+      enabled: true,
+      mode: "group_chat",
+      speakerStrategy: "phase_priority",
+      maxRounds: 20,
+      messageWindow: 40,
+      summarizeLongMessages: true,
+      includeSystemMessages: true
+    },
+    models: {
+      controller: {
+        id: "controller",
+        label: "Controller",
+        model: "gpt-5.4"
+      },
+      research_worker: {
+        id: "research_worker",
+        label: "Research Worker",
+        model: "model-r",
+        provider: "mock",
+        specialties: ["research"]
+      },
+      implementation_worker: {
+        id: "implementation_worker",
+        label: "Implementation Worker",
+        model: "model-i",
+        provider: "mock",
+        specialties: ["implementation"]
+      }
+    }
+  };
+
+  const providerRegistry = new Map([
+    [
+      "controller",
+      new FakeProvider([
+        JSON.stringify({
+          objective: "Inspect the discussion-style collaboration",
+          strategy: "Split work into two parallel lanes and then synthesize.",
+          tasks: [
+            {
+              id: "task_1",
+              phase: "research",
+              title: "Collect fresh evidence",
+              assignedWorker: "research_worker",
+              instructions: "Collect fresh evidence.",
+              dependsOn: []
+            },
+            {
+              id: "task_2",
+              phase: "implementation",
+              title: "Draft the implementation brief",
+              assignedWorker: "implementation_worker",
+              instructions: "Draft the implementation brief.",
+              dependsOn: []
+            }
+          ]
+        }),
+        JSON.stringify({
+          finalAnswer: "Discussion-style collaboration completed.",
+          executiveSummary: ["Parallel lanes exchanged overlap guidance before synthesis."],
+          consensus: ["The chatroom should show discussion wording, not only handoff wording."],
+          disagreements: [],
+          nextActions: []
+        })
+      ])
+    ],
+    ["research_worker", new FakeProvider([buildWorkerOutput("Collected fresh evidence.")])],
+    ["implementation_worker", new FakeProvider([buildWorkerOutput("Drafted the implementation brief.")])]
+  ]);
+
+  const result = await runClusterAnalysis({
+    task: "Inspect the discussion-style collaboration",
+    config,
+    providerRegistry
+  });
+
+  assert.equal(
+    result.multiAgentSession.messages.some((message) => /Parallel discussion lanes are open|share overlaps early/i.test(message.content)),
+    true
+  );
+  assert.equal(
+    result.multiAgentSession.messages.some((message) => /compare notes before synthesis|cross-check it against your lane/i.test(message.content)),
+    true
+  );
+});
+
+test("runClusterAnalysis expands workflow mode into staged handoff messages", async () => {
+  const config = {
+    cluster: {
+      controller: "controller",
+      maxParallel: 3
+    },
+    multiAgent: {
+      enabled: true,
+      mode: "workflow",
+      speakerStrategy: "phase_priority",
+      maxRounds: 20,
+      messageWindow: 40,
+      summarizeLongMessages: true,
+      includeSystemMessages: true
+    },
+    models: {
+      controller: {
+        id: "controller",
+        label: "Controller",
+        model: "gpt-5.4"
+      },
+      research_worker: {
+        id: "research_worker",
+        label: "Research Worker",
+        model: "model-r",
+        provider: "mock",
+        specialties: ["research"]
+      },
+      implementation_worker: {
+        id: "implementation_worker",
+        label: "Implementation Worker",
+        model: "model-i",
+        provider: "mock",
+        specialties: ["implementation"]
+      }
+    }
+  };
+
+  const providerRegistry = new Map([
+    [
+      "controller",
+      new FakeProvider([
+        JSON.stringify({
+          objective: "Inspect the staged collaboration",
+          strategy: "Run research first, implementation second, then synthesize.",
+          tasks: [
+            {
+              id: "task_1",
+              phase: "research",
+              title: "Collect source notes",
+              assignedWorker: "research_worker",
+              instructions: "Collect source notes.",
+              dependsOn: []
+            },
+            {
+              id: "task_2",
+              phase: "implementation",
+              title: "Produce the implementation packet",
+              assignedWorker: "implementation_worker",
+              instructions: "Produce the implementation packet.",
+              dependsOn: ["task_1"]
+            }
+          ]
+        }),
+        JSON.stringify({
+          finalAnswer: "Staged workflow collaboration completed.",
+          executiveSummary: ["The workflow emitted handoff-style collaboration messages."],
+          consensus: ["Downstream phases should consume verified upstream outputs only."],
+          disagreements: [],
+          nextActions: []
+        })
+      ])
+    ],
+    ["research_worker", new FakeProvider([buildWorkerOutput("Collected source notes.")])],
+    ["implementation_worker", new FakeProvider([buildWorkerOutput("Produced the implementation packet.")])]
+  ]);
+
+  const result = await runClusterAnalysis({
+    task: "Inspect the staged collaboration",
+    config,
+    providerRegistry
+  });
+
+  assert.equal(
+    result.multiAgentSession.messages.some((message) => /Nested tool flow locked|Downstream phases should consume verified outputs/i.test(message.content)),
+    true
+  );
+  assert.equal(
+    result.multiAgentSession.messages.some((message) => /handoff pack is ready|consume verified outputs from the previous phase/i.test(message.content)),
+    true
+  );
+});
+
 test("runClusterAnalysis auto-materializes a requested docx artifact from leader synthesis", async () => {
   const workspaceRoot = await mkdtemp(join(process.cwd(), ".tmp-orchestrator-leader-docx-"));
 

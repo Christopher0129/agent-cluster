@@ -2078,8 +2078,9 @@ function collectExecutionArtifacts(output = {}) {
 }
 
 function collectSubordinateArtifacts(output = {}) {
+  const subordinateResults = Array.isArray(output?.subordinateResults) ? output.subordinateResults : [];
   return uniqueArray(
-    safeArray(output?.subordinateResults).flatMap((entry) =>
+    subordinateResults.flatMap((entry) =>
       collectExecutionArtifacts(entry?.output || entry || {})
     )
   );
@@ -2160,7 +2161,18 @@ function buildWorkspaceCleanupPlan({
     const isFinalArtifactProducer = !hasDownstreamArtifactProducer(task.id);
     const subordinateArtifacts = collectSubordinateArtifacts(execution?.output);
     const requestedArtifact = taskRequiresConcreteArtifact(task)
-      ? safeString(inferRequestedArtifact(task, execution?.output || {}, workspaceRoot, originalTask))
+      ? safeString(
+          inferRequestedArtifact(
+            task,
+            {
+              ...(execution?.output || {}),
+              generatedFiles: [],
+              verifiedGeneratedFiles: []
+            },
+            workspaceRoot,
+            originalTask
+          )
+        )
       : "";
     const hasRequestedArtifact = requestedArtifact && realizedArtifacts.includes(requestedArtifact);
 

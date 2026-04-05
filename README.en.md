@@ -18,14 +18,14 @@ Desktop-first multi-model agent cluster runtime for controller-led orchestration
 
 ## Overview
 
-Agent Cluster Workbench is a local-first desktop control plane for running coordinated controller, leader, worker, and child-agent workflows across multiple model providers. It is designed as runtime infrastructure rather than a thin prompt wrapper: runs are routed by scheme, bounded by tool and role policies, observed through live traces, and delivered through a Windows desktop package.
+Agent Cluster Workbench is a local-first desktop control plane for running coordinated controller, leader, worker, and child-agent workflows across multiple model providers. It is built as runtime infrastructure rather than a thin prompt wrapper: tasks are routed by scheme, bounded by tool and role policies, observed through live traces, and delivered through a Windows desktop package.
 
 ## At A Glance
 
 | Dimension | Summary |
 | --- | --- |
 | Runtime shape | Controller-led multi-agent orchestration with staged execution |
-| Execution stages | Research, implementation, validation, and handoff |
+| Execution stages | Research, implementation, validation, handoff |
 | Observability | Live status feed, Task Trace, call chain, virtual cluster graph |
 | Safety model | Capability-aware routing, child-agent inheritance, task-scope guards |
 | Runtime state | Session memory, retry, fallback, circuit breaker, cost estimates |
@@ -44,13 +44,14 @@ Agent Cluster Workbench is a local-first desktop control plane for running coord
 | Per-model Thinking mode toggle | Yes |
 | Web-search capability verification | Yes |
 | Chinese / English runtime UI | Yes |
+| Task log export and post-run cleanup | Yes |
 | Windows EXE packaging | Yes |
 
 ## Module Layers
 
 ```text
 UI Layer
-  src/static/        web UI, trace panels, connectivity console, agent graph
+  src/static/        web UI, trace panels, connectivity console, agent graph, chat pane
 
 Runtime Orchestration
   src/cluster/       controller planning, staged routing, delegation, synthesis
@@ -132,21 +133,17 @@ npm run test:unit
 npm run check
 ```
 
-The left-side `Connectivity` panel validates three different paths independently:
+The left-side connectivity panel validates three paths independently:
 
 - basic reply
 - web-search execution
 - Thinking-mode execution
 
-This matters because a model can respond successfully while still failing to execute web search or Thinking mode in real requests.
-
 ## Kimi / Kimi Code Web Search Setup
 
-- `Kimi Chat`:
-  Use provider `kimi-chat` with `Base URL` set to `https://api.moonshot.cn/v1`. When `Allow Web Search` is enabled, the runtime turns on Moonshot's built-in `$web_search` tool and disables Thinking automatically for compatibility.
-- `Kimi Coding` / `Kimi Code`:
-  Use provider `kimi-coding` with `Base URL` set to `https://api.moonshot.cn/anthropic`, not the older `/v1` route. When `Allow Web Search` is enabled, the runtime sends the Anthropic-compatible `web_search_20250305` server tool.
-- If third-party IDE docs tell you to disable browser-style search tools, that refers to host-tool browser integrations rather than Kimi API web search itself.
+- `Kimi Chat`: use provider `kimi-chat` with `Base URL` set to `https://api.moonshot.cn/v1`. When `Allow Web Search` is enabled, the runtime turns on Moonshot's built-in `$web_search` tool and disables Thinking automatically for compatibility.
+- `Kimi Coding` / `Kimi Code`: use provider `kimi-coding` with `Base URL` set to `https://api.moonshot.cn/anthropic`, not the older `/v1` route. When `Allow Web Search` is enabled, the runtime sends the Anthropic-compatible `web_search_20250305` server tool.
+- Connectivity tests verify real execution paths instead of only checking whether a provider returns a basic response.
 
 ## Thinking Mode
 
@@ -205,9 +202,9 @@ git rm --cached cluster.config.json runtime.settings.json dist/runtime.settings.
 ## Runtime Characteristics
 
 - Controller authority, worker capability, and child-agent inheritance are separated deliberately.
-- Workspace execution is explicit, policy-scoped, and auditable.
+- Final deliverables remain while transient cluster artifacts can be cleaned after the run.
+- Task logs are exported outside the workspace so maintenance data does not pollute delivery outputs.
 - Connectivity testing checks whether advanced features really execute, not just whether a provider returns a reply.
-- Packaging, logging, privacy boundaries, and local generated artifacts are treated as operational concerns.
 
 ## FAQ
 

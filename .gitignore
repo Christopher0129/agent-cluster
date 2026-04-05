@@ -20,6 +20,8 @@ dist/runtime.settings.json
 /build/sea/
 !/src/workspace/
 !/src/workspace/**
+.tmp-*
+.tmp-*/
 .tmp-cluster-cancel-*/
 .tmp-config-*/
 
