@@ -348,8 +348,10 @@ test("multi-agent chatroom prioritizes participant count and filters non-convers
   const styleCss = await readFile(new URL("../src/static/style.css", import.meta.url), "utf8");
 
   assert.match(multiAgentUiJs, /const CONVERSATIONAL_STAGE_SET = new Set\(\[/);
+  assert.match(multiAgentUiJs, /"multi_agent_chat"/);
   assert.match(multiAgentUiJs, /"leader_delegate_done"/);
   assert.match(multiAgentUiJs, /if \(!isConversationalStage\(stage\)\) \{\s*return null;\s*\}/);
+  assert.match(multiAgentUiJs, /event\?\.multiAgentMessages/);
   assert.match(multiAgentUiJs, /multiAgentChatSummary\.hidden = true;/);
   assert.match(multiAgentUiJs, /participants: state\.session\.participantCount \|\| 0/);
   assert.match(styleCss, /\.multi-agent-chat-summary\[hidden\]/);

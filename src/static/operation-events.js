@@ -187,6 +187,19 @@ function describeWorkspaceToolBlocked(event, actor, translate) {
   });
 }
 
+function localizeOperationText(locale, englishText, chineseText) {
+  return String(locale || "").trim() === "en-US" ? englishText : chineseText;
+}
+
+function unwrapSessionMemoryDetail(detail = "") {
+  const normalized = String(detail || "").trim();
+  if (!normalized) {
+    return "";
+  }
+  const match = normalized.match(/^(?:Stored session memory|已写入会话记忆)[：:]\s*(.+)$/i);
+  return match ? String(match[1] || "").trim() : normalized;
+}
+
 export function describeOperationEvent(
   event,
   {
@@ -195,6 +208,7 @@ export function describeOperationEvent(
     locale = ""
   } = {}
 ) {
+  const resolvedLocale = String(locale || "").trim() === "en-US" ? "en-US" : "zh-CN";
   const resolvedTranslate =
     translate === translateOperationEvent && locale ? createOperationEventTranslator(locale) : translate;
   const actor = event.agentLabel || event.modelLabel || event.modelId || "";
@@ -299,8 +313,17 @@ export function describeOperationEvent(
     case "memory_write":
       return resolvedTranslate("event.memoryWrite", {
         actor: actor || labels.leader,
-        detail: event.detail || labels.memoryWrite
+        detail: unwrapSessionMemoryDetail(event.detail || labels.memoryWrite)
       });
+    case "workspace_cleanup":
+      return (
+        event.detail ||
+        localizeOperationText(
+          resolvedLocale,
+          `Removed ${(event.removedFiles || []).length} intermediate workspace file(s) and kept ${(event.keptFiles || []).length} final deliverable artifact(s).`,
+          `已删除 ${(event.removedFiles || []).length} 个中间工作区文件，并保留 ${(event.keptFiles || []).length} 个最终交付产物。`
+        )
+      );
     case "circuit_opened":
       return resolvedTranslate("event.circuitOpened", {
         actor: event.modelLabel || event.modelId || actor,
@@ -412,6 +435,21 @@ export function describeOperationEvent(
       return resolvedTranslate("event.clusterFailed", {
         detail: event.detail || labels.unknownError
       });
+    case "run_log_saved":
+      return localizeOperationText(
+        resolvedLocale,
+        `Run log saved: ${event.logPath || ""}`,
+        `本次任务日志已保存：${event.logPath || ""}`
+      );
+    case "run_log_save_failed":
+      return (
+        event.detail ||
+        localizeOperationText(
+          resolvedLocale,
+          `Run finished, but saving the log failed: ${event.error || ""}`,
+          `任务已结束，但保存日志失败：${event.error || ""}`
+        )
+      );
     default:
       if (event.detail) {
         return event.detail;

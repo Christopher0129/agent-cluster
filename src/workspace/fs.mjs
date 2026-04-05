@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, extname, isAbsolute, relative, resolve, sep } from "node:path";
 import { isSupportedReadableDocument, readDocumentText } from "./document-reader.mjs";
 import { createDocxBuffer } from "./docx.mjs";
@@ -15,6 +15,12 @@ function normalizeRelativePath(filePath) {
     .trim()
     .replaceAll("\\", "/")
     .replace(/^\/+/, "");
+}
+
+function uniqueWorkspacePaths(filePaths) {
+  return Array.from(
+    new Set((Array.isArray(filePaths) ? filePaths : []).map((filePath) => normalizeRelativePath(filePath)).filter(Boolean))
+  );
 }
 
 export function resolveWorkspaceRoot(workspaceDir) {
@@ -187,6 +193,60 @@ export async function writeWorkspaceFiles(workspaceDir, files, options = {}) {
   }
 
   return writtenFiles;
+}
+
+async function pruneEmptyWorkspaceDirectories(rootDir, absolutePath) {
+  let currentDir = dirname(absolutePath);
+  while (currentDir && currentDir !== rootDir) {
+    let entries;
+    try {
+      entries = await readdir(currentDir);
+    } catch {
+      break;
+    }
+    if (entries.length) {
+      break;
+    }
+    await rm(currentDir, { recursive: false, force: true });
+    currentDir = dirname(currentDir);
+  }
+}
+
+export async function removeWorkspaceFiles(workspaceDir, filePaths) {
+  const rootDir = await ensureWorkspaceDirectory(workspaceDir);
+  const removedFiles = [];
+  const failedFiles = [];
+  const normalizedPaths = uniqueWorkspacePaths(filePaths);
+
+  for (const filePath of normalizedPaths) {
+    const resolved = assertPathWithinWorkspace(rootDir, filePath);
+    try {
+      const fileStat = await stat(resolved.absolutePath);
+      if (!fileStat.isFile()) {
+        failedFiles.push({
+          path: resolved.relativePath,
+          error: `Path "${resolved.relativePath}" is not a file.`
+        });
+        continue;
+      }
+      await rm(resolved.absolutePath, { force: true });
+      removedFiles.push(resolved.relativePath);
+      await pruneEmptyWorkspaceDirectories(rootDir, resolved.absolutePath);
+    } catch (error) {
+      if (error?.code === "ENOENT") {
+        continue;
+      }
+      failedFiles.push({
+        path: resolved.relativePath,
+        error: error.message
+      });
+    }
+  }
+
+  return {
+    removedFiles,
+    failedFiles
+  };
 }
 
 export async function verifyWorkspaceArtifacts(workspaceDir, filePaths, options = {}) {

@@ -604,6 +604,8 @@ test("runClusterAnalysis auto-materializes a requested docx artifact from leader
     assert.equal(reportText.includes("中国国情与对外贸易合作分析已整理"), true);
     assert.deepEqual(implementationExecution?.output.verifiedGeneratedFiles, ["reports/report.docx"]);
     assert.equal(implementationExecution?.output.workspaceActions.includes("write_docx"), true);
+    assert.deepEqual(result.workspaceCleanup?.keepFiles, ["reports/report.docx"]);
+    assert.deepEqual(result.workspaceCleanup?.removedFiles, []);
   } finally {
     await rm(workspaceRoot, { recursive: true, force: true });
   }
@@ -735,6 +737,8 @@ test("runClusterAnalysis ignores unverified claimed artifacts and still auto-mat
       implementationExecution?.output.risks.some((risk) => /reported artifact/i.test(String(risk))),
       false
     );
+    assert.deepEqual(result.workspaceCleanup?.keepFiles, ["reports/report.docx"]);
+    assert.deepEqual(result.workspaceCleanup?.removedFiles, []);
   } finally {
     await rm(workspaceRoot, { recursive: true, force: true });
   }
@@ -931,7 +935,7 @@ test("runClusterAnalysis infers dependent delegated child tasks from shared work
     const reportText = await readDocumentText(reportPath);
     const implementationExecution = result.executions.find((execution) => execution.taskId === "task_1");
 
-    assert.equal(existsSync(sourcePath), true);
+    assert.equal(existsSync(sourcePath), false);
     assert.equal(existsSync(reportPath), true);
     assert.equal(reportText.includes("International situation and China trade cooperation analysis"), true);
     assert.equal(implementationExecution?.status, "completed");
@@ -948,6 +952,8 @@ test("runClusterAnalysis infers dependent delegated child tasks from shared work
       result.multiAgentSession.messages.some((message) => /Acknowledged "Write the structured research JSON"/.test(message.content)),
       true
     );
+    assert.equal(result.workspaceCleanup?.removedFiles.includes("research/source.json"), true);
+    assert.equal(result.workspaceCleanup?.keepFiles.includes("reports/report.docx"), true);
   } finally {
     await rm(workspaceRoot, { recursive: true, force: true });
   }

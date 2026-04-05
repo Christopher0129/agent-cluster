@@ -10,6 +10,7 @@ const DEFAULT_SETTINGS = Object.freeze({
 });
 
 const CHATTY_STAGE_KINDS = new Map([
+  ["multi_agent_chat", "message"],
   ["planning_start", "system"],
   ["planning_done", "summary"],
   ["phase_start", "system"],
@@ -52,6 +53,7 @@ const CHATTY_STAGE_KINDS = new Map([
 ]);
 
 const CONVERSATIONAL_STAGE_SET = new Set([
+  "multi_agent_chat",
   "leader_delegate_start",
   "leader_delegate_done",
   "subagent_created",
@@ -403,6 +405,29 @@ export function buildChatEntryFromEvent(event, settings) {
   }
 
   const stage = String(event.stage || "").trim();
+  if (stage === "multi_agent_chat") {
+    const content = summarizeContent(event?.content || "", settings);
+    if (!content) {
+      return null;
+    }
+    const entryKind = String(event.kind || "message").trim() || "message";
+    if (!settings.includeSystemMessages && entryKind === "system") {
+      return null;
+    }
+    return {
+      id: String(event.id || `${stage}:${event.timestamp || Date.now()}`),
+      kind: entryKind,
+      stage,
+      tone: String(event.tone || "neutral").trim() || "neutral",
+      phase: String(event.phase || "").trim(),
+      round: Number(event.round || 0),
+      timestamp: String(event.timestamp || new Date().toISOString()),
+      speakerLabel: String(event.speakerLabel || event.speaker?.displayLabel || event.speaker?.label || "").trim(),
+      targetLabel: String(event.targetLabel || event.target?.displayLabel || event.target?.label || "").trim(),
+      content,
+      summaryType: String(event.summaryType || "").trim()
+    };
+  }
   if (!isConversationalStage(stage)) {
     return null;
   }
@@ -446,6 +471,22 @@ export function buildChatEntryFromEvent(event, settings) {
     targetLabel,
     content
   };
+}
+
+function normalizeIncomingChatEntry(entry, settings) {
+  if (!entry || typeof entry !== "object") {
+    return null;
+  }
+
+  return buildChatEntryFromEvent(
+    entry.stage === "multi_agent_chat"
+      ? entry
+      : {
+          ...entry,
+          stage: "multi_agent_chat"
+        },
+    settings
+  );
 }
 
 export function createMultiAgentUi({
@@ -611,7 +652,14 @@ export function createMultiAgentUi({
       state.session.status = "running";
     }
 
-    appendEntry(buildChatEntryFromEvent(event, state.settings));
+    const injectedMessages = Array.isArray(event?.multiAgentMessages) ? event.multiAgentMessages : [];
+    if (injectedMessages.length) {
+      for (const message of injectedMessages) {
+        appendEntry(normalizeIncomingChatEntry(message, state.settings));
+      }
+    } else {
+      appendEntry(buildChatEntryFromEvent(event, state.settings));
+    }
 
     if (event?.stage === "cluster_done") {
       state.session.status = "completed";

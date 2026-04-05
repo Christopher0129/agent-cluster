@@ -75,7 +75,7 @@ async function persistClusterOperationLog({
       type: "status",
       stage: "run_log_saved",
       tone: "ok",
-      detail: `鏈浠诲姟鏃ュ織宸蹭繚瀛橈細${written.textPath}`,
+      detail: localizeRunText(locale, `Run log saved: ${written.textPath}`, `本次任务日志已保存：${written.textPath}`),
       logPath: written.textPath,
       jsonPath: written.jsonPath
     });
@@ -85,7 +85,12 @@ async function persistClusterOperationLog({
       type: "status",
       stage: "run_log_save_failed",
       tone: "warning",
-      detail: `浠诲姟宸茬粨鏉燂紝浣嗕繚瀛樻棩蹇楀け璐ワ細${logError.message}`
+      detail: localizeRunText(
+        locale,
+        `Run finished, but saving the log failed: ${logError.message}`,
+        `任务已结束，但保存日志失败：${logError.message}`
+      ),
+      error: logError.message
     });
     return null;
   }

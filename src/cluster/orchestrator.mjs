@@ -8,6 +8,7 @@ import {
 import { parseJsonFromText } from "../utils/json-output.mjs";
 import {
   getWorkspaceTree,
+  removeWorkspaceFiles,
   verifyWorkspaceArtifacts,
   writeWorkspaceFiles
 } from "../workspace/fs.mjs";
@@ -2068,6 +2069,134 @@ function normalizeSynthesis(parsed, rawText) {
   };
 }
 
+function collectExecutionArtifacts(output = {}) {
+  const verified = normalizeWorkspaceArtifactReferences(output?.verifiedGeneratedFiles || []);
+  if (verified.length) {
+    return verified;
+  }
+  return normalizeWorkspaceArtifactReferences(output?.generatedFiles || []);
+}
+
+function collectSubordinateArtifacts(output = {}) {
+  return uniqueArray(
+    safeArray(output?.subordinateResults).flatMap((entry) =>
+      collectExecutionArtifacts(entry?.output || entry || {})
+    )
+  );
+}
+
+function buildWorkspaceCleanupPlan({
+  plan,
+  executions,
+  workspaceRoot,
+  originalTask
+}) {
+  if (!workspaceRoot || !Array.isArray(plan?.tasks) || !Array.isArray(executions)) {
+    return {
+      keepFiles: [],
+      removeFiles: []
+    };
+  }
+
+  const taskById = new Map(plan.tasks.map((task) => [safeString(task?.id), task]));
+  const downstreamByTaskId = new Map();
+  for (const task of plan.tasks) {
+    const dependencies = safeArray(task?.dependsOn);
+    for (const dependencyId of dependencies) {
+      const normalizedDependencyId = safeString(dependencyId);
+      if (!normalizedDependencyId) {
+        continue;
+      }
+      const dependents = downstreamByTaskId.get(normalizedDependencyId) || new Set();
+      dependents.add(safeString(task?.id));
+      downstreamByTaskId.set(normalizedDependencyId, dependents);
+    }
+  }
+  const artifactProducerTaskIds = new Set(
+    executions
+      .filter((execution) => collectExecutionArtifacts(execution?.output).length)
+      .map((execution) => safeString(execution?.taskId))
+      .filter(Boolean)
+  );
+  const downstreamArtifactProducerCache = new Map();
+
+  function hasDownstreamArtifactProducer(taskId, ancestry = new Set()) {
+    const normalizedTaskId = safeString(taskId);
+    if (!normalizedTaskId) {
+      return false;
+    }
+    if (downstreamArtifactProducerCache.has(normalizedTaskId)) {
+      return downstreamArtifactProducerCache.get(normalizedTaskId);
+    }
+    if (ancestry.has(normalizedTaskId)) {
+      return false;
+    }
+
+    ancestry.add(normalizedTaskId);
+    const downstreamDependents = downstreamByTaskId.get(normalizedTaskId) || new Set();
+    for (const dependentId of downstreamDependents) {
+      if (artifactProducerTaskIds.has(dependentId) || hasDownstreamArtifactProducer(dependentId, ancestry)) {
+        downstreamArtifactProducerCache.set(normalizedTaskId, true);
+        ancestry.delete(normalizedTaskId);
+        return true;
+      }
+    }
+
+    ancestry.delete(normalizedTaskId);
+    downstreamArtifactProducerCache.set(normalizedTaskId, false);
+    return false;
+  }
+
+  const keepFiles = new Set();
+  const removableFiles = new Set();
+
+  for (const execution of executions) {
+    const task = taskById.get(safeString(execution?.taskId));
+    const realizedArtifacts = collectExecutionArtifacts(execution?.output);
+    if (!task || !realizedArtifacts.length) {
+      continue;
+    }
+
+    const isFinalArtifactProducer = !hasDownstreamArtifactProducer(task.id);
+    const subordinateArtifacts = collectSubordinateArtifacts(execution?.output);
+    const requestedArtifact = taskRequiresConcreteArtifact(task)
+      ? safeString(inferRequestedArtifact(task, execution?.output || {}, workspaceRoot, originalTask))
+      : "";
+    const hasRequestedArtifact = requestedArtifact && realizedArtifacts.includes(requestedArtifact);
+
+    if (isFinalArtifactProducer) {
+      if (subordinateArtifacts.length && hasRequestedArtifact) {
+        keepFiles.add(requestedArtifact);
+        for (const artifact of realizedArtifacts) {
+          if (!subordinateArtifacts.includes(artifact)) {
+            keepFiles.add(artifact);
+          }
+        }
+        for (const artifact of subordinateArtifacts) {
+          if (artifact !== requestedArtifact) {
+            removableFiles.add(artifact);
+          }
+        }
+        continue;
+      }
+
+      for (const artifact of realizedArtifacts) {
+        keepFiles.add(artifact);
+      }
+      continue;
+    }
+
+    for (const artifact of realizedArtifacts) {
+      removableFiles.add(artifact);
+    }
+  }
+
+  return {
+    keepFiles: Array.from(keepFiles),
+    removeFiles: Array.from(removableFiles).filter((artifact) => !keepFiles.has(artifact))
+  };
+}
+
 function createStructuredFallback(label, rawText, error) {
   return {
     unstructuredOutput: true,
@@ -3767,6 +3896,147 @@ export async function runClusterAnalysis({
   let activeController = createControllerRuntimeAgent(controllerModel);
   let activeControllerProvider = controllerProvider;
   const multiAgentRuntime = createMultiAgentRuntime(config.multiAgent);
+  const multiAgentConversationState = {
+    topLevelAssignments: [],
+    childAssignmentsByParent: new Map(),
+    roundRobinCursor: 0
+  };
+
+  function hashConversationSeed(value) {
+    const normalized = safeString(value);
+    let hash = 0;
+    for (let index = 0; index < normalized.length; index += 1) {
+      hash = (hash * 31 + normalized.charCodeAt(index)) >>> 0;
+    }
+    return hash;
+  }
+
+  function createSyntheticRuntimeAgent(label, kind = "agent", fallbackId = "") {
+    const normalizedLabel = safeString(label);
+    const normalizedId =
+      safeString(fallbackId) ||
+      normalizedLabel.toLowerCase().replace(/[^\w-]+/g, "_") ||
+      `synthetic_${kind}`;
+    return {
+      runtimeId: `synthetic:${normalizedId}`,
+      displayLabel: normalizedLabel || normalizedId,
+      label: normalizedLabel || normalizedId,
+      id: normalizedId,
+      agentKind: kind
+    };
+  }
+
+  function rememberTopLevelAssignments(planTasks = []) {
+    const normalizedTasks = Array.isArray(planTasks) ? planTasks : [];
+    multiAgentConversationState.topLevelAssignments = normalizedTasks
+      .map((taskItem) => {
+        const assignedWorker = config.models[safeString(taskItem?.assignedWorker)];
+        if (!assignedWorker) {
+          return null;
+        }
+        return {
+          id: safeString(taskItem?.id),
+          title: safeString(taskItem?.title || taskItem?.id),
+          phase: safeString(taskItem?.phase),
+          assignedWorker: assignedWorker.id,
+          agent: createLeaderRuntimeAgent(assignedWorker, {
+            phase: taskItem?.phase,
+            title: taskItem?.title
+          })
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function rememberChildAssignment(parentAgent, childAgent, taskTitle = "", phase = "") {
+    const parentId = safeString(parentAgent?.runtimeId || parentAgent?.id);
+    const childId = safeString(childAgent?.runtimeId || childAgent?.id);
+    if (!parentId || !childId) {
+      return [];
+    }
+
+    const roster = multiAgentConversationState.childAssignmentsByParent.get(parentId) || [];
+    if (!roster.some((entry) => entry.id === childId)) {
+      roster.push({
+        id: childId,
+        title: safeString(taskTitle),
+        phase: safeString(phase),
+        agent: childAgent
+      });
+      multiAgentConversationState.childAssignmentsByParent.set(parentId, roster);
+    }
+
+    return roster;
+  }
+
+  function resolveRoundRobinIndex(size = 0) {
+    if (!size) {
+      return 0;
+    }
+    const nextIndex = multiAgentConversationState.roundRobinCursor % size;
+    multiAgentConversationState.roundRobinCursor += 1;
+    return nextIndex;
+  }
+
+  function pickStrategicTarget(candidates, seed = "") {
+    const filtered = (Array.isArray(candidates) ? candidates : []).filter(Boolean);
+    if (!filtered.length) {
+      return null;
+    }
+
+    switch (multiAgentRuntime.settings.speakerStrategy) {
+      case "random":
+        return filtered[hashConversationSeed(seed || filtered[0]?.id) % filtered.length];
+      case "round_robin":
+        return filtered[resolveRoundRobinIndex(filtered.length)];
+      default:
+        return filtered[0];
+    }
+  }
+
+  function buildAllocationSummary(assignments, locale = "en-US") {
+    const normalizedAssignments = (Array.isArray(assignments) ? assignments : []).filter(Boolean);
+    if (!normalizedAssignments.length) {
+      return "";
+    }
+
+    return normalizedAssignments
+      .slice(0, 4)
+      .map((assignment) =>
+        localizeRunText(
+          locale,
+          `${resolveQuotedTaskTitle(assignment.title, "this task", locale)} -> ${assignment.agent.displayLabel}`,
+          `${resolveQuotedTaskTitle(assignment.title, "该任务", locale)} -> ${assignment.agent.displayLabel}`
+        )
+      )
+      .join(localizeRunText(locale, "; ", "；"));
+  }
+
+  function createSyntheticMultiAgentMessage({
+    speaker,
+    target = null,
+    phase = "",
+    tone = "neutral",
+    kind = "message",
+    summaryType = "",
+    content = ""
+  } = {}) {
+    const normalizedContent = safeString(content);
+    if (!normalizedContent) {
+      return null;
+    }
+
+    return {
+      kind,
+      stage: "multi_agent_chat",
+      tone: safeString(tone) || "neutral",
+      phase: safeString(phase),
+      speaker,
+      target,
+      content: normalizedContent,
+      summaryType: safeString(summaryType)
+    };
+  }
   
   function resolveRuntimeAgentFromEvent(payload = {}) {
     const runtimeId = safeString(
@@ -3802,6 +4072,482 @@ export async function runClusterAnalysis({
       id: safeString(payload.parentAgentId || payload.parentAgentLabel),
       agentKind: "leader"
     };
+  }
+
+  function resolveTopLevelAssignmentsByPhase(phase = "") {
+    const normalizedPhase = safeString(phase);
+    return multiAgentConversationState.topLevelAssignments.filter(
+      (assignment) => !normalizedPhase || safeString(assignment.phase) === normalizedPhase
+    );
+  }
+
+  function findTopLevelAssignmentForAgent(agent = null, phase = "") {
+    const runtimeId = safeString(agent?.runtimeId || agent?.id);
+    const modelId = safeString(agent?.id);
+    const normalizedPhase = safeString(phase);
+    return (
+      multiAgentConversationState.topLevelAssignments.find((assignment) => {
+        const assignmentRuntimeId = safeString(assignment?.agent?.runtimeId || assignment?.agent?.id);
+        return (
+          (!normalizedPhase || safeString(assignment?.phase) === normalizedPhase) &&
+          (assignmentRuntimeId === runtimeId || safeString(assignment?.assignedWorker) === modelId)
+        );
+      }) || null
+    );
+  }
+
+  function resolveSiblingAssignments(parentAgent = null, excludeAgent = null) {
+    const parentId = safeString(parentAgent?.runtimeId || parentAgent?.id);
+    const excludedId = safeString(excludeAgent?.runtimeId || excludeAgent?.id);
+    if (!parentId) {
+      return [];
+    }
+    return (multiAgentConversationState.childAssignmentsByParent.get(parentId) || []).filter(
+      (assignment) => assignment && assignment.id !== excludedId
+    );
+  }
+
+  function resolveNextPhaseAssignments(phase = "") {
+    const currentIndex = PHASE_ORDER.indexOf(safeString(phase));
+    if (currentIndex < 0) {
+      return [];
+    }
+    for (let index = currentIndex + 1; index < PHASE_ORDER.length; index += 1) {
+      const assignments = resolveTopLevelAssignmentsByPhase(PHASE_ORDER[index]);
+      if (assignments.length) {
+        return assignments;
+      }
+    }
+    return [];
+  }
+
+  function resolveWorkspaceArtifactHint(payload = {}) {
+    const generatedFiles = normalizeWorkspaceArtifactReferences(payload.generatedFiles || []);
+    if (generatedFiles.length) {
+      return generatedFiles[0];
+    }
+    return extractEventDetailValue(safeString(payload.detail), [
+      /^Auto-materialized requested artifact(?: but verification failed)?:\s*(.+)$/i,
+      /^Artifact:\s*(.+)$/i,
+      /^Files:\s*(.+)$/i
+    ]);
+  }
+
+  function buildSequentialSyntheticMessages({ stage, agent, taskTitle, phase }) {
+    if (stage === "planning_done") {
+      return [
+        createSyntheticMultiAgentMessage({
+          speaker: activeController,
+          phase,
+          tone: "neutral",
+          content: localizeRunText(
+            runLocale,
+            "Sequential mode locked the queue. Top-level tasks will be released one at a time.",
+            "顺序协作已锁定队列，顶层任务会按顺序逐个释放。"
+          )
+        })
+      ];
+    }
+
+    if (stage === "worker_done" && taskTitle) {
+      return [
+        createSyntheticMultiAgentMessage({
+          speaker: agent,
+          phase,
+          tone: "ok",
+          content: localizeRunText(
+            runLocale,
+            `Queue advanced after ${resolveQuotedTaskTitle(taskTitle, "this task", runLocale)}.`,
+            `${resolveQuotedTaskTitle(taskTitle, "该任务", runLocale)} 已完成，队列推进到下一项。`
+          )
+        })
+      ];
+    }
+
+    return [];
+  }
+
+  function buildGroupChatSyntheticMessages({ stage, payload, agent, parentAgent, taskTitle, phase }) {
+    const messages = [];
+    const taskLabel = resolveQuotedTaskTitle(taskTitle, "this task", runLocale);
+
+    if (stage === "planning_done") {
+      const assignments = multiAgentConversationState.topLevelAssignments;
+      if (assignments.length > 1) {
+        messages.push(
+          createSyntheticMultiAgentMessage({
+            speaker: activeController,
+            tone: "ok",
+            content: localizeRunText(
+              runLocale,
+              `Parallel discussion lanes are open. ${buildAllocationSummary(assignments, runLocale)}. Share overlaps early instead of waiting for the final merge.`,
+              `并行讨论通道已打开。${buildAllocationSummary(assignments, runLocale)}。如有交叉信息，请尽早互相校对，不要等到最终汇总时才暴露冲突。`
+            )
+          })
+        );
+        const speakerAssignment = pickStrategicTarget(assignments, payload.planStrategy || payload.detail || taskTitle);
+        const peerAssignment = pickStrategicTarget(
+          assignments.filter((assignment) => assignment.id !== speakerAssignment?.id),
+          payload.planStrategy || payload.detail || taskTitle
+        );
+        if (speakerAssignment && peerAssignment) {
+          messages.push(
+            createSyntheticMultiAgentMessage({
+              speaker: speakerAssignment.agent,
+              target: peerAssignment.agent,
+              phase: safeString(speakerAssignment.phase),
+              tone: "neutral",
+              content: localizeRunText(
+                runLocale,
+                "My lane may affect yours. I will surface overlapping evidence early; please call out contradictions as soon as you see them.",
+                "我的任务线可能会影响你的判断。我会尽早同步重叠证据，也请你在发现矛盾时第一时间指出。"
+              )
+            })
+          );
+        }
+      }
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "worker_start") {
+      const assignment = findTopLevelAssignmentForAgent(agent, phase);
+      if (assignment) {
+        const peerAssignment = pickStrategicTarget(
+          multiAgentConversationState.topLevelAssignments.filter((entry) => entry.id !== assignment.id),
+          taskTitle || payload.detail
+        );
+        if (peerAssignment) {
+          messages.push(
+            createSyntheticMultiAgentMessage({
+              speaker: agent,
+              target: peerAssignment.agent,
+              phase,
+              tone: "neutral",
+              content: localizeRunText(
+                runLocale,
+                `I started ${taskLabel}. If your branch touches the same sources or files, flag it early and I will compare notes before synthesis.`,
+                `我已开始处理 ${taskLabel}。如果你的分支碰到相同来源或文件，请尽早提醒，我会在综合前先对齐口径。`
+              )
+            })
+          );
+        }
+      }
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "subagent_created" || stage === "subagent_start") {
+      const siblings = resolveSiblingAssignments(parentAgent, agent);
+      const peerAssignment = pickStrategicTarget(siblings, taskTitle || payload.detail);
+      if (peerAssignment) {
+        messages.push(
+          createSyntheticMultiAgentMessage({
+            speaker: agent,
+            target: peerAssignment.agent,
+            phase,
+            tone: "neutral",
+            content: localizeRunText(
+              runLocale,
+              `I am covering ${taskLabel}. If you hit the same evidence or files, tell me before the leader merges our branches.`,
+              `我负责 ${taskLabel}。如果你碰到相同证据或文件，请在组长合并我们分支前先告诉我。`
+            )
+          })
+        );
+      }
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "subagent_done" || stage === "worker_done") {
+      const siblings = parentAgent
+        ? resolveSiblingAssignments(parentAgent, agent)
+        : multiAgentConversationState.topLevelAssignments.filter(
+            (assignment) => assignment.id !== findTopLevelAssignmentForAgent(agent, phase)?.id
+          );
+      const peerAssignment = pickStrategicTarget(siblings, taskTitle || payload.summary || payload.detail);
+      if (peerAssignment) {
+        messages.push(
+          createSyntheticMultiAgentMessage({
+            speaker: agent,
+            target: peerAssignment.agent,
+            phase,
+            tone: "ok",
+            content: localizeRunText(
+              runLocale,
+              `My branch for ${taskLabel} is ready. Cross-check it against your lane before the final merge.`,
+              `我这条关于 ${taskLabel} 的分支已经完成。请在最终合并前和你的任务线做一次交叉核对。`
+            )
+          })
+        );
+      } else if (parentAgent) {
+        messages.push(
+          createSyntheticMultiAgentMessage({
+            speaker: agent,
+            target: parentAgent,
+            phase,
+            tone: "ok",
+            content: localizeRunText(
+              runLocale,
+              `My branch for ${taskLabel} is ready. Please compare it against the other lanes before synthesis.`,
+              `我这条关于 ${taskLabel} 的分支已经完成。请在综合前和其他任务线做一次比对。`
+            )
+          })
+        );
+      }
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "workspace_web_search") {
+      const peerAssignment = parentAgent
+        ? pickStrategicTarget(resolveSiblingAssignments(parentAgent, agent), payload.detail)
+        : pickStrategicTarget(
+            multiAgentConversationState.topLevelAssignments.filter(
+              (assignment) => assignment.id !== findTopLevelAssignmentForAgent(agent, phase)?.id
+            ),
+            payload.detail
+          );
+      const targetAgent = peerAssignment?.agent || parentAgent || null;
+      if (targetAgent) {
+        messages.push(
+          createSyntheticMultiAgentMessage({
+            speaker: agent,
+            target: targetAgent,
+            phase,
+            tone: "neutral",
+            content: localizeRunText(
+              runLocale,
+              `Fresh web evidence is in. Please check whether it changes your assumptions before we merge.`,
+              "新的联网证据已经补进来了。请先检查它是否会改变你的分支判断，再进入合并。"
+            )
+          })
+        );
+      }
+    }
+
+    return messages.filter(Boolean);
+  }
+
+  function buildWorkflowSyntheticMessages({ stage, payload, agent, parentAgent, taskTitle, phase }) {
+    const messages = [];
+    const taskLabel = resolveQuotedTaskTitle(taskTitle, "this task", runLocale);
+    const nextPhaseAssignments = resolveNextPhaseAssignments(phase);
+
+    if (stage === "planning_done") {
+      const assignments = multiAgentConversationState.topLevelAssignments;
+      if (assignments.length) {
+        messages.push(
+          createSyntheticMultiAgentMessage({
+            speaker: activeController,
+            tone: "ok",
+            content: localizeRunText(
+              runLocale,
+              `Nested tool flow locked. ${buildAllocationSummary(assignments, runLocale)}. Downstream phases should consume verified outputs from the previous phase only.`,
+              `嵌套工具流已锁定。${buildAllocationSummary(assignments, runLocale)}。下游阶段只能消费上游阶段已校验的输出。`
+            )
+          })
+        );
+      }
+      const researchAssignments = resolveTopLevelAssignmentsByPhase("research");
+      const implementationAssignments = resolveTopLevelAssignmentsByPhase("implementation");
+      const upstream = pickStrategicTarget(researchAssignments, payload.planStrategy || payload.detail);
+      const downstream = pickStrategicTarget(implementationAssignments, payload.planStrategy || payload.detail);
+      if (upstream && downstream) {
+        messages.push(
+          createSyntheticMultiAgentMessage({
+            speaker: upstream.agent,
+            target: downstream.agent,
+            phase: "research",
+            tone: "neutral",
+            content: localizeRunText(
+              runLocale,
+              "I will hand off explicit artifact paths and assumptions so your phase can continue without rescanning the whole workspace.",
+              "我会交付明确的产物路径和前提假设，这样你的阶段就不必重新全量扫描整个工作区。"
+            )
+          })
+        );
+      }
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "phase_done") {
+      const currentAssignments = resolveTopLevelAssignmentsByPhase(phase);
+      const sourceAssignment = pickStrategicTarget(currentAssignments, phase);
+      const targetAssignment = pickStrategicTarget(nextPhaseAssignments, phase);
+      if (sourceAssignment && targetAssignment) {
+        messages.push(
+          createSyntheticMultiAgentMessage({
+            speaker: sourceAssignment.agent,
+            target: targetAssignment.agent,
+            phase,
+            tone: "ok",
+            content: localizeRunText(
+              runLocale,
+              `The ${phase || "current"} handoff pack is ready. Continue from the verified outputs only and avoid unrelated workspace scans.`,
+              `${phase || "当前"}阶段的交接包已准备好。请仅基于已校验输出继续推进，不要再去扫描无关的工作区内容。`
+            )
+          })
+        );
+      }
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "worker_start") {
+      if (nextPhaseAssignments.length) {
+        const downstream = pickStrategicTarget(nextPhaseAssignments, taskTitle || payload.detail);
+        if (downstream) {
+          messages.push(
+            createSyntheticMultiAgentMessage({
+              speaker: agent,
+              target: downstream.agent,
+              phase,
+              tone: "neutral",
+              content: localizeRunText(
+                runLocale,
+                `I started ${taskLabel}. I will keep the output structured and tool-safe for the downstream phase.`,
+                `我已开始处理 ${taskLabel}。我会保持输出结构稳定、工具链可消费，方便下游阶段直接接续。`
+              )
+            })
+          );
+        }
+      }
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "subagent_created") {
+      messages.push(
+        createSyntheticMultiAgentMessage({
+          speaker: parentAgent || activeController,
+          target: agent,
+          phase,
+          tone: "neutral",
+          content: localizeRunText(
+            runLocale,
+            `For ${taskLabel}, produce explicit artifact paths and interface notes so the next step can consume your output directly.`,
+            `针对 ${taskLabel}，请输出明确的产物路径和接口说明，让下一步可以直接消费你的结果。`
+          )
+        })
+      );
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "subagent_start") {
+      messages.push(
+        createSyntheticMultiAgentMessage({
+          speaker: agent,
+          target: parentAgent || activeController,
+          phase,
+          tone: "neutral",
+          content: localizeRunText(
+            runLocale,
+            "Accepted. I will keep filenames stable and report contract changes immediately.",
+            "已接手。我会保持文件名和接口稳定，一旦发生契约变化会立刻回报。"
+          )
+        })
+      );
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "subagent_done" || stage === "worker_done") {
+      const downstream = pickStrategicTarget(nextPhaseAssignments, taskTitle || payload.summary || payload.detail);
+      messages.push(
+        createSyntheticMultiAgentMessage({
+          speaker: agent,
+          target: downstream?.agent || parentAgent || activeController,
+          phase,
+          tone: "ok",
+          content: localizeRunText(
+            runLocale,
+            `Handoff for ${taskLabel} is ready. Continue from the verified artifact set only.`,
+            `${taskLabel} 的交接结果已经准备好。请仅从已校验的产物集合继续推进。`
+          )
+        })
+      );
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "workspace_read") {
+      messages.push(
+        createSyntheticMultiAgentMessage({
+          speaker: agent,
+          target: parentAgent || pickStrategicTarget(nextPhaseAssignments, payload.detail)?.agent || null,
+          phase,
+          tone: "neutral",
+          content: localizeRunText(
+            runLocale,
+            "I am reading the upstream artifact bundle directly instead of rescanning the whole workspace.",
+            "我正在直接读取上游产物包，而不是重新全量扫描整个工作区。"
+          )
+        })
+      );
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "workspace_write") {
+      const artifactPath = resolveWorkspaceArtifactHint(payload);
+      messages.push(
+        createSyntheticMultiAgentMessage({
+          speaker: agent,
+          target: parentAgent || pickStrategicTarget(nextPhaseAssignments, artifactPath || payload.detail)?.agent || null,
+          phase,
+          tone: "ok",
+          content: localizeRunText(
+            runLocale,
+            artifactPath
+              ? `Artifact ready for downstream consumption: ${artifactPath}. Use this path as the workflow input.`
+              : "The workflow artifact bundle is ready for downstream consumption.",
+            artifactPath
+              ? `下游可消费的产物已就绪：${artifactPath}。请把这个路径作为后续工作流输入。`
+              : "工作流产物包已就绪，可直接交给下游消费。"
+          )
+        })
+      );
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "workspace_web_search") {
+      messages.push(
+        createSyntheticMultiAgentMessage({
+          speaker: agent,
+          target: parentAgent || pickStrategicTarget(nextPhaseAssignments, payload.detail)?.agent || null,
+          phase,
+          tone: "neutral",
+          content: localizeRunText(
+            runLocale,
+            "Verified external evidence has been added to the handoff pack. Downstream steps should cite it from the validated bundle only.",
+            "已校验的外部证据已经写入交接包。下游步骤引用时只应使用这个经过验证的证据集合。"
+          )
+        })
+      );
+    }
+
+    return messages.filter(Boolean);
+  }
+
+  function buildExpandedMultiAgentMessages(payload = {}) {
+    const stage = safeString(payload.stage);
+    const agent = resolveRuntimeAgentFromEvent(payload);
+    const parentAgent = resolveParentRuntimeAgent(payload);
+    const taskTitle = safeString(payload.taskTitle || payload.taskId);
+    const phase = safeString(payload.phase);
+    const baseMessage = translateClusterEventToMultiAgentMessage(payload);
+
+    if (stage === "planning_done") {
+      rememberTopLevelAssignments(payload.planTasks);
+    } else if (stage === "subagent_created" || stage === "subagent_start" || stage === "subagent_done") {
+      rememberChildAssignment(parentAgent, agent, taskTitle, phase);
+    }
+
+    const messages = baseMessage ? [baseMessage] : [];
+    if (!multiAgentRuntime.isEnabled()) {
+      return messages;
+    }
+
+    const modeSpecificMessages =
+      multiAgentRuntime.settings.mode === "group_chat"
+        ? buildGroupChatSyntheticMessages({ stage, payload, agent, parentAgent, taskTitle, phase })
+        : multiAgentRuntime.settings.mode === "workflow"
+          ? buildWorkflowSyntheticMessages({ stage, payload, agent, parentAgent, taskTitle, phase })
+          : buildSequentialSyntheticMessages({ stage, agent, taskTitle, phase });
+
+    return [...messages, ...modeSpecificMessages].filter(Boolean);
   }
 
   function translateClusterEventToMultiAgentMessage(payload = {}) {
@@ -3964,30 +4710,35 @@ export async function runClusterAnalysis({
 
   function captureMultiAgentFromEvent(payload = {}) {
     if (!multiAgentRuntime.isEnabled()) {
-      return;
+      return [];
     }
 
-    const message = translateClusterEventToMultiAgentMessage(payload);
-    if (!message) {
-      return;
+    const recordedMessages = [];
+    for (const message of buildExpandedMultiAgentMessages(payload)) {
+      if (!message) {
+        continue;
+      }
+
+      const recorded =
+        message.kind === "summary"
+          ? multiAgentRuntime.recordSummary(message)
+          : message.kind === "system"
+            ? multiAgentRuntime.recordSystem(message)
+            : multiAgentRuntime.recordMessage(message);
+      if (recorded) {
+        recordedMessages.push(recorded);
+      }
     }
 
-    if (message.kind === "summary") {
-      multiAgentRuntime.recordSummary(message);
-      return;
-    }
-
-    if (message.kind === "system") {
-      multiAgentRuntime.recordSystem(message);
-      return;
-    }
-
-    multiAgentRuntime.recordMessage(message);
+    return recordedMessages;
   }
 
   function forwardClusterEvent(payload) {
-    captureMultiAgentFromEvent(payload);
-    emitEvent(onEvent, payload);
+    const recordedMessages = captureMultiAgentFromEvent(payload);
+    emitEvent(
+      onEvent,
+      recordedMessages.length ? { ...payload, multiAgentMessages: recordedMessages } : payload
+    );
   }
 
   const sessionRuntime = createSessionRuntime({
@@ -4309,6 +5060,36 @@ export async function runClusterAnalysis({
         parentSpanId: synthesisStage.spanId
       }
     );
+    const cleanupPlan = buildWorkspaceCleanupPlan({
+      plan,
+      executions,
+      workspaceRoot: config.workspace?.resolvedDir,
+      originalTask
+    });
+    const workspaceCleanup = {
+      keepFiles: cleanupPlan.keepFiles,
+      removedFiles: [],
+      failedFiles: []
+    };
+    if (config.workspace?.resolvedDir && cleanupPlan.removeFiles.length) {
+      const cleanupResult = await removeWorkspaceFiles(config.workspace.resolvedDir, cleanupPlan.removeFiles);
+      workspaceCleanup.removedFiles = cleanupResult.removedFiles;
+      workspaceCleanup.failedFiles = cleanupResult.failedFiles;
+      forwardClusterEvent({
+        ...buildAgentEventBase(activeController, null),
+        type: cleanupResult.failedFiles.length ? "error" : "status",
+        stage: "workspace_cleanup",
+        tone: cleanupResult.failedFiles.length ? "warning" : "ok",
+        detail: localizeRunText(
+          runLocale,
+          `Removed ${cleanupResult.removedFiles.length} intermediate workspace file(s) and kept ${cleanupPlan.keepFiles.length} final deliverable artifact(s).`,
+          `已删除 ${cleanupResult.removedFiles.length} 个中间工作区文件，并保留 ${cleanupPlan.keepFiles.length} 个最终交付产物。`
+        ),
+        removedFiles: cleanupResult.removedFiles,
+        keptFiles: cleanupPlan.keepFiles,
+        failedFiles: cleanupResult.failedFiles
+      });
+    }
 
     const totalMs = Date.now() - startedAt;
     sessionRuntime.endSpan(operationSpanId, {
@@ -4334,6 +5115,7 @@ export async function runClusterAnalysis({
       totalMs,
       finalAnswer: normalizedSynthesis.finalAnswer,
       executiveSummary: normalizedSynthesis.executiveSummary,
+      workspaceCleanup,
       session: sessionRuntime.buildSnapshot(),
       multiAgentSession: multiAgentRuntime.buildSnapshot()
     });
@@ -4351,6 +5133,7 @@ export async function runClusterAnalysis({
       timings: {
         totalMs
       },
+      workspaceCleanup,
       session: sessionRuntime.buildSnapshot(),
       multiAgentSession: multiAgentRuntime.buildSnapshot()
     };
