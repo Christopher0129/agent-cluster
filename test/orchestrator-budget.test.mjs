@@ -286,6 +286,90 @@ test("runClusterAnalysis still infers delegation for broad multi-batch research 
   assert.equal(events.some((event) => event.stage === "subagent_created"), true);
 });
 
+test("runClusterAnalysis collapses an over-broadened planning result back to one direct research task", async () => {
+  const events = [];
+  const config = {
+    cluster: {
+      controller: "controller",
+      maxParallel: 4,
+      groupLeaderMaxDelegates: 3,
+      delegateMaxDepth: 1
+    },
+    models: {
+      controller: {
+        id: "controller",
+        label: "Controller",
+        model: "gpt-5.4",
+        provider: "mock"
+      },
+      research_leader: {
+        id: "research_leader",
+        label: "Research Leader",
+        model: "gpt-5.4",
+        provider: "mock",
+        webSearch: true,
+        specialties: ["research"]
+      }
+    }
+  };
+
+  const providerRegistry = new Map([
+    [
+      "controller",
+      new FakeProvider([
+        JSON.stringify({
+          objective: "Verify one latest topic directly",
+          strategy: "Incorrectly broaden the task into several research streams.",
+          tasks: [
+            {
+              id: "topic_sources",
+              phase: "research",
+              title: "Topic source stream",
+              assignedWorker: "research_leader",
+              delegateCount: 2,
+              instructions: "Collect source batch A for the topic.",
+              dependsOn: []
+            },
+            {
+              id: "topic_checks",
+              phase: "research",
+              title: "Topic verification stream",
+              assignedWorker: "research_leader",
+              delegateCount: 2,
+              instructions: "Collect source batch B for the topic.",
+              dependsOn: []
+            }
+          ]
+        }),
+        JSON.stringify({
+          finalAnswer: "Centralized direct research completed.",
+          executiveSummary: ["The planning result was normalized back to one direct research task."],
+          consensus: ["Single-topic direct research should stay centralized even if the raw plan broadens it."],
+          disagreements: [],
+          nextActions: []
+        })
+      ])
+    ],
+    ["research_leader", new FakeProvider([buildWorkerOutput("Handled the direct topic verification centrally.")])]
+  ]);
+
+  const result = await runClusterAnalysis({
+    task: "Verify the latest facts for one topic and return a concise summary directly.",
+    config,
+    providerRegistry,
+    onEvent(event) {
+      events.push(event);
+    }
+  });
+
+  assert.equal(result.plan.tasks.length, 1);
+  assert.equal(result.plan.tasks[0].phase, "research");
+  assert.equal(result.plan.tasks[0].delegateCount, 0);
+  assert.equal(result.executions.length, 1);
+  assert.equal(result.executions[0].output.subordinateCount, 0);
+  assert.equal(events.some((event) => event.stage === "subagent_created"), false);
+});
+
 test("runClusterAnalysis allows larger delegation budgets for complex work", async () => {
   const config = {
     cluster: {

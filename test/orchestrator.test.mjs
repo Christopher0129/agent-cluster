@@ -1486,7 +1486,7 @@ test("runClusterAnalysis releases child-agent budget before retrying a failed de
   ]);
 
   const result = await runClusterAnalysis({
-    task: "调用3个agent使用 web search 采集最新事实并汇总成结论。",
+    task: "Use 3 agents in total to collect the latest facts with web search and summarize the conclusion.",
     config,
     providerRegistry,
     onEvent(event) {

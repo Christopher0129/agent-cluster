@@ -79,6 +79,36 @@ function buildArtifactGuard() {
   ].join(" ");
 }
 
+function looksLikeBroadResearchRequest(task) {
+  const text = String(task || "").toLowerCase();
+  return /(compare|survey|batch(?:es)?|multiple|parallel|delegate|split|across|recursive|non-overlapping|several|workstreams?|source buckets?|evidence batches?|multiple sources?|multi-source|cross-market|cross-country|cross-region|matrix|多个|并行|拆分|批量|递归|委派|多来源|多市场|多国家|多地区|工作流|源桶|证据批次)/.test(
+    text
+  );
+}
+
+function looksLikeDirectResearchRequest(task) {
+  const text = String(task || "").toLowerCase();
+  const hasResearchSignal = /(verify|fact-check|check|confirm|lookup|summarize|summarise|brief|concise|latest|current|today|announcement|quote|market|source|news|one topic|one question|direct verification|direct summary|核实|查证|确认|查找|总结|简要|简短|最新|当前|今日|公告|新闻|行情|来源|一个问题|单个主题|直接核验|直接总结)/.test(
+    text
+  );
+  const hasDirectSignal = /(directly|handle directly|keep (?:the work )?centralized|single topic|single question|single path|quick|brief|concise|only|just|不要拆分|无需拆分|不要分工|集中处理|单点核实|单一主题|单个问题|直接处理|只需|仅需)/.test(
+    text
+  );
+  return hasResearchSignal && (hasDirectSignal || !looksLikeBroadResearchRequest(task));
+}
+
+function buildPlanningScopeGuard(task) {
+  if (looksLikeDirectResearchRequest(task)) {
+    return "Planning scope guard: the user objective looks like a single-topic direct research/verification request. Keep it centralized as one research task with delegateCount=0 unless the user explicitly asks for multiple batches, comparisons, or broad coverage.";
+  }
+
+  if (looksLikeBroadResearchRequest(task)) {
+    return "Planning scope guard: the user objective looks broad enough for parallel research. Splitting into non-overlapping evidence batches is allowed when it materially improves coverage.";
+  }
+
+  return "Planning scope guard: do not broaden a narrow user objective into a larger survey unless the user explicitly asks for broader coverage.";
+}
+
 function buildDateGuard() {
   return renderRuntimeCalendarNote();
 }
@@ -164,9 +194,11 @@ export function buildPlanningRequest({
       "Do not assign web-search-dependent work to workers whose web_search capability is disabled when a web-search-enabled worker is available.",
       "If the task depends on current facts, real-world examples, or source verification, use web search when your model supports it.",
       "For search-heavy research, split the work into smaller batches. Prefer roughly 4-8 verified examples, cases, or evidence items per research subtask instead of large quotas in one task.",
+      "If the user objective is a single-topic direct verification or concise factual summary, keep it as one centralized research task with delegateCount=0. Do not widen it into multiple evidence batches, surveys, or parallel streams unless the user explicitly asked for breadth, comparison, or multi-source coverage.",
       "If several workers share the same provider or base URL, avoid overloading that gateway with too many simultaneous search tasks.",
       "Do not invent sources, cases, URLs, or evidence that you did not actually verify.",
       "If a coding or file-producing task is involved, assign at least one worker to inspect and modify the workspace.",
+      buildPlanningScopeGuard(task),
       buildIdentityLock(task),
       buildArtifactGuard(),
       "When the user asks for a concrete document or file, make that expected artifact explicit in expectedOutput.",

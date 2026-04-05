@@ -1684,6 +1684,56 @@ function buildDefaultFallbackTasks(workers, originalTask, outputLocale = "en-US"
   });
 }
 
+function shouldForceCentralizedResearchPlan(originalTask, tasks) {
+  if (!taskLooksDirectResearch({ title: originalTask, instructions: originalTask }, "research")) {
+    return false;
+  }
+
+  const normalizedTasks = Array.isArray(tasks) ? tasks : [];
+  if (!normalizedTasks.length) {
+    return false;
+  }
+
+  return normalizedTasks.every((task) => normalizePhase(task?.phase, "implementation") === "research");
+}
+
+function buildCentralizedResearchTask(preliminaryTasks, workers, originalTask, capabilityRoutingPolicy, outputLocale = "en-US") {
+  const languagePack = createRunLanguagePack(outputLocale);
+  const firstTask = Array.isArray(preliminaryTasks) && preliminaryTasks.length ? preliminaryTasks[0] : null;
+  const preservedWorker =
+    workers.find((worker) => worker.id === safeString(firstTask?.assignedWorker)) || null;
+  const bestWorker =
+    preservedWorker ||
+    pickBestWorkerForTask(
+      workers,
+      "research",
+      {
+        title: originalTask,
+        instructions: originalTask,
+        expectedOutput: firstTask?.expectedOutput || ""
+      },
+      capabilityRoutingPolicy
+    ) || workers[0];
+
+  return {
+    id: safeString(firstTask?.id) || "task_1",
+    phase: "research",
+    title:
+      safeString(firstTask?.title) ||
+      resolveLocalizedTaskTitle(originalTask, languagePack.taskTitle(0), "task"),
+    assignedWorker: bestWorker.id,
+    delegateCount: 0,
+    instructions:
+      safeString(firstTask?.instructions) ||
+      safeString(originalTask) ||
+      languagePack.analyzeObjective(originalTask),
+    dependsOn: [],
+    expectedOutput:
+      safeString(firstTask?.expectedOutput) ||
+      languagePack.structuredSpecialistAnalysis()
+  };
+}
+
 function injectWorkflowTasks(tasks, workers, originalTask, outputLocale = "en-US") {
   const languagePack = createRunLanguagePack(outputLocale);
   const output = [...tasks];
@@ -1834,7 +1884,23 @@ function normalizePlan(
     };
   });
 
-  const tasksWithWorkflow = injectWorkflowTasks(preliminaryTasks, workers, originalTask, outputLocale);
+  const centralizedPreliminaryTasks = shouldForceCentralizedResearchPlan(originalTask, preliminaryTasks)
+    ? [
+        buildCentralizedResearchTask(
+          preliminaryTasks,
+          workers,
+          originalTask,
+          capabilityRoutingPolicy,
+          outputLocale
+        )
+      ]
+    : preliminaryTasks;
+  const tasksWithWorkflow = injectWorkflowTasks(
+    centralizedPreliminaryTasks,
+    workers,
+    originalTask,
+    outputLocale
+  );
   const taskById = new Map(tasksWithWorkflow.map((task) => [task.id, task]));
   const tasks = tasksWithWorkflow
     .map((task) => ({

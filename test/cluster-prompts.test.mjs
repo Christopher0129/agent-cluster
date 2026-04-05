@@ -112,3 +112,25 @@ test("cluster prompts include the requested output language policy", () => {
   assert.match(planningPrompt.input, /Requested response language:\s+Simplified Chinese/i);
   assert.match(delegationPrompt.instructions, /JSON keys exactly as specified in English/i);
 });
+
+test("buildPlanningRequest guards single-topic direct research from being widened", () => {
+  const prompt = buildPlanningRequest({
+    task: "Verify the latest facts for one topic and return a concise summary directly.",
+    workers: [
+      {
+        id: "research_leader",
+        label: "Research Leader",
+        model: "gpt-5.4",
+        provider: "mock",
+        webSearch: true,
+        specialties: ["research"]
+      }
+    ],
+    maxParallel: 3,
+    outputLocale: "en-US"
+  });
+
+  assert.match(prompt.instructions, /single-topic direct verification or concise factual summary/i);
+  assert.match(prompt.instructions, /delegateCount=0/i);
+  assert.match(prompt.instructions, /keep it centralized/i);
+});
