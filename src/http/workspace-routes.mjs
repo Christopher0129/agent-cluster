@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { isAbsolute, resolve } from "node:path";
 import { loadRuntimeConfig } from "../config.mjs";
 import { pickFolderDialog } from "../system/dialogs.mjs";
@@ -9,6 +10,98 @@ import {
 } from "../workspace/fs.mjs";
 import { clearClusterRunCache } from "../workspace/cache.mjs";
 import { readRequestBody, sendJson } from "./common.mjs";
+
+const FOLDER_PICK_JOB_TTL_MS = 5 * 60 * 1000;
+
+function createFolderPickJobSnapshot(job) {
+  if (!job) {
+    return null;
+  }
+
+  return {
+    jobId: job.id,
+    status: job.status,
+    path: job.path,
+    error: job.error,
+    createdAt: job.createdAt,
+    updatedAt: job.updatedAt
+  };
+}
+
+export function createFolderPickJobStore({
+  pickFolder = pickFolderDialog,
+  createId = () => randomUUID(),
+  now = () => Date.now(),
+  ttlMs = FOLDER_PICK_JOB_TTL_MS
+} = {}) {
+  const jobs = new Map();
+
+  function cleanup(currentTime = now()) {
+    for (const [jobId, job] of jobs.entries()) {
+      if (job.status === "pending") {
+        continue;
+      }
+      if (job.expiresAt > 0 && job.expiresAt <= currentTime) {
+        jobs.delete(jobId);
+      }
+    }
+  }
+
+  function finalize(job, nextState) {
+    job.status = nextState.status;
+    job.path = nextState.path ?? "";
+    job.error = nextState.error ?? "";
+    job.updatedAt = now();
+    job.expiresAt = job.updatedAt + ttlMs;
+    return createFolderPickJobSnapshot(job);
+  }
+
+  function start(initialDir = "") {
+    cleanup();
+
+    const createdAt = now();
+    const job = {
+      id: createId(),
+      status: "pending",
+      path: "",
+      error: "",
+      createdAt,
+      updatedAt: createdAt,
+      expiresAt: 0
+    };
+    jobs.set(job.id, job);
+
+    Promise.resolve()
+      .then(() => pickFolder(initialDir))
+      .then((selectedPath) => {
+        finalize(job, {
+          status: selectedPath ? "completed" : "cancelled",
+          path: String(selectedPath || "")
+        });
+      })
+      .catch((error) => {
+        finalize(job, {
+          status: "failed",
+          error: error instanceof Error ? error.message : String(error || "Folder picker failed.")
+        });
+      });
+
+    return createFolderPickJobSnapshot(job);
+  }
+
+  function get(jobId) {
+    cleanup();
+    return createFolderPickJobSnapshot(jobs.get(String(jobId || "").trim()));
+  }
+
+  return {
+    cleanup,
+    get,
+    start
+  };
+}
+
+const folderPickJobStore = createFolderPickJobStore();
 
 export function resolveWorkspaceRequestContext(projectDir, runtimeConfigOptions, overrideDir = "") {
   const config = loadRuntimeConfig(projectDir, runtimeConfigOptions);
@@ -181,10 +274,41 @@ export async function handleFolderPick(request, response, projectDir, runtimeCon
       runtimeConfigOptions,
       String(body?.currentDir || "").trim()
     );
-    const selectedPath = await pickFolderDialog(workspace.resolvedDir);
     sendJson(response, 200, {
       ok: true,
-      path: selectedPath || ""
+      ...folderPickJobStore.start(workspace.resolvedDir)
+    });
+  } catch (error) {
+    sendJson(response, 400, {
+      ok: false,
+      error: error.message
+    });
+  }
+}
+
+export async function handleFolderPickStatus(response, url) {
+  try {
+    const jobId = String(url.searchParams.get("jobId") || "").trim();
+    if (!jobId) {
+      sendJson(response, 400, {
+        ok: false,
+        error: "Folder pick job id is required."
+      });
+      return;
+    }
+
+    const job = folderPickJobStore.get(jobId);
+    if (!job) {
+      sendJson(response, 404, {
+        ok: false,
+        error: "Folder pick job was not found or has expired."
+      });
+      return;
+    }
+
+    sendJson(response, 200, {
+      ok: true,
+      ...job
     });
   } catch (error) {
     sendJson(response, 400, {

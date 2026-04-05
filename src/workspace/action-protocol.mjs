@@ -78,7 +78,53 @@ const ACTION_BATCH_KEYS = Object.freeze([
   "steps",
   "toolCalls",
   "tool_calls",
-  "operations"
+  "operations",
+  "calls",
+  "requests"
+]);
+
+const ACTION_NAME_KEYS = Object.freeze([
+  "action",
+  "toolAction",
+  "tool_action",
+  "tool",
+  "toolName",
+  "tool_name",
+  "name",
+  "type",
+  "method",
+  "operation",
+  "op",
+  "intent",
+  "functionName",
+  "function_name",
+  "call"
+]);
+
+const ACTION_WRAPPER_KEYS = Object.freeze([
+  "workspaceAction",
+  "workspace_action",
+  "toolCall",
+  "tool_call",
+  "functionCall",
+  "function_call",
+  "request",
+  "toolRequest",
+  "tool_request",
+  "operation",
+  "step"
+]);
+
+const ACTION_PAYLOAD_KEYS = Object.freeze([
+  "payload",
+  "params",
+  "parameters",
+  "arguments",
+  "input",
+  "toolInput",
+  "tool_input",
+  "data",
+  "body"
 ]);
 
 const ACTION_ALIASES = new Map([
@@ -202,6 +248,36 @@ function normalizeActionName(value) {
   return ACTION_ALIASES.get(normalized) || "";
 }
 
+function getFirstObjectValue(candidate, keys) {
+  for (const key of keys) {
+    const value = candidate?.[key];
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      return value;
+    }
+
+    const parsed = parseMaybeJsonObject(value);
+    if (parsed) {
+      return parsed;
+    }
+  }
+
+  return null;
+}
+
+function getFirstDefinedValue(candidate, keys) {
+  for (const key of keys) {
+    if (candidate?.[key] != null) {
+      return candidate[key];
+    }
+  }
+
+  return undefined;
+}
+
+function resolveRawActionName(candidate) {
+  return getFirstDefinedValue(candidate, ACTION_NAME_KEYS);
+}
+
 function maybeUnwrapFunctionCall(candidate) {
   if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
     return candidate;
@@ -230,6 +306,52 @@ function maybeUnwrapFunctionCall(candidate) {
   return candidate;
 }
 
+function maybeUnwrapWorkspaceAction(candidate) {
+  if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
+    return candidate;
+  }
+
+  let current = maybeUnwrapFunctionCall(candidate);
+
+  for (let depth = 0; depth < 4; depth += 1) {
+    let changed = false;
+
+    const wrappedAction = getFirstObjectValue(current, ACTION_WRAPPER_KEYS);
+    if (wrappedAction) {
+      const rawActionName = resolveRawActionName(current);
+      current = {
+        ...wrappedAction,
+        ...current,
+        action:
+          rawActionName ??
+          resolveRawActionName(wrappedAction)
+      };
+      current = maybeUnwrapFunctionCall(current);
+      changed = true;
+    }
+
+    const wrappedPayload = getFirstObjectValue(current, ACTION_PAYLOAD_KEYS);
+    if (wrappedPayload) {
+      const rawActionName = resolveRawActionName(current);
+      current = {
+        ...wrappedPayload,
+        ...current,
+        action:
+          rawActionName ??
+          resolveRawActionName(wrappedPayload)
+      };
+      current = maybeUnwrapFunctionCall(current);
+      changed = true;
+    }
+
+    if (!changed) {
+      break;
+    }
+  }
+
+  return current;
+}
+
 function extractFirstActionCandidate(parsed) {
   if (Array.isArray(parsed)) {
     return parsed.find((entry) => entry && typeof entry === "object" && !Array.isArray(entry)) || parsed[0];
@@ -255,19 +377,65 @@ function extractFirstActionCandidate(parsed) {
       ...firstEntry,
       reason: firstEntry.reason ?? parsed.reason,
       action:
-        firstEntry.action ??
-        firstEntry.toolAction ??
-        firstEntry.tool ??
-        firstEntry.name ??
-        parsed.action ??
-        parsed.toolAction ??
-        parsed.tool ??
-        parsed.name ??
-        parsed.type
+        resolveRawActionName(firstEntry) ??
+        resolveRawActionName(parsed)
     };
   }
 
   return parsed;
+}
+
+function getPathAlias(candidate) {
+  return getFirstDefinedValue(candidate, [
+    "path",
+    "filePath",
+    "file_path",
+    "filename",
+    "fileName",
+    "targetPath",
+    "target_path",
+    "artifactPath",
+    "artifact_path"
+  ]);
+}
+
+function getContentAlias(candidate) {
+  return getFirstDefinedValue(candidate, [
+    "content",
+    "text",
+    "body",
+    "markdown",
+    "document",
+    "doc",
+    "contents",
+    "data"
+  ]);
+}
+
+function normalizeFileLikeEntry(entry) {
+  if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+    return null;
+  }
+
+  const path = getPathAlias(entry);
+  const content = getContentAlias(entry);
+  if (!hasNonEmptyString(path) || typeof content !== "string") {
+    return null;
+  }
+
+  const normalized = {
+    path: String(path),
+    content: String(content)
+  };
+
+  if (entry.encoding != null) {
+    normalized.encoding = String(entry.encoding).trim().toLowerCase() || "utf8";
+  }
+  if (entry.title != null) {
+    normalized.title = String(entry.title);
+  }
+
+  return normalized;
 }
 
 export function canonicalizeWorkspaceActionPayload(parsed) {
@@ -276,39 +444,60 @@ export function canonicalizeWorkspaceActionPayload(parsed) {
     return parsed;
   }
 
-  let candidate = maybeUnwrapFunctionCall(firstCandidate);
-
-  for (const key of ["payload", "params", "input", "toolInput", "tool_input"]) {
-    const nested = parseMaybeJsonObject(candidate?.[key]);
-    if (nested) {
-      candidate = {
-        ...nested,
-        ...candidate,
-        action:
-          candidate.action ??
-          candidate.toolAction ??
-          candidate.tool ??
-          candidate.name ??
-          nested.action ??
-          nested.toolAction ??
-          nested.tool ??
-          nested.name
-      };
-      break;
-    }
-  }
-
-  const action = normalizeActionName(
-    candidate.action ??
-      candidate.toolAction ??
-      candidate.tool ??
-      candidate.name ??
-      candidate.type
-  );
+  const candidate = maybeUnwrapWorkspaceAction(firstCandidate);
+  const action = normalizeActionName(resolveRawActionName(candidate));
 
   const normalized = {
     ...candidate
   };
+
+  if (!Array.isArray(normalized.files)) {
+    const parsedFiles = parseMaybeJsonValue(normalized.files);
+    if (Array.isArray(parsedFiles)) {
+      normalized.files = parsedFiles;
+    }
+  }
+
+  if (Array.isArray(normalized.files)) {
+    normalized.files = normalized.files
+      .map((entry) => normalizeFileLikeEntry(entry))
+      .filter(Boolean);
+  }
+
+  if (!hasNonEmptyString(normalized.path)) {
+    const pathAlias = getPathAlias(normalized);
+    if (hasNonEmptyString(pathAlias)) {
+      normalized.path = String(pathAlias);
+    }
+  }
+
+  if (typeof normalized.content !== "string") {
+    const contentAlias = getContentAlias(normalized);
+    if (typeof contentAlias === "string") {
+      normalized.content = String(contentAlias);
+    }
+  }
+
+  if (!hasNonEmptyString(normalized.command)) {
+    const commandAlias = getFirstDefinedValue(normalized, ["command", "cmd", "shellCommand", "shell_command"]);
+    if (hasNonEmptyString(commandAlias)) {
+      normalized.command = String(commandAlias);
+    }
+  }
+
+  if (!hasNonEmptyString(normalized.query)) {
+    const queryAlias = getFirstDefinedValue(normalized, ["query", "searchQuery", "search_query", "prompt"]);
+    if (hasNonEmptyString(queryAlias)) {
+      normalized.query = String(queryAlias);
+    }
+  }
+
+  if (!Array.isArray(normalized.paths)) {
+    const parsedPaths = parseMaybeJsonValue(normalized.paths);
+    if (Array.isArray(parsedPaths)) {
+      normalized.paths = parsedPaths;
+    }
+  }
 
   if (!normalized.action && action) {
     normalized.action = action;
@@ -352,6 +541,39 @@ export function canonicalizeWorkspaceActionPayload(parsed) {
         encoding: String(normalized.encoding || "utf8").trim().toLowerCase() || "utf8"
       }
     ];
+  }
+
+  if (
+    normalized.action === WORKSPACE_ACTIONS.WRITE_FILES &&
+    (!Array.isArray(normalized.files) || !normalized.files.length)
+  ) {
+    const singleFileEntry =
+      normalizeFileLikeEntry(getFirstObjectValue(normalized, ["file", "artifact", "document"])) ||
+      normalizeFileLikeEntry(normalized);
+    if (singleFileEntry) {
+      normalized.files = [
+        {
+          ...singleFileEntry,
+          encoding: String(singleFileEntry.encoding || normalized.encoding || "utf8").trim().toLowerCase() || "utf8"
+        }
+      ];
+    }
+  }
+
+  if (
+    normalized.action === WORKSPACE_ACTIONS.WRITE_DOCX &&
+    !hasNonEmptyString(normalized.path)
+  ) {
+    const docxEntry =
+      normalizeFileLikeEntry(getFirstObjectValue(normalized, ["file", "artifact", "document"])) ||
+      normalizeFileLikeEntry(normalized);
+    if (docxEntry) {
+      normalized.path = docxEntry.path;
+      normalized.content = docxEntry.content;
+      if (docxEntry.title != null && normalized.title == null) {
+        normalized.title = docxEntry.title;
+      }
+    }
   }
 
   if (
@@ -423,7 +645,7 @@ export function normalizeVerificationStatus(value, fallback = "not_applicable") 
 
 export function normalizeToolAction(parsed) {
   const normalized = canonicalizeWorkspaceActionPayload(parsed);
-  const action = normalizeActionName(normalized?.action || normalized?.toolAction || normalized?.tool || normalized?.name);
+  const action = normalizeActionName(resolveRawActionName(normalized));
   if (action) {
     return action;
   }

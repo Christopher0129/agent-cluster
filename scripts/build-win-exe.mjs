@@ -45,6 +45,28 @@ function resolveImport(fromFile, specifier) {
   return resolve(dirname(fromFile), specifier);
 }
 
+function escapeCodePointForJs(codePoint) {
+  if (codePoint <= 0xffff) {
+    return `\\u${codePoint.toString(16).padStart(4, "0")}`;
+  }
+
+  const normalized = codePoint - 0x10000;
+  const highSurrogate = 0xd800 + (normalized >> 10);
+  const lowSurrogate = 0xdc00 + (normalized & 0x3ff);
+  return `\\u${highSurrogate.toString(16).padStart(4, "0")}\\u${lowSurrogate
+    .toString(16)
+    .padStart(4, "0")}`;
+}
+
+export function escapeNonAsciiForJs(source) {
+  return Array.from(String(source || ""))
+    .map((char) => {
+      const codePoint = char.codePointAt(0);
+      return codePoint > 0x7f ? escapeCodePointForJs(codePoint) : char;
+    })
+    .join("");
+}
+
 function normalizeNamedImportClause(clause) {
   return clause
     .slice(1, -1)
@@ -151,7 +173,7 @@ export function transformModuleSource(source, filePath, discoveredDeps) {
   transformed = transformed.replace(/^export\s+\{[\s\S]*?\};?\s*$/gm, "");
 
   transformed += `\nmodule.exports = { ${Array.from(exportNames).join(", ")} };\n`;
-  return transformed;
+  return escapeNonAsciiForJs(transformed);
 }
 
 async function collectModules(entryFile) {

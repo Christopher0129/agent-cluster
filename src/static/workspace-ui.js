@@ -2,6 +2,11 @@ function interpolate(template, values = {}) {
   return String(template || "").replace(/\{(\w+)\}/g, (_, key) => String(values[key] ?? ""));
 }
 
+const FOLDER_PICK_POLL_INTERVAL_MS = 400;
+const FOLDER_PICK_TIMEOUT_MS = 10 * 60 * 1000;
+const REALTIME_REFRESH_INTERVAL_MS = 2500;
+const REALTIME_REFRESH_DEBOUNCE_MS = 220;
+
 function createFallbackTranslator() {
   const catalog = {
     "workspace.loadingSummary": "正在读取工作区...",
@@ -51,6 +56,10 @@ export function createWorkspaceUi({
     readWorkspaceFileButton,
     workspaceFileOutput
   } = elements;
+  let realtimeRefreshIntervalId = 0;
+  let realtimeRefreshTimeoutId = 0;
+  let refreshInFlight = false;
+  let queuedRefreshOptions = null;
 
   function getDirValue() {
     return workspaceDirInput?.value.trim() || "";
@@ -120,8 +129,16 @@ export function createWorkspaceUi({
     return payload;
   }
 
-  async function loadSummary() {
-    if (workspaceTreeOutput) {
+  function delay(ms) {
+    return new Promise((resolve) => {
+      window.setTimeout(resolve, ms);
+    });
+  }
+
+  async function loadSummary(options = {}) {
+    const showLoading = options.showLoading !== false;
+
+    if (showLoading && workspaceTreeOutput) {
       workspaceTreeOutput.textContent = translate("workspace.loadingSummary");
     }
 
@@ -136,26 +153,31 @@ export function createWorkspaceUi({
           tree: treeText
         });
       }
+      return payload;
     } catch (error) {
       if (workspaceTreeOutput) {
         workspaceTreeOutput.textContent = translate("workspace.summaryLoadFailed", {
           error: error.message
         });
       }
+      throw error;
     }
   }
 
-  async function readFilePreview() {
+  async function readFilePreview(options = {}) {
+    const silent = options.silent === true;
     const filePath = workspaceFilePathInput?.value.trim() || "";
     if (!filePath) {
-      if (workspaceFileOutput) {
+      if (!silent && workspaceFileOutput) {
         workspaceFileOutput.textContent = translate("workspace.readPathRequired");
       }
-      workspaceFilePathInput?.focus();
+      if (!silent) {
+        workspaceFilePathInput?.focus();
+      }
       return;
     }
 
-    if (workspaceFileOutput) {
+    if (!silent && workspaceFileOutput) {
       workspaceFileOutput.textContent = translate("workspace.readingFile");
     }
 
@@ -173,12 +195,130 @@ export function createWorkspaceUi({
       if (workspaceFileOutput) {
         workspaceFileOutput.textContent = `${file.content || ""}${suffix}`;
       }
+      return payload;
     } catch (error) {
       if (workspaceFileOutput) {
         workspaceFileOutput.textContent = translate("workspace.readFileFailed", {
           error: error.message
         });
       }
+      throw error;
+    }
+  }
+
+  async function refreshWorkspaceState(options = {}) {
+    const nextOptions = {
+      showLoading: options.showLoading === true,
+      includePreview: options.includePreview !== false,
+      silentPreview: options.silentPreview !== false
+    };
+
+    if (refreshInFlight) {
+      queuedRefreshOptions = {
+        ...(queuedRefreshOptions || {}),
+        ...nextOptions
+      };
+      return;
+    }
+
+    refreshInFlight = true;
+    try {
+      await loadSummary({ showLoading: nextOptions.showLoading });
+      if (nextOptions.includePreview) {
+        try {
+          await readFilePreview({ silent: nextOptions.silentPreview });
+        } catch {
+          // Keep the tree refreshed even if the current preview file is unreadable.
+        }
+      }
+    } finally {
+      refreshInFlight = false;
+      if (queuedRefreshOptions) {
+        const queuedOptions = queuedRefreshOptions;
+        queuedRefreshOptions = null;
+        void refreshWorkspaceState(queuedOptions);
+      }
+    }
+  }
+
+  function scheduleRealtimeRefresh(options = {}) {
+    if (realtimeRefreshTimeoutId) {
+      clearTimeout(realtimeRefreshTimeoutId);
+      realtimeRefreshTimeoutId = 0;
+    }
+
+    realtimeRefreshTimeoutId = window.setTimeout(() => {
+      realtimeRefreshTimeoutId = 0;
+      void refreshWorkspaceState({
+        showLoading: false,
+        includePreview: options.includePreview !== false,
+        silentPreview: options.silentPreview !== false
+      });
+    }, REALTIME_REFRESH_DEBOUNCE_MS);
+  }
+
+  function startRealtimeRefresh() {
+    if (realtimeRefreshIntervalId) {
+      return;
+    }
+
+    scheduleRealtimeRefresh({
+      includePreview: true,
+      silentPreview: true
+    });
+    realtimeRefreshIntervalId = window.setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) {
+        return;
+      }
+      void refreshWorkspaceState({
+        showLoading: false,
+        includePreview: true,
+        silentPreview: true
+      });
+    }, REALTIME_REFRESH_INTERVAL_MS);
+  }
+
+  function stopRealtimeRefresh() {
+    if (realtimeRefreshIntervalId) {
+      clearInterval(realtimeRefreshIntervalId);
+      realtimeRefreshIntervalId = 0;
+    }
+    if (realtimeRefreshTimeoutId) {
+      clearTimeout(realtimeRefreshTimeoutId);
+      realtimeRefreshTimeoutId = 0;
+    }
+  }
+
+  function handleOperationEvent(event = {}) {
+    const stage = String(event?.stage || "").trim();
+    if (!stage) {
+      return;
+    }
+
+    if (stage === "workspace_write") {
+      const generatedFiles = Array.isArray(event.generatedFiles) ? event.generatedFiles : [];
+      if (!workspaceFilePathInput?.value.trim() && generatedFiles.length && workspaceFilePathInput) {
+        workspaceFilePathInput.value = String(generatedFiles[0] || "").trim();
+      }
+      scheduleRealtimeRefresh({
+        includePreview: true,
+        silentPreview: true
+      });
+      return;
+    }
+
+    if (
+      stage === "workspace_command" ||
+      stage === "worker_done" ||
+      stage === "subagent_done" ||
+      stage === "cluster_done" ||
+      stage === "cluster_cancelled" ||
+      stage === "cluster_failed"
+    ) {
+      scheduleRealtimeRefresh({
+        includePreview: true,
+        silentPreview: true
+      });
     }
   }
 
@@ -189,7 +329,7 @@ export function createWorkspaceUi({
     setSaveStatus(translate("workspace.pickingFolder"), "neutral");
 
     try {
-      const payload = await fetchJson("/api/system/pick-folder", {
+      const started = await fetchJson("/api/system/pick-folder", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -199,7 +339,28 @@ export function createWorkspaceUi({
         })
       });
 
-      if (!payload.path) {
+      const jobId = String(started.jobId || "").trim();
+      if (!jobId) {
+        throw new Error("Folder picker did not return a job id.");
+      }
+
+      const startedAt = Date.now();
+      let payload = started;
+
+      while (payload.status === "pending") {
+        if (Date.now() - startedAt > FOLDER_PICK_TIMEOUT_MS) {
+          throw new Error("Folder picker timed out.");
+        }
+
+        await delay(FOLDER_PICK_POLL_INTERVAL_MS);
+        payload = await fetchJson(`/api/system/pick-folder?jobId=${encodeURIComponent(jobId)}`);
+      }
+
+      if (payload.status === "failed") {
+        throw new Error(payload.error || "Folder picker failed.");
+      }
+
+      if (payload.status === "cancelled" || !payload.path) {
         setSaveStatus(translate("workspace.folderNotSelected"), "neutral");
         return;
       }
@@ -208,7 +369,11 @@ export function createWorkspaceUi({
         workspaceDirInput.value = payload.path;
       }
       setSaveStatus(translate("workspace.folderSelected"), "ok");
-      await loadSummary();
+      await refreshWorkspaceState({
+        showLoading: true,
+        includePreview: true,
+        silentPreview: true
+      });
     } catch (error) {
       setSaveStatus(
         translate("workspace.folderPickFailed", {
@@ -280,7 +445,11 @@ export function createWorkspaceUi({
         workspaceFileOutput.textContent = translate("workspace.importedDone");
       }
 
-      await loadSummary();
+      await refreshWorkspaceState({
+        showLoading: true,
+        includePreview: true,
+        silentPreview: true
+      });
       if (firstPath) {
         await readFilePreview();
       }
@@ -343,7 +512,11 @@ export function createWorkspaceUi({
       if (workspaceFileOutput) {
         workspaceFileOutput.textContent = translate("workspace.cachePreviewCleared");
       }
-      await loadSummary();
+      await refreshWorkspaceState({
+        showLoading: true,
+        includePreview: true,
+        silentPreview: true
+      });
     } catch (error) {
       const errorMessage = translate("workspace.cacheClearFailed", {
         error: error.message
@@ -370,22 +543,42 @@ export function createWorkspaceUi({
 
   function bindEvents() {
     pickWorkspaceButton?.addEventListener("click", pickFolder);
-    refreshWorkspaceButton?.addEventListener("click", loadSummary);
+    refreshWorkspaceButton?.addEventListener("click", () => {
+      void refreshWorkspaceState({
+        showLoading: true,
+        includePreview: true,
+        silentPreview: true
+      });
+    });
     clearWorkspaceCacheButton?.addEventListener("click", clearClusterCache);
     importWorkspaceFilesButton?.addEventListener("click", importFiles);
     readWorkspaceFileButton?.addEventListener("click", readFilePreview);
+    workspaceDirInput?.addEventListener("change", () => {
+      void refreshWorkspaceState({
+        showLoading: true,
+        includePreview: true,
+        silentPreview: true
+      });
+    });
+    workspaceFilePathInput?.addEventListener("change", () => {
+      void readFilePreview();
+    });
   }
 
   return {
     applySettings,
     bindEvents,
+    handleOperationEvent,
     collectSettings,
     getDirValue,
     importFiles,
     loadSummary,
     pickFolder,
     readFilePreview,
+    refreshWorkspaceState,
     clearClusterCache,
-    refreshLocale
+    refreshLocale,
+    startRealtimeRefresh,
+    stopRealtimeRefresh
   };
 }

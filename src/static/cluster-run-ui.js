@@ -184,10 +184,14 @@ export function createClusterRunUi({
   formatDelay,
   formatTimestamp,
   getCurrentScheme,
+  getLocale = () => resolveRuntimeLocale(),
   captureCurrentSchemeDraft,
   openOperationStream,
   createOperationId,
   multiAgentUi,
+  onOperationEvent = null,
+  onOperationStart = null,
+  onOperationFinish = null,
   translate = createFallbackTranslator()
 }) {
   const {
@@ -264,6 +268,11 @@ export function createClusterRunUi({
     closeCurrentOperationStream();
     currentOperationStream = openOperationStream(operationId, onEvent);
     agentVizUi.startRunTimer();
+    try {
+      onOperationStart?.(operationId);
+    } catch {
+      // Ignore auxiliary UI callback failures.
+    }
   }
 
   function finishOperation(options = {}) {
@@ -271,11 +280,17 @@ export function createClusterRunUi({
       0,
       Number.isFinite(Number(options.closeDelayMs)) ? Number(options.closeDelayMs) : 300
     );
+    const finishedOperationId = currentOperationId;
     currentOperationId = "";
     if (cancelButton) {
       cancelButton.disabled = true;
     }
     agentVizUi.stopRunTimer();
+    try {
+      onOperationFinish?.(finishedOperationId);
+    } catch {
+      // Ignore auxiliary UI callback failures.
+    }
     if (currentOperationStream) {
       const stream = currentOperationStream;
       currentOperationStream = null;
@@ -432,6 +447,11 @@ export function createClusterRunUi({
     runConsoleUi.updateTraceStateFromEvent(event);
     runConsoleUi.updateSessionStateFromEvent(event);
     multiAgentUi?.updateFromEvent?.(event);
+    try {
+      onOperationEvent?.(event, currentOperationId);
+    } catch {
+      // Ignore auxiliary UI callback failures.
+    }
     appendLiveEvent(event);
     setRunStateFromEvent(event);
   }
@@ -507,7 +527,12 @@ export function createClusterRunUi({
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ task, operationId, schemeId: currentScheme.id }),
+        body: JSON.stringify({
+          task,
+          operationId,
+          schemeId: currentScheme.id,
+          locale: typeof getLocale === "function" ? getLocale() : resolveRuntimeLocale()
+        }),
         signal: requestController.signal
       });
 

@@ -1,6 +1,9 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { describeOperationEvent } from "./static/operation-events.js";
+import {
+  createOperationEventTranslator,
+  describeOperationEvent
+} from "./static/operation-events.js";
 
 export const RUN_LOG_DIR = "task-logs";
 
@@ -19,13 +22,24 @@ function formatLogValue(value, fallback = "") {
   return normalized || fallback;
 }
 
-function formatEventLine(event) {
+function normalizeLogLocale(value) {
+  return String(value || "").trim() === "zh-CN" ? "zh-CN" : "en-US";
+}
+
+function localizeLogText(locale, englishText, chineseText) {
+  return normalizeLogLocale(locale) === "zh-CN" ? chineseText : englishText;
+}
+
+function formatEventLine(event, locale = "en-US") {
   const timestamp = formatLogValue(event?.timestamp, "unknown-time");
   const stage = formatLogValue(event?.stage, "unknown-stage");
   const tone = formatLogValue(event?.tone);
   const actor = formatLogValue(event?.agentLabel || event?.modelLabel || event?.modelId);
+  const translate = createOperationEventTranslator(locale);
   const detail = formatLogValue(
     describeOperationEvent(event, {
+      locale,
+      translate,
       formatDelay(value) {
         const amount = Number(value);
         return Number.isFinite(amount) ? `${amount} ms` : "n/a";
@@ -45,6 +59,7 @@ function formatEventLine(event) {
 }
 
 function renderClusterRunLogText(payload) {
+  const locale = normalizeLogLocale(payload?.locale || payload?.operation?.meta?.locale);
   const summary = payload?.result?.synthesis || {};
   const timings = payload?.result?.timings || {};
   const eventLines = Array.isArray(payload?.operation?.events)
@@ -53,11 +68,11 @@ function renderClusterRunLogText(payload) {
           const stage = String(event?.stage || "").trim();
           return stage !== "session_update" && !stage.startsWith("trace_span_");
         })
-        .map((event) => formatEventLine(event))
+        .map((event) => formatEventLine(event, locale))
     : [];
 
   return [
-    "# Agent Cluster Task Log",
+    localizeLogText(locale, "# Agent Cluster Task Log", "# Agent 集群任务日志"),
     `Operation ID: ${formatLogValue(payload?.operationId, "unknown")}`,
     `Status: ${formatLogValue(payload?.status, "unknown")}`,
     `Saved At: ${formatLogValue(payload?.savedAt, "unknown")}`,
@@ -65,16 +80,20 @@ function renderClusterRunLogText(payload) {
     `Scheme: ${formatLogValue(payload?.schemeId, "default")}`,
     `Workspace: ${formatLogValue(payload?.workspace?.resolvedDir, "unknown")}`,
     "",
-    "## Summary",
-    `Final Answer: ${formatLogValue(summary?.finalAnswer, formatLogValue(payload?.error?.message, "n/a"))}`,
-    `Total Time (ms): ${formatLogValue(timings?.totalMs, "n/a")}`,
-    `Task Count: ${formatLogValue(payload?.result?.plan?.tasks?.length, "0")}`,
-    `Execution Count: ${formatLogValue(payload?.result?.executions?.length, "0")}`,
+    localizeLogText(locale, "## Summary", "## 摘要"),
+    `${localizeLogText(locale, "Final Answer", "最终答复")}: ${formatLogValue(summary?.finalAnswer, formatLogValue(payload?.error?.message, "n/a"))}`,
+    `${localizeLogText(locale, "Total Time (ms)", "总耗时（ms）")}: ${formatLogValue(timings?.totalMs, "n/a")}`,
+    `${localizeLogText(locale, "Task Count", "任务数量")}: ${formatLogValue(payload?.result?.plan?.tasks?.length, "0")}`,
+    `${localizeLogText(locale, "Execution Count", "执行数量")}: ${formatLogValue(payload?.result?.executions?.length, "0")}`,
     "",
-    "## Status Timeline",
-    ...(eventLines.length ? eventLines : ["(no events captured)"]),
+    localizeLogText(locale, "## Status Timeline", "## 状态时间线"),
+    ...(eventLines.length ? eventLines : [localizeLogText(locale, "(no events captured)", "（未捕获到事件）")]),
     "",
-    "Detailed low-level traces remain in the JSON log.",
+    localizeLogText(
+      locale,
+      "Detailed low-level traces remain in the JSON log.",
+      "更详细的底层追踪已保存在 JSON 日志中。"
+    ),
     ""
   ].join("\n");
 }

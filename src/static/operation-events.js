@@ -34,7 +34,7 @@ const OPERATION_EVENT_CATALOG = {
     "event.workspaceWrite": "{actor} 已写入文件：{detail}",
     "event.workspaceWebSearch": "{actor} 已完成网页搜索：{detail}",
     "event.workspaceCommand": "{actor} 已执行命令：{detail}（退出码 {exitCode}）",
-    "event.workspaceJsonRepair": "{actor} 正在修复无效的 workspace JSON 响应。",
+    "event.workspaceJsonRepair": "{actor} 已自动修复无效的 workspace JSON 响应。",
     "event.workspaceToolBlocked.webSearch": "{actor} 的工具调用被限制：当前任务不允许网页搜索。",
     "event.workspaceToolBlocked.runCommand": "{actor} 的工具调用被限制：当前任务不允许执行工作区命令。",
     "event.workspaceToolBlocked.writeFiles": "{actor} 的工具调用被限制：当前任务不允许写入工作区文件。",
@@ -95,7 +95,7 @@ const OPERATION_EVENT_CATALOG = {
     "event.workspaceWrite": "{actor} wrote files: {detail}",
     "event.workspaceWebSearch": "{actor} ran a web search: {detail}",
     "event.workspaceCommand": "{actor} ran a command: {detail} (exit code {exitCode})",
-    "event.workspaceJsonRepair": "{actor} is repairing an invalid workspace JSON response.",
+    "event.workspaceJsonRepair": "{actor} repaired an invalid workspace JSON response automatically.",
     "event.workspaceToolBlocked.webSearch": "{actor} had a tool call blocked: web search is out of scope for this task.",
     "event.workspaceToolBlocked.runCommand": "{actor} had a tool call blocked: workspace commands are out of scope for this task.",
     "event.workspaceToolBlocked.writeFiles": "{actor} had a tool call blocked: workspace writes are out of scope for this task.",
@@ -129,9 +129,15 @@ const OPERATION_EVENT_CATALOG = {
   }
 };
 
-const translateOperationEvent = createCatalogTranslator(OPERATION_EVENT_CATALOG, {
-  fallbackLocale: "zh-CN"
-});
+export function createOperationEventTranslator(locale = "") {
+  const normalizedLocale = String(locale || "").trim() === "en-US" ? "en-US" : "zh-CN";
+  return createCatalogTranslator(OPERATION_EVENT_CATALOG, {
+    fallbackLocale: "zh-CN",
+    resolveLocale: () => normalizedLocale
+  });
+}
+
+const translateOperationEvent = createOperationEventTranslator();
 
 function resolveLabels(translate) {
   return {
@@ -183,44 +189,50 @@ function describeWorkspaceToolBlocked(event, actor, translate) {
 
 export function describeOperationEvent(
   event,
-  { formatDelay = (value) => `${value ?? 0} ms`, translate = translateOperationEvent } = {}
+  {
+    formatDelay = (value) => `${value ?? 0} ms`,
+    translate = translateOperationEvent,
+    locale = ""
+  } = {}
 ) {
+  const resolvedTranslate =
+    translate === translateOperationEvent && locale ? createOperationEventTranslator(locale) : translate;
   const actor = event.agentLabel || event.modelLabel || event.modelId || "";
-  const labels = resolveLabels(translate);
+  const labels = resolveLabels(resolvedTranslate);
 
   switch (event.stage) {
     case "submitted":
-      return translate("event.submitted");
+      return resolvedTranslate("event.submitted");
     case "model_test_retry":
-      return translate("event.modelTestRetry", {
+      return resolvedTranslate("event.modelTestRetry", {
         actor: event.modelId || "",
         attempt: event.attempt ?? 0,
         maxRetries: event.maxRetries ?? 0,
         nextDelay: formatDelay(event.nextDelayMs)
       });
     case "model_test_done":
-      return translate("event.modelTestDone");
+      return resolvedTranslate("event.modelTestDone");
     case "model_test_failed":
-      return translate("event.modelTestFailed", {
+      return resolvedTranslate("event.modelTestFailed", {
         detail: event.detail || labels.unknownError
       });
     case "planning_start":
-      return translate("event.planningStart", {
+      return resolvedTranslate("event.planningStart", {
         actor: actor || labels.controller
       });
     case "planning_done":
-      return translate("event.planningDone", {
+      return resolvedTranslate("event.planningDone", {
         taskCount: event.taskCount ?? 0
       });
     case "planning_retry":
-      return translate("event.planningRetry", {
+      return resolvedTranslate("event.planningRetry", {
         actor: actor || labels.controller,
         attempt: event.attempt ?? 0,
         maxRetries: event.maxRetries ?? 0,
         nextDelay: formatDelay(event.nextDelayMs)
       });
     case "controller_fallback":
-      return translate("event.controllerFallback", {
+      return resolvedTranslate("event.controllerFallback", {
         actor: actor || labels.controller,
         previousController:
           event.previousControllerLabel || event.previousControllerId || labels.controller,
@@ -228,176 +240,176 @@ export function describeOperationEvent(
           event.fallbackControllerLabel || event.fallbackControllerId || labels.controller
       });
     case "cancel_requested":
-      return event.detail || translate("event.cancelRequested");
+      return event.detail || resolvedTranslate("event.cancelRequested");
     case "phase_start":
-      return translate("event.phaseStart", {
-        phase: resolvePhaseLabel(event.phase, translate)
+      return resolvedTranslate("event.phaseStart", {
+        phase: resolvePhaseLabel(event.phase, resolvedTranslate)
       });
     case "phase_done":
-      return translate("event.phaseDone", {
-        phase: resolvePhaseLabel(event.phase, translate)
+      return resolvedTranslate("event.phaseDone", {
+        phase: resolvePhaseLabel(event.phase, resolvedTranslate)
       });
     case "worker_start":
-      return translate("event.workerStart", {
+      return resolvedTranslate("event.workerStart", {
         actor: actor || labels.leader,
         taskTitle: event.taskTitle || event.taskId || labels.task
       });
     case "worker_done":
-      return translate("event.workerDone", {
+      return resolvedTranslate("event.workerDone", {
         actor: actor || labels.leader,
         taskTitle: event.taskTitle || event.taskId || labels.task
       });
     case "workspace_list":
-      return translate("event.workspaceList", {
+      return resolvedTranslate("event.workspaceList", {
         actor: actor || labels.leader,
         detail: event.detail || ""
       });
     case "workspace_read":
-      return translate("event.workspaceRead", {
+      return resolvedTranslate("event.workspaceRead", {
         actor: actor || labels.leader,
         detail: event.detail || ""
       });
     case "workspace_write":
-      return translate("event.workspaceWrite", {
+      return resolvedTranslate("event.workspaceWrite", {
         actor: actor || labels.leader,
         detail: (event.generatedFiles || []).join(", ") || event.detail || ""
       });
     case "workspace_web_search":
-      return translate("event.workspaceWebSearch", {
+      return resolvedTranslate("event.workspaceWebSearch", {
         actor: actor || labels.leader,
         detail: event.detail || ""
       });
     case "workspace_command":
-      return translate("event.workspaceCommand", {
+      return resolvedTranslate("event.workspaceCommand", {
         actor: actor || labels.leader,
         detail: event.detail || "",
         exitCode: event.exitCode ?? "n/a"
       });
     case "workspace_json_repair":
-      return translate("event.workspaceJsonRepair", {
+      return resolvedTranslate("event.workspaceJsonRepair", {
         actor: actor || labels.leader
       });
     case "workspace_tool_blocked":
-      return describeWorkspaceToolBlocked(event, actor || labels.leader, translate);
+      return describeWorkspaceToolBlocked(event, actor || labels.leader, resolvedTranslate);
     case "memory_read":
-      return translate("event.memoryRead", {
+      return resolvedTranslate("event.memoryRead", {
         actor: actor || labels.leader,
         detail: event.detail || labels.memoryRead
       });
     case "memory_write":
-      return translate("event.memoryWrite", {
+      return resolvedTranslate("event.memoryWrite", {
         actor: actor || labels.leader,
         detail: event.detail || labels.memoryWrite
       });
     case "circuit_opened":
-      return translate("event.circuitOpened", {
+      return resolvedTranslate("event.circuitOpened", {
         actor: event.modelLabel || event.modelId || actor,
         detail: event.detail || labels.circuitOpened
       });
     case "circuit_closed":
-      return translate("event.circuitClosed", {
+      return resolvedTranslate("event.circuitClosed", {
         actor: event.modelLabel || event.modelId || actor
       });
     case "circuit_half_open":
-      return translate("event.circuitHalfOpen", {
+      return resolvedTranslate("event.circuitHalfOpen", {
         actor: event.modelLabel || event.modelId || actor
       });
     case "circuit_blocked":
-      return translate("event.circuitBlocked", {
+      return resolvedTranslate("event.circuitBlocked", {
         actor: event.modelLabel || event.modelId || actor
       });
     case "worker_retry":
-      return translate("event.workerRetry", {
+      return resolvedTranslate("event.workerRetry", {
         actor: actor || labels.leader,
         attempt: event.attempt ?? 0,
         maxRetries: event.maxRetries ?? 0,
         nextDelay: formatDelay(event.nextDelayMs)
       });
     case "worker_fallback":
-      return translate("event.workerFallback", {
+      return resolvedTranslate("event.workerFallback", {
         actor: actor || labels.leader,
         previousWorker: event.previousWorkerLabel || event.previousWorkerId || labels.leader,
         fallbackWorker: event.fallbackWorkerLabel || event.fallbackWorkerId || labels.leader
       });
     case "worker_failed":
-      return translate("event.workerFailed", {
+      return resolvedTranslate("event.workerFailed", {
         actor: actor || labels.leader,
         detail: event.detail || labels.unknownError
       });
     case "leader_delegate_start":
-      return translate("event.leaderDelegateStart", {
+      return resolvedTranslate("event.leaderDelegateStart", {
         actor: actor || labels.leader
       });
     case "leader_delegate_done":
-      return translate("event.leaderDelegateDone", {
+      return resolvedTranslate("event.leaderDelegateDone", {
         actor: actor || labels.leader
       });
     case "leader_delegate_retry":
-      return translate("event.leaderDelegateRetry", {
+      return resolvedTranslate("event.leaderDelegateRetry", {
         actor: actor || labels.leader,
         attempt: event.attempt ?? 0,
         maxRetries: event.maxRetries ?? 0
       });
     case "subagent_created":
-      return translate("event.subagentCreated", {
+      return resolvedTranslate("event.subagentCreated", {
         actor: actor || labels.subordinate,
         taskTitle: event.taskTitle || event.detail || labels.task
       });
     case "subagent_start":
-      return translate("event.subagentStart", {
+      return resolvedTranslate("event.subagentStart", {
         actor: actor || labels.subordinate,
         taskTitle: event.taskTitle || event.taskId || labels.task
       });
     case "subagent_done":
-      return translate("event.subagentDone", {
+      return resolvedTranslate("event.subagentDone", {
         actor: actor || labels.subordinate,
         taskTitle: event.taskTitle || event.taskId || labels.task
       });
     case "subagent_retry":
-      return translate("event.subagentRetry", {
+      return resolvedTranslate("event.subagentRetry", {
         actor: actor || labels.subordinate,
         attempt: event.attempt ?? 0,
         maxRetries: event.maxRetries ?? 0,
         nextDelay: formatDelay(event.nextDelayMs)
       });
     case "subagent_failed":
-      return translate("event.subagentFailed", {
+      return resolvedTranslate("event.subagentFailed", {
         actor: actor || labels.subordinate,
         detail: event.detail || labels.unknownError
       });
     case "leader_synthesis_start":
-      return translate("event.leaderSynthesisStart", {
+      return resolvedTranslate("event.leaderSynthesisStart", {
         actor: actor || labels.leader
       });
     case "leader_synthesis_retry":
-      return translate("event.leaderSynthesisRetry", {
+      return resolvedTranslate("event.leaderSynthesisRetry", {
         actor: actor || labels.leader,
         attempt: event.attempt ?? 0,
         maxRetries: event.maxRetries ?? 0
       });
     case "validation_gate_failed":
-      return translate("event.validationGateFailed");
+      return resolvedTranslate("event.validationGateFailed");
     case "synthesis_start":
-      return translate("event.synthesisStart", {
+      return resolvedTranslate("event.synthesisStart", {
         actor: actor || labels.controller
       });
     case "synthesis_retry":
-      return translate("event.synthesisRetry", {
+      return resolvedTranslate("event.synthesisRetry", {
         actor: actor || labels.controller,
         attempt: event.attempt ?? 0,
         maxRetries: event.maxRetries ?? 0,
         nextDelay: formatDelay(event.nextDelayMs)
       });
     case "cluster_done":
-      return translate("event.clusterDone", {
+      return resolvedTranslate("event.clusterDone", {
         totalMs: event.totalMs ?? "n/a"
       });
     case "cluster_cancelled":
-      return translate("event.clusterCancelled", {
+      return resolvedTranslate("event.clusterCancelled", {
         detail: event.detail || labels.clusterCancelled
       });
     case "cluster_failed":
-      return translate("event.clusterFailed", {
+      return resolvedTranslate("event.clusterFailed", {
         detail: event.detail || labels.unknownError
       });
     default:
@@ -407,6 +419,6 @@ export function describeOperationEvent(
       if (event.message) {
         return event.message;
       }
-      return translate("event.default");
+      return resolvedTranslate("event.default");
   }
 }

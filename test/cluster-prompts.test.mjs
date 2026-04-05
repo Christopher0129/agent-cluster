@@ -71,3 +71,44 @@ test("buildLeaderDelegationRequest distinguishes global agent total from local c
   assert.match(prompt.input, /"requestedTotalAgents": 50/);
   assert.match(prompt.input, /"remainingRunWideChildBudget": 44/);
 });
+
+test("cluster prompts include the requested output language policy", () => {
+  const planningPrompt = buildPlanningRequest({
+    task: "分析当前国际局势",
+    workers: [
+      {
+        id: "research_leader",
+        label: "Research Leader",
+        model: "gpt-5.4",
+        provider: "mock",
+        webSearch: true,
+        specialties: ["research"]
+      }
+    ],
+    maxParallel: 2,
+    outputLocale: "zh-CN"
+  });
+  const delegationPrompt = buildLeaderDelegationRequest({
+    originalTask: "分析当前国际局势",
+    clusterPlan: {
+      strategy: "Split the work into regional streams."
+    },
+    leader: {
+      label: "Research Leader",
+      webSearch: true
+    },
+    task: {
+      id: "task_1",
+      phase: "research",
+      title: "Research current geopolitics"
+    },
+    dependencyOutputs: [],
+    delegateCount: 2,
+    depthRemaining: 2,
+    outputLocale: "zh-CN"
+  });
+
+  assert.match(planningPrompt.instructions, /always respond in Simplified Chinese/i);
+  assert.match(planningPrompt.input, /Requested response language:\s+Simplified Chinese/i);
+  assert.match(delegationPrompt.instructions, /JSON keys exactly as specified in English/i);
+});

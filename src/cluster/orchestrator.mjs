@@ -6,7 +6,11 @@ import {
   buildWorkerExecutionRequest
 } from "./prompts.mjs";
 import { parseJsonFromText } from "../utils/json-output.mjs";
-import { getWorkspaceTree } from "../workspace/fs.mjs";
+import {
+  getWorkspaceTree,
+  verifyWorkspaceArtifacts,
+  writeWorkspaceFiles
+} from "../workspace/fs.mjs";
 import { runWorkspaceToolLoop } from "../workspace/agent-loop.mjs";
 import { isAbortError, throwIfAborted } from "../utils/abort.mjs";
 import { createSessionRuntime } from "../session/runtime.mjs";
@@ -28,6 +32,12 @@ import {
   summarizeCapabilityRoutingPolicy
 } from "./policies.mjs";
 import { deriveTaskRequirements } from "../workspace/task-requirements.mjs";
+import {
+  buildDocxFallbackContent,
+  getArtifactTitleFromPath,
+  inferRequestedArtifact
+} from "../workspace/artifact-fallback.mjs";
+import { normalizeWorkspaceArtifactReferences } from "../workspace/action-protocol.mjs";
 
 const PHASE_ORDER = ["research", "implementation", "validation", "handoff"];
 const DEFAULT_SUBORDINATE_MAX_PARALLEL = 3;
@@ -35,6 +45,20 @@ const DEFAULT_GROUP_LEADER_MAX_DELEGATES = 10;
 const DEFAULT_DELEGATION_MAX_DEPTH = 1;
 const PHASE_CONCURRENCY_CAPS = {};
 const RETRYABLE_PROVIDER_STATUSES = new Set([408, 409, 425, 429, 500, 502, 503, 504, 520, 521, 522, 523, 524, 529]);
+const DELEGATION_FILE_REFERENCE_PATTERNS = [
+  /`([^`\r\n]+\.(?:json|docx|md|txt|csv|tsv|yaml|yml|xml|html|js|mjs|cjs|ts|tsx|jsx|py|pdf|pptx|xlsx))`/gi,
+  /"([^"\r\n]+\.(?:json|docx|md|txt|csv|tsv|yaml|yml|xml|html|js|mjs|cjs|ts|tsx|jsx|py|pdf|pptx|xlsx))"/gi,
+  /'([^'\r\n]+\.(?:json|docx|md|txt|csv|tsv|yaml|yml|xml|html|js|mjs|cjs|ts|tsx|jsx|py|pdf|pptx|xlsx))'/gi,
+  /([A-Za-z0-9_./\\-]+\.(?:json|docx|md|txt|csv|tsv|yaml|yml|xml|html|js|mjs|cjs|ts|tsx|jsx|py|pdf|pptx|xlsx))/gi
+];
+const DELEGATION_PRODUCER_HINTS = [
+  /\b(write|create|generate|save|produce|output|materialize|build|assemble|deliver)\b/i,
+  /(写入|生成|创建|保存|产出|输出|落地|交付)/
+];
+const DELEGATION_CONSUMER_HINTS = [
+  /\b(read|use|verify|validate|check|open|load|parse|review|summarize|merge|combine|consume|based on|using)\b/i,
+  /(读取|使用|基于|核验|验证|检查|打开|加载|解析|审阅|汇总|合并|依赖)/
+];
 const AGENT_PREFIX = {
   research: {
     leader: "调研组长",
@@ -98,6 +122,36 @@ function safeArray(value) {
   return Array.isArray(value) ? value.map((item) => String(item)) : [];
 }
 
+function normalizeArtifactEntry(value) {
+  if (typeof value === "string") {
+    return String(value).trim();
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return "";
+  }
+
+  return String(
+    value.path ??
+      value.filePath ??
+      value.file_path ??
+      value.filename ??
+      value.fileName ??
+      value.targetPath ??
+      value.target_path ??
+      ""
+  ).trim();
+}
+
+function normalizeArtifactArray(value) {
+  return Array.isArray(value)
+    ? normalizeWorkspaceArtifactReferences(
+      value
+        .map((item) => normalizeArtifactEntry(item))
+        .filter(Boolean)
+    )
+    : [];
+}
+
 function normalizeModelRole(value, fallback = "") {
   const trimmed = String(value || "").trim().toLowerCase();
   if (!trimmed) {
@@ -132,6 +186,84 @@ function modelCanActAsWorker(worker) {
 
 function uniqueArray(items) {
   return Array.from(new Set((Array.isArray(items) ? items : []).map((item) => String(item)).filter(Boolean)));
+}
+
+function escapeRegExp(value) {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function normalizeDelegationFileReference(value) {
+  return String(value || "")
+    .trim()
+    .replace(/^["'`]+|["'`.,;:!?]+$/g, "")
+    .replace(/\\/g, "/")
+    .replace(/^\.\//, "")
+    .toLowerCase();
+}
+
+function extractDelegationFileReferences(text) {
+  const source = String(text || "");
+  const matches = [];
+  for (const pattern of DELEGATION_FILE_REFERENCE_PATTERNS) {
+    for (const match of source.matchAll(pattern)) {
+      const normalized = normalizeDelegationFileReference(match[1]);
+      if (normalized) {
+        matches.push(normalized);
+      }
+    }
+  }
+  return uniqueArray(matches);
+}
+
+function matchesDelegationHint(text, patterns) {
+  return patterns.some((pattern) => pattern.test(String(text || "")));
+}
+
+function inferImplicitDelegationDependencies(subtasks) {
+  const metadata = (Array.isArray(subtasks) ? subtasks : []).map((subtask, index) => {
+    const combinedText = [subtask?.title, subtask?.instructions, subtask?.expectedOutput]
+      .filter(Boolean)
+      .join("\n");
+    return {
+      id: subtask.id,
+      ordinal: index + 1,
+      combinedText,
+      normalizedText: combinedText.toLowerCase(),
+      references: extractDelegationFileReferences(combinedText),
+      producerHints: matchesDelegationHint(combinedText, DELEGATION_PRODUCER_HINTS),
+      consumerHints: matchesDelegationHint(combinedText, DELEGATION_CONSUMER_HINTS)
+    };
+  });
+  const dependencies = new Map();
+
+  metadata.forEach((current, currentIndex) => {
+    const inferred = [];
+    for (let priorIndex = 0; priorIndex < currentIndex; priorIndex += 1) {
+      const prior = metadata[priorIndex];
+      const sharedReferences = prior.references.filter((reference) =>
+        current.references.includes(reference)
+      );
+      const referencesPriorId =
+        new RegExp(`\\b${escapeRegExp(prior.id)}\\b`, "i").test(current.combinedText) ||
+        new RegExp(`\\b(?:subtask|subagent|child(?:\\s+agent)?|sibling)\\s*0*${prior.ordinal}\\b`, "i").test(
+          current.combinedText
+        ) ||
+        new RegExp(`(?:子任务|子代理|下属)\\s*0*${prior.ordinal}`).test(current.combinedText);
+      if (referencesPriorId) {
+        inferred.push(prior.id);
+        continue;
+      }
+
+      if (!sharedReferences.length || !prior.producerHints || !current.consumerHints) {
+        continue;
+      }
+
+      inferred.push(prior.id);
+    }
+    dependencies.set(current.id, uniqueArray(inferred));
+  });
+
+  return dependencies;
 }
 
 function normalizePhase(value, fallback = "implementation") {
@@ -287,6 +419,399 @@ function safeString(value) {
   return String(value || "").trim();
 }
 
+function normalizeRunLocale(value) {
+  return safeString(value) === "zh-CN" ? "zh-CN" : "en-US";
+}
+
+function localizeRunText(locale, englishText, chineseText) {
+  return normalizeRunLocale(locale) === "zh-CN" ? chineseText : englishText;
+}
+
+function createRunLanguagePack(locale) {
+  const normalizedLocale = normalizeRunLocale(locale);
+  return {
+    taskTitle(index) {
+      return normalizedLocale === "zh-CN" ? `任务 ${index + 1}` : `Task ${index + 1}`;
+    },
+    subtaskTitle(index) {
+      return normalizedLocale === "zh-CN" ? `子任务 ${index + 1}` : `Subtask ${index + 1}`;
+    },
+    subtaskInstructions(index) {
+      return normalizedLocale === "zh-CN"
+        ? `处理组长任务中的第 ${index + 1} 部分。`
+        : `Handle part ${index + 1} of the assigned leader task.`;
+    },
+    subtaskExpectedOutput() {
+      return normalizedLocale === "zh-CN" ? "输出具体的专业结果。" : "Concrete specialist output.";
+    },
+    fallbackTaskTitle(worker, phase) {
+      return normalizedLocale === "zh-CN"
+        ? `${worker.label} 的${phase}任务`
+        : `${worker.label} ${phase} task`;
+    },
+    fallbackTaskInstructions(originalTask) {
+      return normalizedLocale === "zh-CN"
+        ? `从你最擅长的专业方向处理用户目标“${originalTask}”。`
+        : `Handle the user objective "${originalTask}" in your strongest specialty area.`;
+    },
+    fallbackTaskExpectedOutput() {
+      return normalizedLocale === "zh-CN"
+        ? "输出结构化结论，并在合适时给出具体产物。"
+        : "Structured findings with concrete artifacts where useful.";
+    },
+    structuredSpecialistAnalysis() {
+      return normalizedLocale === "zh-CN" ? "结构化的专业分析结果。" : "Structured specialist analysis.";
+    },
+    analyzeObjective(originalTask) {
+      return normalizedLocale === "zh-CN"
+        ? `从你的专业角度分析目标“${originalTask}”，并返回具体建议。`
+        : `Analyze the objective "${originalTask}" from your specialty and return concrete recommendations.`;
+    },
+    validateGeneratedWorkspaceOutputsTitle() {
+      return normalizedLocale === "zh-CN" ? "校验生成的工作区产物" : "Validate generated workspace outputs";
+    },
+    validateGeneratedOutputsTitle() {
+      return normalizedLocale === "zh-CN" ? "校验生成结果" : "Validate generated outputs";
+    },
+    validationGateInstructions() {
+      return normalizedLocale === "zh-CN"
+        ? "仅审查上游实现任务明确产出的文件和产物；除非依赖结果要求扩大范围，否则忽略无关的既有工作区文件。对这些产物执行最相关且安全的测试或构建命令，并报告该工作流结果是否真正可用。"
+        : "Review only the files and artifacts explicitly produced by upstream implementation tasks unless dependency outputs require a broader workspace inspection. Ignore unrelated pre-existing workspace files, run the most relevant safe tests or build commands for the produced outputs, and report whether the workflow result is actually usable.";
+    },
+    validationGateExpectedOutput() {
+      return normalizedLocale === "zh-CN" ? "给出带测试/构建结果的验证结论。" : "Validation verdict with test/build results.";
+    },
+    finalCodeManagementReviewTitle() {
+      return normalizedLocale === "zh-CN" ? "最终代码管理复核" : "Final code management review";
+    },
+    finalCodeManagementReviewInstructions() {
+      return normalizedLocale === "zh-CN"
+        ? "对所有实现产物执行最终代码管理复核。优先关注上游实现任务明确产出的文件和产物；除非依赖输出指向其他文件，否则忽略无关的既有工作区内容。针对这些产物运行最相关且安全的测试、构建或 lint 命令，并报告编码结果是否一致、可验收、可交付。"
+        : "Perform the final code-management review for all implementation outputs. Focus first on files and artifacts explicitly produced by upstream implementation tasks, ignore unrelated pre-existing workspace files unless a dependency output points to them, run the most relevant safe test, build, or lint commands for those outputs, and report whether the coding results are cohesive and ready for handoff.";
+    },
+    finalCodeManagementReviewExpectedOutput() {
+      return normalizedLocale === "zh-CN"
+        ? "给出带验证证据和剩余风险的最终代码复核结论。"
+        : "Final code review verdict with verification evidence and remaining risks.";
+    },
+    prepareHandoffSummaryTitle() {
+      return normalizedLocale === "zh-CN" ? "准备交付摘要" : "Prepare handoff summary";
+    },
+    prepareHandoffSummaryInstructions() {
+      return normalizedLocale === "zh-CN"
+        ? "整理一份面向用户的精简交付摘要，覆盖产出结果、剩余风险，以及如何使用生成的内容。"
+        : "Prepare a concise user-facing handoff summary covering outcomes, remaining risks, and how to use the generated outputs.";
+    },
+    prepareHandoffSummaryExpectedOutput() {
+      return normalizedLocale === "zh-CN" ? "输出可直接阅读的交付说明。" : "Readable handoff notes.";
+    },
+    planningChildAgents(delegateCount, requestedTotalAgents) {
+      if (normalizedLocale === "zh-CN") {
+        return Number(requestedTotalAgents) > 0
+          ? `计划在本任务内最多分配 ${delegateCount} 个子 agent，对应整轮全局目标 ${requestedTotalAgents} 个 agent。`
+          : `计划在本任务内最多分配 ${delegateCount} 个子 agent。`;
+      }
+      return Number(requestedTotalAgents) > 0
+        ? `Planning up to ${delegateCount} child agent(s) for this task within the run-wide total target of ${requestedTotalAgents} agent(s).`
+        : `Planning up to ${delegateCount} child agent(s) for this task.`;
+    },
+    leaderSynthesisContent(childCount) {
+      return normalizedLocale === "zh-CN"
+        ? `把 ${childCount} 个子任务结果汇总成一份统一结论。`
+        : `Merge ${childCount} child result(s) into one consolidated answer.`;
+    },
+    leaderSynthesisDetail(childCount) {
+      return normalizedLocale === "zh-CN"
+        ? `正在汇总 ${childCount} 个子任务结果。`
+        : `Synthesizing ${childCount} child result(s).`;
+    },
+    taskCompletedWithoutDelegation() {
+      return normalizedLocale === "zh-CN" ? "任务已直接完成，未继续委派。" : "Task completed without delegation.";
+    },
+    taskCompletedAfterBudgetExhausted() {
+      return normalizedLocale === "zh-CN"
+        ? "整轮子 agent 预算已用尽，本任务已改为直接完成。"
+        : "Task completed after the run-wide child-agent budget was exhausted.";
+    },
+    delegationDone(delegatedCount, subordinateConcurrency, hasDependencies, globalConcurrencyLabel) {
+      if (normalizedLocale === "zh-CN") {
+        return delegatedCount < 0
+          ? ""
+          : `已分派 ${delegatedCount} 个子任务；本地子任务启动上限 ${subordinateConcurrency}，依赖感知调度${hasDependencies ? "已启用" : "无需启用"}，全局执行上限 ${globalConcurrencyLabel}。`;
+      }
+      return `Delegated ${delegatedCount} child task(s); local child launch cap is ${subordinateConcurrency}, dependency-aware scheduling is ${hasDependencies ? "enabled" : "not needed"}, and the global execution cap is ${globalConcurrencyLabel}.`;
+    },
+    delegationDoneBudgeted(delegatedCount, subordinateConcurrency, hasDependencies, globalConcurrencyLabel) {
+      if (normalizedLocale === "zh-CN") {
+        return `应用整轮子 agent 预算后，已分派 ${delegatedCount} 个子任务；本地子任务启动上限 ${subordinateConcurrency}，依赖感知调度${hasDependencies ? "已启用" : "无需启用"}，全局执行上限 ${globalConcurrencyLabel}。`;
+      }
+      return `Delegated ${delegatedCount} child task(s) after applying the run-wide child-agent budget; local child launch cap is ${subordinateConcurrency}, dependency-aware scheduling is ${hasDependencies ? "enabled" : "not needed"}, and the global execution cap is ${globalConcurrencyLabel}.`;
+    },
+    delegationDoneSequential(delegatedCount, globalConcurrencyLabel) {
+      return normalizedLocale === "zh-CN"
+        ? `已分派 ${delegatedCount} 个子任务；本地子任务将顺序启动，全局执行上限 ${globalConcurrencyLabel}。`
+        : `Delegated ${delegatedCount} child task(s); local child launch continues sequentially and the global execution cap is ${globalConcurrencyLabel}.`;
+    },
+    collaborationStarted(mode) {
+      return normalizedLocale === "zh-CN"
+        ? `协作已启动，当前模式：${mode}。`
+        : `Collaboration started in ${mode} mode.`;
+    }
+  };
+}
+
+function isGenericEnglishTaskTitle(value, kind = "task") {
+  const normalized = safeString(value).toLowerCase();
+  if (!normalized) {
+    return false;
+  }
+
+  if (kind === "subtask") {
+    return /^(subtask|child task|task)\s*#?:?\s*\d+$/.test(normalized);
+  }
+
+  return /^task\s*#?:?\s*\d+$/.test(normalized);
+}
+
+function resolveLocalizedTaskTitle(rawTitle, fallbackTitle, kind = "task") {
+  const normalized = safeString(rawTitle);
+  if (!normalized) {
+    return fallbackTitle;
+  }
+
+  return isGenericEnglishTaskTitle(normalized, kind) ? fallbackTitle : normalized;
+}
+
+function joinConversationParts(parts) {
+  return parts
+    .map((value) => safeString(value))
+    .filter(Boolean)
+    .join(" ");
+}
+
+function resolveQuotedTaskTitle(taskTitle, fallback, locale = "en-US") {
+  const normalized = safeString(taskTitle);
+  if (normalized) {
+    return normalizeRunLocale(locale) === "zh-CN" ? `“${normalized}”` : `"${normalized}"`;
+  }
+  return fallback;
+}
+
+function resolveConversationSnippet(stage, payload = {}) {
+  switch (stage) {
+    case "leader_delegate_done":
+      return safeString(payload.detail || payload.summary || payload.thinkingSummary || payload.content);
+    case "worker_done":
+    case "subagent_done":
+      return safeString(payload.summary || payload.content || payload.thinkingSummary || payload.detail);
+    default:
+      return safeString(payload.content || payload.summary || payload.thinkingSummary || payload.detail);
+  }
+}
+
+function extractEventDetailValue(detail, patterns = []) {
+  const normalized = safeString(detail);
+  if (!normalized) {
+    return "";
+  }
+
+  for (const pattern of patterns) {
+    const match = normalized.match(pattern);
+    if (match) {
+      return safeString(match[1] || match[0]);
+    }
+  }
+
+  return normalized;
+}
+
+function buildConversationStyleContent(stage, payload = {}, taskTitle = "", locale = "en-US") {
+  const normalizedLocale = normalizeRunLocale(locale);
+  const snippet = resolveConversationSnippet(stage, payload);
+  const taskLabel = resolveQuotedTaskTitle(
+    taskTitle,
+    normalizedLocale === "zh-CN" ? "该任务" : "this task",
+    normalizedLocale
+  );
+  const childTaskLabel = resolveQuotedTaskTitle(
+    taskTitle,
+    normalizedLocale === "zh-CN" ? "该子任务" : "this child task",
+    normalizedLocale
+  );
+
+  switch (stage) {
+    case "planning_start":
+      return localizeRunText(
+        normalizedLocale,
+        "I'm planning the overall collaboration.",
+        "我正在规划整个协作流程。"
+      );
+    case "planning_done":
+      return localizeRunText(
+        normalizedLocale,
+        `The top-level plan is ready with ${payload.taskCount ?? 0} task(s).`,
+        `顶层计划已完成，共拆分 ${payload.taskCount ?? 0} 个任务。`
+      );
+    case "phase_start":
+      return localizeRunText(
+        normalizedLocale,
+        `Entering the ${safeString(payload.phase) || "current"} phase.`,
+        `进入${safeString(payload.phase) || "当前"}阶段。`
+      );
+    case "phase_done":
+      return localizeRunText(
+        normalizedLocale,
+        `Completed the ${safeString(payload.phase) || "current"} phase.`,
+        `已完成${safeString(payload.phase) || "当前"}阶段。`
+      );
+    case "leader_delegate_start":
+      return joinConversationParts([
+        localizeRunText(
+          normalizedLocale,
+          `I'm splitting ${taskLabel} into child assignments.`,
+          `我来把 ${taskLabel} 拆成若干子任务。`
+        ),
+        snippet && snippet !== taskTitle
+          ? localizeRunText(normalizedLocale, `Focus: ${snippet}`, `重点：${snippet}`)
+          : ""
+      ]);
+    case "leader_delegate_done":
+      return joinConversationParts([
+        localizeRunText(normalizedLocale, "Delegation plan ready.", "分工计划已确定。"),
+        snippet && snippet !== taskTitle ? snippet : ""
+      ]);
+    case "worker_start":
+      return joinConversationParts([
+        localizeRunText(normalizedLocale, `I'm taking ${taskLabel}.`, `我来处理 ${taskLabel}。`),
+        snippet && snippet !== taskTitle
+          ? localizeRunText(normalizedLocale, `Plan: ${snippet}`, `计划：${snippet}`)
+          : ""
+      ]);
+    case "subagent_created":
+      return joinConversationParts([
+        localizeRunText(normalizedLocale, `Please take ${childTaskLabel}.`, `请接手 ${childTaskLabel}。`),
+        snippet && snippet !== taskTitle
+          ? localizeRunText(normalizedLocale, `Focus: ${snippet}`, `重点：${snippet}`)
+          : ""
+      ]);
+    case "subagent_start":
+      return joinConversationParts([
+        localizeRunText(normalizedLocale, `Acknowledged ${childTaskLabel}.`, `已接单，开始处理 ${childTaskLabel}。`),
+        snippet && snippet !== taskTitle
+          ? localizeRunText(normalizedLocale, `Plan: ${snippet}`, `计划：${snippet}`)
+          : localizeRunText(normalizedLocale, "Starting now.", "马上开始。")
+      ]);
+    case "leader_synthesis_start":
+      return joinConversationParts([
+        localizeRunText(normalizedLocale, "I'm merging the child outputs into one answer.", "我正在汇总子任务结果。"),
+        snippet && snippet !== taskTitle ? snippet : ""
+      ]);
+    case "worker_done":
+      return joinConversationParts([
+        localizeRunText(normalizedLocale, `Finished ${taskLabel}.`, `已完成 ${taskLabel}。`),
+        snippet && snippet !== taskTitle
+          ? localizeRunText(normalizedLocale, `Result: ${snippet}`, `结果：${snippet}`)
+          : ""
+      ]);
+    case "subagent_done":
+      return joinConversationParts([
+        localizeRunText(normalizedLocale, `Completed ${childTaskLabel}.`, `已完成 ${childTaskLabel}。`),
+        snippet && snippet !== taskTitle
+          ? localizeRunText(normalizedLocale, `Result: ${snippet}`, `结果：${snippet}`)
+          : ""
+      ]);
+    case "workspace_list":
+      return joinConversationParts([
+        localizeRunText(normalizedLocale, "I checked the workspace path.", "我已查看工作区路径。"),
+        extractEventDetailValue(snippet) ? localizeRunText(normalizedLocale, `Path: ${extractEventDetailValue(snippet)}`, `路径：${extractEventDetailValue(snippet)}`) : ""
+      ]);
+    case "workspace_read":
+      return joinConversationParts([
+        localizeRunText(normalizedLocale, "I read the required files.", "我已读取所需文件。"),
+        extractEventDetailValue(snippet) ? localizeRunText(normalizedLocale, `Files: ${extractEventDetailValue(snippet)}`, `文件：${extractEventDetailValue(snippet)}`) : ""
+      ]);
+    case "workspace_write": {
+      const artifactPath = extractEventDetailValue(snippet, [
+        /^Auto-materialized requested artifact(?: but verification failed)?:\s*(.+)$/i,
+        /^已自动生成(?:并校验|但校验失败的)?目标产物[：:]\s*(.+)$/i
+      ]);
+      return joinConversationParts([
+        localizeRunText(normalizedLocale, "I wrote files into the workspace.", "我已向工作区写入文件。"),
+        artifactPath
+          ? localizeRunText(
+              normalizedLocale,
+              `Artifact: ${artifactPath}`,
+              `产物：${artifactPath}`
+            )
+          : extractEventDetailValue(snippet)
+            ? localizeRunText(
+                normalizedLocale,
+                `Files: ${extractEventDetailValue(snippet)}`,
+                `文件：${extractEventDetailValue(snippet)}`
+              )
+            : ""
+      ]);
+    }
+    case "workspace_web_search":
+      return joinConversationParts([
+        localizeRunText(normalizedLocale, "I finished a web search.", "我已完成一次网页搜索。"),
+        extractEventDetailValue(snippet)
+          ? localizeRunText(
+              normalizedLocale,
+              `Query: ${extractEventDetailValue(snippet)}`,
+              `查询：${extractEventDetailValue(snippet)}`
+            )
+          : ""
+      ]);
+    case "workspace_json_repair":
+      return localizeRunText(
+        normalizedLocale,
+        "I detected an invalid workspace JSON response and repaired it automatically.",
+        "我检测到无效的 workspace JSON 响应，并已自动修复。"
+      );
+    case "memory_write": {
+      const title = extractEventDetailValue(snippet, [
+        /^Stored session memory:\s*(.+)$/i,
+        /^已写入会话记忆[：:]\s*(.+)$/i
+      ]);
+      return joinConversationParts([
+        localizeRunText(normalizedLocale, "I stored the latest session memory.", "我已写入最新的会话记忆。"),
+        title ? localizeRunText(normalizedLocale, `Title: ${title}`, `标题：${title}`) : ""
+      ]);
+    }
+    case "memory_read": {
+      const memoryCount = extractEventDetailValue(snippet, [
+        /^Recalled\s+(\d+)\s+session memory item\(s\)\.?$/i,
+        /^已召回\s+(\d+)\s+条会话记忆。?$/i
+      ]);
+      return joinConversationParts([
+        localizeRunText(normalizedLocale, "I recalled the relevant session memory.", "我已召回相关会话记忆。"),
+        memoryCount
+          ? localizeRunText(normalizedLocale, `Items: ${memoryCount}`, `条目：${memoryCount}`)
+          : ""
+      ]);
+    }
+    case "worker_fallback":
+      return joinConversationParts([
+        localizeRunText(normalizedLocale, "Rerouted after a provider failure.", "因 provider 故障已切换执行者。"),
+        snippet && snippet !== taskTitle ? snippet : ""
+      ]);
+    case "controller_fallback":
+      return joinConversationParts([
+        localizeRunText(normalizedLocale, "Controller fallback engaged.", "主控已切换到备用模型。"),
+        snippet && snippet !== taskTitle ? snippet : ""
+      ]);
+    case "cancel_requested":
+      return localizeRunText(
+        normalizedLocale,
+        "The user requested cancellation and I'm stopping the current run.",
+        "用户已请求终止，我正在停止当前运行。"
+      );
+    default:
+      return snippet;
+  }
+}
+
 function padAgentIndex(value) {
   return String(value).padStart(2, "0");
 }
@@ -325,8 +850,20 @@ function taskLooksCodeReview(task) {
 
 function taskRequiresConcreteArtifact(task) {
   const text = textBlob(task?.title, task?.instructions, task?.expectedOutput);
+  const hasExplicitArtifactPath = /\.(docx?|pptx?|xlsx?|pdf|md|txt|csv|json)\b/.test(text);
+  const hasNegatedArtifactWrite =
+    /(\bdo not\b|\bdon't\b|\bwithout\b|\bavoid\b|\bnever\b).{0,20}\b(write|create|generate|save|export|deliver)\b/.test(text) ||
+    /\b(write|create|generate|save|export|deliver)\b.{0,20}\b(no|without)\b.{0,12}\b(file|document|report|artifact|files|documents|reports|artifacts)\b/.test(text) ||
+    /(?:不要|勿|禁止|无需|不必).{0,8}(?:写入|生成|创建|导出|保存).{0,8}(?:文件|文档|报告|交付物)/.test(text);
+
+  if (hasExplicitArtifactPath) {
+    return true;
+  }
+  if (hasNegatedArtifactWrite) {
+    return false;
+  }
+
   return (
-    /\.(docx?|pptx?|xlsx?|pdf|md|txt|csv|json)\b/.test(text) ||
     /(write|create|generate|save|export|deliver).{0,40}(file|document|report|artifact)/.test(text) ||
     /(\u6587\u4ef6|\u6587\u6863|\u62a5\u544a|\u4ea4\u4ed8\u7269|\u751f\u6210doc|\u751f\u6210docx)/.test(text)
   );
@@ -956,6 +1493,7 @@ function emitAgentEvent(onEvent, agent, payload, task = null) {
 function normalizeDelegationPlan(parsed, delegateCount, options = {}) {
   const defaultToRequested = options.defaultToRequested !== false;
   const preferDelegation = options.preferDelegation === true;
+  const languagePack = createRunLanguagePack(options.outputLocale);
   const subtasks = Array.isArray(parsed?.subtasks) ? parsed.subtasks : [];
   const explicitCount = Number(parsed?.delegateCount);
   const desiredCount =
@@ -966,29 +1504,55 @@ function normalizeDelegationPlan(parsed, delegateCount, options = {}) {
         : defaultToRequested
           ? delegateCount
           : 0;
+  const seenIds = new Set();
   const normalizedSubtasks = subtasks
     .slice(0, desiredCount)
-    .map((subtask, index) => ({
-      id: safeString(subtask?.id) || `sub_${index + 1}`,
-      title: safeString(subtask?.title) || `Subtask ${index + 1}`,
-      instructions: safeString(subtask?.instructions) || `Handle part ${index + 1} of the assigned leader task.`,
-      expectedOutput: safeString(subtask?.expectedOutput) || "Concrete specialist output."
-    }));
+    .map((subtask, index) => {
+      const preferredId = safeString(subtask?.id).replace(/[^\w-]/g, "_") || `sub_${index + 1}`;
+      let subtaskId = preferredId;
+      while (seenIds.has(subtaskId)) {
+        subtaskId = `${preferredId}_${index + 1}`;
+      }
+      seenIds.add(subtaskId);
+      const fallbackTitle = languagePack.subtaskTitle(index);
+      return {
+        id: subtaskId,
+        title: resolveLocalizedTaskTitle(subtask?.title, fallbackTitle, "subtask"),
+        instructions: safeString(subtask?.instructions) || languagePack.subtaskInstructions(index),
+        dependsOn: safeArray(subtask?.dependsOn),
+        expectedOutput: safeString(subtask?.expectedOutput) || languagePack.subtaskExpectedOutput()
+      };
+    });
 
   while (defaultToRequested && normalizedSubtasks.length < desiredCount) {
     const index = normalizedSubtasks.length;
+    const subtaskId = `sub_${index + 1}`;
+    seenIds.add(subtaskId);
     normalizedSubtasks.push({
-      id: `sub_${index + 1}`,
-      title: `Subtask ${index + 1}`,
-      instructions: `Handle part ${index + 1} of the assigned leader task.`,
-      expectedOutput: "Concrete specialist output."
+      id: subtaskId,
+      title: languagePack.subtaskTitle(index),
+      instructions: languagePack.subtaskInstructions(index),
+      dependsOn: [],
+      expectedOutput: languagePack.subtaskExpectedOutput()
     });
   }
+
+  const subtaskIdSet = new Set(normalizedSubtasks.map((subtask) => subtask.id));
+  const implicitDependencies = inferImplicitDelegationDependencies(normalizedSubtasks);
+  const finalizedSubtasks = normalizedSubtasks.map((subtask) => ({
+    ...subtask,
+    dependsOn: uniqueArray([
+      ...safeArray(subtask.dependsOn).filter(
+        (dependencyId) => dependencyId !== subtask.id && subtaskIdSet.has(dependencyId)
+      ),
+      ...(implicitDependencies.get(subtask.id) || [])
+    ])
+  }));
 
   return {
     thinkingSummary: safeString(parsed?.thinkingSummary),
     delegationSummary: safeString(parsed?.delegationSummary),
-      subtasks: normalizedSubtasks
+      subtasks: finalizedSubtasks
   };
 }
 
@@ -1017,23 +1581,25 @@ function summarizeSubordinateExecution(execution) {
   };
 }
 
-function buildDefaultFallbackTasks(workers, originalTask) {
+function buildDefaultFallbackTasks(workers, originalTask, outputLocale = "en-US") {
+  const languagePack = createRunLanguagePack(outputLocale);
   return workers.map((worker, index) => {
     const phase = inferWorkerPhases(worker)[0] || "implementation";
     return {
       id: `task_${index + 1}`,
       phase,
-      title: `${worker.label} ${phase} task`,
+      title: languagePack.fallbackTaskTitle(worker, phase),
       assignedWorker: worker.id,
       delegateCount: 0,
-      instructions: `Handle the user objective "${originalTask}" in your strongest specialty area.`,
+      instructions: languagePack.fallbackTaskInstructions(originalTask),
       dependsOn: [],
-      expectedOutput: "Structured findings with concrete artifacts where useful."
+      expectedOutput: languagePack.fallbackTaskExpectedOutput()
     };
   });
 }
 
-function injectWorkflowTasks(tasks, workers, originalTask) {
+function injectWorkflowTasks(tasks, workers, originalTask, outputLocale = "en-US") {
+  const languagePack = createRunLanguagePack(outputLocale);
   const output = [...tasks];
   const implementationTasks = output.filter((task) => task.phase === "implementation");
   const validationWorkers = workers.filter((worker) => inferWorkerPhases(worker).includes("validation"));
@@ -1049,19 +1615,18 @@ function injectWorkflowTasks(tasks, workers, originalTask) {
     !codingManagerWorkers.length
   ) {
     const worker = pickBestWorkerForTask(validationWorkers, "validation", {
-      title: "Validate generated workspace outputs",
+      title: languagePack.validateGeneratedWorkspaceOutputsTitle(),
       instructions: originalTask
     });
     output.push({
       id: "validation_gate",
       phase: "validation",
-      title: "Validate generated outputs",
+      title: languagePack.validateGeneratedOutputsTitle(),
       assignedWorker: worker.id,
       delegateCount: 0,
-      instructions:
-        "Review only the files and artifacts explicitly produced by upstream implementation tasks unless dependency outputs require a broader workspace inspection. Ignore unrelated pre-existing workspace files, run the most relevant safe tests or build commands for the produced outputs, and report whether the workflow result is actually usable.",
+      instructions: languagePack.validationGateInstructions(),
       dependsOn: implementationTasks.map((task) => task.id),
-      expectedOutput: "Validation verdict with test/build results."
+      expectedOutput: languagePack.validationGateExpectedOutput()
     });
   }
 
@@ -1071,9 +1636,9 @@ function injectWorkflowTasks(tasks, workers, originalTask) {
     !output.some((task) => task.id === "coding_management_review")
   ) {
     const worker = pickBestWorkerForTask(codingManagerWorkers, "validation", {
-      title: "Final code management review",
+      title: languagePack.finalCodeManagementReviewTitle(),
       instructions: originalTask,
-      expectedOutput: "Final code review verdict with test/build results."
+      expectedOutput: languagePack.validationGateExpectedOutput()
     });
     const validationDependencies = output
       .filter((task) => task.phase === "validation" && task.id !== "coding_management_review")
@@ -1082,34 +1647,32 @@ function injectWorkflowTasks(tasks, workers, originalTask) {
     output.push({
       id: "coding_management_review",
       phase: "validation",
-      title: "Final code management review",
+      title: languagePack.finalCodeManagementReviewTitle(),
       assignedWorker: worker.id,
       delegateCount: 0,
-      instructions:
-        "Perform the final code-management review for all implementation outputs. Focus first on files and artifacts explicitly produced by upstream implementation tasks, ignore unrelated pre-existing workspace files unless a dependency output points to them, run the most relevant safe test, build, or lint commands for those outputs, and report whether the coding results are cohesive and ready for handoff.",
+      instructions: languagePack.finalCodeManagementReviewInstructions(),
       dependsOn: uniqueArray([
         ...implementationTasks.map((task) => task.id),
         ...validationDependencies
       ]),
-      expectedOutput: "Final code review verdict with verification evidence and remaining risks."
+      expectedOutput: languagePack.finalCodeManagementReviewExpectedOutput()
     });
   }
 
   if (!output.some((task) => task.phase === "handoff") && handoffWorkers.length) {
     const worker = pickBestWorkerForTask(handoffWorkers, "handoff", {
-      title: "Prepare handoff summary",
+      title: languagePack.prepareHandoffSummaryTitle(),
       instructions: originalTask
     });
     output.push({
       id: "handoff_summary",
       phase: "handoff",
-      title: "Prepare handoff summary",
+      title: languagePack.prepareHandoffSummaryTitle(),
       assignedWorker: worker.id,
       delegateCount: 0,
-      instructions:
-        "Prepare a concise user-facing handoff summary covering outcomes, remaining risks, and how to use the generated outputs.",
+      instructions: languagePack.prepareHandoffSummaryInstructions(),
       dependsOn: output.filter((task) => task.phase !== "handoff").map((task) => task.id),
-      expectedOutput: "Readable handoff notes."
+      expectedOutput: languagePack.prepareHandoffSummaryExpectedOutput()
     });
   }
 
@@ -1124,10 +1687,12 @@ function normalizePlan(
   groupLeaderMaxDelegates,
   delegateMaxDepth,
   capabilityRoutingPolicy = null,
-  multiAgentConfig = null
+  multiAgentConfig = null,
+  outputLocale = "en-US"
 ) {
+  const languagePack = createRunLanguagePack(outputLocale);
   const workerIds = new Set(workers.map((worker) => worker.id));
-  const fallbackTasks = buildDefaultFallbackTasks(workers, originalTask);
+  const fallbackTasks = buildDefaultFallbackTasks(workers, originalTask, outputLocale);
 
   const taskCandidates = Array.isArray(rawPlan?.tasks) && rawPlan.tasks.length ? rawPlan.tasks : fallbackTasks;
   const seenIds = new Set();
@@ -1166,7 +1731,7 @@ function normalizePlan(
     return {
       id: taskId,
       phase,
-      title: String(task?.title || `Subtask ${index + 1}`),
+      title: resolveLocalizedTaskTitle(task?.title, languagePack.taskTitle(index), "task"),
       assignedWorker: reroutedWorker.id,
       delegateCount: resolveTaskDelegateCount(
         task,
@@ -1176,14 +1741,14 @@ function normalizePlan(
       ),
       instructions: String(
         task?.instructions ||
-          `Analyze the objective "${originalTask}" from your specialty and return concrete recommendations.`
+          languagePack.analyzeObjective(originalTask)
       ),
       dependsOn: safeArray(task?.dependsOn),
-      expectedOutput: String(task?.expectedOutput || "Structured specialist analysis.")
+      expectedOutput: String(task?.expectedOutput || languagePack.structuredSpecialistAnalysis())
     };
   });
 
-  const tasksWithWorkflow = injectWorkflowTasks(preliminaryTasks, workers, originalTask);
+  const tasksWithWorkflow = injectWorkflowTasks(preliminaryTasks, workers, originalTask, outputLocale);
   const taskById = new Map(tasksWithWorkflow.map((task) => [task.id, task]));
   const tasks = tasksWithWorkflow
     .map((task) => ({
@@ -1281,9 +1846,7 @@ function applyTaskOutputGuards(task, output, extras = {}) {
   const actualGeneratedFiles = uniqueArray(
     Array.isArray(extras.actualGeneratedFiles)
       ? extras.actualGeneratedFiles
-      : guarded.verifiedGeneratedFiles.length
-        ? guarded.verifiedGeneratedFiles
-        : guarded.generatedFiles
+      : guarded.verifiedGeneratedFiles
   );
 
   if (taskRequiresConcreteArtifact(task) && !actualGeneratedFiles.length) {
@@ -1312,10 +1875,13 @@ function normalizeWorkerResult(parsed, rawText, extras = {}) {
       ? parsed.confidence
       : "medium",
     followUps: safeArray(parsed?.followUps),
-    generatedFiles: uniqueArray([...(parsed?.generatedFiles || []), ...(extras.generatedFiles || [])]),
+    generatedFiles: uniqueArray([
+      ...normalizeArtifactArray(parsed?.generatedFiles),
+      ...normalizeArtifactArray(extras.generatedFiles)
+    ]),
     verifiedGeneratedFiles: uniqueArray([
-      ...(parsed?.verifiedGeneratedFiles || []),
-      ...(extras.verifiedGeneratedFiles || [])
+      ...normalizeArtifactArray(parsed?.verifiedGeneratedFiles),
+      ...normalizeArtifactArray(extras.verifiedGeneratedFiles)
     ]),
     workspaceActions: uniqueArray([...(parsed?.workspaceActions || []), ...(extras.workspaceActions || [])]),
     executedCommands: uniqueArray([...(parsed?.executedCommands || []), ...(extras.executedCommands || [])]),
@@ -1324,6 +1890,7 @@ function normalizeWorkerResult(parsed, rawText, extras = {}) {
     memoryWrites: Math.max(0, Number(parsed?.memoryWrites ?? extras.memoryWrites ?? 0) || 0),
     verificationStatus: normalizeVerificationStatus(parsed?.verificationStatus || extras.verificationStatus),
     delegationNotes: uniqueArray([...(parsed?.delegationNotes || []), ...(extras.delegationNotes || [])]),
+    unstructuredOutput: Boolean(parsed?.unstructuredOutput || extras.unstructuredOutput),
     subordinateCount: Number(extras.subordinateCount || 0),
     subordinateResults: Array.isArray(extras.subordinateResults) ? extras.subordinateResults : []
   };
@@ -1341,6 +1908,7 @@ function normalizeSynthesis(parsed, rawText) {
 
 function createStructuredFallback(label, rawText, error) {
   return {
+    unstructuredOutput: true,
     thinkingSummary: "",
     summary: `${label} returned unstructured output.`,
     keyFindings: [rawText.slice(0, 2000)],
@@ -1349,6 +1917,18 @@ function createStructuredFallback(label, rawText, error) {
     confidence: "low",
     followUps: ["Tighten the prompt or use a model with more reliable JSON output."]
   };
+}
+
+function parseStructuredJsonOrFallback(label, rawText) {
+  try {
+    const parsed = parseJsonFromText(rawText);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new Error("Model output did not parse into a JSON object.");
+    }
+    return parsed;
+  } catch (error) {
+    return createStructuredFallback(label, rawText, error);
+  }
 }
 
 async function invokeProviderWithSessionLegacy({
@@ -1456,8 +2036,11 @@ async function executeSingleTask({
   sessionRuntime,
   parentSpanId = "",
   onEvent,
-  signal
+  signal,
+  outputLocale = "en-US"
 }) {
+  const runLocale = normalizeRunLocale(outputLocale);
+  const languagePack = createRunLanguagePack(runLocale);
   const allWorkers = workerListFromConfig(config);
   const capabilityRoutingPolicy = normalizeCapabilityRoutingPolicy(
     config?.cluster?.capabilityRoutingPolicy
@@ -1565,7 +2148,8 @@ async function executeSingleTask({
       clusterPlan: plan,
       worker: agent,
       task: agentTask,
-      dependencyOutputs
+      dependencyOutputs,
+      outputLocale: runLocale
     });
 
     if (emitLifecycle) {
@@ -1666,11 +2250,7 @@ async function executeSingleTask({
         });
 
         rawText = response.text;
-        try {
-          parsed = parseJsonFromText(response.text);
-        } catch (error) {
-          parsed = createStructuredFallback(agent.displayLabel || agent.label, response.text, error);
-        }
+        parsed = parseStructuredJsonOrFallback(agent.displayLabel || agent.label, response.text);
       });
 
       const endedAt = Date.now();
@@ -1787,9 +2367,10 @@ async function executeSingleTask({
         tone: "neutral",
         content: agentTask.instructions || agentTask.title || "",
         detail:
-          Number(runAgentBudget?.requestedTotalAgents) > 0
-            ? `Planning up to ${delegateCount} child agent(s) for this task within the run-wide total target of ${runAgentBudget.requestedTotalAgents} agent(s).`
-            : `Planning up to ${delegateCount} child agent(s) for this task.`
+          languagePack.planningChildAgents(
+            delegateCount,
+            Number(runAgentBudget?.requestedTotalAgents) || 0
+          )
       },
       agentTask
     );
@@ -1802,7 +2383,8 @@ async function executeSingleTask({
       dependencyOutputs,
       delegateCount,
       depthRemaining,
-      runAgentBudget
+      runAgentBudget,
+      outputLocale: runLocale
     });
 
     try {
@@ -1847,12 +2429,17 @@ async function executeSingleTask({
 
       const normalized = normalizeDelegationPlan(parsed, delegateCount, {
         defaultToRequested,
-        preferDelegation
+        preferDelegation,
+        outputLocale: runLocale
       });
       if (delegationSpanId) {
         sessionRuntime.endSpan(delegationSpanId, {
           status: "ok",
-          detail: `Planned ${normalized.subtasks.length} delegated child task(s).`
+          detail: localizeRunText(
+            runLocale,
+            `Planned ${normalized.subtasks.length} delegated child task(s).`,
+            `已规划 ${normalized.subtasks.length} 个子任务。`
+          )
         });
       }
       return normalized;
@@ -1865,6 +2452,169 @@ async function executeSingleTask({
       }
       throw error;
     }
+  }
+
+  async function maybeAutoMaterializeLeaderArtifact({
+    agent,
+    agentTask,
+    output,
+    dependencyOutputs,
+    subordinateExecutions,
+    parentSpanId = ""
+  }) {
+    const workspaceRoot = config.workspace?.resolvedDir;
+    if (!workspaceRoot || !taskRequiresConcreteArtifact(agentTask)) {
+      return output;
+    }
+    if (output?.unstructuredOutput) {
+      return output;
+    }
+
+    const artifactPath = inferRequestedArtifact(
+      agentTask,
+      output,
+      workspaceRoot,
+      originalTask
+    );
+    const reportedArtifacts = normalizeWorkspaceArtifactReferences([
+      ...(output?.verifiedGeneratedFiles || []),
+      ...(output?.generatedFiles || [])
+    ]);
+    const reportedVerification = reportedArtifacts.length
+      ? await verifyWorkspaceArtifacts(workspaceRoot, reportedArtifacts, {
+        maxFiles: Math.min(12, reportedArtifacts.length)
+      })
+      : [];
+    const verifiedReportedArtifacts = reportedVerification
+      .filter((entry) => entry.verified)
+      .map((entry) => entry.path);
+    const filteredOutput = {
+      ...output,
+      generatedFiles: uniqueArray(verifiedReportedArtifacts),
+      verifiedGeneratedFiles: uniqueArray(verifiedReportedArtifacts)
+    };
+    const hasVerifiedRequestedArtifact = verifiedReportedArtifacts.includes(artifactPath);
+    const failedReportedArtifacts = reportedVerification.filter(
+      (entry) => !entry.verified && entry.path !== artifactPath
+    );
+    filteredOutput.risks = uniqueArray([
+      ...(filteredOutput?.risks || []),
+      ...failedReportedArtifacts.map(
+        (entry) => `Reported artifact "${entry.path}" was not actually present in the workspace: ${entry.error}`
+      )
+    ]);
+
+    if (hasVerifiedRequestedArtifact) {
+      return filteredOutput;
+    }
+    if (!/\.docx$/i.test(String(artifactPath || ""))) {
+      return filteredOutput;
+    }
+
+    const content = buildDocxFallbackContent({
+      task: agentTask,
+      parsed: filteredOutput,
+      dependencyOutputs: [
+        ...dependencyOutputs,
+        ...subordinateExecutions.map(summarizeExecutionForDependency)
+      ],
+      originalTask
+    });
+    if (!safeString(content) || safeString(content).length < 24) {
+      return filteredOutput;
+    }
+
+    const writtenFiles = await writeWorkspaceFiles(workspaceRoot, [
+      {
+        path: artifactPath,
+        title: getArtifactTitleFromPath(artifactPath),
+        content,
+        encoding: "utf8"
+      }
+    ]);
+    const verification = await verifyWorkspaceArtifacts(workspaceRoot, [artifactPath], {
+      maxFiles: 1
+    });
+    const verifiedGeneratedFiles = verification
+      .filter((entry) => entry.verified)
+      .map((entry) => entry.path);
+    const failedVerification = verification.filter((entry) => !entry.verified);
+
+    emitAgentEvent(
+      onEvent,
+      agent,
+      {
+        type: "status",
+        stage: "workspace_write",
+        tone: verifiedGeneratedFiles.length ? "ok" : "warning",
+        detail: verifiedGeneratedFiles.length
+          ? localizeRunText(
+              runLocale,
+              `Auto-materialized requested artifact: ${artifactPath}`,
+              `已自动生成目标产物：${artifactPath}`
+            )
+          : localizeRunText(
+              runLocale,
+              `Auto-materialized requested artifact but verification failed: ${artifactPath}`,
+              `已自动生成目标产物但校验失败：${artifactPath}`
+            )
+      },
+      agentTask
+    );
+    sessionRuntime?.remember(
+      {
+        title: localizeRunText(
+          runLocale,
+          `${agent.displayLabel || agent.label} artifact materialization`,
+          `${agent.displayLabel || agent.label} 产物生成`
+        ),
+        content: verifiedGeneratedFiles.length
+          ? localizeRunText(
+              runLocale,
+              `Auto-materialized ${artifactPath}`,
+              `已自动生成 ${artifactPath}`
+            )
+          : localizeRunText(
+              runLocale,
+              `Attempted to auto-materialize ${artifactPath}, but verification failed.`,
+              `已尝试自动生成 ${artifactPath}，但校验失败。`
+            ),
+        tags: uniqueArray([agentTask.phase, agent.id, "artifact_materialization"])
+      },
+      {
+        ...buildAgentEventBase(agent, agentTask),
+        parentSpanId
+      }
+    );
+
+    return {
+      ...filteredOutput,
+      keyFindings: uniqueArray([
+        ...(filteredOutput?.keyFindings || []),
+        verifiedGeneratedFiles.length
+          ? "The requested workspace artifact was auto-materialized from the leader synthesis output."
+          : ""
+      ]),
+      risks: uniqueArray([
+        ...(filteredOutput?.risks || []),
+        ...failedVerification.map(
+          (entry) => `Auto-materialized artifact "${entry.path}" could not be verified: ${entry.error}`
+        )
+      ]),
+      generatedFiles: uniqueArray([
+        ...(filteredOutput?.generatedFiles || []),
+        ...writtenFiles.map((entry) => entry.path)
+      ]),
+      verifiedGeneratedFiles: uniqueArray([
+        ...(filteredOutput?.verifiedGeneratedFiles || []),
+        ...verifiedGeneratedFiles
+      ]),
+      workspaceActions: uniqueArray([...(filteredOutput?.workspaceActions || []), "write_docx"]),
+      toolUsage: uniqueArray([...(filteredOutput?.toolUsage || []), "write_docx"]),
+      verificationStatus: verifiedGeneratedFiles.length
+        ? "passed"
+        : filteredOutput?.verificationStatus || "not_applicable"
+    };
   }
 
   async function synthesizeLeaderResult({
@@ -1892,8 +2642,8 @@ async function executeSingleTask({
         tone: "neutral",
         content:
           delegationPlan.delegationSummary ||
-          `Merge ${subordinateExecutions.length} child result(s) into one consolidated answer.`,
-        detail: `Synthesizing ${subordinateExecutions.length} child result(s).`
+          languagePack.leaderSynthesisContent(subordinateExecutions.length),
+        detail: languagePack.leaderSynthesisDetail(subordinateExecutions.length)
       },
       agentTask
     );
@@ -1904,7 +2654,8 @@ async function executeSingleTask({
       leader: agent,
       task: agentTask,
       dependencyOutputs,
-      subordinateResults: subordinateExecutions.map(summarizeExecutionForDependency)
+      subordinateResults: subordinateExecutions.map(summarizeExecutionForDependency),
+      outputLocale: runLocale
     });
 
     const response = await runWithExecutionGate(() =>
@@ -1940,11 +2691,7 @@ async function executeSingleTask({
     );
 
     let parsed;
-    try {
-      parsed = parseJsonFromText(response.text);
-    } catch (error) {
-      parsed = createStructuredFallback(agent.displayLabel || agent.label, response.text, error);
-    }
+    parsed = parseStructuredJsonOrFallback(agent.displayLabel || agent.label, response.text);
 
     const endedAt = Date.now();
     const mergedGeneratedFiles = subordinateExecutions.flatMap(
@@ -1972,34 +2719,48 @@ async function executeSingleTask({
             subordinateExecutions.every((execution) => execution.output?.verificationStatus === "passed")
           ? "passed"
           : "not_applicable";
+    let normalizedLeaderOutput = normalizeWorkerResult(parsed, response.text, {
+      delegationNotes: [
+        delegationPlan.delegationSummary,
+        ...subordinateExecutions
+          .filter((execution) => execution.status === "failed")
+          .map((execution) => `${execution.agentLabel || execution.workerLabel} failed`)
+      ],
+      generatedFiles: mergedGeneratedFiles,
+      verifiedGeneratedFiles: mergedVerifiedGeneratedFiles,
+      workspaceActions: mergedWorkspaceActions,
+      executedCommands: mergedCommands,
+      toolUsage: subordinateExecutions.flatMap((execution) => execution.output?.toolUsage || []),
+      memoryReads: subordinateExecutions.reduce(
+        (sum, execution) => sum + Number(execution.output?.memoryReads || 0),
+        0
+      ),
+      memoryWrites: subordinateExecutions.reduce(
+        (sum, execution) => sum + Number(execution.output?.memoryWrites || 0),
+        0
+      ),
+      subordinateCount: totalDescendantCount,
+      subordinateResults: subordinateExecutions.map(summarizeSubordinateExecution),
+      verificationStatus: normalizeVerificationStatus(parsed?.verificationStatus || derivedVerification)
+    });
+    normalizedLeaderOutput = await maybeAutoMaterializeLeaderArtifact({
+      agent,
+      agentTask,
+      output: normalizedLeaderOutput,
+      dependencyOutputs,
+      subordinateExecutions,
+      parentSpanId: synthesisSpanId || parentSpanId
+    });
+    const realizedArtifacts = uniqueArray(
+      normalizedLeaderOutput.verifiedGeneratedFiles.length
+        ? normalizedLeaderOutput.verifiedGeneratedFiles
+        : normalizedLeaderOutput.generatedFiles
+    );
     const output = applyTaskOutputGuards(
       agentTask,
-      normalizeWorkerResult(parsed, response.text, {
-        delegationNotes: [
-          delegationPlan.delegationSummary,
-          ...subordinateExecutions
-            .filter((execution) => execution.status === "failed")
-            .map((execution) => `${execution.agentLabel || execution.workerLabel} failed`)
-        ],
-        generatedFiles: mergedGeneratedFiles,
-        verifiedGeneratedFiles: mergedVerifiedGeneratedFiles,
-        workspaceActions: mergedWorkspaceActions,
-        executedCommands: mergedCommands,
-        toolUsage: subordinateExecutions.flatMap((execution) => execution.output?.toolUsage || []),
-        memoryReads: subordinateExecutions.reduce(
-          (sum, execution) => sum + Number(execution.output?.memoryReads || 0),
-          0
-        ),
-        memoryWrites: subordinateExecutions.reduce(
-          (sum, execution) => sum + Number(execution.output?.memoryWrites || 0),
-          0
-        ),
-        subordinateCount: totalDescendantCount,
-        subordinateResults: subordinateExecutions.map(summarizeSubordinateExecution),
-        verificationStatus: normalizeVerificationStatus(parsed?.verificationStatus || derivedVerification)
-      }),
+      normalizedLeaderOutput,
       {
-        actualGeneratedFiles: mergedVerifiedGeneratedFiles
+        actualGeneratedFiles: realizedArtifacts
       }
     );
 
@@ -2214,7 +2975,7 @@ async function executeSingleTask({
             detail:
               directResult.output.summary ||
               directResult.output.thinkingSummary ||
-              "Task completed without delegation."
+              languagePack.taskCompletedWithoutDelegation()
           });
         }
         return directResult;
@@ -2258,7 +3019,7 @@ async function executeSingleTask({
             detail:
               directResult.output.summary ||
               directResult.output.thinkingSummary ||
-              "Task completed after the run-wide child-agent budget was exhausted."
+              languagePack.taskCompletedAfterBudgetExhausted()
           });
         }
         return directResult;
@@ -2270,6 +3031,9 @@ async function executeSingleTask({
         config,
         delegatedSubtasks.length
       );
+      const hasDelegatedDependencies = delegatedSubtasks.some(
+        (subtask) => Array.isArray(subtask?.dependsOn) && subtask.dependsOn.length
+      );
       emitAgentEvent(
         onEvent,
         agent,
@@ -2279,61 +3043,132 @@ async function executeSingleTask({
           tone: "ok",
           detail:
             grantedChildCount < delegationPlan.subtasks.length
-              ? `Delegated ${delegatedSubtasks.length} child task(s) after applying the run-wide child-agent budget; local child launch cap is ${subordinateConcurrency} and the global execution cap is ${globalConcurrencyLabel}.`
+              ? languagePack.delegationDoneBudgeted(
+                  delegatedSubtasks.length,
+                  subordinateConcurrency,
+                  hasDelegatedDependencies,
+                  globalConcurrencyLabel
+                )
               : subordinateConcurrency === 1
-                ? `Delegated ${delegatedSubtasks.length} child task(s); local child launch continues sequentially and the global execution cap is ${globalConcurrencyLabel}.`
-                : `Delegated ${delegatedSubtasks.length} child task(s); local child launch cap is ${subordinateConcurrency} and the global execution cap is ${globalConcurrencyLabel}.`,
+                ? languagePack.delegationDoneSequential(
+                    delegatedSubtasks.length,
+                    globalConcurrencyLabel
+                  )
+                : languagePack.delegationDone(
+                    delegatedSubtasks.length,
+                    subordinateConcurrency,
+                    hasDelegatedDependencies,
+                    globalConcurrencyLabel
+                  ),
           thinkingSummary: delegationPlan.thinkingSummary || ""
         },
         agentTask
       );
 
       const childPreferredDelegateCount = depthRemaining > 1 ? branchFactor : 0;
-      const subordinateExecutions = await mapWithConcurrency(
-        delegatedSubtasks,
-        subordinateConcurrency,
-        async (subtask, index) => {
-          const subordinateTask = {
-            id: `${agentTask.id}__${subtask.id}`,
-            phase: agentTask.phase,
-            title: subtask.title,
-            assignedWorker: agentTask.assignedWorker,
-            delegateCount: childPreferredDelegateCount,
-            instructions: subtask.instructions,
-            dependsOn: [],
-            expectedOutput: subtask.expectedOutput
-          };
-          subordinateTask.requirements = deriveTaskRequirements(subordinateTask, {
-            parentRequirements: agentTask.requirements,
-            inheritConcreteArtifactRequirement: false
-          });
-          const subordinateAgent = createSubordinateRuntimeAgent(agent, subordinateTask, index);
+      const delegatedEntries = delegatedSubtasks.map((subtask, index) => {
+        const subordinateTask = {
+          id: `${agentTask.id}__${subtask.id}`,
+          phase: agentTask.phase,
+          title: subtask.title,
+          assignedWorker: agentTask.assignedWorker,
+          delegateCount: childPreferredDelegateCount,
+          instructions: subtask.instructions,
+          dependsOn: safeArray(subtask.dependsOn),
+          expectedOutput: subtask.expectedOutput
+        };
+        subordinateTask.requirements = deriveTaskRequirements(subordinateTask, {
+          parentRequirements: agentTask.requirements,
+          inheritConcreteArtifactRequirement: false
+        });
+        return {
+          index,
+          subtask,
+          subordinateTask,
+          subordinateAgent: createSubordinateRuntimeAgent(agent, subordinateTask, index)
+        };
+      });
+      const completedSubordinateExecutions = new Map();
+      const runningSubordinateExecutions = new Map();
+
+      while (completedSubordinateExecutions.size < delegatedEntries.length) {
+        for (const entry of delegatedEntries) {
+          if (
+            runningSubordinateExecutions.size >= subordinateConcurrency ||
+            completedSubordinateExecutions.has(entry.subtask.id) ||
+            runningSubordinateExecutions.has(entry.subtask.id)
+          ) {
+            continue;
+          }
+
+          const ready = entry.subordinateTask.dependsOn.every((dependencyId) =>
+            completedSubordinateExecutions.has(dependencyId)
+          );
+          if (!ready) {
+            continue;
+          }
+
           emitAgentEvent(
             onEvent,
-            subordinateAgent,
+            entry.subordinateAgent,
             {
               type: "status",
               stage: "subagent_created",
               tone: "neutral",
-              content: subtask.instructions || subtask.title || "",
-              detail: `Created child agent for: ${subtask.title}`,
+              content: entry.subtask.instructions || entry.subtask.title || "",
+              detail: localizeRunText(
+                runLocale,
+                `Created child agent for: ${entry.subtask.title}`,
+                `已为该任务创建子 Agent：${entry.subtask.title}`
+              ),
               thinkingSummary: delegationPlan.thinkingSummary || "",
-              targetAgentLabel: subordinateAgent.displayLabel || subordinateAgent.label || ""
+              targetAgentLabel: entry.subordinateAgent.displayLabel || entry.subordinateAgent.label || ""
             },
-            subordinateTask
+            entry.subordinateTask
           );
 
-          return executeAgentHierarchy({
-            agent: subordinateAgent,
+          const childDependencyOutputs = [
+            ...dependencyOutputs,
+            ...entry.subordinateTask.dependsOn
+              .map((dependencyId) => completedSubordinateExecutions.get(dependencyId))
+              .filter(Boolean)
+              .map(summarizeExecutionForDependency)
+          ];
+          const executionPromise = executeAgentHierarchy({
+            agent: entry.subordinateAgent,
             provider,
-            agentTask: subordinateTask,
-            dependencyOutputs,
+            agentTask: entry.subordinateTask,
+            dependencyOutputs: childDependencyOutputs,
             preferredDelegateCount: childPreferredDelegateCount,
             depthRemaining: Math.max(0, depthRemaining - 1),
             defaultToRequested: false,
             parentSpanId: taskSpanId || inheritedParentSpanId || parentSpanId
-          });
+          }).then((execution) => ({
+            subtaskId: entry.subtask.id,
+            execution
+          }));
+          runningSubordinateExecutions.set(entry.subtask.id, executionPromise);
         }
+
+        if (!runningSubordinateExecutions.size) {
+          const blocked = delegatedEntries
+            .filter((entry) => !completedSubordinateExecutions.has(entry.subtask.id))
+            .map((entry) => ({
+              subtaskId: entry.subtask.id,
+              dependsOn: entry.subordinateTask.dependsOn
+            }));
+          throw new Error(
+            `Delegated child tasks contain unresolved dependencies: ${JSON.stringify(blocked)}`
+          );
+        }
+
+        const settled = await Promise.race(runningSubordinateExecutions.values());
+        runningSubordinateExecutions.delete(settled.subtaskId);
+        completedSubordinateExecutions.set(settled.subtaskId, settled.execution);
+      }
+
+      const subordinateExecutions = delegatedEntries.map((entry) =>
+        completedSubordinateExecutions.get(entry.subtask.id)
       );
 
       const result = await synthesizeLeaderResult({
@@ -2474,7 +3309,11 @@ async function executeSingleTask({
         type: "status",
         stage: "worker_fallback",
         tone: "warning",
-        detail: `Retryable provider failure on ${currentWorker.label}; rerouting this task to ${nextWorker.label}.`,
+        detail: localizeRunText(
+          runLocale,
+          `Retryable provider failure on ${currentWorker.label}; rerouting this task to ${nextWorker.label}.`,
+          `${currentWorker.label} 发生可重试的 provider 故障；本任务已切换给 ${nextWorker.label}。`
+        ),
         previousWorkerId: currentWorker.id,
         previousWorkerLabel: currentWorker.label,
         fallbackWorkerId: nextWorker.id,
@@ -2499,7 +3338,8 @@ async function executePlan(
   sessionRuntime,
   parentSpanId,
   onEvent,
-  signal
+  signal,
+  outputLocale = "en-US"
 ) {
   const pending = new Map(plan.tasks.map((task) => [task.id, task]));
   const running = new Map();
@@ -2521,7 +3361,11 @@ async function executePlan(
       stage: "phase_start",
       tone: "neutral",
       phase,
-      detail: `Entering ${phase} phase.`
+      detail: localizeRunText(
+        outputLocale,
+        `Entering ${phase} phase.`,
+        `进入${phase}阶段。`
+      )
     });
 
     while (phaseTasks.some((task) => !completedResults.has(task.id))) {
@@ -2557,7 +3401,8 @@ async function executePlan(
           sessionRuntime,
           parentSpanId,
           onEvent,
-          signal
+          signal,
+          outputLocale
         }).then((result) => ({ taskId: task.id, result }));
         running.set(task.id, promise);
       }
@@ -2595,7 +3440,11 @@ async function executePlan(
       stage: "phase_done",
       tone: "ok",
       phase,
-      detail: `Completed ${phase} phase with ${phaseResults.length} task(s).`
+      detail: localizeRunText(
+        outputLocale,
+        `Completed ${phase} phase with ${phaseResults.length} task(s).`,
+        `已完成${phase}阶段，共处理 ${phaseResults.length} 个任务。`
+      )
     });
 
     if (
@@ -2606,7 +3455,11 @@ async function executePlan(
         type: "status",
         stage: "validation_gate_failed",
         tone: "warning",
-        detail: "Validation phase reported failures. Final synthesis will highlight verification risks."
+        detail: localizeRunText(
+          outputLocale,
+          "Validation phase reported failures. Final synthesis will highlight verification risks.",
+          "验证阶段报告了失败项，最终综合会明确标出这些校验风险。"
+        )
       });
     }
   }
@@ -2614,7 +3467,14 @@ async function executePlan(
   return plan.tasks.map((task) => completedResults.get(task.id));
 }
 
-export async function runClusterAnalysis({ task, config, providerRegistry, onEvent, signal }) {
+export async function runClusterAnalysis({
+  task,
+  config,
+  providerRegistry,
+  onEvent,
+  signal,
+  outputLocale = "en-US"
+}) {
   const originalTask = String(task || "").trim();
   if (!originalTask) {
     throw new Error("Task input cannot be empty.");
@@ -2634,6 +3494,8 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
     throw new Error(`No provider found for controller "${controllerId}".`);
   }
   const controllerModels = modelListFromConfig(config);
+  const runLocale = normalizeRunLocale(outputLocale);
+  const languagePack = createRunLanguagePack(runLocale);
   let activeController = createControllerRuntimeAgent(controllerModel);
   let activeControllerProvider = controllerProvider;
   const multiAgentRuntime = createMultiAgentRuntime(config.multiAgent);
@@ -2679,14 +3541,9 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
     const agent = resolveRuntimeAgentFromEvent(payload);
     const parentAgent = resolveParentRuntimeAgent(payload);
     const taskTitle = safeString(payload.taskTitle || payload.taskId);
-    const detail = safeString(payload.detail);
-    const content =
-      safeString(payload.content) ||
-      safeString(payload.summary) ||
-      safeString(payload.thinkingSummary) ||
-      detail;
     const phase = safeString(payload.phase);
     const tone = safeString(payload.tone || "neutral") || "neutral";
+    const content = buildConversationStyleContent(stage, payload, taskTitle, runLocale);
 
     switch (stage) {
       case "planning_start":
@@ -2695,7 +3552,13 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
           stage,
           tone,
           speaker: agent,
-          content: content || `${agent.displayLabel} started planning the collaboration.`
+          content:
+            content ||
+            localizeRunText(
+              runLocale,
+              `${agent.displayLabel} started planning the collaboration.`,
+              `${agent.displayLabel} 已开始规划协作流程。`
+            )
         };
       case "planning_done":
         return {
@@ -2703,7 +3566,13 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
           stage,
           tone: "ok",
           speaker: agent,
-          content: content || `${agent.displayLabel} created ${payload.taskCount ?? 0} top-level task(s).`
+          content:
+            content ||
+            localizeRunText(
+              runLocale,
+              `${agent.displayLabel} created ${payload.taskCount ?? 0} top-level task(s).`,
+              `${agent.displayLabel} 已创建 ${payload.taskCount ?? 0} 个顶层任务。`
+            )
         };
       case "phase_start":
       case "phase_done":
@@ -2718,6 +3587,7 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
       case "worker_start":
       case "subagent_start":
       case "leader_delegate_start":
+      case "leader_delegate_done":
       case "leader_synthesis_start":
       case "workspace_list":
       case "workspace_read":
@@ -2736,7 +3606,17 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
           speaker: agent,
           content:
             content ||
-            (taskTitle ? `${agent.displayLabel} is handling ${taskTitle}.` : `${agent.displayLabel} sent an update.`)
+            (taskTitle
+              ? localizeRunText(
+                  runLocale,
+                  `${agent.displayLabel} is handling ${taskTitle}.`,
+                  `${agent.displayLabel} 正在处理 ${taskTitle}。`
+                )
+              : localizeRunText(
+                  runLocale,
+                  `${agent.displayLabel} sent an update.`,
+                  `${agent.displayLabel} 发送了一条进展更新。`
+                ))
         };
       case "subagent_created":
         return {
@@ -2746,7 +3626,13 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
           phase,
           speaker: parentAgent || agent,
           target: agent,
-          content: content || `Created ${agent.displayLabel}${taskTitle ? ` for ${taskTitle}` : ""}.`
+          content:
+            content ||
+            localizeRunText(
+              runLocale,
+              `Created ${agent.displayLabel}${taskTitle ? ` for ${taskTitle}` : ""}.`,
+              `已创建 ${agent.displayLabel}${taskTitle ? `，负责 ${taskTitle}` : ""}。`
+            )
         };
       case "worker_done":
       case "subagent_done":
@@ -2763,7 +3649,17 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
           target: parentAgent || null,
           content:
             content ||
-            (taskTitle ? `${agent.displayLabel} completed ${taskTitle}.` : `${agent.displayLabel} completed an update.`)
+            (taskTitle
+              ? localizeRunText(
+                  runLocale,
+                  `${agent.displayLabel} completed ${taskTitle}.`,
+                  `${agent.displayLabel} 已完成 ${taskTitle}。`
+                )
+              : localizeRunText(
+                  runLocale,
+                  `${agent.displayLabel} completed an update.`,
+                  `${agent.displayLabel} 已完成一条更新。`
+                ))
         };
       case "planning_retry":
       case "worker_retry":
@@ -2787,7 +3683,11 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
           content:
             content ||
             safeString(payload.finalAnswer) ||
-            `${agent.displayLabel} reported ${stage.replaceAll("_", " ")}.`
+            localizeRunText(
+              runLocale,
+              `${agent.displayLabel} reported ${stage.replaceAll("_", " ")}.`,
+              `${agent.displayLabel} 已报告 ${stage.replaceAll("_", " ")}。`
+            )
         };
       default:
         return null;
@@ -2823,6 +3723,7 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
   }
 
   const sessionRuntime = createSessionRuntime({
+    locale: runLocale,
     emitEvent(payload) {
       forwardClusterEvent(payload);
     }
@@ -2841,7 +3742,7 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
     multiAgentRuntime.start({
       task: originalTask,
       controller: activeController,
-      detail: `Collaboration started in ${multiAgentRuntime.settings.mode} mode.`
+      detail: languagePack.collaborationStarted(multiAgentRuntime.settings.mode)
     });
 
     async function invokeControllerStageWithFallback({
@@ -2945,7 +3846,11 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
             type: "status",
             stage: "controller_fallback",
             tone: "warning",
-            detail: `Retryable provider failure on ${stageController.label}; rerouting ${purpose} to ${nextController.label}.`,
+            detail: localizeRunText(
+              runLocale,
+              `Retryable provider failure on ${stageController.label}; rerouting ${purpose} to ${nextController.label}.`,
+              `${stageController.label} 发生可重试的 provider 故障；${purpose} 已切换到 ${nextController.label}。`
+            ),
             previousControllerId: stageController.id,
             previousControllerLabel: stageController.label,
             fallbackControllerId: nextController.id,
@@ -2980,7 +3885,8 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
       delegateMaxDepth: resolveEffectiveDelegateMaxDepth(config, prePlanningBudget),
       delegateBranchFactor: resolveEffectiveGroupLeaderMaxDelegates(config, prePlanningBudget),
       complexityBudget: prePlanningBudget,
-      capabilityRoutingPolicySummary: summarizeCapabilityRoutingPolicy(capabilityRoutingPolicy)
+      capabilityRoutingPolicySummary: summarizeCapabilityRoutingPolicy(capabilityRoutingPolicy),
+      outputLocale: runLocale
     });
     const planningStage = await invokeControllerStageWithFallback({
       purpose: "planning",
@@ -3023,12 +3929,13 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
       groupLeaderMaxDelegates,
       delegateMaxDepth,
       capabilityRoutingPolicy,
-      config.multiAgent
+      config.multiAgent,
+      runLocale
     );
     const runAgentBudget = createRunAgentBudget(complexityBudget, plan.tasks.length);
     sessionRuntime.remember(
       {
-        title: "Cluster planning",
+        title: localizeRunText(runLocale, "Cluster planning", "集群规划"),
         content: plan.strategy,
         tags: ["planning", activeController.id]
       },
@@ -3066,13 +3973,15 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
       sessionRuntime,
       operationSpanId,
       forwardClusterEvent,
-      signal
+      signal,
+      runLocale
     );
 
     const synthesisPrompt = buildSynthesisRequest({
       task: originalTask,
       plan,
-      executions
+      executions,
+      outputLocale: runLocale
     });
     const synthesisStage = await invokeControllerStageWithFallback({
       purpose: "synthesis",
@@ -3094,7 +4003,7 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
     const normalizedSynthesis = normalizeSynthesis(synthesisParsed, synthesisResponse.text);
     sessionRuntime.remember(
       {
-        title: "Cluster synthesis",
+        title: localizeRunText(runLocale, "Cluster synthesis", "集群综合"),
         content: normalizedSynthesis.finalAnswer,
         tags: ["synthesis", activeController.id]
       },
@@ -3107,11 +4016,17 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
     const totalMs = Date.now() - startedAt;
     sessionRuntime.endSpan(operationSpanId, {
       status: "ok",
-      detail: normalizedSynthesis.finalAnswer || "Cluster run completed."
+      detail:
+        normalizedSynthesis.finalAnswer ||
+        localizeRunText(runLocale, "Cluster run completed.", "集群运行已完成。")
     });
-    sessionRuntime.publishSessionUpdate("Cluster run completed.");
+    sessionRuntime.publishSessionUpdate(
+      localizeRunText(runLocale, "Cluster run completed.", "集群运行已完成。")
+    );
     multiAgentRuntime.complete({
-      content: normalizedSynthesis.finalAnswer || "Cluster run completed.",
+      content:
+        normalizedSynthesis.finalAnswer ||
+        localizeRunText(runLocale, "Cluster run completed.", "集群运行已完成。"),
       tone: "ok"
     });
     forwardClusterEvent({

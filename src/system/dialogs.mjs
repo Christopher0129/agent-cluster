@@ -10,14 +10,17 @@ function runPowerShell(script, env = {}) {
       "powershell.exe",
       [
         "-NoProfile",
+        "-Sta",
         "-NonInteractive",
+        "-WindowStyle",
+        "Hidden",
         "-ExecutionPolicy",
         "Bypass",
         "-EncodedCommand",
         encodePowerShell(script)
       ],
       {
-        windowsHide: false,
+        windowsHide: true,
         env: {
           ...process.env,
           ...env
@@ -48,11 +51,13 @@ function runPowerShell(script, env = {}) {
 export async function pickFolderDialog(initialDir = "") {
   const script = `
 Add-Type -AssemblyName System.Windows.Forms
+[System.Windows.Forms.Application]::EnableVisualStyles()
 $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
-$dialog.Description = "选择 Agent 工作区目录"
+$dialog.Description = "Select Agent Cluster workspace folder"
 $dialog.ShowNewFolderButton = $true
-if ($env:AGENT_CLUSTER_INITIAL_DIR) {
-  $dialog.SelectedPath = $env:AGENT_CLUSTER_INITIAL_DIR
+$initialDir = $env:AGENT_CLUSTER_INITIAL_DIR
+if (-not [string]::IsNullOrWhiteSpace($initialDir) -and (Test-Path -LiteralPath $initialDir -PathType Container)) {
+  $dialog.SelectedPath = (Resolve-Path -LiteralPath $initialDir).Path
 }
 $result = $dialog.ShowDialog()
 if ($result -eq [System.Windows.Forms.DialogResult]::OK) {
@@ -60,9 +65,7 @@ if ($result -eq [System.Windows.Forms.DialogResult]::OK) {
 }
 `;
 
-  const selectedPath = await runPowerShell(script, {
+  return runPowerShell(script, {
     AGENT_CLUSTER_INITIAL_DIR: String(initialDir || "")
   });
-
-  return selectedPath;
 }

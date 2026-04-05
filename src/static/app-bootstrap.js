@@ -270,10 +270,14 @@ export function createAppBootstrap(root = document) {
     formatDelay,
     formatTimestamp,
     getCurrentScheme: () => modelsSchemesUi.getCurrentScheme(),
+    getLocale: () => localeUi.getLocale(),
     captureCurrentSchemeDraft: () => modelsSchemesUi.captureCurrentSchemeDraft(),
     openOperationStream,
     createOperationId,
-    multiAgentUi
+    multiAgentUi,
+    onOperationEvent: (event) => workspaceUi.handleOperationEvent(event),
+    onOperationStart: () => workspaceUi.startRealtimeRefresh(),
+    onOperationFinish: () => workspaceUi.stopRealtimeRefresh()
   });
 
   settingsUi = createSettingsUi({

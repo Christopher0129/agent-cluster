@@ -89,6 +89,37 @@ test("canonicalizeWorkspaceActionPayload normalizes wrapped action aliases", () 
   );
 });
 
+test("canonicalizeWorkspaceActionPayload tolerates tool_name and nested workspace wrappers", () => {
+  const nestedDocx = canonicalizeWorkspaceActionPayload({
+    workspace_action: {
+      tool_name: "write_docx",
+      file_path: "reports/final.docx",
+      text: "final report body"
+    }
+  });
+
+  assert.equal(nestedDocx.action, WORKSPACE_ACTIONS.WRITE_DOCX);
+  assert.equal(nestedDocx.path, "reports/final.docx");
+  assert.equal(nestedDocx.content, "final report body");
+
+  const rpcWrite = canonicalizeWorkspaceActionPayload({
+    method: "write_file",
+    params: {
+      filename: "docs/note.txt",
+      body: "hello"
+    }
+  });
+
+  assert.equal(rpcWrite.action, WORKSPACE_ACTIONS.WRITE_FILES);
+  assert.deepEqual(rpcWrite.files, [
+    {
+      path: "docs/note.txt",
+      content: "hello",
+      encoding: "utf8"
+    }
+  ]);
+});
+
 test("validateWorkspaceActionPayload rejects malformed workspace tool payloads", () => {
   assert.throws(
     () => validateWorkspaceActionPayload(null, WORKSPACE_ACTIONS.LIST_FILES),

@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
+import { mkdtemp, rm } from "node:fs/promises";
+import { join } from "node:path";
 import { runClusterAnalysis } from "../src/cluster/orchestrator.mjs";
+import { readDocumentText } from "../src/workspace/document-reader.mjs";
 import { DelayedJsonProvider, FakeProvider, waitForDelay } from "./helpers/providers.mjs";
 
 function buildWorkerOutput(summary) {
@@ -25,6 +29,141 @@ function buildLeaderSynthesis(summary) {
     followUps: [],
     verificationStatus: "not_applicable"
   });
+}
+
+function parseAssignedSubtaskFromPrompt(input) {
+  const source = Array.isArray(input) ? input.join("\n\n") : String(input || "");
+  const match = source.match(/Assigned subtask:\n([\s\S]*?)\n\nTask execution policy:/);
+  return match ? JSON.parse(match[1]) : null;
+}
+
+class DependentWorkspaceLeaderProvider {
+  constructor() {
+    this.turns = new Map();
+  }
+
+  async invoke({ input, purpose, signal } = {}) {
+    if (purpose === "leader_delegation") {
+      return {
+        text: JSON.stringify({
+          thinkingSummary: "First create the shared research JSON, then turn it into the requested report.",
+          delegationSummary: "Child 2 depends on the JSON created by child 1.",
+          subtasks: [
+            {
+              id: "research_json",
+              title: "Write the structured research JSON",
+              instructions:
+                "Create `research/source.json` in the workspace with the structured report source content.",
+              expectedOutput: "A written `research/source.json` workspace artifact."
+            },
+            {
+              id: "report_docx",
+              title: "Build the final report docx",
+              instructions:
+                "Read `research/source.json` and use it to generate `reports/report.docx` in the workspace.",
+              expectedOutput: "A verified `reports/report.docx` workspace artifact."
+            }
+          ]
+        })
+      };
+    }
+
+    if (purpose === "leader_synthesis") {
+      return {
+        text: buildLeaderSynthesis("Leader merged the dependency-ordered child outputs.")
+      };
+    }
+
+    const assignedSubtask = parseAssignedSubtaskFromPrompt(input);
+    const taskId = assignedSubtask?.id || "";
+    const turn = this.turns.get(taskId) || 0;
+    this.turns.set(taskId, turn + 1);
+
+    if (taskId.endsWith("__research_json")) {
+      if (turn === 0) {
+        await waitForDelay(50, signal);
+        return {
+          text: JSON.stringify({
+            action: "write_files",
+            reason: "Write the upstream research JSON before the downstream report step starts.",
+            files: [
+              {
+                path: "research/source.json",
+                content: JSON.stringify(
+                  {
+                    title: "International situation and China trade cooperation",
+                    sections: ["Macro overview", "China outlook", "Trade cooperation"]
+                  },
+                  null,
+                  2
+                )
+              }
+            ]
+          })
+        };
+      }
+
+      return {
+        text: JSON.stringify({
+          action: "final",
+          summary: "Research JSON written.",
+          keyFindings: ["The structured source JSON is ready for the downstream report builder."],
+          risks: [],
+          deliverables: ["research/source.json"],
+          confidence: "high",
+          followUps: [],
+          generatedFiles: ["research/source.json"],
+          verificationStatus: "passed"
+        })
+      };
+    }
+
+    if (taskId.endsWith("__report_docx")) {
+      if (turn === 0) {
+        return {
+          text: JSON.stringify({
+            action: "read_files",
+            reason: "Load the research JSON before generating the requested report.",
+            paths: ["research/source.json"]
+          })
+        };
+      }
+
+      if (turn === 1) {
+        assert.match(String(input), /research\/source\.json/i);
+        assert.match(String(input), /International situation and China trade cooperation/i);
+        return {
+          text: JSON.stringify({
+            action: "write_files",
+            reason: "Write the final report after reading the upstream JSON.",
+            files: [
+              {
+                path: "reports/report.docx",
+                content:
+                  "International situation and China trade cooperation analysis\n\nMacro overview\nChina outlook\nTrade cooperation\n"
+              }
+            ]
+          })
+        };
+      }
+
+      return {
+        text: JSON.stringify({
+          action: "final",
+          summary: "Report docx written from the upstream JSON.",
+          keyFindings: ["The report builder consumed the JSON produced by the sibling child task."],
+          risks: [],
+          deliverables: ["reports/report.docx"],
+          confidence: "high",
+          followUps: [],
+          generatedFiles: ["reports/report.docx"],
+          verificationStatus: "passed"
+        })
+      };
+    }
+
+    throw new Error(`Unexpected provider call for purpose=${purpose} taskId=${taskId}`);
+  }
 }
 
 test("runClusterAnalysis plans, executes workers, and synthesizes", async () => {
@@ -207,9 +346,554 @@ test("runClusterAnalysis returns a multi-agent session snapshot when the framewo
   assert.equal(result.multiAgentSession.totalMessageCount > 0, true);
   assert.equal(result.multiAgentSession.participantCount >= 1, true);
   assert.equal(
-    result.multiAgentSession.messages.some((message) => /planning|research|completed/i.test(message.content)),
+    result.multiAgentSession.messages.some((message) => /I'm taking|Finished "Research one focused question"/i.test(message.content)),
     true
   );
+});
+
+test("runClusterAnalysis localizes multi-agent session messages when outputLocale is zh-CN", async () => {
+  const config = {
+    cluster: {
+      controller: "controller",
+      maxParallel: 2
+    },
+    multiAgent: {
+      enabled: true,
+      mode: "group_chat",
+      speakerStrategy: "phase_priority",
+      maxRounds: 10,
+      messageWindow: 20,
+      summarizeLongMessages: true,
+      includeSystemMessages: true
+    },
+    models: {
+      controller: {
+        id: "controller",
+        label: "Controller",
+        model: "gpt-5.4"
+      },
+      research_worker: {
+        id: "research_worker",
+        label: "Research Worker",
+        model: "model-r",
+        provider: "mock",
+        specialties: ["research"]
+      }
+    }
+  };
+
+  const providerRegistry = new Map([
+    [
+      "controller",
+      new FakeProvider([
+        JSON.stringify({
+          objective: "Inspect the collaboration session",
+          strategy: "Run one research task and then synthesize.",
+          tasks: [
+            {
+              id: "task_1",
+              phase: "research",
+              title: "Research one focused question",
+              assignedWorker: "research_worker",
+              instructions: "Research one focused question.",
+              dependsOn: []
+            }
+          ]
+        }),
+        JSON.stringify({
+          finalAnswer: "协作会话已完成。",
+          executiveSummary: ["一个工作模型完成了任务。"],
+          consensus: ["会话快照应该可用。"],
+          disagreements: [],
+          nextActions: []
+        })
+      ])
+    ],
+    [
+      "research_worker",
+      new FakeProvider([
+        buildWorkerOutput("研究任务已完成。")
+      ])
+    ]
+  ]);
+
+  const result = await runClusterAnalysis({
+    task: "Inspect the collaboration session",
+    config,
+    providerRegistry,
+    outputLocale: "zh-CN"
+  });
+
+  assert.equal(
+    result.multiAgentSession.messages.some((message) => /我来处理|已完成/.test(message.content)),
+    true
+  );
+});
+
+test("runClusterAnalysis auto-materializes a requested docx artifact from leader synthesis", async () => {
+  const workspaceRoot = await mkdtemp(join(process.cwd(), ".tmp-orchestrator-leader-docx-"));
+
+  try {
+    const config = {
+      cluster: {
+        controller: "controller",
+        maxParallel: 2,
+        groupLeaderMaxDelegates: 1,
+        delegateMaxDepth: 1
+      },
+      workspace: {
+        resolvedDir: workspaceRoot
+      },
+      models: {
+        controller: {
+          id: "controller",
+          label: "Controller",
+          model: "gpt-5.4",
+          provider: "mock"
+        },
+        implementation_leader: {
+          id: "implementation_leader",
+          label: "Implementation Leader",
+          model: "gpt-5.3-codex",
+          provider: "mock",
+          specialties: ["implementation", "coding"]
+        }
+      }
+    };
+
+    const providerRegistry = new Map([
+      [
+        "controller",
+        new FakeProvider([
+          JSON.stringify({
+            objective: "Deliver the requested report artifact",
+            strategy: "Delegate source gathering, then synthesize the final deliverable.",
+            tasks: [
+              {
+                id: "task_1",
+                phase: "implementation",
+                title: "Generate reports/report.docx",
+                assignedWorker: "implementation_leader",
+                delegateCount: 1,
+                instructions: "Generate `reports/report.docx` in the workspace using the collected report content.",
+                dependsOn: [],
+                expectedOutput: "A concrete reports/report.docx artifact."
+              }
+            ]
+          }),
+          JSON.stringify({
+            finalAnswer: "The requested report artifact was delivered.",
+            executiveSummary: ["Leader synthesis auto-materialized the report into the workspace."],
+            consensus: ["Structured child content was enough to build the final document."],
+            disagreements: [],
+            nextActions: []
+          })
+        ])
+      ],
+      [
+        "implementation_leader",
+        new FakeProvider([
+          JSON.stringify({
+            thinkingSummary: "Collect source material before assembling the final report.",
+            delegationSummary: "One child gathers the structured report content.",
+            subtasks: [
+              {
+                id: "source_content",
+                title: "Collect report source material",
+                instructions: "Provide structured Chinese report content only. Do not write files.",
+                expectedOutput: "Structured source content for the final report."
+              }
+            ]
+          }),
+          JSON.stringify({
+            action: "final",
+            summary: "Collected the structured source content for the requested report.",
+            keyFindings: [
+              "国际局势部分已整理。",
+              "中国国情与对外贸易合作分析已整理。"
+            ],
+            risks: [],
+            deliverables: ["报告正文素材"],
+            confidence: "high",
+            followUps: ["目标文档：reports/report.docx"],
+            verificationStatus: "not_applicable"
+          }),
+          JSON.stringify({
+            thinkingSummary: "Merged the child source material into the requested deliverable.",
+            summary: "Structured report content is ready for delivery.",
+            keyFindings: ["The child produced the report outline and the core findings."],
+            risks: [],
+            deliverables: ["reports/report.docx"],
+            confidence: "high",
+            followUps: ["Use the merged content to create reports/report.docx."],
+            verificationStatus: "not_applicable"
+          })
+        ])
+      ]
+    ]);
+
+    const result = await runClusterAnalysis({
+      task: "Generate reports/report.docx in the workspace.",
+      config,
+      providerRegistry
+    });
+
+    const reportPath = join(workspaceRoot, "reports", "report.docx");
+    const reportText = await readDocumentText(reportPath);
+    const implementationExecution = result.executions.find((execution) => execution.taskId === "task_1");
+
+    assert.equal(existsSync(reportPath), true);
+    assert.equal(reportText.includes("国际局势部分已整理"), true);
+    assert.equal(reportText.includes("中国国情与对外贸易合作分析已整理"), true);
+    assert.deepEqual(implementationExecution?.output.verifiedGeneratedFiles, ["reports/report.docx"]);
+    assert.equal(implementationExecution?.output.workspaceActions.includes("write_docx"), true);
+  } finally {
+    await rm(workspaceRoot, { recursive: true, force: true });
+  }
+});
+
+test("runClusterAnalysis ignores unverified claimed artifacts and still auto-materializes the requested leader docx", async () => {
+  const workspaceRoot = await mkdtemp(join(process.cwd(), ".tmp-orchestrator-leader-claimed-docx-"));
+
+  try {
+    const config = {
+      cluster: {
+        controller: "controller",
+        maxParallel: 2,
+        groupLeaderMaxDelegates: 1,
+        delegateMaxDepth: 1
+      },
+      workspace: {
+        resolvedDir: workspaceRoot
+      },
+      models: {
+        controller: {
+          id: "controller",
+          label: "Controller",
+          model: "gpt-5.4",
+          provider: "mock"
+        },
+        implementation_leader: {
+          id: "implementation_leader",
+          label: "Implementation Leader",
+          model: "gpt-5.3-codex",
+          provider: "mock",
+          specialties: ["implementation", "coding"]
+        }
+      }
+    };
+
+    const providerRegistry = new Map([
+      [
+        "controller",
+        new FakeProvider([
+          JSON.stringify({
+            objective: "Deliver the requested report artifact",
+            strategy: "Delegate source gathering, then synthesize the final deliverable.",
+            tasks: [
+              {
+                id: "task_1",
+                phase: "implementation",
+                title: "Generate reports/report.docx",
+                assignedWorker: "implementation_leader",
+                delegateCount: 1,
+                instructions: "Generate `reports/report.docx` in the workspace using the collected report content.",
+                dependsOn: [],
+                expectedOutput: "A concrete reports/report.docx artifact."
+              }
+            ]
+          }),
+          JSON.stringify({
+            finalAnswer: "The requested report artifact was delivered.",
+            executiveSummary: ["Leader synthesis no longer trusts claimed files that do not exist."],
+            consensus: ["The runtime materialized the requested docx after verifying the claim was false."],
+            disagreements: [],
+            nextActions: []
+          })
+        ])
+      ],
+      [
+        "implementation_leader",
+        new FakeProvider([
+          JSON.stringify({
+            thinkingSummary: "Collect source material before assembling the final report.",
+            delegationSummary: "One child gathers the structured report content.",
+            subtasks: [
+              {
+                id: "source_content",
+                title: "Collect report source material",
+                instructions: "Provide structured Chinese report content only. Do not write files.",
+                expectedOutput: "Structured source content for the final report."
+              }
+            ]
+          }),
+          JSON.stringify({
+            action: "final",
+            summary: "Collected the structured source content for the requested report.",
+            keyFindings: [
+              "国际局势部分已整理。",
+              "中国国情与对外贸易合作分析已整理。"
+            ],
+            risks: [],
+            deliverables: ["报告正文素材"],
+            confidence: "high",
+            followUps: ["目标文档：reports/report.docx"],
+            verificationStatus: "not_applicable"
+          }),
+          JSON.stringify({
+            thinkingSummary: "Merged the child source material into the requested deliverable.",
+            summary: "Structured report content is ready for delivery.",
+            keyFindings: [
+              "国际局势部分已整理。",
+              "中国国情与对外贸易合作分析已整理。"
+            ],
+            risks: [],
+            deliverables: ["reports/report.docx"],
+            generatedFiles: [
+              "reports/report.docx（需根据上文内容生成）"
+            ],
+            confidence: "high",
+            followUps: ["Use the merged content to create reports/report.docx."],
+            verificationStatus: "failed"
+          })
+        ])
+      ]
+    ]);
+
+    const result = await runClusterAnalysis({
+      task: "Generate reports/report.docx in the workspace.",
+      config,
+      providerRegistry
+    });
+
+    const reportPath = join(workspaceRoot, "reports", "report.docx");
+    const reportText = await readDocumentText(reportPath);
+    const implementationExecution = result.executions.find((execution) => execution.taskId === "task_1");
+
+    assert.equal(existsSync(reportPath), true);
+    assert.equal(reportText.includes("国际局势部分已整理"), true);
+    assert.deepEqual(implementationExecution?.output.verifiedGeneratedFiles, ["reports/report.docx"]);
+    assert.equal(implementationExecution?.output.generatedFiles.includes("reports/report.docx"), true);
+    assert.equal(
+      implementationExecution?.output.risks.some((risk) => /reported artifact/i.test(String(risk))),
+      false
+    );
+  } finally {
+    await rm(workspaceRoot, { recursive: true, force: true });
+  }
+});
+
+test("runClusterAnalysis does not auto-materialize an artifact from malformed leader synthesis output", async () => {
+  const workspaceRoot = await mkdtemp(join(process.cwd(), ".tmp-orchestrator-malformed-leader-"));
+
+  try {
+    const config = {
+      cluster: {
+        controller: "controller",
+        maxParallel: 2,
+        groupLeaderMaxDelegates: 1,
+        delegateMaxDepth: 1
+      },
+      workspace: {
+        resolvedDir: workspaceRoot
+      },
+      models: {
+        controller: {
+          id: "controller",
+          label: "Controller",
+          model: "gpt-5.4",
+          provider: "mock"
+        },
+        implementation_leader: {
+          id: "implementation_leader",
+          label: "Implementation Leader",
+          model: "gpt-5.3-codex",
+          provider: "mock",
+          specialties: ["implementation", "coding"]
+        }
+      }
+    };
+
+    const providerRegistry = new Map([
+      [
+        "controller",
+        new FakeProvider([
+          JSON.stringify({
+            objective: "Attempt to deliver a report artifact",
+            strategy: "Delegate source collection and then synthesize.",
+            tasks: [
+              {
+                id: "task_1",
+                phase: "implementation",
+                title: "Generate reports/report.docx",
+                assignedWorker: "implementation_leader",
+                delegateCount: 1,
+                instructions: "Generate `reports/report.docx` in the workspace.",
+                dependsOn: [],
+                expectedOutput: "A concrete reports/report.docx artifact."
+              }
+            ]
+          }),
+          JSON.stringify({
+            finalAnswer: "The run finished.",
+            executiveSummary: [],
+            consensus: [],
+            disagreements: [],
+            nextActions: []
+          })
+        ])
+      ],
+      [
+        "implementation_leader",
+        new FakeProvider([
+          JSON.stringify({
+            thinkingSummary: "Delegate one child to collect source material.",
+            delegationSummary: "One child collects the source material.",
+            subtasks: [
+              {
+                id: "source_content",
+                title: "Collect report source material",
+                instructions: "Return structured source content only.",
+                expectedOutput: "Source content."
+              }
+            ]
+          }),
+          JSON.stringify({
+            action: "final",
+            summary: "Collected the source content.",
+            keyFindings: ["Do not use stale_report.docx as the final artifact."],
+            risks: [],
+            deliverables: ["Source content"],
+            confidence: "high",
+            followUps: [],
+            verificationStatus: "not_applicable"
+          }),
+          "```json\n{\"summary\":\"broken synthesis\",\"keyFindings\":[\"stale_report.docx should be ignored\"]"
+        ])
+      ]
+    ]);
+
+    const result = await runClusterAnalysis({
+      task: "Generate reports/report.docx in the workspace.",
+      config,
+      providerRegistry
+    });
+
+    const implementationExecution = result.executions.find((execution) => execution.taskId === "task_1");
+    assert.equal(existsSync(join(workspaceRoot, "stale_report.docx")), false);
+    assert.equal(existsSync(join(workspaceRoot, "reports", "report.docx")), false);
+    assert.equal(implementationExecution?.output.generatedFiles.length, 0);
+    assert.equal(implementationExecution?.output.verifiedGeneratedFiles.length, 0);
+    assert.equal(implementationExecution?.output.verificationStatus, "failed");
+  } finally {
+    await rm(workspaceRoot, { recursive: true, force: true });
+  }
+});
+
+test("runClusterAnalysis infers dependent delegated child tasks from shared workspace artifacts", async () => {
+  const workspaceRoot = await mkdtemp(join(process.cwd(), ".tmp-orchestrator-dependent-children-"));
+
+  try {
+    const config = {
+      cluster: {
+        controller: "controller",
+        maxParallel: 4,
+        groupLeaderMaxDelegates: 2,
+        delegateMaxDepth: 1
+      },
+      multiAgent: {
+        enabled: true,
+        mode: "group_chat",
+        speakerStrategy: "phase_priority",
+        maxRounds: 12,
+        messageWindow: 20,
+        summarizeLongMessages: true,
+        includeSystemMessages: true
+      },
+      workspace: {
+        resolvedDir: workspaceRoot
+      },
+      models: {
+        controller: {
+          id: "controller",
+          label: "Controller",
+          model: "gpt-5.4",
+          provider: "mock"
+        },
+        implementation_leader: {
+          id: "implementation_leader",
+          label: "Implementation Leader",
+          model: "gpt-5.3-codex",
+          provider: "mock",
+          specialties: ["implementation", "coding"]
+        }
+      }
+    };
+
+    const providerRegistry = new Map([
+      [
+        "controller",
+        new FakeProvider([
+          JSON.stringify({
+            objective: "Generate the requested report artifact",
+            strategy: "Delegate source JSON creation first and then assemble the report.",
+            tasks: [
+              {
+                id: "task_1",
+                phase: "implementation",
+                title: "Generate reports/report.docx",
+                assignedWorker: "implementation_leader",
+                delegateCount: 2,
+                instructions:
+                  "Generate `reports/report.docx` in the workspace using intermediate structured research output.",
+                dependsOn: [],
+                expectedOutput: "A concrete reports/report.docx artifact."
+              }
+            ]
+          }),
+          JSON.stringify({
+            finalAnswer: "The dependency-ordered report workflow completed successfully.",
+            executiveSummary: ["Delegated child dependencies were inferred and respected."],
+            consensus: ["The downstream child waited for the upstream JSON artifact."],
+            disagreements: [],
+            nextActions: []
+          })
+        ])
+      ],
+      ["implementation_leader", new DependentWorkspaceLeaderProvider()]
+    ]);
+
+    const result = await runClusterAnalysis({
+      task: "Generate reports/report.docx in the workspace from delegated child work.",
+      config,
+      providerRegistry
+    });
+
+    const sourcePath = join(workspaceRoot, "research", "source.json");
+    const reportPath = join(workspaceRoot, "reports", "report.docx");
+    const reportText = await readDocumentText(reportPath);
+    const implementationExecution = result.executions.find((execution) => execution.taskId === "task_1");
+
+    assert.equal(existsSync(sourcePath), true);
+    assert.equal(existsSync(reportPath), true);
+    assert.equal(reportText.includes("International situation and China trade cooperation analysis"), true);
+    assert.equal(implementationExecution?.status, "completed");
+    assert.equal(implementationExecution?.output.subordinateCount, 2);
+    assert.deepEqual(implementationExecution?.output.verifiedGeneratedFiles, [
+      "research/source.json",
+      "reports/report.docx"
+    ]);
+    assert.equal(
+      result.multiAgentSession.messages.some((message) => /Please take "Write the structured research JSON"/.test(message.content)),
+      true
+    );
+    assert.equal(
+      result.multiAgentSession.messages.some((message) => /Acknowledged "Write the structured research JSON"/.test(message.content)),
+      true
+    );
+  } finally {
+    await rm(workspaceRoot, { recursive: true, force: true });
+  }
 });
 
 test("runClusterAnalysis applies maxParallel as a shared gate across workers and subagents", async () => {

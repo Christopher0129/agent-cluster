@@ -2,13 +2,42 @@ import { basename, extname, relative, resolve } from "node:path";
 
 const ARTIFACT_EXTENSION_PATTERN = /\.(docx?|pptx?|xlsx?|pdf|md|txt|csv|json)\b/i;
 const WINDOWS_INVALID_FILENAME = /[<>:"/\\|?*\u0000-\u001f]/g;
+const QUOTED_ARTIFACT_PATTERN = /[`"'“”]([^`"'“”\r\n]+?\.(?:docx?|pptx?|xlsx?|pdf|md|txt|csv|json))[`"'“”]/gi;
+const ABSOLUTE_WINDOWS_ARTIFACT_PATTERN = /[a-z]:\\[^\r\n]+?\.(?:docx?|pptx?|xlsx?|pdf|md|txt|csv|json)\b/gi;
+const BARE_FILENAME_PATTERN =
+  /(?:^|[\s(（:：])([^\s"'“”`<>|?*\r\n\\/:]+?\.(?:docx?|pptx?|xlsx?|pdf|md|txt|csv|json))\b/gi;
 
 function safeString(value) {
   return String(value || "").trim();
 }
 
 function uniqueStrings(items) {
-  return Array.from(new Set((Array.isArray(items) ? items : []).map((item) => safeString(item)).filter(Boolean)));
+  return Array.from(
+    new Set(
+      (Array.isArray(items) ? items : [])
+        .map((item) => safeString(item))
+        .filter(Boolean)
+    )
+  );
+}
+
+function normalizeArtifactCandidateValue(value) {
+  if (typeof value === "string") {
+    return safeString(value);
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return "";
+  }
+
+  return safeString(
+    value.path ??
+      value.filePath ??
+      value.file_path ??
+      value.filename ??
+      value.fileName ??
+      value.targetPath ??
+      value.target_path
+  );
 }
 
 function normalizeRelativePath(filePath) {
@@ -47,18 +76,13 @@ function collectQuotedArtifactCandidates(text) {
   }
 
   const matches = [];
-  const quotedPattern = /[`"'“”]([^`"'“”\r\n]+?\.(?:docx?|pptx?|xlsx?|pdf|md|txt|csv|json))[`"'“”]/gi;
-  for (const match of value.matchAll(quotedPattern)) {
+  for (const match of value.matchAll(QUOTED_ARTIFACT_PATTERN)) {
     matches.push(match[1]);
   }
-
-  const absoluteWindowsPattern = /[a-z]:\\[^\r\n]+?\.(?:docx?|pptx?|xlsx?|pdf|md|txt|csv|json)\b/gi;
-  for (const match of value.matchAll(absoluteWindowsPattern)) {
+  for (const match of value.matchAll(ABSOLUTE_WINDOWS_ARTIFACT_PATTERN)) {
     matches.push(match[0]);
   }
-
-  const bareFilenamePattern = /(?:^|[\s(（:：])([^\s"'“”`<>|?*\r\n\\/:]+?\.(?:docx?|pptx?|xlsx?|pdf|md|txt|csv|json))\b/gi;
-  for (const match of value.matchAll(bareFilenamePattern)) {
+  for (const match of value.matchAll(BARE_FILENAME_PATTERN)) {
     matches.push(match[1]);
   }
 
@@ -84,6 +108,16 @@ function deriveFallbackFilename(task) {
   return sanitizeFilename(source).slice(0, 80);
 }
 
+function appendBulletSection(lines, heading, items) {
+  const normalizedItems = uniqueStrings(items);
+  if (!normalizedItems.length) {
+    return;
+  }
+
+  lines.push(`## ${heading}`);
+  lines.push(...normalizedItems.map((item) => `- ${item}`));
+}
+
 function renderOutputSection(result) {
   const output = result?.output && typeof result.output === "object" ? result.output : {};
   const lines = [];
@@ -92,55 +126,60 @@ function renderOutputSection(result) {
     lines.push(output.summary);
   }
 
-  const keyFindings = uniqueStrings(output.keyFindings || []);
-  if (keyFindings.length) {
-    lines.push("## 关键要点");
-    lines.push(...keyFindings.map((item) => `- ${item}`));
-  }
-
-  const deliverables = uniqueStrings(output.deliverables || []);
-  if (deliverables.length) {
-    lines.push("## 相关交付");
-    lines.push(...deliverables.map((item) => `- ${item}`));
-  }
-
-  const risks = uniqueStrings(output.risks || []);
-  if (risks.length) {
-    lines.push("## 风险与注意事项");
-    lines.push(...risks.map((item) => `- ${item}`));
-  }
-
-  const followUps = uniqueStrings(output.followUps || []);
-  if (followUps.length) {
-    lines.push("## 后续建议");
-    lines.push(...followUps.map((item) => `- ${item}`));
-  }
+  appendBulletSection(lines, "关键要点", output.keyFindings || []);
+  appendBulletSection(lines, "相关交付", output.deliverables || []);
+  appendBulletSection(lines, "风险与注意事项", output.risks || []);
+  appendBulletSection(lines, "后续建议", output.followUps || []);
 
   return lines.join("\n");
 }
 
-export function inferRequestedArtifact(task, parsed, workspaceRoot, originalTask = "") {
-  const explicitCandidates = uniqueStrings([
+function collectExplicitArtifactCandidates(parsed) {
+  return uniqueStrings([
     ...(Array.isArray(parsed?.generatedFiles) ? parsed.generatedFiles : []),
+    ...(Array.isArray(parsed?.verifiedGeneratedFiles) ? parsed.verifiedGeneratedFiles : []),
+    ...(Array.isArray(parsed?.deliverables) ? parsed.deliverables : [])
+  ].map((item) => normalizeArtifactCandidateValue(item)).filter(Boolean));
+}
+
+function collectArtifactPathHints(parsed) {
+  return uniqueStrings([
+    ...(Array.isArray(parsed?.generatedFiles) ? parsed.generatedFiles : []),
+    ...(Array.isArray(parsed?.verifiedGeneratedFiles) ? parsed.verifiedGeneratedFiles : [])
+  ].map((item) => normalizeArtifactCandidateValue(item)).filter(Boolean));
+}
+
+function collectDeliverableTexts(parsed) {
+  return uniqueStrings([
     ...(Array.isArray(parsed?.deliverables) ? parsed.deliverables : [])
   ]);
+}
 
-  for (const candidate of explicitCandidates) {
+function collectArtifactHintTexts(task, parsed, originalTask) {
+  return [
+    task?.title,
+    task?.instructions,
+    task?.expectedOutput,
+    originalTask,
+    parsed?.summary,
+    ...(Array.isArray(parsed?.followUps) ? parsed.followUps : []),
+    ...collectDeliverableTexts(parsed),
+    ...collectArtifactPathHints(parsed),
+    ...(Array.isArray(parsed?.keyFindings) ? parsed.keyFindings : [])
+  ]
+    .map((value) => safeString(value))
+    .filter(Boolean);
+}
+
+export function inferRequestedArtifact(task, parsed, workspaceRoot, originalTask = "") {
+  for (const candidate of collectExplicitArtifactCandidates(parsed)) {
     const normalized = normalizeCandidatePath(candidate, workspaceRoot);
     if (ARTIFACT_EXTENSION_PATTERN.test(normalized)) {
       return normalized;
     }
   }
 
-  const textSources = [
-    task?.title,
-    task?.instructions,
-    task?.expectedOutput,
-    originalTask,
-    safeString(parsed?.summary)
-  ];
-
-  for (const source of textSources) {
+  for (const source of collectArtifactHintTexts(task, parsed, originalTask)) {
     for (const candidate of collectQuotedArtifactCandidates(source)) {
       const normalized = normalizeCandidatePath(candidate, workspaceRoot);
       if (ARTIFACT_EXTENSION_PATTERN.test(normalized)) {
@@ -149,8 +188,8 @@ export function inferRequestedArtifact(task, parsed, workspaceRoot, originalTask
     }
   }
 
-  const extensionMatch = textSources
-    .map((source) => safeString(source).match(ARTIFACT_EXTENSION_PATTERN))
+  const extensionMatch = collectArtifactHintTexts(task, parsed, originalTask)
+    .map((source) => source.match(ARTIFACT_EXTENSION_PATTERN))
     .find(Boolean);
   const extension = extensionMatch ? extensionMatch[0].toLowerCase() : ".docx";
 
@@ -177,11 +216,10 @@ export function buildDocxFallbackContent({
     sections.push(parsed.summary);
   }
 
-  const parsedFindings = uniqueStrings(parsed?.keyFindings || []);
-  if (parsedFindings.length) {
-    sections.push("## 当前任务要点");
-    sections.push(...parsedFindings.map((item) => `- ${item}`));
-  }
+  appendBulletSection(sections, "当前任务要点", parsed?.keyFindings || []);
+  appendBulletSection(sections, "当前任务交付", parsed?.deliverables || []);
+  appendBulletSection(sections, "风险与限制", parsed?.risks || []);
+  appendBulletSection(sections, "后续建议", parsed?.followUps || []);
 
   const outputs = Array.isArray(dependencyOutputs) ? dependencyOutputs : [];
   for (const dependency of outputs) {
@@ -190,7 +228,8 @@ export function buildDocxFallbackContent({
       continue;
     }
 
-    const heading = safeString(dependency?.output?.deliverables?.[0]) ||
+    const heading =
+      safeString(dependency?.title) ||
       safeString(dependency?.taskId) ||
       "依赖输出";
     sections.push(`## 依赖输出：${heading}`);

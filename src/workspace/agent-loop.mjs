@@ -115,7 +115,7 @@ function renderSessionMemorySnapshot(entries) {
   );
 }
 
-function collectDependencyArtifactFocus(dependencyOutputs) {
+function collectDependencyArtifactFocus(dependencyOutputs, workspaceRoot) {
   if (!Array.isArray(dependencyOutputs) || !dependencyOutputs.length) {
     return [];
   }
@@ -124,9 +124,23 @@ function collectDependencyArtifactFocus(dependencyOutputs) {
     new Set(
       dependencyOutputs.flatMap((item) => {
         const output = item?.output && typeof item.output === "object" ? item.output : {};
+        const artifactTask = {
+          title: item?.title || "",
+          instructions: "",
+          expectedOutput: Array.isArray(output?.deliverables) ? output.deliverables.join("\n") : ""
+        };
+        const inferredArtifact = deriveTaskRequirements(artifactTask).requiresConcreteArtifact
+          ? inferRequestedArtifact(
+            artifactTask,
+            output,
+            workspaceRoot || ".",
+            output?.summary || ""
+          )
+          : "";
         return [
           ...(Array.isArray(output.verifiedGeneratedFiles) ? output.verifiedGeneratedFiles : []),
-          ...(Array.isArray(output.generatedFiles) ? output.generatedFiles : [])
+          ...(Array.isArray(output.generatedFiles) ? output.generatedFiles : []),
+          inferredArtifact
         ]
           .map((path) => String(path || "").trim())
           .filter(Boolean);
@@ -154,7 +168,7 @@ function buildWorkspaceWorkerPrompt({
     workspaceCommandScopeDescription: taskRequirements.workspaceCommandScopeDescription
   });
   const dateContext = renderRuntimeCalendarNote();
-  const dependencyArtifacts = collectDependencyArtifactFocus(dependencyOutputs);
+  const dependencyArtifacts = collectDependencyArtifactFocus(dependencyOutputs, workspaceRoot);
 
   return {
     instructions: [
@@ -181,6 +195,7 @@ function buildWorkspaceWorkerPrompt({
       "Never invent sources, URLs, examples, or case studies.",
       "Never reference or request paths outside the workspace root.",
       "When dependency outputs already list generated or verified files, focus implementation, validation, and review work on those files first.",
+      "When dependency artifact focus is non-empty and the expected artifact is missing, do not inspect unrelated pre-existing workspace files just to fill the gap. Report the missing artifact directly.",
       "Ignore unrelated pre-existing workspace files unless the assigned task explicitly requires a broader repository or workspace audit.",
       "Provide a short public thinking summary that can be shown in a UI. Do not reveal hidden chain-of-thought.",
       "Return JSON only.",

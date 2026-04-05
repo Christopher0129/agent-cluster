@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+﻿import { resolve } from "node:path";
 import { createProviderRegistry } from "../providers/factory.mjs";
 import { testModelConnectivity } from "../providers/connectivity-test.mjs";
 import { runClusterAnalysis } from "../cluster/orchestrator.mjs";
@@ -6,6 +6,14 @@ import { loadRuntimeConfig, summarizeConfig } from "../config.mjs";
 import { writeClusterRunLog } from "../run-log-store.mjs";
 import { isAbortError } from "../utils/abort.mjs";
 import { readRequestBody, resolveOperationId, sendJson } from "./common.mjs";
+
+function normalizeRunLocale(value) {
+  return String(value || "").trim() === "zh-CN" ? "zh-CN" : "en-US";
+}
+
+function localizeRunText(locale, englishText, chineseText) {
+  return normalizeRunLocale(locale) === "zh-CN" ? chineseText : englishText;
+}
 
 function resolveLogWorkspaceDir(projectDir, runtimeConfigOptions, schemeId = "", config = null) {
   if (config?.workspace?.resolvedDir) {
@@ -26,6 +34,7 @@ async function persistClusterOperationLog({
   task,
   operationId,
   schemeId,
+  locale = "en-US",
   projectDir,
   runtimeConfigOptions,
   operationTracker,
@@ -44,6 +53,7 @@ async function persistClusterOperationLog({
     savedAt: new Date().toISOString(),
     task,
     schemeId,
+    locale: normalizeRunLocale(locale),
     workspace: {
       dir: config?.workspace?.dir || "./workspace",
       resolvedDir: workspaceDir
@@ -65,7 +75,7 @@ async function persistClusterOperationLog({
       type: "status",
       stage: "run_log_saved",
       tone: "ok",
-      detail: `本次任务日志已保存：${written.textPath}`,
+      detail: `鏈浠诲姟鏃ュ織宸蹭繚瀛橈細${written.textPath}`,
       logPath: written.textPath,
       jsonPath: written.jsonPath
     });
@@ -75,7 +85,7 @@ async function persistClusterOperationLog({
       type: "status",
       stage: "run_log_save_failed",
       tone: "warning",
-      detail: `任务已结束，但保存日志失败：${logError.message}`
+      detail: `浠诲姟宸茬粨鏉燂紝浣嗕繚瀛樻棩蹇楀け璐ワ細${logError.message}`
     });
     return null;
   }
@@ -85,16 +95,19 @@ export async function executeClusterOperation({
   task,
   operationId,
   schemeId = "",
+  locale = "en-US",
   projectDir,
   runtimeConfigOptions,
   operationTracker
 }) {
+  const outputLocale = normalizeRunLocale(locale);
   let config = null;
   try {
     operationTracker.ensureOperation(operationId, {
       kind: "cluster_run",
       task,
-      schemeId
+      schemeId,
+      locale: outputLocale
     });
     operationTracker.publish(operationId, {
       type: "status",
@@ -110,6 +123,7 @@ export async function executeClusterOperation({
     const result = await runClusterAnalysis({
       task,
       config,
+      outputLocale,
       signal: operationTracker.getSignal(operationId),
       providerRegistry: providers,
       onEvent(event) {
@@ -120,12 +134,13 @@ export async function executeClusterOperation({
       task,
       operationId,
       schemeId,
+      locale: outputLocale,
       projectDir,
       runtimeConfigOptions,
       operationTracker,
       config,
-      status: "completed",
-      result
+        status: "completed",
+        result
     });
     return {
       ...result,
@@ -143,6 +158,7 @@ export async function executeClusterOperation({
         task,
         operationId,
         schemeId,
+        locale: outputLocale,
         projectDir,
         runtimeConfigOptions,
         operationTracker,
@@ -163,6 +179,7 @@ export async function executeClusterOperation({
       task,
       operationId,
       schemeId,
+      locale: outputLocale,
       projectDir,
       runtimeConfigOptions,
       operationTracker,
@@ -188,6 +205,7 @@ export async function handleClusterRun(
     operationId = resolveOperationId(body, "cluster", randomUuid);
     const task = String(body?.task || "").trim();
     const schemeId = String(body?.schemeId || "").trim();
+    const locale = normalizeRunLocale(body?.locale);
     if (!task) {
       sendJson(response, 400, {
         ok: false,
@@ -201,6 +219,7 @@ export async function handleClusterRun(
       task,
       operationId,
       schemeId,
+      locale,
       projectDir,
       runtimeConfigOptions,
       operationTracker
@@ -237,9 +256,12 @@ export async function handleOperationCancel(
   projectDir,
   runtimeConfigOptions = {}
 ) {
+  const locale = normalizeRunLocale(
+    operationTracker.getSnapshot(operationId, { afterSeq: 0 })?.meta?.locale
+  );
   const result = operationTracker.cancel(operationId, {
-    detail: "User requested task cancellation.",
-    message: "Operation cancelled by user."
+    detail: localizeRunText(locale, "User requested task cancellation.", "用户请求终止任务。"),
+    message: localizeRunText(locale, "Operation cancelled by user.", "任务已由用户终止。")
   });
 
   if (!result.ok && result.code === "not_found") {
@@ -264,14 +286,21 @@ export async function handleOperationCancel(
   const cancelLog =
     snapshot && snapshot.meta
       ? await persistClusterOperationLog({
-          task: String(snapshot.meta.task || "").trim(),
-          operationId,
-          schemeId: String(snapshot.meta.schemeId || "").trim(),
-          projectDir,
-          runtimeConfigOptions,
-          operationTracker,
+      task: String(snapshot.meta.task || "").trim(),
+      operationId,
+      schemeId: String(snapshot.meta.schemeId || "").trim(),
+      locale: normalizeRunLocale(snapshot.meta.locale),
+      projectDir,
+      runtimeConfigOptions,
+      operationTracker,
           status: "cancel_requested",
-          error: new Error("Cancellation requested by user before the task completed.")
+          error: new Error(
+            localizeRunText(
+              locale,
+              "Cancellation requested by user before the task completed.",
+              "用户在任务完成前请求了终止。"
+            )
+          )
         })
       : null;
 
@@ -356,3 +385,4 @@ export async function handleOperationSnapshot(response, url, operationId, operat
     ...snapshot
   });
 }
+

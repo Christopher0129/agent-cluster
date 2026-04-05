@@ -24,6 +24,7 @@ import {
 import {
   handleWorkspaceCacheClear,
   handleFolderPick,
+  handleFolderPickStatus,
   handleWorkspaceFileRead,
   handleWorkspaceFileWrite,
   handleWorkspaceImport,
@@ -154,6 +155,11 @@ export function createAppServer({
 
       if (request.method === "POST" && url.pathname === "/api/system/pick-folder") {
         await handleFolderPick(request, response, projectDir, runtimeConfigOptions);
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname === "/api/system/pick-folder") {
+        await handleFolderPickStatus(response, url);
         return;
       }
 

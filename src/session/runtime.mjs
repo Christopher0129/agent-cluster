@@ -6,6 +6,14 @@ function safeString(value) {
   return String(value || "").trim();
 }
 
+function normalizeRuntimeLocale(value) {
+  return safeString(value) === "zh-CN" ? "zh-CN" : "en-US";
+}
+
+function localizeRuntimeText(locale, englishText, chineseText) {
+  return normalizeRuntimeLocale(locale) === "zh-CN" ? chineseText : englishText;
+}
+
 function normalizeInteger(value) {
   const number = Number(value);
   return Number.isFinite(number) && number > 0 ? Math.floor(number) : 0;
@@ -130,7 +138,8 @@ function formatCircuitDetail(state) {
   return "Circuit is closed.";
 }
 
-export function createSessionRuntime({ emitEvent } = {}) {
+export function createSessionRuntime({ emitEvent, locale = "en-US" } = {}) {
+  const runLocale = normalizeRuntimeLocale(locale);
   const memoryEntries = [];
   const modelStatsById = new Map();
   const circuitByModelId = new Map();
@@ -572,6 +581,9 @@ export function createSessionRuntime({ emitEvent } = {}) {
 
   function remember(entry = {}, meta = {}) {
     totals.memoryWrites += 1;
+    const memoryTitle =
+      safeString(entry.title || entry.taskTitle || "") ||
+      localizeRuntimeText(runLocale, "Session memory", "会话记忆");
     const spanId = beginToolCall({
       ...meta,
       spanKind: "memory_write",
@@ -581,7 +593,7 @@ export function createSessionRuntime({ emitEvent } = {}) {
 
     const memoryEntry = {
       id: `mem_${String(++memorySequence).padStart(4, "0")}`,
-      title: safeString(entry.title || entry.taskTitle || "Session memory"),
+      title: memoryTitle,
       content: compactText(entry.content, 500),
       tags: uniqueStrings(entry.tags),
       createdAt: new Date().toISOString(),
@@ -593,7 +605,11 @@ export function createSessionRuntime({ emitEvent } = {}) {
 
     if (!memoryEntry.content) {
       completeToolCall(spanId, {
-        detail: "Skipped empty session memory write.",
+        detail: localizeRuntimeText(
+          runLocale,
+          "Skipped empty session memory write.",
+          "已跳过空白会话记忆写入。"
+        ),
         resultCount: memoryEntries.length
       });
       return null;
@@ -608,14 +624,22 @@ export function createSessionRuntime({ emitEvent } = {}) {
       type: "status",
       stage: "memory_write",
       tone: "ok",
-      detail: `Stored session memory: ${memoryEntry.title}`,
+      detail: localizeRuntimeText(
+        runLocale,
+        `Stored session memory: ${memoryEntry.title}`,
+        `已写入会话记忆：${memoryEntry.title}`
+      ),
       memoryEntry: cloneJson(memoryEntry),
       ...meta
     });
 
     endSpan(spanId, {
       status: "ok",
-      detail: `Stored session memory: ${memoryEntry.title}`,
+      detail: localizeRuntimeText(
+        runLocale,
+        `Stored session memory: ${memoryEntry.title}`,
+        `已写入会话记忆：${memoryEntry.title}`
+      ),
       memoryCount: memoryEntries.length
     });
     publishSessionUpdate("Session memory updated.");
@@ -672,14 +696,22 @@ export function createSessionRuntime({ emitEvent } = {}) {
       type: "status",
       stage: "memory_read",
       tone: "neutral",
-      detail: `Recalled ${ranked.length} session memory item(s).`,
+      detail: localizeRuntimeText(
+        runLocale,
+        `Recalled ${ranked.length} session memory item(s).`,
+        `已召回 ${ranked.length} 条会话记忆。`
+      ),
       memoryCount: ranked.length,
       ...meta
     });
 
     endSpan(spanId, {
       status: "ok",
-      detail: `Recalled ${ranked.length} session memory item(s).`,
+      detail: localizeRuntimeText(
+        runLocale,
+        `Recalled ${ranked.length} session memory item(s).`,
+        `已召回 ${ranked.length} 条会话记忆。`
+      ),
       resultCount: ranked.length,
       memoryCount: memoryEntries.length
     });

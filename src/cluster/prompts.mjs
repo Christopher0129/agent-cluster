@@ -1,5 +1,23 @@
 import { renderRuntimeCalendarNote } from "../utils/runtime-context.mjs";
 
+function normalizeOutputLocale(value) {
+  return String(value || "").trim() === "zh-CN" ? "zh-CN" : "en-US";
+}
+
+function describeOutputLanguage(locale) {
+  return normalizeOutputLocale(locale) === "zh-CN" ? "Simplified Chinese" : "English";
+}
+
+function buildOutputLanguageInstruction(locale) {
+  return normalizeOutputLocale(locale) === "zh-CN"
+    ? "Output language policy: always respond in Simplified Chinese. Keep the JSON keys exactly as specified in English, but write all natural-language values, summaries, findings, titles, and final answers in Simplified Chinese unless the user explicitly requests another language."
+    : "Output language policy: always respond in English. Keep the JSON keys exactly as specified in English, and write all natural-language values, summaries, findings, titles, and final answers in English unless the user explicitly requests another language.";
+}
+
+function buildOutputLanguageInput(locale) {
+  return `Requested response language:\n${describeOutputLanguage(locale)}`;
+}
+
 function formatWorkers(workers) {
   return workers
     .map(
@@ -125,12 +143,14 @@ export function buildPlanningRequest({
   delegateMaxDepth = 1,
   delegateBranchFactor = 0,
   complexityBudget = null,
-  capabilityRoutingPolicySummary = ""
+  capabilityRoutingPolicySummary = "",
+  outputLocale = "en-US"
 }) {
   return {
     instructions: [
       "You are the controller of a multi-model agent cluster.",
       buildDateGuard(),
+      buildOutputLanguageInstruction(outputLocale),
       "Break the user objective into concrete subtasks that can be executed by the listed group leaders.",
       "Never infer a different 'actual current date' from background knowledge. Use only the authoritative runtime clock provided below.",
       "Use staged workflow phases when helpful: research -> implementation -> validation -> handoff.",
@@ -156,6 +176,7 @@ export function buildPlanningRequest({
     input: [
       `User objective:\n${task}`,
       `Current local date context:\n${buildDateGuard()}`,
+      buildOutputLanguageInput(outputLocale),
       `Available workers:\n${formatWorkers(workers)}`,
       `Workspace context:\n${formatWorkspaceSummary(workspaceSummary)}`,
       `Delegation limits:\nmax_depth=${Math.max(0, Number(delegateMaxDepth) || 0)}\nmax_children_per_parent=${Math.max(0, Number(delegateBranchFactor) || 0)}`,
@@ -175,12 +196,14 @@ export function buildWorkerExecutionRequest({
   clusterPlan,
   worker,
   task,
-  dependencyOutputs
+  dependencyOutputs,
+  outputLocale = "en-US"
 }) {
   return {
     instructions: [
       `You are ${worker.label}, a specialist worker inside a multi-model cluster.`,
       buildDateGuard(),
+      buildOutputLanguageInstruction(outputLocale),
       "Complete only the assigned subtask and stay scoped.",
       "Never state that the actual current date is different from the authoritative runtime clock below.",
       "Be explicit about uncertainty and concrete about recommendations.",
@@ -198,6 +221,7 @@ export function buildWorkerExecutionRequest({
     input: [
       `Overall objective:\n${originalTask}`,
       `Current local date context:\n${buildDateGuard()}`,
+      buildOutputLanguageInput(outputLocale),
       `Worker capabilities:\nweb_search=${worker.webSearch ? "enabled" : "disabled"}`,
       `Assigned workflow phase:\n${task.phase || "implementation"}`,
       `Cluster strategy:\n${clusterPlan.strategy}`,
@@ -217,12 +241,14 @@ export function buildLeaderDelegationRequest({
   dependencyOutputs,
   delegateCount,
   depthRemaining,
-  runAgentBudget = null
+  runAgentBudget = null,
+  outputLocale = "en-US"
 }) {
   return {
     instructions: [
       `You are ${leader.label}, an agent inside a multi-model cluster.`,
       buildDateGuard(),
+      buildOutputLanguageInstruction(outputLocale),
       `You may create up to ${delegateCount} child agents for this assignment.`,
       Number(runAgentBudget?.requestedTotalAgents) > 0
         ? `The user explicitly requested ${runAgentBudget.requestedTotalAgents} total agents for the whole cluster run. That number applies to the entire run across all top-level leaders and child agents combined, not to this single parent task.`
@@ -233,6 +259,7 @@ export function buildLeaderDelegationRequest({
       "You may also choose 0 child agents if the task is already atomic and should be executed directly.",
       "When child-agent budget is available and the task is not obviously atomic, prefer delegating to child agents instead of executing everything yourself.",
       "If you delegate, child tasks must be narrower, non-overlapping, and independently executable whenever possible.",
+      "If one child really must consume another child's artifact or findings, declare that explicitly with dependsOn. Do not leave that dependency implicit.",
       "For coding or workspace tasks, avoid assigning overlapping file edits to different child agents.",
       "For research tasks, split by source bucket, case batch, or question cluster to reduce duplicated browsing.",
       "Do not make sibling child agents depend on another sibling's not-yet-written workspace file. Have siblings return findings to you, and let the parent synthesize any shared artifact.",
@@ -242,11 +269,12 @@ export function buildLeaderDelegationRequest({
       buildArtifactGuard(),
       "Provide a short public thinking summary that can be shown in a UI. Do not reveal hidden chain-of-thought.",
       "Return JSON only.",
-      'Schema: {"thinkingSummary":"string","delegationSummary":"string","delegateCount":0,"subtasks":[{"id":"sub_1","title":"string","instructions":"string","expectedOutput":"string"}]}'
+      'Schema: {"thinkingSummary":"string","delegationSummary":"string","delegateCount":0,"subtasks":[{"id":"sub_1","title":"string","instructions":"string","dependsOn":["sub_0"],"expectedOutput":"string"}]}'
     ].join(" "),
     input: [
       `Overall objective:\n${originalTask}`,
       `Current local date context:\n${buildDateGuard()}`,
+      buildOutputLanguageInput(outputLocale),
       `Cluster strategy:\n${clusterPlan.strategy}`,
       `Assigned agent task:\n${JSON.stringify(task, null, 2)}`,
       dependencyOutputs.length
@@ -263,18 +291,21 @@ export function buildLeaderSynthesisRequest({
   leader,
   task,
   dependencyOutputs,
-  subordinateResults
+  subordinateResults,
+  outputLocale = "en-US"
 }) {
   return {
     instructions: [
       `You are ${leader.label}, an agent synthesizing child-agent results.`,
       buildDateGuard(),
+      buildOutputLanguageInstruction(outputLocale),
       "Merge the child outputs into one coherent result for the assigned task.",
       "Never state that the actual current date differs from the authoritative runtime clock below.",
       "Resolve overlaps, highlight conflicts, and preserve concrete evidence or file outputs.",
       buildIdentityLock(originalTask),
       buildArtifactGuard(),
       "Do not claim verification passed if child results failed verification or could not prove the requested artifact exists.",
+      "If the assigned task expects a concrete file artifact and child agents only produced source material, still return the final structured content, deliverable filename, and any artifact path hints needed for runtime materialization.",
       "Provide a short public thinking summary that can be shown in a UI. Do not reveal hidden chain-of-thought.",
       "Return JSON only.",
       'Schema: {"thinkingSummary":"string","summary":"string","keyFindings":["string"],"risks":["string"],"deliverables":["string"],"generatedFiles":["string"],"confidence":"low|medium|high","followUps":["string"],"delegationNotes":["string"],"verificationStatus":"not_applicable|passed|failed"}'
@@ -282,6 +313,7 @@ export function buildLeaderSynthesisRequest({
     input: [
       `Overall objective:\n${originalTask}`,
       `Current local date context:\n${buildDateGuard()}`,
+      buildOutputLanguageInput(outputLocale),
       `Cluster strategy:\n${clusterPlan.strategy}`,
       `Assigned agent task:\n${JSON.stringify(task, null, 2)}`,
       dependencyOutputs.length
@@ -292,11 +324,12 @@ export function buildLeaderSynthesisRequest({
   };
 }
 
-export function buildSynthesisRequest({ task, plan, executions }) {
+export function buildSynthesisRequest({ task, plan, executions, outputLocale = "en-US" }) {
   return {
     instructions: [
       "You are the controller synthesizing outputs from a multi-model cluster.",
       buildDateGuard(),
+      buildOutputLanguageInstruction(outputLocale),
       "Never override the authoritative runtime clock with model priors or background assumptions.",
       "Produce a final answer for the user that resolves overlaps and highlights disagreements.",
       "If source-backed verification is required and your model supports web search, use it before finalizing claims.",
@@ -309,6 +342,7 @@ export function buildSynthesisRequest({ task, plan, executions }) {
     input: [
       `Original user objective:\n${task}`,
       `Current local date context:\n${buildDateGuard()}`,
+      buildOutputLanguageInput(outputLocale),
       `Plan:\n${JSON.stringify(plan, null, 2)}`,
       `Worker outputs:\n${JSON.stringify(executions, null, 2)}`
     ].join("\n\n")

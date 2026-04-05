@@ -506,14 +506,14 @@ export function createRunConsoleUi({
       return t("trace.detail.webSearch", { query: match[1] });
     }
 
-    match = detail.match(/^Stored session memory: (.+)$/i);
+    match = detail.match(/^(?:Stored session memory|已写入会话记忆)[：:]\s*(.+)$/i);
     if (match) {
       return t("trace.detail.memoryStored", { title: match[1] });
     }
 
-    match = detail.match(/^Recalled (\d+) session memory item\(s\)\.?$/i);
+    match = detail.match(/^(?:Recalled\s+(\d+)\s+session memory item\(s\)\.?|已召回\s+(\d+)\s+条会话记忆。?)$/i);
     if (match) {
-      return t("trace.detail.memoryRecalled", { count: metricNumber(match[1]) });
+      return t("trace.detail.memoryRecalled", { count: metricNumber(match[1] || match[2]) });
     }
 
     if (/invalid workspace json response/i.test(detail)) {

@@ -5,6 +5,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   buildSeaAssets,
   collectStaticAssets,
+  escapeNonAsciiForJs,
   parseImportClause,
   transformModuleSource,
   patchPeSubsystemBuffer
@@ -13,6 +14,7 @@ import { createAppState } from "../src/static/app-state.js";
 import { buildAgentLayout } from "../src/static/agent-graph-layout.js";
 import { getRunStateTextForEvent } from "../src/static/cluster-run-ui.js";
 import { formatModelTestRetryStatus } from "../src/static/model-connectivity-service.js";
+import { buildChatEntryFromEvent } from "../src/static/multi-agent-ui.js";
 import { describeOperationEvent } from "../src/static/operation-events.js";
 import { mergeSecretEntries } from "../src/static/secrets-ui.js";
 import { normalizeStringList, renderList } from "../src/static/ui-core.js";
@@ -259,6 +261,7 @@ test("app bootstrap refreshes locale-sensitive modules on language changes", asy
   assert.match(bootstrapJs, /modelsSchemesUi\?\.refreshLocale\?\.\(\)/);
   assert.match(bootstrapJs, /botUi\?\.refreshLocale\?\.\(\)/);
   assert.match(bootstrapJs, /multiAgentUi\?\.refreshLocale\?\.\(\)/);
+  assert.match(bootstrapJs, /getLocale:\s*\(\)\s*=>\s*localeUi\.getLocale\(\)/);
 });
 
 test("agent viz UI ships localized empty-state and inspector strings", async () => {
@@ -315,6 +318,7 @@ test("cluster run UI finalizes local cancellation immediately and syncs backend 
   const runUiJs = await readFile(new URL("../src/static/cluster-run-ui.js", import.meta.url), "utf8");
 
   assert.match(runUiJs, /const CANCEL_REQUEST_TIMEOUT_MS = 1800;/);
+  assert.match(runUiJs, /locale:\s*typeof getLocale === "function" \? getLocale\(\) : resolveRuntimeLocale\(\)/);
   assert.match(runUiJs, /void finalizeRemoteCancellation\(operationId\);/);
   assert.match(runUiJs, /finishOperation\(\{ closeDelayMs: 0 \}\);/);
   assert.match(runUiJs, /setSaveStatus\?\.\(translate\("run\.cancel\.renderRemote"\), "ok"\);/);
@@ -326,11 +330,48 @@ test("multi-agent chatroom prioritizes participant count and filters non-convers
   const styleCss = await readFile(new URL("../src/static/style.css", import.meta.url), "utf8");
 
   assert.match(multiAgentUiJs, /const CONVERSATIONAL_STAGE_SET = new Set\(\[/);
+  assert.match(multiAgentUiJs, /"leader_delegate_done"/);
   assert.match(multiAgentUiJs, /if \(!isConversationalStage\(stage\)\) \{\s*return null;\s*\}/);
   assert.match(multiAgentUiJs, /multiAgentChatSummary\.hidden = true;/);
   assert.match(multiAgentUiJs, /participants: state\.session\.participantCount \|\| 0/);
   assert.match(styleCss, /\.multi-agent-chat-summary\[hidden\]/);
   assert.match(styleCss, /\.agent-viz-lower \{\s*display: grid;\s*grid-template-columns: minmax\(0, 1fr\);/s);
+});
+
+test("buildChatEntryFromEvent renders subagent assignment and acknowledgement as dialogue", () => {
+  const settings = {
+    includeSystemMessages: true,
+    summarizeLongMessages: true
+  };
+  const created = buildChatEntryFromEvent(
+    {
+      stage: "subagent_created",
+      timestamp: "2026-04-05T10:00:00.000Z",
+      parentAgentLabel: "Research Leader",
+      agentLabel: "Research Child 01",
+      taskTitle: "Collect policy updates",
+      content: "Review the newest policy notes and return concise bullets."
+    },
+    settings
+  );
+  const started = buildChatEntryFromEvent(
+    {
+      stage: "subagent_start",
+      timestamp: "2026-04-05T10:00:01.000Z",
+      parentAgentLabel: "Research Leader",
+      agentLabel: "Research Child 01",
+      taskTitle: "Collect policy updates",
+      content: "Review the newest policy notes and return concise bullets."
+    },
+    settings
+  );
+
+  assert.equal(created?.speakerLabel, "Research Leader");
+  assert.equal(created?.targetLabel, "Research Child 01");
+  assert.match(created?.content || "", /请接手/);
+  assert.equal(started?.speakerLabel, "Research Child 01");
+  assert.equal(started?.targetLabel, "Research Leader");
+  assert.match(started?.content || "", /已接单/);
 });
 
 test("orchestrator publishes richer chat content for collaboration events", async () => {
@@ -339,7 +380,10 @@ test("orchestrator publishes richer chat content for collaboration events", asyn
   assert.match(orchestratorJs, /content:\s*agentTask\.instructions \|\| agentTask\.title \|\| ""/);
   assert.match(orchestratorJs, /summary:\s*result\.output\.summary \|\| ""/);
   assert.match(orchestratorJs, /targetAgentLabel:\s*agent\.parentAgentLabel \|\| ""/);
-  assert.match(orchestratorJs, /content:\s*subtask\.instructions \|\| subtask\.title \|\| ""/);
+  assert.match(
+    orchestratorJs,
+    /content:\s*(?:subtask|entry\.subtask)\.instructions \|\| (?:subtask|entry\.subtask)\.title \|\| ""/
+  );
 });
 
 test("buildAgentLayout expands subordinate radius for crowded child branches", () => {
@@ -477,6 +521,14 @@ test("parseImportClause supports default plus namespace imports", () => {
   assert.match(parsed, /const processModule = __importedModule9;/);
 });
 
+test("SEA bundle transformer escapes non-ASCII source safely", () => {
+  const escaped = escapeNonAsciiForJs('const text = "用户请求终止任务。";\n');
+
+  assert.equal(/[^\x00-\x7f]/.test(escaped), false);
+  assert.match(escaped, /\\u7528\\u6237/);
+  assert.doesNotThrow(() => new Function(escaped));
+});
+
 test("ui-core shared helpers normalize text lists and render escaped list output", () => {
   assert.deepEqual(normalizeStringList("alpha, beta\nalpha\ngamma"), ["alpha", "beta", "gamma"]);
   assert.match(renderList([], "Empty list."), /Empty list\./);
@@ -528,11 +580,22 @@ test("workspace UI keeps the clear-cache button wired", async () => {
   const workspaceJs = await readFile(new URL("../src/static/workspace-ui.js", import.meta.url), "utf8");
 
   assert.match(workspaceJs, /function clearClusterCache\(/);
+  assert.match(workspaceJs, /const FOLDER_PICK_POLL_INTERVAL_MS = 400;/);
+  assert.match(workspaceJs, /\/api\/system\/pick-folder\?jobId=/);
+  assert.match(workspaceJs, /payload\.status === "pending"/);
   assert.match(
     workspaceJs,
     /clearWorkspaceCacheButton\?\.addEventListener\("click", clearClusterCache\);/
   );
   assert.match(workspaceJs, /function refreshLocale\(/);
+});
+
+test("windows folder dialog launches hidden and in STA mode", async () => {
+  const dialogsJs = await readFile(new URL("../src/system/dialogs.mjs", import.meta.url), "utf8");
+
+  assert.match(dialogsJs, /"-Sta"/);
+  assert.match(dialogsJs, /"-WindowStyle"/);
+  assert.match(dialogsJs, /windowsHide: true/);
 });
 
 test("bot and scheme UI expose refreshLocale for runtime language switching", async () => {

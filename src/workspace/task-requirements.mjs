@@ -30,8 +30,20 @@ function normalizePhase(value) {
 
 function taskRequiresConcreteArtifact(task) {
   const text = textBlob(task?.title, task?.instructions, task?.expectedOutput);
+  const hasExplicitArtifactPath = /\.(docx?|pptx?|xlsx?|pdf|md|txt|csv|json)\b/.test(text);
+  const hasNegatedArtifactWrite =
+    /(\bdo not\b|\bdon't\b|\bwithout\b|\bavoid\b|\bnever\b).{0,20}\b(write|create|generate|save|export|deliver)\b/.test(text) ||
+    /\b(write|create|generate|save|export|deliver)\b.{0,20}\b(no|without)\b.{0,12}\b(file|document|report|artifact|files|documents|reports|artifacts)\b/.test(text) ||
+    /(?:不要|勿|禁止|无需|不必).{0,8}(?:写入|生成|创建|导出|保存).{0,8}(?:文件|文档|报告|交付物)/.test(text);
+
+  if (hasExplicitArtifactPath) {
+    return true;
+  }
+  if (hasNegatedArtifactWrite) {
+    return false;
+  }
+
   return (
-    /\.(docx?|pptx?|xlsx?|pdf|md|txt|csv|json)\b/.test(text) ||
     /(write|create|generate|save|export|deliver).{0,40}(file|document|report|artifact)/.test(text) ||
     /(\u6587\u4ef6|\u6587\u6863|\u62a5\u544a|\u4ea4\u4ed8\u7269|\u751f\u6210doc|\u751f\u6210docx)/.test(text)
   );

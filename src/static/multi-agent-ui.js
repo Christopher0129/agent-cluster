@@ -17,6 +17,7 @@ const CHATTY_STAGE_KINDS = new Map([
   ["worker_start", "message"],
   ["worker_done", "summary"],
   ["leader_delegate_start", "message"],
+  ["leader_delegate_done", "message"],
   ["leader_synthesis_start", "message"],
   ["subagent_created", "message"],
   ["subagent_start", "message"],
@@ -52,6 +53,7 @@ const CHATTY_STAGE_KINDS = new Map([
 
 const CONVERSATIONAL_STAGE_SET = new Set([
   "leader_delegate_start",
+  "leader_delegate_done",
   "subagent_created",
   "worker_start",
   "subagent_start",
@@ -71,6 +73,10 @@ function resolveRuntimeLocale() {
     return "en-US";
   }
   return "zh-CN";
+}
+
+function localizeConversationText(locale, englishText, chineseText) {
+  return locale === "zh-CN" ? chineseText : englishText;
 }
 
 function createFallbackTranslator() {
@@ -214,8 +220,7 @@ function isConversationalStage(stage) {
   return CONVERSATIONAL_STAGE_SET.has(String(stage || "").trim());
 }
 
-function resolveChatContentFromEvent(event, settings) {
-  const candidates = [event?.content, event?.summary, event?.thinkingSummary, event?.detail];
+function resolveChatContentFromCandidates(candidates, settings) {
   for (const value of candidates) {
     const normalized = summarizeContent(value, settings);
     if (normalized) {
@@ -223,7 +228,122 @@ function resolveChatContentFromEvent(event, settings) {
     }
   }
 
+  return "";
+}
+
+function resolveChatContentFromEvent(event, settings) {
+  const resolved = resolveChatContentFromCandidates(
+    [event?.content, event?.summary, event?.thinkingSummary, event?.detail],
+    settings
+  );
+  if (resolved) {
+    return resolved;
+  }
+
   return summarizeContent(event?.taskTitle || "", settings);
+}
+
+function joinConversationParts(parts) {
+  return parts
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
+function resolveQuotedTaskTitle(taskTitle, fallback) {
+  const normalized = String(taskTitle || "").trim();
+  return normalized
+    ? resolveRuntimeLocale() === "zh-CN"
+      ? `“${normalized}”`
+      : `"${normalized}"`
+    : fallback;
+}
+
+function buildConversationalContent(event, settings) {
+  const locale = resolveRuntimeLocale();
+  const stage = String(event?.stage || "").trim();
+  const taskTitle = summarizeContent(event?.taskTitle || "", settings);
+  const defaultDetail = resolveChatContentFromEvent(event, settings);
+  const taskSpecificDetail = resolveChatContentFromCandidates(
+    [event?.summary, event?.content, event?.thinkingSummary, event?.detail],
+    settings
+  );
+  const technicalDetail = resolveChatContentFromCandidates(
+    [event?.detail, event?.summary, event?.thinkingSummary, event?.content],
+    settings
+  );
+  const taskLabel = resolveQuotedTaskTitle(taskTitle, locale === "zh-CN" ? "该任务" : "this task");
+  const childTaskLabel = resolveQuotedTaskTitle(
+    taskTitle,
+    locale === "zh-CN" ? "该子任务" : "this child task"
+  );
+
+  switch (stage) {
+    case "leader_delegate_start":
+      return joinConversationParts([
+        localizeConversationText(locale, `I'm splitting ${taskLabel} into child assignments.`, `我来把 ${taskLabel} 拆成若干子任务。`),
+        taskSpecificDetail && taskSpecificDetail !== taskTitle
+          ? localizeConversationText(locale, `Focus: ${taskSpecificDetail}`, `重点：${taskSpecificDetail}`)
+          : ""
+      ]);
+    case "leader_delegate_done":
+      return joinConversationParts([
+        localizeConversationText(locale, "Delegation plan ready.", "分工计划已确定。"),
+        technicalDetail && technicalDetail !== taskTitle ? technicalDetail : ""
+      ]);
+    case "worker_start":
+      return joinConversationParts([
+        localizeConversationText(locale, `I'm taking ${taskLabel}.`, `我来处理 ${taskLabel}。`),
+        taskSpecificDetail && taskSpecificDetail !== taskTitle
+          ? localizeConversationText(locale, `Plan: ${taskSpecificDetail}`, `计划：${taskSpecificDetail}`)
+          : ""
+      ]);
+    case "subagent_created":
+      return joinConversationParts([
+        localizeConversationText(locale, `Please take ${childTaskLabel}.`, `请接手 ${childTaskLabel}。`),
+        taskSpecificDetail && taskSpecificDetail !== taskTitle
+          ? localizeConversationText(locale, `Focus: ${taskSpecificDetail}`, `重点：${taskSpecificDetail}`)
+          : ""
+      ]);
+    case "subagent_start":
+      return joinConversationParts([
+        localizeConversationText(locale, `Acknowledged ${childTaskLabel}.`, `已接单，开始处理 ${childTaskLabel}。`),
+        taskSpecificDetail && taskSpecificDetail !== taskTitle
+          ? localizeConversationText(locale, `Plan: ${taskSpecificDetail}`, `计划：${taskSpecificDetail}`)
+          : localizeConversationText(locale, "Starting now.", "马上开始。")
+      ]);
+    case "leader_synthesis_start":
+      return joinConversationParts([
+        localizeConversationText(locale, "I'm merging the child outputs into one answer.", "我正在汇总子任务结果。"),
+        taskSpecificDetail && taskSpecificDetail !== taskTitle ? taskSpecificDetail : ""
+      ]);
+    case "worker_done":
+      return joinConversationParts([
+        localizeConversationText(locale, `Finished ${taskLabel}.`, `已完成 ${taskLabel}。`),
+        taskSpecificDetail && taskSpecificDetail !== taskTitle
+          ? localizeConversationText(locale, `Result: ${taskSpecificDetail}`, `结果：${taskSpecificDetail}`)
+          : ""
+      ]);
+    case "subagent_done":
+      return joinConversationParts([
+        localizeConversationText(locale, `Completed ${childTaskLabel}.`, `已完成 ${childTaskLabel}。`),
+        taskSpecificDetail && taskSpecificDetail !== taskTitle
+          ? localizeConversationText(locale, `Result: ${taskSpecificDetail}`, `结果：${taskSpecificDetail}`)
+          : ""
+      ]);
+    case "worker_fallback":
+      return joinConversationParts([
+        localizeConversationText(locale, "Rerouted after a provider failure.", "因 provider 故障已切换执行者。"),
+        technicalDetail && technicalDetail !== taskTitle ? technicalDetail : ""
+      ]);
+    case "controller_fallback":
+      return joinConversationParts([
+        localizeConversationText(locale, "Controller fallback engaged.", "主控已切换到备用模型。"),
+        technicalDetail && technicalDetail !== taskTitle ? technicalDetail : ""
+      ]);
+    default:
+      return defaultDetail;
+  }
 }
 
 function shouldIgnoreEvent(event) {
@@ -277,7 +397,7 @@ function upsertParticipant(session, speakerLabel = "") {
   session.participantCount = session.participants.length;
 }
 
-function buildChatEntryFromEvent(event, settings) {
+export function buildChatEntryFromEvent(event, settings) {
   if (shouldIgnoreEvent(event)) {
     return null;
   }
@@ -295,7 +415,7 @@ function buildChatEntryFromEvent(event, settings) {
     return null;
   }
 
-  const sourceLabel = String(event.parentAgentLabel || event.agentLabel || event.modelLabel || "").trim();
+  const sourceLabel = String(event.agentLabel || event.modelLabel || event.parentAgentLabel || "").trim();
   const speakerLabel =
     stage === "subagent_created"
       ? String(event.parentAgentLabel || event.agentLabel || "").trim()
@@ -305,11 +425,11 @@ function buildChatEntryFromEvent(event, settings) {
       event.targetAgentLabel ||
         (stage === "subagent_created"
           ? event.agentLabel
-          : stage === "subagent_done"
+          : stage === "subagent_start" || stage === "subagent_done"
             ? event.parentAgentLabel
             : "")
     ).trim();
-  const content = resolveChatContentFromEvent(event, settings);
+  const content = buildConversationalContent(event, settings);
   if (!content) {
     return null;
   }

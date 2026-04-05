@@ -119,6 +119,7 @@ export async function handleBotIncoming(
       task: text,
       operationId,
       schemeId: String(body?.schemeId || "").trim(),
+      locale: String(body?.locale || "").trim(),
       projectDir,
       runtimeConfigOptions,
       operationTracker
