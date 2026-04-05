@@ -196,8 +196,15 @@ function unwrapSessionMemoryDetail(detail = "") {
   if (!normalized) {
     return "";
   }
-  const match = normalized.match(/^(?:Stored session memory|已写入会话记忆)[：:]\s*(.+)$/i);
-  return match ? String(match[1] || "").trim() : normalized;
+  let current = normalized;
+  for (let depth = 0; depth < 3; depth += 1) {
+    const match = current.match(/^(?:Stored session memory|已写入会话记忆)[：:]\s*(.+)$/i);
+    if (!match) {
+      break;
+    }
+    current = String(match[1] || "").trim();
+  }
+  return current;
 }
 
 export function describeOperationEvent(

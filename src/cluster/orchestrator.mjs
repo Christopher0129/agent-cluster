@@ -2113,11 +2113,47 @@ function buildWorkspaceCleanupPlan({
       downstreamByTaskId.set(normalizedDependencyId, dependents);
     }
   }
+  const executionArtifactRecords = executions
+    .map((execution) => {
+      const task = taskById.get(safeString(execution?.taskId));
+      const realizedArtifacts = collectExecutionArtifacts(execution?.output);
+      if (!task || !realizedArtifacts.length) {
+        return null;
+      }
+
+      const subordinateArtifacts = collectSubordinateArtifacts(execution?.output);
+      const requestedArtifact = taskRequiresConcreteArtifact(task)
+        ? safeString(
+            inferRequestedArtifact(
+              task,
+              {
+                ...(execution?.output || {}),
+                generatedFiles: [],
+                verifiedGeneratedFiles: []
+              },
+              workspaceRoot,
+              originalTask
+            )
+          )
+        : "";
+
+      return {
+        execution,
+        task,
+        realizedArtifacts,
+        subordinateArtifacts,
+        requestedArtifact,
+        hasRequestedArtifact: Boolean(requestedArtifact && realizedArtifacts.includes(requestedArtifact)),
+        phaseOrder: Math.max(0, phaseIndex(task.phase))
+      };
+    })
+    .filter(Boolean);
   const artifactProducerTaskIds = new Set(
-    executions
-      .filter((execution) => collectExecutionArtifacts(execution?.output).length)
-      .map((execution) => safeString(execution?.taskId))
-      .filter(Boolean)
+    executionArtifactRecords.map((record) => safeString(record.task?.id)).filter(Boolean)
+  );
+  const highestArtifactPhaseOrder = executionArtifactRecords.reduce(
+    (max, record) => Math.max(max, record.phaseOrder),
+    -1
   );
   const downstreamArtifactProducerCache = new Map();
 
@@ -2151,30 +2187,18 @@ function buildWorkspaceCleanupPlan({
   const keepFiles = new Set();
   const removableFiles = new Set();
 
-  for (const execution of executions) {
-    const task = taskById.get(safeString(execution?.taskId));
-    const realizedArtifacts = collectExecutionArtifacts(execution?.output);
-    if (!task || !realizedArtifacts.length) {
+  for (const record of executionArtifactRecords) {
+    const { task, realizedArtifacts, subordinateArtifacts, requestedArtifact, hasRequestedArtifact, phaseOrder } =
+      record;
+    const isFinalArtifactProducer = !hasDownstreamArtifactProducer(task.id);
+    const supersededByLaterPhase = highestArtifactPhaseOrder > phaseOrder;
+
+    if (supersededByLaterPhase) {
+      for (const artifact of realizedArtifacts) {
+        removableFiles.add(artifact);
+      }
       continue;
     }
-
-    const isFinalArtifactProducer = !hasDownstreamArtifactProducer(task.id);
-    const subordinateArtifacts = collectSubordinateArtifacts(execution?.output);
-    const requestedArtifact = taskRequiresConcreteArtifact(task)
-      ? safeString(
-          inferRequestedArtifact(
-            task,
-            {
-              ...(execution?.output || {}),
-              generatedFiles: [],
-              verifiedGeneratedFiles: []
-            },
-            workspaceRoot,
-            originalTask
-          )
-        )
-      : "";
-    const hasRequestedArtifact = requestedArtifact && realizedArtifacts.includes(requestedArtifact);
 
     if (isFinalArtifactProducer) {
       if (subordinateArtifacts.length && hasRequestedArtifact) {

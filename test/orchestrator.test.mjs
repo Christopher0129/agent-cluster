@@ -1145,6 +1145,147 @@ test("runClusterAnalysis infers dependent delegated child tasks from shared work
   }
 });
 
+test("runClusterAnalysis removes earlier-phase artifacts when a later phase delivers the final report", async () => {
+  const workspaceRoot = await mkdtemp(join(process.cwd(), ".tmp-orchestrator-phase-cleanup-"));
+
+  try {
+    const config = {
+      cluster: {
+        controller: "controller",
+        maxParallel: 2,
+        groupLeaderMaxDelegates: 0,
+        delegateMaxDepth: 0
+      },
+      workspace: {
+        resolvedDir: workspaceRoot
+      },
+      models: {
+        controller: {
+          id: "controller",
+          label: "Controller",
+          model: "gpt-5.4",
+          provider: "mock"
+        },
+        research_worker: {
+          id: "research_worker",
+          label: "Research Worker",
+          model: "model-r",
+          provider: "mock",
+          specialties: ["research"]
+        },
+        implementation_worker: {
+          id: "implementation_worker",
+          label: "Implementation Worker",
+          model: "model-i",
+          provider: "mock",
+          specialties: ["implementation"]
+        }
+      }
+    };
+
+    const providerRegistry = new Map([
+      [
+        "controller",
+        new FakeProvider([
+          JSON.stringify({
+            objective: "Deliver a single final Word report",
+            strategy: "Research first, then produce the final report.",
+            tasks: [
+              {
+                id: "task_1",
+                phase: "research",
+                title: "Write the research briefing docx",
+                assignedWorker: "research_worker",
+                instructions: "Write `research/briefing.docx` in the workspace with the supporting analysis.",
+                dependsOn: [],
+                expectedOutput: "A concrete research/briefing.docx artifact."
+              },
+              {
+                id: "task_2",
+                phase: "implementation",
+                title: "Write the final report docx",
+                assignedWorker: "implementation_worker",
+                instructions: "Write `reports/final.docx` in the workspace as the final deliverable.",
+                dependsOn: [],
+                expectedOutput: "A concrete reports/final.docx artifact."
+              }
+            ]
+          }),
+          JSON.stringify({
+            finalAnswer: "The final report was delivered and intermediate artifacts were cleaned.",
+            executiveSummary: ["The later implementation phase superseded the earlier research artifact."],
+            consensus: ["Only the final report should remain in the workspace."],
+            disagreements: [],
+            nextActions: []
+          })
+        ])
+      ],
+      [
+        "research_worker",
+        new FakeProvider([
+          JSON.stringify({
+            action: "write_docx",
+            path: "research/briefing.docx",
+            content: "Research briefing content for the intermediate report.",
+            title: "Research Briefing"
+          }),
+          JSON.stringify({
+            action: "final",
+            summary: "Research briefing written.",
+            keyFindings: ["The intermediate research briefing exists in the workspace."],
+            risks: [],
+            deliverables: ["research/briefing.docx"],
+            confidence: "high",
+            followUps: [],
+            generatedFiles: ["research/briefing.docx"],
+            verificationStatus: "passed"
+          })
+        ])
+      ],
+      [
+        "implementation_worker",
+        new FakeProvider([
+          JSON.stringify({
+            action: "write_docx",
+            path: "reports/final.docx",
+            content: "Final delivered report content.",
+            title: "Final Report"
+          }),
+          JSON.stringify({
+            action: "final",
+            summary: "Final report written.",
+            keyFindings: ["The requested final deliverable exists in the workspace."],
+            risks: [],
+            deliverables: ["reports/final.docx"],
+            confidence: "high",
+            followUps: [],
+            generatedFiles: ["reports/final.docx"],
+            verificationStatus: "passed"
+          })
+        ])
+      ]
+    ]);
+
+    const result = await runClusterAnalysis({
+      task: "Generate a final Word report in the workspace.",
+      config,
+      providerRegistry
+    });
+
+    const researchPath = join(workspaceRoot, "research", "briefing.docx");
+    const finalPath = join(workspaceRoot, "reports", "final.docx");
+    const finalText = await readDocumentText(finalPath);
+
+    assert.equal(existsSync(researchPath), false);
+    assert.equal(existsSync(finalPath), true);
+    assert.equal(finalText.includes("Final delivered report content."), true);
+    assert.equal(result.workspaceCleanup?.removedFiles.includes("research/briefing.docx"), true);
+    assert.equal(result.workspaceCleanup?.keepFiles.includes("reports/final.docx"), true);
+  } finally {
+    await rm(workspaceRoot, { recursive: true, force: true });
+  }
+});
+
 test("runClusterAnalysis applies maxParallel as a shared gate across workers and subagents", async () => {
   const concurrency = {
     current: 0,

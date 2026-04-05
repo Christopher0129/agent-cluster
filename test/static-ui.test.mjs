@@ -109,6 +109,17 @@ test("describeOperationEvent renders workspace JSON repair as a completed auto-f
   assert.doesNotMatch(repairText, /正在修复/);
 });
 
+test("describeOperationEvent strips repeated session-memory prefixes", () => {
+  const memoryWriteText = describeOperationEvent({
+    stage: "memory_write",
+    agentLabel: "调研组长 · kimi code",
+    detail: "已写入会话记忆：已写入会话记忆：调研组长 · kimi code · 研究结论"
+  });
+
+  assert.match(memoryWriteText, /调研组长 · kimi code 已写入会话记忆：调研组长 · kimi code · 研究结论/);
+  assert.doesNotMatch(memoryWriteText, /已写入会话记忆：已写入会话记忆：/);
+});
+
 test("describeOperationEvent localizes worker fallback events", () => {
   const fallbackText = describeOperationEvent({
     stage: "worker_fallback",
