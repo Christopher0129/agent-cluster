@@ -453,6 +453,72 @@ test("runWorkspaceToolLoop auto-materializes a requested docx artifact from depe
   }
 });
 
+test("runWorkspaceToolLoop locally salvages yaml-like workspace actions without invoking JSON repair", async () => {
+  const workspaceRoot = await mkdtemp(join(process.cwd(), ".tmp-workspace-local-salvage-"));
+  const events = [];
+
+  try {
+    const provider = new FakeProvider([
+      [
+        "action: write_docx",
+        "path: reports/salvaged.docx",
+        "title: Salvaged Report",
+        "reason: Write the requested report artifact.",
+        "content: |",
+        "  这是通过本地容错解析恢复出来的 Word 文档内容。",
+        "  第二段也应该被保留下来。"
+      ].join("\n"),
+      JSON.stringify({
+        action: "final",
+        summary: "The salvaged report was written.",
+        keyFindings: ["The malformed YAML-like tool output was handled locally."],
+        risks: [],
+        deliverables: ["reports/salvaged.docx"],
+        confidence: "high",
+        followUps: [],
+        generatedFiles: ["reports/salvaged.docx"],
+        verificationStatus: "passed"
+      })
+    ]);
+
+    const result = await runWorkspaceToolLoop({
+      provider,
+      worker: {
+        id: "salvage_worker",
+        label: "Salvage Worker",
+        model: "model-s",
+        webSearch: false
+      },
+      task: {
+        id: "salvage_docx",
+        phase: "handoff",
+        title: "Write salvaged report",
+        instructions: "Create reports/salvaged.docx in the workspace.",
+        expectedOutput: "A concrete salvaged.docx artifact."
+      },
+      originalTask: "Create reports/salvaged.docx in the workspace.",
+      clusterPlan: {
+        strategy: "Write the requested Word report."
+      },
+      dependencyOutputs: [],
+      workspaceRoot,
+      onEvent(event) {
+        events.push(event);
+      }
+    });
+
+    const reportPath = join(workspaceRoot, "reports", "salvaged.docx");
+    const reportText = await readDocumentText(reportPath);
+
+    assert.equal(existsSync(reportPath), true);
+    assert.equal(reportText.includes("这是通过本地容错解析恢复出来的 Word 文档内容。"), true);
+    assert.equal(result.verifiedGeneratedFiles.includes("reports/salvaged.docx"), true);
+    assert.equal(events.some((event) => event.stage === "workspace_json_repair"), false);
+  } finally {
+    await rm(workspaceRoot, { recursive: true, force: true });
+  }
+});
+
 test("runWorkspaceToolLoop forces a final summary after the tool-turn budget is exhausted", async () => {
   const workspaceRoot = await mkdtemp(join(process.cwd(), ".tmp-workspace-tool-budget-"));
   const events = [];

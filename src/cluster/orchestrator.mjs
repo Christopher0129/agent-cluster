@@ -4240,6 +4240,19 @@ export async function runClusterAnalysis({
               )
             })
           );
+          messages.push(
+            createSyntheticMultiAgentMessage({
+              speaker: peerAssignment.agent,
+              target: speakerAssignment.agent,
+              phase: safeString(peerAssignment.phase),
+              tone: "neutral",
+              content: localizeRunText(
+                runLocale,
+                "Understood. I will challenge weak assumptions early instead of waiting for the final synthesis.",
+                "收到。我会尽早质疑薄弱假设，不会等到最终综合时才提出。"
+              )
+            })
+          );
         }
       }
       return messages.filter(Boolean);
@@ -4266,14 +4279,74 @@ export async function runClusterAnalysis({
               )
             })
           );
+          messages.push(
+            createSyntheticMultiAgentMessage({
+              speaker: peerAssignment.agent,
+              target: agent,
+              phase: safeString(peerAssignment.phase),
+              tone: "neutral",
+              content: localizeRunText(
+                runLocale,
+                "I see your lane. If my evidence conflicts with yours, I will surface the mismatch immediately.",
+                "我看到你的任务线了。如果我的证据和你冲突，我会立刻把冲突点抛出来。"
+              )
+            })
+          );
         }
       }
       return messages.filter(Boolean);
     }
 
-    if (stage === "subagent_created" || stage === "subagent_start") {
+    if (stage === "subagent_created") {
       const siblings = resolveSiblingAssignments(parentAgent, agent);
       const peerAssignment = pickStrategicTarget(siblings, taskTitle || payload.detail);
+      messages.push(
+        createSyntheticMultiAgentMessage({
+          speaker: parentAgent || activeController,
+          target: agent,
+          phase,
+          tone: "neutral",
+          content: localizeRunText(
+            runLocale,
+            `Take ${taskLabel}. Keep me posted if you discover overlap with any sibling lane.`,
+            `请接手 ${taskLabel}。如果你发现和其他兄弟任务线有重叠，第一时间同步给我。`
+          )
+        })
+      );
+      if (peerAssignment) {
+        messages.push(
+          createSyntheticMultiAgentMessage({
+            speaker: peerAssignment.agent,
+            target: agent,
+            phase: safeString(peerAssignment.phase),
+            tone: "neutral",
+            content: localizeRunText(
+              runLocale,
+              "I am working on a nearby branch. Ping me if our evidence or files start to overlap.",
+              "我在处理相邻分支。如果我们的证据或文件开始重叠，直接来找我。"
+            )
+          })
+        );
+      }
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "subagent_start") {
+      const siblings = resolveSiblingAssignments(parentAgent, agent);
+      const peerAssignment = pickStrategicTarget(siblings, taskTitle || payload.detail);
+      messages.push(
+        createSyntheticMultiAgentMessage({
+          speaker: agent,
+          target: parentAgent || activeController,
+          phase,
+          tone: "neutral",
+          content: localizeRunText(
+            runLocale,
+            `Accepted ${taskLabel}. I will flag overlaps instead of silently diverging from sibling branches.`,
+            `已接手 ${taskLabel}。如果我发现和兄弟分支存在重叠，不会闷头各做各的，我会直接提示。`
+          )
+        })
+      );
       if (peerAssignment) {
         messages.push(
           createSyntheticMultiAgentMessage({
@@ -4313,6 +4386,19 @@ export async function runClusterAnalysis({
             )
           })
         );
+        messages.push(
+          createSyntheticMultiAgentMessage({
+            speaker: peerAssignment.agent,
+            target: agent,
+            phase: safeString(peerAssignment.phase),
+            tone: "ok",
+            content: localizeRunText(
+              runLocale,
+              "I will compare your branch against mine now and call out any mismatch before we merge.",
+              "我现在就拿你的分支和我的分支做比对，在合并前把不一致点挑出来。"
+            )
+          })
+        );
       } else if (parentAgent) {
         messages.push(
           createSyntheticMultiAgentMessage({
@@ -4324,6 +4410,84 @@ export async function runClusterAnalysis({
               runLocale,
               `My branch for ${taskLabel} is ready. Please compare it against the other lanes before synthesis.`,
               `我这条关于 ${taskLabel} 的分支已经完成。请在综合前和其他任务线做一次比对。`
+            )
+          })
+        );
+      }
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "workspace_read") {
+      const peerAssignment = parentAgent
+        ? pickStrategicTarget(resolveSiblingAssignments(parentAgent, agent), payload.detail)
+        : pickStrategicTarget(
+            multiAgentConversationState.topLevelAssignments.filter(
+              (assignment) => assignment.id !== findTopLevelAssignmentForAgent(agent, phase)?.id
+            ),
+            payload.detail
+          );
+      const targetAgent = peerAssignment?.agent || parentAgent || null;
+      if (targetAgent) {
+        messages.push(
+          createSyntheticMultiAgentMessage({
+            speaker: agent,
+            target: targetAgent,
+            phase,
+            tone: "neutral",
+            content: localizeRunText(
+              runLocale,
+              "I am reading the latest artifact bundle now. If you already depend on it, tell me what assumption matters most.",
+              "我正在读取最新的产物包。如果你也依赖它，告诉我你最关心哪条前提假设。"
+            )
+          })
+        );
+      }
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "workspace_write") {
+      const artifactPath = resolveWorkspaceArtifactHint(payload);
+      const peerAssignment = parentAgent
+        ? pickStrategicTarget(resolveSiblingAssignments(parentAgent, agent), artifactPath || payload.detail)
+        : pickStrategicTarget(
+            multiAgentConversationState.topLevelAssignments.filter(
+              (assignment) => assignment.id !== findTopLevelAssignmentForAgent(agent, phase)?.id
+            ),
+            artifactPath || payload.detail
+          );
+      const targetAgent = peerAssignment?.agent || parentAgent || null;
+      if (targetAgent) {
+        messages.push(
+          createSyntheticMultiAgentMessage({
+            speaker: agent,
+            target: targetAgent,
+            phase,
+            tone: "ok",
+            content: localizeRunText(
+              runLocale,
+              artifactPath
+                ? `I wrote ${artifactPath}. Pull it directly if it changes your lane, and challenge anything that looks inconsistent.`
+                : "I wrote a new workspace artifact. Pull it directly if it affects your lane, and challenge anything inconsistent.",
+              artifactPath
+                ? `我已经写入 ${artifactPath}。如果它会影响你的任务线，直接拿去用；若发现不一致，马上指出。`
+                : "我已经写入新的工作区产物。如果它会影响你的任务线，直接拿去用；若发现不一致，马上指出。"
+            )
+          })
+        );
+        messages.push(
+          createSyntheticMultiAgentMessage({
+            speaker: targetAgent,
+            target: agent,
+            phase: safeString(peerAssignment?.phase || phase),
+            tone: "neutral",
+            content: localizeRunText(
+              runLocale,
+              artifactPath
+                ? `Received ${artifactPath}. I will consume it directly and flag any contradiction instead of silently patching around it.`
+                : "Received the new artifact. I will consume it directly and flag any contradiction instead of silently patching around it.",
+              artifactPath
+                ? `收到 ${artifactPath}。我会直接消费它，不会悄悄绕过去；如果有矛盾我会直接指出。`
+                : "收到新的产物。我会直接消费它，不会悄悄绕过去；如果有矛盾我会直接指出。"
             )
           })
         );
@@ -4352,6 +4516,19 @@ export async function runClusterAnalysis({
               runLocale,
               `Fresh web evidence is in. Please check whether it changes your assumptions before we merge.`,
               "新的联网证据已经补进来了。请先检查它是否会改变你的分支判断，再进入合并。"
+            )
+          })
+        );
+        messages.push(
+          createSyntheticMultiAgentMessage({
+            speaker: targetAgent,
+            target: agent,
+            phase: safeString(peerAssignment?.phase || phase),
+            tone: "neutral",
+            content: localizeRunText(
+              runLocale,
+              "I will update my assumptions against the fresh evidence now. If anything no longer holds, I will say it explicitly.",
+              "我现在就用这批新证据回刷我的判断。如果有前提站不住了，我会明确说出来。"
             )
           })
         );

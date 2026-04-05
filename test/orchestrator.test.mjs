@@ -578,6 +578,10 @@ test("runClusterAnalysis expands group chat mode into discussion-style collabora
     result.multiAgentSession.messages.some((message) => /compare notes before synthesis|cross-check it against your lane/i.test(message.content)),
     true
   );
+  assert.equal(
+    result.multiAgentSession.messages.some((message) => /challenge weak assumptions early|flag any contradiction/i.test(message.content)),
+    true
+  );
 });
 
 test("runClusterAnalysis expands workflow mode into staged handoff messages", async () => {
