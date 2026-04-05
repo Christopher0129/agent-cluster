@@ -52,6 +52,62 @@ function uniqueStrings(items) {
   return Array.from(new Set(items.filter(Boolean).map((item) => String(item))));
 }
 
+const LOCAL_WORKSPACE_FIELD_ALIASES = new Map([
+  ["action", "action"],
+  ["tool", "action"],
+  ["toolaction", "action"],
+  ["tool_action", "action"],
+  ["toolname", "action"],
+  ["tool_name", "action"],
+  ["name", "action"],
+  ["method", "action"],
+  ["path", "path"],
+  ["filepath", "path"],
+  ["file_path", "path"],
+  ["filename", "path"],
+  ["file_name", "path"],
+  ["targetpath", "path"],
+  ["target_path", "path"],
+  ["paths", "paths"],
+  ["files", "files"],
+  ["content", "content"],
+  ["text", "content"],
+  ["body", "content"],
+  ["title", "title"],
+  ["reason", "reason"],
+  ["query", "query"],
+  ["search", "query"],
+  ["searchquery", "query"],
+  ["search_query", "query"],
+  ["domains", "domains"],
+  ["recency", "recencyDays"],
+  ["recencydays", "recencyDays"],
+  ["recency_days", "recencyDays"],
+  ["command", "command"],
+  ["cmd", "command"],
+  ["args", "args"],
+  ["arguments", "args"],
+  ["cwd", "cwd"],
+  ["summary", "summary"],
+  ["thinkingsummary", "thinkingSummary"],
+  ["thinking_summary", "thinkingSummary"],
+  ["keyfindings", "keyFindings"],
+  ["key_findings", "keyFindings"],
+  ["risks", "risks"],
+  ["deliverables", "deliverables"],
+  ["confidence", "confidence"],
+  ["followups", "followUps"],
+  ["follow_ups", "followUps"],
+  ["generatedfiles", "generatedFiles"],
+  ["generated_files", "generatedFiles"],
+  ["verifiedgeneratedfiles", "verifiedGeneratedFiles"],
+  ["verified_generated_files", "verifiedGeneratedFiles"],
+  ["verificationstatus", "verificationStatus"],
+  ["verification_status", "verificationStatus"],
+  ["tags", "tags"],
+  ["limit", "limit"]
+]);
+
 function renderWorkspaceTree(lines) {
   return lines.length ? lines.join("\n") : "(workspace is empty)";
 }
@@ -70,6 +126,200 @@ function normalizeInteger(value, fallback = 0) {
     return fallback;
   }
   return Math.floor(number);
+}
+
+function normalizeWorkspaceFieldKey(value) {
+  const normalized = String(value || "")
+    .trim()
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/[\s-]+/g, "_")
+    .replace(/[^\w]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .toLowerCase();
+  return LOCAL_WORKSPACE_FIELD_ALIASES.get(normalized) || "";
+}
+
+function stripWrappingQuotes(value) {
+  return String(value || "")
+    .trim()
+    .replace(/^["'`]+|["'`]+$/g, "")
+    .trim();
+}
+
+function tryParseLooseJson(value) {
+  const text = String(value || "").trim();
+  if (!text || !/^[\[{]/.test(text)) {
+    return null;
+  }
+  try {
+    return parseJsonFromText(text);
+  } catch {
+    return null;
+  }
+}
+
+function splitLooseList(value) {
+  const parsed = tryParseLooseJson(value);
+  if (Array.isArray(parsed)) {
+    return parsed.map((item) => stripWrappingQuotes(item)).filter(Boolean);
+  }
+  return String(value || "")
+    .split(/\r?\n|[;,，；]/)
+    .map((item) =>
+      stripWrappingQuotes(
+        String(item || "")
+          .replace(/^\s*[-*]\s*/, "")
+          .trim()
+      )
+    )
+    .filter(Boolean);
+}
+
+function parseLooseFieldMap(rawText) {
+  const lines = String(rawText || "").replace(/\r\n?/g, "\n").split("\n");
+  const fields = new Map();
+  let currentKey = "";
+  let currentValueLines = [];
+
+  const flush = () => {
+    if (!currentKey) {
+      return;
+    }
+    const combined = currentValueLines.join("\n").trim();
+    if (combined) {
+      fields.set(currentKey, combined);
+    }
+    currentKey = "";
+    currentValueLines = [];
+  };
+
+  for (const line of lines) {
+    const trimmed = String(line || "").trim();
+    if (!trimmed || trimmed === "```" || /^```[a-z0-9_-]*$/i.test(trimmed)) {
+      continue;
+    }
+
+    const match = line.match(/^\s*(?:[-*]\s*)?([A-Za-z_][\w-]*)\s*[:=]\s*(.*)$/);
+    const key = normalizeWorkspaceFieldKey(match?.[1] || "");
+    if (key) {
+      flush();
+      currentKey = key;
+      const inlineValue = String(match?.[2] || "").trim();
+      currentValueLines = inlineValue === "|" || inlineValue === ">" ? [] : [inlineValue];
+      continue;
+    }
+
+    if (!currentKey) {
+      continue;
+    }
+
+    currentValueLines.push(String(line || "").replace(/^\s+/, ""));
+  }
+
+  flush();
+  return fields;
+}
+
+function trySalvageWorkspaceActionPayload(rawText) {
+  const fields = parseLooseFieldMap(rawText);
+  if (!fields.size) {
+    return null;
+  }
+
+  const candidate = {};
+  for (const [key, value] of fields.entries()) {
+    candidate[key] = value;
+  }
+
+  if (candidate.action) {
+    candidate.action = stripWrappingQuotes(candidate.action);
+  }
+  if (candidate.path) {
+    candidate.path = stripWrappingQuotes(candidate.path);
+  }
+  if (candidate.title) {
+    candidate.title = stripWrappingQuotes(candidate.title);
+  }
+  if (candidate.reason) {
+    candidate.reason = stripWrappingQuotes(candidate.reason);
+  }
+  if (candidate.query) {
+    candidate.query = stripWrappingQuotes(candidate.query);
+  }
+  if (candidate.command) {
+    candidate.command = stripWrappingQuotes(candidate.command);
+  }
+  if (candidate.cwd) {
+    candidate.cwd = stripWrappingQuotes(candidate.cwd);
+  }
+  if (candidate.confidence) {
+    candidate.confidence = stripWrappingQuotes(candidate.confidence).toLowerCase();
+  }
+  if (candidate.verificationStatus) {
+    candidate.verificationStatus = stripWrappingQuotes(candidate.verificationStatus).toLowerCase();
+  }
+  if (candidate.recencyDays != null) {
+    const recency = Number(stripWrappingQuotes(candidate.recencyDays));
+    if (Number.isFinite(recency) && recency >= 0) {
+      candidate.recencyDays = Math.floor(recency);
+    } else {
+      delete candidate.recencyDays;
+    }
+  }
+  if (candidate.limit != null) {
+    const limit = Number(stripWrappingQuotes(candidate.limit));
+    if (Number.isFinite(limit) && limit >= 0) {
+      candidate.limit = Math.floor(limit);
+    } else {
+      delete candidate.limit;
+    }
+  }
+
+  for (const listKey of [
+    "paths",
+    "domains",
+    "args",
+    "tags",
+    "keyFindings",
+    "risks",
+    "deliverables",
+    "followUps",
+    "generatedFiles",
+    "verifiedGeneratedFiles"
+  ]) {
+    if (candidate[listKey] == null) {
+      continue;
+    }
+    const parsed = tryParseLooseJson(candidate[listKey]);
+    candidate[listKey] = Array.isArray(parsed)
+      ? parsed.map((item) => stripWrappingQuotes(item)).filter(Boolean)
+      : splitLooseList(candidate[listKey]);
+  }
+
+  if (candidate.files != null) {
+    const parsedFiles = tryParseLooseJson(candidate.files);
+    if (Array.isArray(parsedFiles)) {
+      candidate.files = parsedFiles;
+    } else if (candidate.path && typeof candidate.content === "string") {
+      candidate.files = [
+        {
+          path: candidate.path,
+          content: candidate.content
+        }
+      ];
+    } else {
+      delete candidate.files;
+    }
+  }
+
+  if (candidate.content != null) {
+    candidate.content = String(candidate.content);
+  }
+  if (!candidate.action && (candidate.summary || candidate.keyFindings || candidate.followUps)) {
+    candidate.action = WORKSPACE_ACTIONS.FINAL;
+  }
+
+  return Object.keys(candidate).length ? candidate : null;
 }
 
 function resolveMaxToolTurns(phase) {
@@ -476,21 +726,7 @@ async function parseWorkspaceActionPayload({
     parsed = parseJsonFromText(rawText);
   } catch (error) {
     parseError = error;
-    try {
-      parsed = await requestWorkspaceJsonRepair({
-        provider,
-        invokeModel,
-        worker,
-        task,
-        taskRequirements,
-        rawText,
-        onRetry,
-        onEvent,
-        signal
-      });
-    } catch {
-      throw error;
-    }
+    parsed = trySalvageWorkspaceActionPayload(rawText);
   }
 
   const tryValidate = (candidate) => {
@@ -518,8 +754,8 @@ async function parseWorkspaceActionPayload({
   try {
     return tryValidate(parsed);
   } catch (error) {
-    if (parseError && !parsed) {
-      throw parseError;
+    if (!parseError) {
+      throw error;
     }
   }
 
