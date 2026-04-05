@@ -416,7 +416,7 @@
               data-console-panel="connectivity"
               data-panel-kicker="通联"
               data-panel-title="模型通联"
-              data-panel-description="把当前方案的模型连通性测试移动到左侧菜单，不再占用右侧运行态视图。"
+              data-panel-description="集中查看当前方案下各模型的基础回复、联网搜索、Thinking 和降级状态诊断。"
               hidden
             >
               <section class="subpanel">
@@ -687,30 +687,32 @@
               <div id="agentVizTooltip" class="agent-viz-tooltip" hidden></div>
             </div>
 
-            <div id="agentVizInspector" class="agent-viz-inspector">
-              <p class="placeholder">运行后点击节点查看详情，悬停可预览当前动作。</p>
-            </div>
-
-            <div class="agent-viz-chatroom">
-              <div class="agent-inspector-head">
-                <div>
-                  <h3 id="multiAgentChatTitle">Agent 聊天室</h3>
-                  <p id="multiAgentChatDescription" class="muted section-copy">
-                    开启左侧的多智能体框架后，这里会展示主控、组长和子 Agent 之间的交流细节。
-                  </p>
-                </div>
-                <div class="agent-inspector-meta">
-                  <span id="multiAgentChatStatus" class="chip">未启用</span>
-                  <span id="multiAgentChatMeta" class="chip">动态群聊 · 0 条消息</span>
-                </div>
+            <div class="agent-viz-lower">
+              <div id="agentVizInspector" class="agent-viz-inspector">
+                <p class="placeholder">运行后点击节点查看详情，悬停可预览当前动作。</p>
               </div>
 
-              <div id="multiAgentChatSummary" class="multi-agent-chat-summary">
-                <p class="placeholder">等待运行后生成会话摘要。</p>
-              </div>
+              <div class="agent-viz-chatroom">
+                <div class="agent-inspector-head">
+                  <div>
+                    <h3 id="multiAgentChatTitle">协作聊天室</h3>
+                    <p id="multiAgentChatDescription" class="muted section-copy">
+                      开启左侧的多智能体框架后，这里会展示主控、组长和子代理之间的交流细节。
+                    </p>
+                  </div>
+                  <div class="agent-inspector-meta">
+                    <span id="multiAgentChatStatus" class="chip">未启用</span>
+                    <span id="multiAgentChatMeta" class="chip">参与智能体 0</span>
+                  </div>
+                </div>
 
-              <div id="multiAgentChatroom" class="multi-agent-chatroom">
-                <p class="placeholder">当前还没有协作消息。</p>
+                <div id="multiAgentChatSummary" class="multi-agent-chat-summary">
+                  <p class="placeholder">等待运行后生成会话摘要。</p>
+                </div>
+
+                <div id="multiAgentChatroom" class="multi-agent-chatroom">
+                  <p class="placeholder">当前还没有协作消息。</p>
+                </div>
               </div>
             </div>
           </div>

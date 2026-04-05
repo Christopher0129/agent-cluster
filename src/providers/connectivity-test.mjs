@@ -9,6 +9,7 @@ const SUPPORTED_AUTH_STYLES = new Set(["bearer", "api-key", "none"]);
 const SUPPORTED_REASONING_EFFORTS = new Set(["low", "medium", "high", "xhigh"]);
 const THINKING_PROBE_REPLY = "THINKING_OK";
 const WEB_SEARCH_PROBE_QUERY = "OpenAI API";
+const WEB_SEARCH_PROBE_OK_PREFIX = "SEARCH_OK";
 
 function mapSecrets(entries) {
   const secrets = {};
@@ -182,6 +183,21 @@ function createThinkingProbePrompt() {
       "2. Confirm whether reversing that sequence changes its last element.",
       `After reasoning, reply with exactly ${THINKING_PROBE_REPLY}.`
     ].join("\n")
+  };
+}
+
+function createWebSearchProbePrompt() {
+  return {
+    instructions: [
+      "You are a web-search capability probe.",
+      "If web search is available, you must perform exactly one live web search before answering.",
+      "Do not rely on prior knowledge.",
+      "Reply with exactly one line only."
+    ].join(" "),
+    input: [
+      `Search for "${WEB_SEARCH_PROBE_QUERY}" once, then reply exactly as: ${WEB_SEARCH_PROBE_OK_PREFIX} domain=<hostname>.`,
+      "If search is unavailable, reply exactly as: SEARCH_NO."
+    ].join(" ")
   };
 }
 
@@ -390,9 +406,19 @@ function detectThinkingEvidence(modelConfig, raw) {
   return detectChatThinking(raw) || detectResponsesThinking(raw) || detectAnthropicThinking(raw);
 }
 
+function parseWebSearchProbeMarker(reply) {
+  const match = String(reply || "").match(/domain=([^\s]+)/i);
+  return match ? String(match[1] || "").trim() : "";
+}
+
 function assessWorkflowProbe(modelConfig, workflowProbe) {
   const webSearchEnabled = Boolean(modelConfig?.webSearch);
-  const webSearchUsed = Boolean(workflowProbe?.usedWebSearch);
+  const dedicatedWebSearchProbe = workflowProbe?.webSearchProbe || null;
+  const webSearchUsed = webSearchEnabled
+    ? dedicatedWebSearchProbe
+      ? Boolean(dedicatedWebSearchProbe.verified)
+      : Boolean(workflowProbe?.usedWebSearch)
+    : false;
   const webSearchVerified = webSearchEnabled && webSearchUsed;
   const degradedBecauseWebSearch = webSearchEnabled && !webSearchUsed;
   const thinkingEnabled = Boolean(modelConfig?.thinkingEnabled);
@@ -405,9 +431,15 @@ function assessWorkflowProbe(modelConfig, workflowProbe) {
   if (degradedBecauseWebSearch && degradedBecauseThinking) {
     summary =
       "Basic probe passed, but the workflow checks did not confirm that either web search or thinking mode executed successfully on this model.";
+  } else if (
+    degradedBecauseWebSearch &&
+    String(dedicatedWebSearchProbe?.error || "").trim()
+  ) {
+    summary =
+      `Basic probe passed, but the dedicated web-search probe failed: ${String(dedicatedWebSearchProbe.error || "").trim()}`;
   } else if (degradedBecauseWebSearch) {
     summary =
-      "Basic probe passed, but the workflow probe did not confirm that web search executed successfully on this model.";
+      "Basic probe passed, but the dedicated web-search probe did not confirm that web search executed successfully on this model.";
   } else if (degradedBecauseThinking) {
     summary =
       "Basic probe passed, but the workflow checks did not confirm that thinking mode executed successfully on this model.";
@@ -437,10 +469,17 @@ function assessWorkflowProbe(modelConfig, workflowProbe) {
       used: webSearchUsed,
       verified: webSearchVerified,
       confirmationMethod:
+        String(dedicatedWebSearchProbe?.confirmationMethod || "").trim() ||
         String(workflowProbe?.webSearchEvidence?.confirmationMethod || "").trim() ||
         (workflowProbe?.reportedWebSearch ? "probe_report" : ""),
-      query: String(workflowProbe?.query || "").trim(),
-      marker: String(workflowProbe?.marker || "").trim()
+      query:
+        String(dedicatedWebSearchProbe?.query || "").trim() ||
+        String(workflowProbe?.query || "").trim(),
+      marker:
+        String(dedicatedWebSearchProbe?.marker || "").trim() ||
+        String(workflowProbe?.marker || "").trim(),
+      reply: String(dedicatedWebSearchProbe?.reply || "").trim(),
+      error: String(dedicatedWebSearchProbe?.error || "").trim()
     },
     thinking: {
       enabled: thinkingEnabled,
@@ -546,6 +585,53 @@ async function runWorkflowProbe(modelConfig, runtimeOptions = {}) {
   }
 }
 
+async function runWebSearchProbe(modelConfig, runtimeOptions = {}) {
+  const provider = createProbeProvider(
+    {
+      ...modelConfig,
+      webSearch: true
+    },
+    {
+      maxOutputTokens: 64,
+      timeoutMs: Math.max(90000, Number(modelConfig.timeoutMs) || 90000)
+    }
+  );
+  const prompt = createWebSearchProbePrompt();
+
+  try {
+    const response = await provider.invoke({
+      instructions: prompt.instructions,
+      input: prompt.input,
+      purpose: "connectivity_test_web_search",
+      onRetry: runtimeOptions.onRetry,
+      allowEmptyText: true
+    });
+
+    const reply = String(response.text || "").trim();
+    const webSearchEvidence = detectWebSearchEvidence(modelConfig, response);
+
+    return {
+      verified: Boolean(webSearchEvidence.observed),
+      confirmationMethod: String(webSearchEvidence.confirmationMethod || "").trim(),
+      query: WEB_SEARCH_PROBE_QUERY,
+      marker: parseWebSearchProbeMarker(reply),
+      reply,
+      error: "",
+      reportedOk: reply.startsWith(WEB_SEARCH_PROBE_OK_PREFIX)
+    };
+  } catch (error) {
+    return {
+      verified: false,
+      confirmationMethod: "",
+      query: WEB_SEARCH_PROBE_QUERY,
+      marker: "",
+      reply: "",
+      error: error.message,
+      reportedOk: false
+    };
+  }
+}
+
 async function runThinkingProbe(modelConfig, runtimeOptions = {}) {
   const provider = createProbeProvider(
     {
@@ -599,6 +685,13 @@ export async function testModelConnectivity(payload, runtimeOptions = {}) {
     : null;
   if (thinkingProbe) {
     workflowProbe.thinkingProbe = thinkingProbe;
+  }
+
+  const webSearchProbe = modelConfig.webSearch
+    ? await runWebSearchProbe(modelConfig, runtimeOptions)
+    : null;
+  if (webSearchProbe) {
+    workflowProbe.webSearchProbe = webSearchProbe;
   }
 
   const assessment = assessWorkflowProbe(modelConfig, workflowProbe);

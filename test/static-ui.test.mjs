@@ -217,6 +217,7 @@ test("sea main relaunches the packaged app hidden on Windows unless show-console
 
 test("app.js wires settings bootstrap explicitly", async () => {
   const bootstrapJs = await readFile(new URL("../src/static/app-bootstrap.js", import.meta.url), "utf8");
+  const multiAgentBlockMatch = bootstrapJs.match(/multiAgentUi = createMultiAgentUi\(\{([\s\S]*?)\n  \}\);/);
 
   assert.match(bootstrapJs, /import \{ createSettingsUi \} from "\.\/settings-ui\.js";/);
   assert.match(bootstrapJs, /import \{ createLocaleUi \} from "\.\/locale-ui\.js";/);
@@ -225,6 +226,11 @@ test("app.js wires settings bootstrap explicitly", async () => {
   assert.match(bootstrapJs, /batchRoleSelect: elements\.batchRoleSelect/);
   assert.match(bootstrapJs, /const bindingSteps = \[/);
   assert.match(bootstrapJs, /settingsUi\.loadSettings\(\)/);
+  assert.ok(multiAgentBlockMatch, "createMultiAgentUi block should exist");
+  assert.doesNotMatch(
+    multiAgentBlockMatch[1],
+    /translate:\s*\(\.\.\.args\)\s*=>\s*localeUi\.t\(\.\.\.args\)/
+  );
 });
 test("app bootstrap binds all interactive module event handlers", async () => {
   const bootstrapJs = await readFile(new URL("../src/static/app-bootstrap.js", import.meta.url), "utf8");
@@ -303,6 +309,37 @@ test("cluster run live feed uses operation-event localization directly", async (
 
   assert.match(runUiJs, /describeOperationEventMessage\(event, \{ formatDelay \}\)/);
   assert.doesNotMatch(runUiJs, /describeOperationEventMessage\(event, \{ formatDelay, translate \}\)/);
+});
+
+test("cluster run UI finalizes local cancellation immediately and syncs backend cancel asynchronously", async () => {
+  const runUiJs = await readFile(new URL("../src/static/cluster-run-ui.js", import.meta.url), "utf8");
+
+  assert.match(runUiJs, /const CANCEL_REQUEST_TIMEOUT_MS = 1800;/);
+  assert.match(runUiJs, /void finalizeRemoteCancellation\(operationId\);/);
+  assert.match(runUiJs, /finishOperation\(\{ closeDelayMs: 0 \}\);/);
+  assert.match(runUiJs, /setSaveStatus\?\.\(translate\("run\.cancel\.renderRemote"\), "ok"\);/);
+  assert.match(runUiJs, /setSaveStatus\?\.\(translate\("run\.cancel\.renderRemoteFailed"\), "warning"\);/);
+});
+
+test("multi-agent chatroom prioritizes participant count and filters non-conversation events", async () => {
+  const multiAgentUiJs = await readFile(new URL("../src/static/multi-agent-ui.js", import.meta.url), "utf8");
+  const styleCss = await readFile(new URL("../src/static/style.css", import.meta.url), "utf8");
+
+  assert.match(multiAgentUiJs, /const CONVERSATIONAL_STAGE_SET = new Set\(\[/);
+  assert.match(multiAgentUiJs, /if \(!isConversationalStage\(stage\)\) \{\s*return null;\s*\}/);
+  assert.match(multiAgentUiJs, /multiAgentChatSummary\.hidden = true;/);
+  assert.match(multiAgentUiJs, /participants: state\.session\.participantCount \|\| 0/);
+  assert.match(styleCss, /\.multi-agent-chat-summary\[hidden\]/);
+  assert.match(styleCss, /\.agent-viz-lower \{\s*display: grid;\s*grid-template-columns: minmax\(0, 1fr\);/s);
+});
+
+test("orchestrator publishes richer chat content for collaboration events", async () => {
+  const orchestratorJs = await readFile(new URL("../src/cluster/orchestrator.mjs", import.meta.url), "utf8");
+
+  assert.match(orchestratorJs, /content:\s*agentTask\.instructions \|\| agentTask\.title \|\| ""/);
+  assert.match(orchestratorJs, /summary:\s*result\.output\.summary \|\| ""/);
+  assert.match(orchestratorJs, /targetAgentLabel:\s*agent\.parentAgentLabel \|\| ""/);
+  assert.match(orchestratorJs, /content:\s*subtask\.instructions \|\| subtask\.title \|\| ""/);
 });
 
 test("buildAgentLayout expands subordinate radius for crowded child branches", () => {

@@ -37,6 +37,28 @@ test("testModelConnectivity confirms web search from chat tool traces with a com
         JSON.stringify({
           choices: [
             {
+              message: {
+                content: JSON.stringify({
+                  status: "ok",
+                  usedWebSearch: false,
+                  checks: ["structured:kimi-k2.5", "web-search"],
+                  query: "",
+                  marker: "kimi-k2.5",
+                  note: "search not executed"
+                })
+              }
+            }
+          ]
+        })
+      );
+      return;
+    }
+
+    if (requestCount === 3) {
+      response.end(
+        JSON.stringify({
+          choices: [
+            {
               finish_reason: "tool_calls",
               message: {
                 role: "assistant",
@@ -64,14 +86,7 @@ test("testModelConnectivity confirms web search from chat tool traces with a com
         choices: [
           {
             message: {
-              content: JSON.stringify({
-                status: "ok",
-                usedWebSearch: false,
-                checks: ["structured:kimi-k2.5", "web-search"],
-                query: "OpenAI API",
-                marker: "openai.com",
-                note: "ok"
-              })
+              content: "SEARCH_OK domain=openai.com"
             }
           }
         ]
@@ -101,13 +116,15 @@ test("testModelConnectivity confirms web search from chat tool traces with a com
     assert.equal(result.degraded, false);
     assert.equal(result.diagnostics.webSearch.verified, true);
     assert.equal(result.diagnostics.webSearch.confirmationMethod, "tool_trace");
-    assert.equal(result.diagnostics.workflowProbe.usedWebSearch, true);
+    assert.equal(result.diagnostics.workflowProbe.usedWebSearch, false);
     assert.equal(result.diagnostics.workflowProbe.reportedWebSearch, false);
     assert.equal(result.diagnostics.webSearch.query, "OpenAI API");
     assert.equal(result.diagnostics.webSearch.marker, "openai.com");
     assert.match(capturedBodies[1].messages[0].content, /compact workflow connectivity probe/i);
     assert.match(capturedBodies[1].messages[1].content, /OpenAI API/);
     assert.match(capturedBodies[1].messages[1].content, /exactly once/i);
+    assert.match(capturedBodies[2].messages[0].content, /web-search capability probe/i);
+    assert.match(capturedBodies[2].messages[1].content, /SEARCH_OK domain=<hostname>/i);
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }
@@ -147,6 +164,30 @@ test("testModelConnectivity confirms web search from anthropic server-tool trace
     if (requestCount === 2) {
       response.end(
         JSON.stringify({
+          id: "msg_workflow",
+          type: "message",
+          role: "assistant",
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                status: "ok",
+                usedWebSearch: false,
+                checks: ["structured:kimi-k2.5", "web-search"],
+                query: "",
+                marker: "kimi-k2.5",
+                note: "search not executed"
+              })
+            }
+          ]
+        })
+      );
+      return;
+    }
+
+    if (requestCount === 3) {
+      response.end(
+        JSON.stringify({
           id: "msg_pause",
           type: "message",
           role: "assistant",
@@ -171,14 +212,7 @@ test("testModelConnectivity confirms web search from anthropic server-tool trace
         content: [
           {
             type: "text",
-            text: JSON.stringify({
-              status: "ok",
-              usedWebSearch: false,
-              checks: ["structured:kimi-k2.5", "web-search"],
-              query: "OpenAI API",
-              marker: "openai.com",
-              note: "ok"
-            })
+            text: "SEARCH_OK domain=openai.com"
           }
         ]
       })
@@ -208,16 +242,17 @@ test("testModelConnectivity confirms web search from anthropic server-tool trace
     assert.equal(result.degraded, false);
     assert.equal(result.diagnostics.webSearch.verified, true);
     assert.equal(result.diagnostics.webSearch.confirmationMethod, "tool_trace");
-    assert.equal(result.diagnostics.workflowProbe.usedWebSearch, true);
+    assert.equal(result.diagnostics.workflowProbe.usedWebSearch, false);
     assert.equal(result.diagnostics.workflowProbe.reportedWebSearch, false);
     assert.match(capturedBodies[1].system, /compact workflow connectivity probe/i);
-    assert.deepEqual(capturedBodies[1].tools, [
+    assert.deepEqual(capturedBodies[2].tools, [
       {
         type: "web_search_20250305",
         name: "web_search",
         max_uses: 3
       }
     ]);
+    assert.match(capturedBodies[2].system, /web-search capability probe/i);
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }

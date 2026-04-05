@@ -288,8 +288,8 @@ function buildEnglishPatches(elements, root) {
     createPatch(
       () => panel("connectivity"),
       "dataset.panelDescription",
-      "Test the current scheme from the left menu instead of occupying the right-side runtime viewport.",
-      "把当前方案的模型通联测试收纳到左侧菜单，不再占用右侧运行视图。"
+      "Review basic reply, web-search, thinking, and degraded-state diagnostics for the active scheme.",
+      "集中查看当前方案下各模型的基础回复、联网搜索、Thinking 和降级状态诊断。"
     ),
     createPatch(() => heading("connectivity"), "textContent", "Scheme Connectivity", "方案通联"),
     createPatch(() => copy("connectivity"), "textContent", "Automatic checks run on startup, and you can re-test the active scheme here at any time.", "程序启动时会自动检查，也可以随时在这里重试当前方案。"),
@@ -388,10 +388,10 @@ function buildEnglishPatches(elements, root) {
     createPatch(() => root.querySelector("#agentVizStage"), "ariaLabel", "Agent cluster graph", "Agent 集群动态图"),
     createPatch(() => root.querySelector("#agentVizSvg"), "ariaLabel", "Agent cluster topology", "Agent 集群拓扑图"),
     createPatch(() => root.querySelector("#agentVizInspector .placeholder"), "textContent", "Click a node after the run starts to inspect details. Hovering previews the current action.", "运行后点击节点可查看详情，悬停时会预览当前动作。"),
-    createPatch(() => elements.multiAgentChatTitle, "textContent", "Agent Chatroom", "Agent 聊天室"),
-    createPatch(() => elements.multiAgentChatDescription, "textContent", "Enable the multi-agent framework on the left to inspect controller, leader, and child-agent collaboration here.", "开启左侧多智能体框架后，这里会展示主控、组长和子 Agent 之间的交流细节。"),
+    createPatch(() => elements.multiAgentChatTitle, "textContent", "Agent Chatroom", "协作聊天室"),
+    createPatch(() => elements.multiAgentChatDescription, "textContent", "Enable the multi-agent framework on the left to inspect controller, leader, and child-agent collaboration here.", "开启左侧多智能体框架后，这里会展示主控、组长和子代理之间的交流细节。"),
     createPatch(() => elements.multiAgentChatStatus, "textContent", "Disabled", "未启用"),
-    createPatch(() => elements.multiAgentChatMeta, "textContent", "Group Chat · 0 messages", "动态群聊 · 0 条消息"),
+    createPatch(() => elements.multiAgentChatMeta, "textContent", "Participants 0", "参与智能体 0"),
     createPatch(() => root.querySelector("#multiAgentChatSummary .placeholder"), "textContent", "The session summary appears here after a run starts.", "等待运行后生成会话摘要。"),
     createPatch(() => root.querySelector("#multiAgentChatroom .placeholder"), "textContent", "No collaboration messages yet.", "当前还没有协作消息。"),
     createPatch(() => elements.saveStatus, "textContent", "Local configuration loaded.", "本地配置已加载。")

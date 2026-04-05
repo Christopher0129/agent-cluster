@@ -230,7 +230,13 @@ export async function handleClusterRun(
   }
 }
 
-export async function handleOperationCancel(response, operationId, operationTracker) {
+export async function handleOperationCancel(
+  response,
+  operationId,
+  operationTracker,
+  projectDir,
+  runtimeConfigOptions = {}
+) {
   const result = operationTracker.cancel(operationId, {
     detail: "User requested task cancellation.",
     message: "Operation cancelled by user."
@@ -254,11 +260,27 @@ export async function handleOperationCancel(response, operationId, operationTrac
     return;
   }
 
+  const snapshot = operationTracker.getSnapshot(operationId, { afterSeq: 0 });
+  const cancelLog =
+    snapshot && snapshot.meta
+      ? await persistClusterOperationLog({
+          task: String(snapshot.meta.task || "").trim(),
+          operationId,
+          schemeId: String(snapshot.meta.schemeId || "").trim(),
+          projectDir,
+          runtimeConfigOptions,
+          operationTracker,
+          status: "cancel_requested",
+          error: new Error("Cancellation requested by user before the task completed.")
+        })
+      : null;
+
   sendJson(response, 200, {
     ok: true,
     operationId,
     cancellationRequested: true,
-    alreadyRequested: Boolean(result.alreadyRequested)
+    alreadyRequested: Boolean(result.alreadyRequested),
+    log: cancelLog
   });
 }
 

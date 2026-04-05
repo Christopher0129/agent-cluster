@@ -248,7 +248,9 @@ export function createAppServer({
         await handleOperationCancel(
           response,
           decodeURIComponent(operationCancelMatch[1]),
-          operationTracker
+          operationTracker,
+          projectDir,
+          runtimeConfigOptions
         );
         return;
       }

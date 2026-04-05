@@ -4074,11 +4074,20 @@ async function runClusterCancelRouteTests() {
       );
       const cancelPayload = await cancelResponse.json();
       const runPayload = await runPromise;
+      const logJsonPath = join(projectDir, "task-logs", `${operationId}.json`);
+      const logTextPath = join(projectDir, "task-logs", `${operationId}.log`);
+      const logJson = JSON.parse(await readFile(logJsonPath, "utf8"));
+      const logText = await readFile(logTextPath, "utf8");
 
       assert.equal(cancelPayload.ok, true);
       assert.equal(cancelPayload.cancellationRequested, true);
+      assert.equal(cancelPayload.log.textPath, `task-logs/${operationId}.log`);
       assert.equal(runPayload.ok, false);
       assert.equal(runPayload.cancelled, true);
+      assert.equal(logJson.status, "cancelled");
+      assert.match(logText, /Status: cancelled/);
+      assert.match(logText, /cancel_requested/);
+      assert.match(logText, /cluster_cancelled/);
     } finally {
       await new Promise((resolve) => appServer.close(resolve));
     }
@@ -4460,20 +4469,56 @@ async function runAnthropicConnectivityWebSearchTests() {
       return;
     }
 
+    if (attempt === 2) {
+      response.end(
+        JSON.stringify({
+          id: "msg_test_2",
+          type: "message",
+          role: "assistant",
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                status: "ok",
+                usedWebSearch: true,
+                checks: ["anthropic-structured:kimi-k2.5", "web-search:kimi-k2.5"],
+                note: "workflow probe ok"
+              })
+            }
+          ]
+        })
+      );
+      return;
+    }
+
+    if (attempt === 3) {
+      response.end(
+        JSON.stringify({
+          id: "msg_test_3",
+          type: "message",
+          role: "assistant",
+          stop_reason: "pause_turn",
+          content: [
+            {
+              type: "server_tool_use",
+              id: "toolu_web_1",
+              name: "web_search"
+            }
+          ]
+        })
+      );
+      return;
+    }
+
     response.end(
       JSON.stringify({
-        id: "msg_test_2",
+        id: "msg_test_4",
         type: "message",
         role: "assistant",
         content: [
           {
             type: "text",
-            text: JSON.stringify({
-              status: "ok",
-              usedWebSearch: true,
-              checks: ["anthropic-structured:kimi-k2.5", "web-search:kimi-k2.5"],
-              note: "workflow probe ok"
-            })
+            text: "SEARCH_OK domain=openai.com"
           }
         ]
       })
@@ -4504,11 +4549,12 @@ async function runAnthropicConnectivityWebSearchTests() {
     assert.equal(result.degraded, false);
     assert.equal(result.diagnostics.workflowProbe.usedWebSearch, true);
     assert.equal(result.diagnostics.webSearch.verified, true);
+    assert.equal(result.diagnostics.webSearch.confirmationMethod, "tool_trace");
     assert.deepEqual(result.diagnostics.workflowProbe.checks, [
       "anthropic-structured:kimi-k2.5",
       "web-search:kimi-k2.5"
     ]);
-    assert.deepEqual(capturedBodies[0].tools, [
+    assert.deepEqual(capturedBodies[2].tools, [
       {
         type: "web_search_20250305",
         name: "web_search",

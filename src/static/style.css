@@ -17,6 +17,7 @@
   --error: #ff6e8d;
   --shadow: 0 28px 90px rgba(2, 8, 20, 0.45);
   --shadow-soft: 0 18px 44px rgba(2, 8, 20, 0.3);
+  --agent-viewport-width: 46.5rem;
   --font-display: "Bahnschrift", "Segoe UI Variable Display", "Microsoft YaHei UI", sans-serif;
   --font-body: "Aptos", "Segoe UI Variable Text", "Microsoft YaHei UI", sans-serif;
 }
@@ -122,9 +123,9 @@ body::after {
 
 @media (min-width: 1320px) {
   .shell {
-    width: min(1460px, calc(100vw - 41.5rem));
+    width: min(1460px, calc(100vw - (var(--agent-viewport-width) + 4.25rem)));
     margin-left: 0.45rem;
-    margin-right: calc(38rem + 0.75rem);
+    margin-right: calc(var(--agent-viewport-width) + 1.5rem);
   }
 }
 
@@ -132,7 +133,7 @@ body::after {
   position: fixed;
   top: 1rem;
   right: 1rem;
-  width: min(37.25rem, calc(100vw - 1rem));
+  width: min(var(--agent-viewport-width), calc(100vw - 1rem));
   max-height: calc(100vh - 2rem);
   z-index: 30;
 }
@@ -175,8 +176,8 @@ body::after {
 
 .agent-viz-shell {
   display: grid;
-  grid-template-rows: auto minmax(22rem, 1fr) auto auto;
-  gap: 0.85rem;
+  grid-template-rows: auto minmax(20rem, 0.88fr) minmax(24rem, 1.12fr);
+  gap: 0.95rem;
   height: 100%;
 }
 
@@ -196,10 +197,31 @@ body::after {
   gap: 0.8rem;
 }
 
+.agent-inspector-head {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.agent-inspector-head > div:first-child {
+  min-width: 0;
+  flex: 1 1 15rem;
+}
+
 .agent-viz-controls,
 .agent-inspector-meta {
   gap: 0.55rem;
   flex-wrap: wrap;
+}
+
+.agent-inspector-meta {
+  justify-content: flex-start;
+  align-self: flex-start;
+  max-width: 100%;
+}
+
+.agent-inspector-meta > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .agent-viz-hint {
@@ -294,6 +316,7 @@ body::after {
 .agent-viz-tooltip strong,
 .agent-inspector-head h3 {
   font-size: 0.95rem;
+  line-height: 1.35;
 }
 
 .agent-tooltip-head span {
@@ -311,8 +334,8 @@ body::after {
 .agent-viz-inspector {
   display: grid;
   gap: 0.7rem;
-  min-height: 11rem;
-  max-height: clamp(13rem, 28vh, 21rem);
+  min-height: 10.5rem;
+  max-height: clamp(10.5rem, 20vh, 13rem);
   min-width: 0;
   padding: 0.95rem 1rem;
   border-radius: 20px;
@@ -322,17 +345,29 @@ body::after {
   overflow: auto;
 }
 
+.agent-viz-lower {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(10.5rem, auto) minmax(24rem, 1fr);
+  gap: 0.85rem;
+  min-height: 0;
+  align-items: stretch;
+}
+
 .agent-viz-connectivity,
 .agent-viz-chatroom {
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 0.75rem;
-  min-height: 9rem;
-  max-height: clamp(18rem, 42vh, 31rem);
+  min-height: 24rem;
+  max-height: clamp(24rem, 47vh, 38rem);
+  min-width: 0;
   padding: 0.95rem 1rem;
   border-radius: 20px;
   border: 1px solid rgba(95, 180, 255, 0.16);
   background: linear-gradient(180deg, rgba(8, 22, 45, 0.88), rgba(4, 11, 24, 0.84));
   box-shadow: inset 0 1px 0 rgba(184, 229, 255, 0.05);
+  overflow: hidden;
 }
 
 .scheme-connectivity-list {
@@ -490,6 +525,9 @@ body::after {
   background: rgba(95, 180, 255, 0.1);
   color: #d8edff;
   font-size: 0.76rem;
+  line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .agent-inspector-notes {
@@ -500,48 +538,58 @@ body::after {
 
 .multi-agent-chat-summary {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 0.65rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+  align-content: start;
+}
+
+.multi-agent-chat-summary[hidden] {
+  display: none !important;
 }
 
 .multi-agent-summary-card {
   display: grid;
   gap: 0.28rem;
-  padding: 0.75rem 0.82rem;
+  min-height: 4.8rem;
+  padding: 0.78rem 0.88rem;
   border-radius: 16px;
   border: 1px solid rgba(95, 180, 255, 0.14);
   background: linear-gradient(180deg, rgba(10, 24, 48, 0.84), rgba(5, 14, 29, 0.8));
+  overflow-wrap: anywhere;
 }
 
 .multi-agent-summary-card span {
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   color: var(--muted);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  text-transform: none;
 }
 
 .multi-agent-summary-card strong {
   font-size: 0.95rem;
+  line-height: 1.35;
   color: var(--ink);
 }
 
 .multi-agent-chatroom {
   display: grid;
-  gap: 0.65rem;
+  gap: 0.8rem;
   min-height: 0;
-  max-height: clamp(14rem, 32vh, 23rem);
+  max-height: none;
   overflow: auto;
-  padding-right: 0.2rem;
+  padding-right: 0.35rem;
   align-content: start;
+  min-width: 0;
 }
 
 .multi-agent-message {
   display: grid;
-  gap: 0.45rem;
-  padding: 0.78rem 0.88rem;
-  border-radius: 16px;
-  border: 1px solid rgba(95, 180, 255, 0.14);
-  background: linear-gradient(180deg, rgba(10, 24, 48, 0.82), rgba(5, 14, 29, 0.78));
+  gap: 0.55rem;
+  padding: 0.92rem 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(95, 180, 255, 0.16);
+  background: linear-gradient(180deg, rgba(10, 24, 48, 0.86), rgba(5, 14, 29, 0.8));
+  box-shadow: inset 0 1px 0 rgba(184, 229, 255, 0.05);
 }
 
 .multi-agent-message[data-kind="summary"] {
@@ -560,30 +608,34 @@ body::after {
 
 .multi-agent-message-head,
 .multi-agent-message-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
   gap: 0.6rem;
-  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .multi-agent-message-head {
-  align-items: flex-start;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
 }
 
 .multi-agent-message-meta strong {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .multi-agent-message-target,
 .multi-agent-message-time {
-  font-size: 0.76rem;
+  font-size: 0.78rem;
   color: var(--muted);
 }
 
 .multi-agent-message p {
   margin: 0;
-  line-height: 1.6;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .agent-viz-inspector::-webkit-scrollbar,
@@ -2304,6 +2356,10 @@ li + li {
     grid-template-rows: auto minmax(20rem, 1fr) auto;
   }
 
+  .agent-viz-lower {
+    grid-template-columns: 1fr;
+  }
+
   .agent-card-tooltip {
     position: static;
     width: auto;
@@ -2378,6 +2434,10 @@ li + li {
 
   .agent-viz-stage {
     min-height: 20rem;
+  }
+
+  .multi-agent-chat-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .panel-head,

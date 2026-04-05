@@ -216,8 +216,7 @@ export function createAppBootstrap(root = document) {
       multiAgentChatMeta: elements.multiAgentChatMeta,
       multiAgentChatSummary: elements.multiAgentChatSummary,
       multiAgentChatroom: elements.multiAgentChatroom
-    },
-    translate: (...args) => localeUi.t(...args)
+    }
   });
 
   modelsSchemesUi.setCallbacks({

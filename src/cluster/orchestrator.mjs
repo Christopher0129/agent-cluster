@@ -1575,7 +1575,8 @@ async function executeSingleTask({
         {
           type: "status",
           stage: lifecycle.start,
-          tone: "neutral"
+          tone: "neutral",
+          content: agentTask.instructions || agentTask.title || ""
         },
         agentTask
       );
@@ -1727,7 +1728,10 @@ async function executeSingleTask({
             type: "status",
             stage: lifecycle.done,
             tone: "ok",
-            thinkingSummary: result.output.thinkingSummary || ""
+            thinkingSummary: result.output.thinkingSummary || "",
+            summary: result.output.summary || "",
+            content: result.output.summary || result.output.thinkingSummary || "",
+            targetAgentLabel: agent.parentAgentLabel || ""
           },
           agentTask
         );
@@ -1781,6 +1785,7 @@ async function executeSingleTask({
         type: "status",
         stage: "leader_delegate_start",
         tone: "neutral",
+        content: agentTask.instructions || agentTask.title || "",
         detail:
           Number(runAgentBudget?.requestedTotalAgents) > 0
             ? `Planning up to ${delegateCount} child agent(s) for this task within the run-wide total target of ${runAgentBudget.requestedTotalAgents} agent(s).`
@@ -1885,6 +1890,9 @@ async function executeSingleTask({
         type: "status",
         stage: "leader_synthesis_start",
         tone: "neutral",
+        content:
+          delegationPlan.delegationSummary ||
+          `Merge ${subordinateExecutions.length} child result(s) into one consolidated answer.`,
         detail: `Synthesizing ${subordinateExecutions.length} child result(s).`
       },
       agentTask
@@ -2098,6 +2106,7 @@ async function executeSingleTask({
           type: "status",
           stage: lifecycle.start,
           tone: "neutral",
+          content: agentTask.instructions || agentTask.title || "",
           detail:
             preferredDelegateCount > 0 && depthRemaining > 0
               ? `Execution started with delegation budget ${preferredDelegateCount} and remaining depth ${depthRemaining}.`
@@ -2136,7 +2145,10 @@ async function executeSingleTask({
               type: "status",
               stage: lifecycle.done,
               tone: directResult.status === "failed" ? "warning" : "ok",
-              thinkingSummary: directResult.output.thinkingSummary || ""
+              thinkingSummary: directResult.output.thinkingSummary || "",
+              summary: directResult.output.summary || "",
+              content: directResult.output.summary || directResult.output.thinkingSummary || "",
+              targetAgentLabel: agent.parentAgentLabel || ""
             },
             agentTask
           );
@@ -2188,7 +2200,10 @@ async function executeSingleTask({
               type: "status",
               stage: lifecycle.done,
               tone: directResult.status === "failed" ? "warning" : "ok",
-              thinkingSummary: directResult.output.thinkingSummary || ""
+              thinkingSummary: directResult.output.thinkingSummary || "",
+              summary: directResult.output.summary || "",
+              content: directResult.output.summary || directResult.output.thinkingSummary || "",
+              targetAgentLabel: agent.parentAgentLabel || ""
             },
             agentTask
           );
@@ -2229,7 +2244,10 @@ async function executeSingleTask({
               type: "status",
               stage: lifecycle.done,
               tone: directResult.status === "failed" ? "warning" : "ok",
-              thinkingSummary: directResult.output.thinkingSummary || ""
+              thinkingSummary: directResult.output.thinkingSummary || "",
+              summary: directResult.output.summary || "",
+              content: directResult.output.summary || directResult.output.thinkingSummary || "",
+              targetAgentLabel: agent.parentAgentLabel || ""
             },
             agentTask
           );
@@ -2297,8 +2315,10 @@ async function executeSingleTask({
               type: "status",
               stage: "subagent_created",
               tone: "neutral",
+              content: subtask.instructions || subtask.title || "",
               detail: `Created child agent for: ${subtask.title}`,
-              thinkingSummary: delegationPlan.thinkingSummary || ""
+              thinkingSummary: delegationPlan.thinkingSummary || "",
+              targetAgentLabel: subordinateAgent.displayLabel || subordinateAgent.label || ""
             },
             subordinateTask
           );
@@ -2335,7 +2355,10 @@ async function executeSingleTask({
             type: "status",
             stage: lifecycle.done,
             tone: result.status === "failed" ? "warning" : "ok",
-            thinkingSummary: result.output.thinkingSummary || ""
+            thinkingSummary: result.output.thinkingSummary || "",
+            summary: result.output.summary || "",
+            content: result.output.summary || result.output.thinkingSummary || "",
+            targetAgentLabel: agent.parentAgentLabel || ""
           },
           agentTask
         );
@@ -2657,6 +2680,11 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
     const parentAgent = resolveParentRuntimeAgent(payload);
     const taskTitle = safeString(payload.taskTitle || payload.taskId);
     const detail = safeString(payload.detail);
+    const content =
+      safeString(payload.content) ||
+      safeString(payload.summary) ||
+      safeString(payload.thinkingSummary) ||
+      detail;
     const phase = safeString(payload.phase);
     const tone = safeString(payload.tone || "neutral") || "neutral";
 
@@ -2667,7 +2695,7 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
           stage,
           tone,
           speaker: agent,
-          content: detail || `${agent.displayLabel} started planning the collaboration.`
+          content: content || `${agent.displayLabel} started planning the collaboration.`
         };
       case "planning_done":
         return {
@@ -2675,7 +2703,7 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
           stage,
           tone: "ok",
           speaker: agent,
-          content: detail || `${agent.displayLabel} created ${payload.taskCount ?? 0} top-level task(s).`
+          content: content || `${agent.displayLabel} created ${payload.taskCount ?? 0} top-level task(s).`
         };
       case "phase_start":
       case "phase_done":
@@ -2685,7 +2713,7 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
           tone,
           phase,
           speaker: agent,
-          content: detail || `${stage === "phase_start" ? "Entering" : "Completed"} ${phase} phase.`
+          content: content || `${stage === "phase_start" ? "Entering" : "Completed"} ${phase} phase.`
         };
       case "worker_start":
       case "subagent_start":
@@ -2707,7 +2735,7 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
           phase,
           speaker: agent,
           content:
-            detail ||
+            content ||
             (taskTitle ? `${agent.displayLabel} is handling ${taskTitle}.` : `${agent.displayLabel} sent an update.`)
         };
       case "subagent_created":
@@ -2718,7 +2746,7 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
           phase,
           speaker: parentAgent || agent,
           target: agent,
-          content: detail || `Created ${agent.displayLabel}${taskTitle ? ` for ${taskTitle}` : ""}.`
+          content: content || `Created ${agent.displayLabel}${taskTitle ? ` for ${taskTitle}` : ""}.`
         };
       case "worker_done":
       case "subagent_done":
@@ -2732,8 +2760,9 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
           tone,
           phase,
           speaker: agent,
+          target: parentAgent || null,
           content:
-            detail ||
+            content ||
             (taskTitle ? `${agent.displayLabel} completed ${taskTitle}.` : `${agent.displayLabel} completed an update.`)
         };
       case "planning_retry":
@@ -2756,7 +2785,7 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
           phase,
           speaker: agent,
           content:
-            detail ||
+            content ||
             safeString(payload.finalAnswer) ||
             `${agent.displayLabel} reported ${stage.replaceAll("_", " ")}.`
         };

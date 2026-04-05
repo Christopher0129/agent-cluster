@@ -1,6 +1,8 @@
 import { describeOperationEvent as describeOperationEventMessage } from "./operation-events.js";
 
 const LIVE_EVENT_LIMIT = 60;
+const CANCEL_REQUEST_TIMEOUT_MS = 1800;
+const CANCEL_REQUEST_MAX_ATTEMPTS = 3;
 
 function interpolate(template, values = {}) {
   return String(template || "").replace(/\{(\w+)\}/g, (_, key) => String(values[key] ?? ""));
@@ -264,7 +266,11 @@ export function createClusterRunUi({
     agentVizUi.startRunTimer();
   }
 
-  function finishOperation() {
+  function finishOperation(options = {}) {
+    const closeDelayMs = Math.max(
+      0,
+      Number.isFinite(Number(options.closeDelayMs)) ? Number(options.closeDelayMs) : 300
+    );
     currentOperationId = "";
     if (cancelButton) {
       cancelButton.disabled = true;
@@ -273,7 +279,11 @@ export function createClusterRunUi({
     if (currentOperationStream) {
       const stream = currentOperationStream;
       currentOperationStream = null;
-      setTimeout(() => stream.close(), 300);
+      if (closeDelayMs === 0) {
+        stream.close();
+      } else {
+        setTimeout(() => stream.close(), closeDelayMs);
+      }
     }
   }
 
@@ -303,13 +313,25 @@ export function createClusterRunUi({
     }
   }
 
-  async function requestOperationCancellation(operationId, maxAttempts = 4) {
+  async function requestOperationCancellation(
+    operationId,
+    {
+      maxAttempts = CANCEL_REQUEST_MAX_ATTEMPTS,
+      timeoutMs = CANCEL_REQUEST_TIMEOUT_MS
+    } = {}
+  ) {
     let lastError = null;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      const requestController = new AbortController();
+      const timeoutHandle = setTimeout(() => {
+        requestController.abort(new Error("Cancel request timed out."));
+      }, timeoutMs);
+
       try {
         const response = await fetch(`/api/operations/${encodeURIComponent(operationId)}/cancel`, {
-          method: "POST"
+          method: "POST",
+          signal: requestController.signal
         });
         const payload = await response.json();
         if (!response.ok || payload.ok === false) {
@@ -320,14 +342,41 @@ export function createClusterRunUi({
         return payload;
       } catch (error) {
         lastError = error;
-        if (error?.status !== 404 || attempt === maxAttempts) {
+        const isTimeout =
+          error?.name === "AbortError" || error?.message === "Cancel request timed out.";
+        if ((!isTimeout && error?.status !== 404) || attempt === maxAttempts) {
           throw error;
         }
         await sleep(120 * attempt);
+      } finally {
+        clearTimeout(timeoutHandle);
       }
     }
 
     throw lastError || new Error("Cancel request failed.");
+  }
+
+  async function finalizeRemoteCancellation(operationId) {
+    const canReportStatus = () => !currentOperationId || currentOperationId === operationId;
+
+    try {
+      await requestOperationCancellation(operationId);
+      if (canReportStatus()) {
+        setSaveStatus?.(translate("run.cancel.renderRemote"), "ok");
+      }
+    } catch (error) {
+      if (canReportStatus()) {
+        setSaveStatus?.(translate("run.cancel.renderRemoteFailed"), "warning");
+      }
+      if (!currentOperationId) {
+        appendLiveEvent({
+          timestamp: new Date().toISOString(),
+          tone: "warning",
+          stage: "cluster_failed",
+          detail: translate("run.cancel.failed", { error: error.message })
+        });
+      }
+    }
   }
 
   function appendLiveEvent(event) {
@@ -524,7 +573,7 @@ export function createClusterRunUi({
         if (runButton) {
           runButton.disabled = false;
         }
-        finishOperation();
+        finishOperation({ closeDelayMs: 300 });
       }
     }
   }
@@ -533,6 +582,7 @@ export function createClusterRunUi({
     if (!currentOperationId) {
       return;
     }
+    const operationId = currentOperationId;
 
     if (cancelButton) {
       cancelButton.disabled = true;
@@ -551,40 +601,19 @@ export function createClusterRunUi({
       ...agentVizUi.resolveControllerEventMeta()
     };
     handleOperationEvent(localCancelEvent);
+    handleOperationEvent({
+      timestamp: new Date().toISOString(),
+      tone: "warning",
+      stage: "cluster_cancelled",
+      detail: translate("run.cancel.renderLocal"),
+      ...agentVizUi.resolveControllerEventMeta()
+    });
     renderClusterCancelledState(translate("run.cancel.renderLocal"));
-
-    try {
-      const operationId = currentOperationId;
-      await requestOperationCancellation(operationId);
-
-      const cancelledEvent = {
-        timestamp: new Date().toISOString(),
-        tone: "warning",
-        stage: "cluster_cancelled",
-        detail: translate("run.cancel.renderRemote"),
-        ...agentVizUi.resolveControllerEventMeta()
-      };
-      handleOperationEvent(cancelledEvent);
-      renderClusterCancelledState(translate("run.cancel.renderRemote"));
-      if (runButton) {
-        runButton.disabled = false;
-      }
-      finishOperation();
-    } catch (error) {
-      if (cancelButton) {
-        cancelButton.disabled = false;
-      }
-      renderClusterCancelledState(translate("run.cancel.renderRemoteFailed"));
-      appendLiveEvent({
-        timestamp: new Date().toISOString(),
-        tone: "error",
-        stage: "cluster_failed",
-        detail: translate("run.cancel.failed", { error: error.message })
-      });
-      if (runState) {
-        runState.textContent = translate("run.state.failed");
-      }
+    if (runButton) {
+      runButton.disabled = false;
     }
+    finishOperation({ closeDelayMs: 0 });
+    void finalizeRemoteCancellation(operationId);
   }
 
   function refreshLocale() {

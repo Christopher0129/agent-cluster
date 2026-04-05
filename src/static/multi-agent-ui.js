@@ -1,5 +1,3 @@
-import { describeOperationEvent } from "./operation-events.js";
-
 const DEFAULT_SETTINGS = Object.freeze({
   enabled: false,
   mode: "group_chat",
@@ -52,6 +50,18 @@ const CHATTY_STAGE_KINDS = new Map([
   ["cluster_failed", "summary"]
 ]);
 
+const CONVERSATIONAL_STAGE_SET = new Set([
+  "leader_delegate_start",
+  "subagent_created",
+  "worker_start",
+  "subagent_start",
+  "leader_synthesis_start",
+  "worker_done",
+  "subagent_done",
+  "worker_fallback",
+  "controller_fallback"
+]);
+
 function interpolate(template, values = {}) {
   return String(template || "").replace(/\{(\w+)\}/g, (_, key) => String(values[key] ?? ""));
 }
@@ -72,24 +82,19 @@ function createFallbackTranslator() {
       "multiAgent.strategy.round_robin": "轮询发言",
       "multiAgent.strategy.phase_priority": "阶段优先",
       "multiAgent.strategy.random": "随机发言",
-      "multiAgent.hint.disabled": "关闭后维持当前原始集群编排，右侧聊天室只保留占位说明。",
+      "multiAgent.hint.disabled": "关闭后维持当前原始集群编排，右侧协作区仅保留说明。",
       "multiAgent.hint.enabled": "开启后会记录协作消息、阶段接力和最终会话快照。群聊模式保留并行，顺序模式会串行化顶层任务，工作流模式会强化跨阶段交接。",
       "multiAgent.status.disabled": "未启用",
       "multiAgent.status.ready": "等待运行",
       "multiAgent.status.running": "协作中",
       "multiAgent.status.completed": "已完成",
       "multiAgent.status.terminated": "已终止",
-      "multiAgent.meta": "{mode} · {messages} 条消息",
-      "multiAgent.chat.title": "Agent 聊天室",
-      "multiAgent.chat.copy.disabled": "开启左侧的多智能体框架后，这里会展示主控、组长和子 Agent 之间的交流细节。",
+      "multiAgent.meta": "参与智能体 {participants}",
+      "multiAgent.chat.title": "协作聊天室",
+      "multiAgent.chat.copy.disabled": "开启左侧多智能体框架后，这里会展示主控、组长和子代理之间的交流细节。",
       "multiAgent.chat.copy.ready": "运行任务后，这里会按会话窗口实时展示协作过程与结果回放。",
       "multiAgent.chat.empty": "当前还没有协作消息。",
-      "multiAgent.chat.summary.mode": "协作模式",
-      "multiAgent.chat.summary.strategy": "发言策略",
-      "multiAgent.chat.summary.turns": "可见轮次",
-      "multiAgent.chat.summary.participants": "参与 Agent",
-      "multiAgent.chat.summary.window": "消息窗口",
-      "multiAgent.chat.summary.folded": "折叠消息",
+      "multiAgent.chat.summary.participants": "参与智能体",
       "multiAgent.chat.summary.none": "等待运行后生成会话摘要。",
       "multiAgent.chat.folded": "超过轮次上限的协作消息已折叠 {count} 条。",
       "multiAgent.chat.target": "发送给 {target}",
@@ -112,17 +117,12 @@ function createFallbackTranslator() {
       "multiAgent.status.running": "Running",
       "multiAgent.status.completed": "Completed",
       "multiAgent.status.terminated": "Terminated",
-      "multiAgent.meta": "{mode} · {messages} messages",
+      "multiAgent.meta": "Participants {participants}",
       "multiAgent.chat.title": "Agent Chatroom",
       "multiAgent.chat.copy.disabled": "Enable the multi-agent framework on the left to inspect controller, leader, and child-agent collaboration here.",
       "multiAgent.chat.copy.ready": "Run a task to stream collaboration updates and synthesis handoff details into this chatroom.",
       "multiAgent.chat.empty": "No collaboration messages yet.",
-      "multiAgent.chat.summary.mode": "Mode",
-      "multiAgent.chat.summary.strategy": "Speaker Strategy",
-      "multiAgent.chat.summary.turns": "Visible Turns",
       "multiAgent.chat.summary.participants": "Participants",
-      "multiAgent.chat.summary.window": "Window",
-      "multiAgent.chat.summary.folded": "Folded",
       "multiAgent.chat.summary.none": "The session summary appears here after a run starts.",
       "multiAgent.chat.folded": "{count} collaboration message(s) were folded after reaching the round cap.",
       "multiAgent.chat.target": "To {target}",
@@ -210,6 +210,22 @@ function summarizeContent(content, settings) {
   return `${normalized.slice(0, 317)}...`;
 }
 
+function isConversationalStage(stage) {
+  return CONVERSATIONAL_STAGE_SET.has(String(stage || "").trim());
+}
+
+function resolveChatContentFromEvent(event, settings) {
+  const candidates = [event?.content, event?.summary, event?.thinkingSummary, event?.detail];
+  for (const value of candidates) {
+    const normalized = summarizeContent(value, settings);
+    if (normalized) {
+      return normalized;
+    }
+  }
+
+  return summarizeContent(event?.taskTitle || "", settings);
+}
+
 function shouldIgnoreEvent(event) {
   const stage = String(event?.stage || "").trim();
   return (
@@ -267,6 +283,9 @@ function buildChatEntryFromEvent(event, settings) {
   }
 
   const stage = String(event.stage || "").trim();
+  if (!isConversationalStage(stage)) {
+    return null;
+  }
   const kind = CHATTY_STAGE_KINDS.get(stage);
   if (!kind) {
     return null;
@@ -282,11 +301,22 @@ function buildChatEntryFromEvent(event, settings) {
       ? String(event.parentAgentLabel || event.agentLabel || "").trim()
       : sourceLabel;
   const targetLabel =
-    stage === "subagent_created" ? String(event.agentLabel || "").trim() : "";
+    String(
+      event.targetAgentLabel ||
+        (stage === "subagent_created"
+          ? event.agentLabel
+          : stage === "subagent_done"
+            ? event.parentAgentLabel
+            : "")
+    ).trim();
+  const content = resolveChatContentFromEvent(event, settings);
+  if (!content) {
+    return null;
+  }
 
   return {
     id: `${stage}:${event.timestamp || Date.now()}:${event.agentId || event.modelId || Math.random()}`,
-    kind,
+    kind: kind === "summary" ? "message" : kind,
     stage,
     tone: String(event.tone || "neutral").trim() || "neutral",
     phase: String(event.phase || "").trim(),
@@ -294,7 +324,7 @@ function buildChatEntryFromEvent(event, settings) {
     timestamp: String(event.timestamp || new Date().toISOString()),
     speakerLabel,
     targetLabel,
-    content: summarizeContent(describeOperationEvent(event), settings)
+    content
   };
 }
 
@@ -501,37 +531,8 @@ export function createMultiAgentUi({
     if (!multiAgentChatSummary) {
       return;
     }
-
-    const session = state.session;
-    if (!session.messages.length) {
-      multiAgentChatSummary.innerHTML = `<p class="placeholder">${escapeHtml(
-        translate("multiAgent.chat.summary.none")
-      )}</p>`;
-      return;
-    }
-
-    const cards = [
-      [translate("multiAgent.chat.summary.mode"), translate(`multiAgent.mode.${state.settings.mode}`)],
-      [
-        translate("multiAgent.chat.summary.strategy"),
-        translate(`multiAgent.strategy.${state.settings.speakerStrategy}`)
-      ],
-      [translate("multiAgent.chat.summary.turns"), session.rounds || 0],
-      [translate("multiAgent.chat.summary.participants"), session.participantCount || 0],
-      [translate("multiAgent.chat.summary.window"), state.settings.messageWindow],
-      [translate("multiAgent.chat.summary.folded"), session.foldedMessageCount || 0]
-    ];
-
-    multiAgentChatSummary.innerHTML = cards
-      .map(
-        ([label, value]) => `
-          <article class="multi-agent-summary-card">
-            <span>${escapeHtml(label)}</span>
-            <strong>${escapeHtml(value)}</strong>
-          </article>
-        `
-      )
-      .join("");
+    multiAgentChatSummary.hidden = true;
+    multiAgentChatSummary.innerHTML = "";
   }
 
   function renderMessages() {
@@ -546,15 +547,20 @@ export function createMultiAgentUi({
       return;
     }
 
-    if (!state.session.messages.length) {
+    const conversationEntries = state.session.messages.filter(
+      (entry) => entry && isConversationalStage(entry.stage)
+    );
+
+    if (!conversationEntries.length) {
       multiAgentChatroom.innerHTML = `<p class="placeholder">${escapeHtml(
         translate("multiAgent.chat.empty")
       )}</p>`;
       return;
     }
 
-    multiAgentChatroom.innerHTML = state.session.messages
+    multiAgentChatroom.innerHTML = conversationEntries
       .map((entry) => {
+        const displayKind = entry.kind === "summary" && isConversationalStage(entry.stage) ? "message" : entry.kind;
         const phaseLabel = resolvePhaseLabel(entry.phase, translate);
         const targetCopy = entry.targetLabel
           ? `<span class="multi-agent-message-target">${escapeHtml(
@@ -563,7 +569,7 @@ export function createMultiAgentUi({
           : "";
 
         return `
-          <article class="multi-agent-message" data-kind="${escapeHtml(entry.kind)}" data-tone="${escapeHtml(
+          <article class="multi-agent-message" data-kind="${escapeHtml(displayKind)}" data-tone="${escapeHtml(
             entry.tone || "neutral"
           )}">
             <div class="multi-agent-message-head">
@@ -616,8 +622,7 @@ export function createMultiAgentUi({
     }
     if (multiAgentChatMeta) {
       multiAgentChatMeta.textContent = translate("multiAgent.meta", {
-        mode: translate(`multiAgent.mode.${state.settings.mode}`),
-        messages: state.session.totalMessageCount || 0
+        participants: state.session.participantCount || 0
       });
     }
   }
