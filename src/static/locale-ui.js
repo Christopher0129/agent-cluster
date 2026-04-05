@@ -167,6 +167,12 @@ function buildEnglishPatches(elements, root) {
     createPatch(() => fieldLabel("subordinateParallelInput"), "textContent", "Subordinate Parallel Limit", "组员并发上限"),
     createPatch(() => fieldLabel("groupLeaderMaxDelegatesInput"), "textContent", "Leader Delegate Cap", "组长委派上限"),
     createPatch(() => fieldLabel("delegateMaxDepthInput"), "textContent", "Delegate Max Depth", "委派最大层级"),
+    createPatch(
+      () => fieldLabel("subagentRetryFallbackThresholdInput"),
+      "textContent",
+      "Subagent Retry Fallback Threshold",
+      "子 Agent 重试接管阈值"
+    ),
     createPatch(() => fieldLabel("controllerSelect"), "textContent", "Controller Model", "主控模型"),
 
     createPatch(() => panel("schemes"), "dataset.panelKicker", "Scheme", "方案"),
@@ -200,10 +206,22 @@ function buildEnglishPatches(elements, root) {
     createPatch(() => fieldLabel("phaseImplementationInput"), "textContent", "Implementation", "实现"),
     createPatch(() => fieldLabel("phaseValidationInput"), "textContent", "Validation", "验证"),
     createPatch(() => fieldLabel("phaseHandoffInput"), "textContent", "Handoff", "交付"),
+    createPatch(
+      () => elements.subagentRetryFallbackThresholdInput,
+      "placeholder",
+      "Default 5, set 0 to disable automatic takeover",
+      "默认 5，0 表示关闭自动接管"
+    ),
     createPatch(() => phaseHints?.[0], "textContent", "Web search, case collection, and material gathering. For search-heavy tasks, 1 to 2 is usually enough.", "联网搜索、案例收集和资料整理。搜索密集任务通常 1 到 2 个就够。"),
     createPatch(() => phaseHints?.[1], "textContent", "Code changes, scripts, and generated files. Raise this according to your available models.", "写代码、改脚本和生成文件。可按你的可用模型数量适当放开。"),
     createPatch(() => phaseHints?.[2], "textContent", "Testing, review, and build checks. Keep it aligned with machine load.", "测试、复核和构建检查。建议结合机器负载控制。"),
     createPatch(() => phaseHints?.[3], "textContent", "Final document assembly and synthesis. Usually 1 is enough to avoid duplicate output.", "最终文档和汇总通常 1 个就够，避免重复输出。"),
+    createPatch(
+      () => phaseHints?.[4],
+      "textContent",
+      "If any child agent reaches this many model retries, the controller immediately reroutes the whole task to a standby leader. Set 0 to disable.",
+      "任一子 Agent 的模型重试达到该次数后，主控会立即把整个任务改派给备用组长。设为 0 可关闭。"
+    ),
 
     createPatch(() => panel("secrets"), "dataset.panelKicker", "Secrets", "密钥"),
     createPatch(() => panel("secrets"), "dataset.panelTitle", "Shared Secrets", "共享密钥"),

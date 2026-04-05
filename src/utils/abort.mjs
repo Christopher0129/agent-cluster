@@ -61,3 +61,49 @@ export function abortableSleep(ms, signal, fallback = DEFAULT_ABORT_MESSAGE) {
     signal?.addEventListener("abort", onAbort, { once: true });
   });
 }
+
+export function combineAbortSignals(...signals) {
+  const activeSignals = signals.filter(Boolean);
+  if (!activeSignals.length) {
+    return null;
+  }
+  if (activeSignals.length === 1) {
+    return activeSignals[0];
+  }
+  if (typeof AbortSignal !== "undefined" && typeof AbortSignal.any === "function") {
+    return AbortSignal.any(activeSignals);
+  }
+
+  const controller = new AbortController();
+  const listeners = [];
+
+  const cleanup = () => {
+    for (const [signal, listener] of listeners) {
+      signal.removeEventListener("abort", listener);
+    }
+    listeners.length = 0;
+  };
+
+  const forwardAbort = (sourceSignal) => {
+    if (controller.signal.aborted) {
+      return;
+    }
+    controller.abort(
+      sourceSignal?.reason || createAbortError(getAbortMessage(sourceSignal))
+    );
+    cleanup();
+  };
+
+  for (const signal of activeSignals) {
+    if (signal.aborted) {
+      forwardAbort(signal);
+      return controller.signal;
+    }
+
+    const listener = () => forwardAbort(signal);
+    signal.addEventListener("abort", listener, { once: true });
+    listeners.push([signal, listener]);
+  }
+
+  return controller.signal;
+}

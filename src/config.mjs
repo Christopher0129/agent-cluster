@@ -24,6 +24,7 @@ const DEFAULT_BOT_INSTALL_DIR = "bot-connectors";
 const DEFAULT_SUBORDINATE_MAX_PARALLEL = 3;
 const DEFAULT_GROUP_LEADER_MAX_DELEGATES = 10;
 const DEFAULT_DELEGATION_MAX_DEPTH = 1;
+const DEFAULT_SUBAGENT_RETRY_FALLBACK_THRESHOLD = 5;
 const DEFAULT_SCHEME_ID = "gpt_scheme";
 const DEFAULT_SCHEME_LABEL = "gpt方案";
 const DEFAULT_MULTI_AGENT_MODE = "group_chat";
@@ -808,6 +809,13 @@ function normalizeSavedSettingsPayload(payload, fallbackConfig) {
       DEFAULT_DELEGATION_MAX_DEPTH
     )
   );
+  const subagentRetryFallbackThreshold = normalizeNonNegativeInteger(
+    payload?.cluster?.subagentRetryFallbackThreshold,
+    normalizeNonNegativeInteger(
+      fallbackConfig?.cluster?.subagentRetryFallbackThreshold,
+      DEFAULT_SUBAGENT_RETRY_FALLBACK_THRESHOLD
+    )
+  );
   const phaseParallel = normalizePhaseParallelSettings(
     payload?.cluster?.phaseParallel,
     fallbackConfig?.cluster?.phaseParallel
@@ -909,6 +917,7 @@ function normalizeSavedSettingsPayload(payload, fallbackConfig) {
       subordinateMaxParallel,
       groupLeaderMaxDelegates,
       delegateMaxDepth,
+      subagentRetryFallbackThreshold,
       phaseParallel,
       agentBudgetProfiles,
       capabilityRoutingPolicy
@@ -1034,6 +1043,7 @@ export function getEditableSettings(projectDir, options = {}) {
         subordinateMaxParallel: runtimeConfig.cluster.subordinateMaxParallel,
         groupLeaderMaxDelegates: runtimeConfig.cluster.groupLeaderMaxDelegates,
         delegateMaxDepth: runtimeConfig.cluster.delegateMaxDepth,
+        subagentRetryFallbackThreshold: runtimeConfig.cluster.subagentRetryFallbackThreshold,
         phaseParallel: normalizePhaseParallelSettings(mergedConfig?.cluster?.phaseParallel),
         agentBudgetProfiles: normalizeAgentBudgetProfiles(mergedConfig?.cluster?.agentBudgetProfiles),
         capabilityRoutingPolicy: normalizeCapabilityRoutingPolicy(
@@ -1137,6 +1147,10 @@ export function loadRuntimeConfig(projectDir, options = {}) {
         parsed?.cluster?.delegateMaxDepth,
         DEFAULT_DELEGATION_MAX_DEPTH
       ),
+      subagentRetryFallbackThreshold: normalizeNonNegativeInteger(
+        parsed?.cluster?.subagentRetryFallbackThreshold,
+        DEFAULT_SUBAGENT_RETRY_FALLBACK_THRESHOLD
+      ),
       phaseParallel: normalizePhaseParallelSettings(parsed?.cluster?.phaseParallel),
       agentBudgetProfiles: normalizeAgentBudgetProfiles(parsed?.cluster?.agentBudgetProfiles),
       capabilityRoutingPolicy: normalizeCapabilityRoutingPolicy(
@@ -1194,6 +1208,7 @@ export function summarizeConfig(config) {
     subordinateMaxParallel: config.cluster.subordinateMaxParallel,
     groupLeaderMaxDelegates: config.cluster.groupLeaderMaxDelegates,
     delegateMaxDepth: config.cluster.delegateMaxDepth,
+    subagentRetryFallbackThreshold: config.cluster.subagentRetryFallbackThreshold,
     phaseParallel: config.cluster.phaseParallel,
     agentBudgetProfiles: config.cluster.agentBudgetProfiles,
     capabilityRoutingPolicy: config.cluster.capabilityRoutingPolicy,

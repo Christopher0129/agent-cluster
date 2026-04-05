@@ -166,6 +166,63 @@ class DependentWorkspaceLeaderProvider {
   }
 }
 
+class RetryThresholdLeaderProvider {
+  async invoke({ input, purpose, onRetry } = {}) {
+    if (purpose === "leader_delegation") {
+      return {
+        text: JSON.stringify({
+          thinkingSummary: "Split the work into two child buckets.",
+          delegationSummary: "Bucket A is flaky and Bucket B is straightforward.",
+          subtasks: [
+            {
+              id: "bucket_a",
+              title: "Retry-heavy bucket",
+              instructions: "Collect the retry-heavy source bucket.",
+              expectedOutput: "Retry-heavy findings."
+            },
+            {
+              id: "bucket_b",
+              title: "Stable bucket",
+              instructions: "Collect the stable source bucket.",
+              expectedOutput: "Stable findings."
+            }
+          ]
+        })
+      };
+    }
+
+    if (purpose === "leader_synthesis") {
+      return {
+        text: buildLeaderSynthesis("Primary leader should not reach synthesis after threshold escalation.")
+      };
+    }
+
+    const promptText = Array.isArray(input) ? input.join("\n\n") : String(input || "");
+
+    if (/\"id\"\s*:\s*\"task_1__bucket_a\"/.test(promptText)) {
+      for (let attempt = 1; attempt <= 8; attempt += 1) {
+        onRetry?.({
+          attempt,
+          maxRetries: 8,
+          nextDelayMs: 10,
+          status: 524,
+          message: `Transient upstream gateway failure ${attempt}.`,
+          purpose
+        });
+      }
+
+      const error = new Error("Retry threshold escalation did not interrupt the child execution.");
+      error.status = 524;
+      error.retryable = true;
+      throw error;
+    }
+
+    return {
+      text: buildWorkerOutput("Primary stable child completed.")
+    };
+  }
+}
+
 test("runClusterAnalysis plans, executes workers, and synthesizes", async () => {
   const config = {
     cluster: {
@@ -1500,6 +1557,133 @@ test("runClusterAnalysis releases child-agent budget before retrying a failed de
   assert.equal(result.executions[0].status, "completed");
   assert.equal(result.executions[0].output.subordinateCount, 2);
   assert.equal(events.filter((event) => event.stage === "worker_fallback").length, 1);
+});
+
+test("runClusterAnalysis hands a delegated task to a fallback leader after the subagent retry threshold is reached", async () => {
+  const events = [];
+  const config = {
+    cluster: {
+      controller: "controller",
+      maxParallel: 4,
+      subordinateMaxParallel: 1,
+      groupLeaderMaxDelegates: 2,
+      delegateMaxDepth: 1,
+      subagentRetryFallbackThreshold: 5
+    },
+    models: {
+      controller: {
+        id: "controller",
+        label: "Controller",
+        model: "gpt-5.4",
+        provider: "mock"
+      },
+      leader_primary: {
+        id: "leader_primary",
+        label: "Leader Primary",
+        model: "gpt-5.4",
+        provider: "mock",
+        baseUrl: "https://primary.example/v1",
+        webSearch: true,
+        specialties: ["research"]
+      },
+      leader_backup: {
+        id: "leader_backup",
+        label: "Leader Backup",
+        model: "gpt-5.4-mini",
+        provider: "mock",
+        baseUrl: "https://backup.example/v1",
+        webSearch: true,
+        specialties: ["research"]
+      }
+    }
+  };
+
+  const providerRegistry = new Map([
+    [
+      "controller",
+      new FakeProvider([
+        JSON.stringify({
+          objective: "Collect the latest facts with two child buckets.",
+          strategy: "Let the primary leader delegate, then reroute the whole task if the retry-heavy child gets stuck.",
+          tasks: [
+            {
+              id: "task_1",
+              phase: "research",
+              title: "Collect retry-heavy market facts",
+              assignedWorker: "leader_primary",
+              delegateCount: 2,
+              instructions: "Use web search to collect the latest facts from two source buckets.",
+              dependsOn: []
+            }
+          ]
+        }),
+        JSON.stringify({
+          finalAnswer: "Fallback leader completed the delegated task after the retry threshold triggered.",
+          executiveSummary: ["The controller rerouted the task after the child retry threshold was reached."],
+          consensus: ["The standby leader took over the whole delegated task."],
+          disagreements: [],
+          nextActions: []
+        })
+      ])
+    ],
+    ["leader_primary", new RetryThresholdLeaderProvider()],
+    [
+      "leader_backup",
+      new FakeProvider([
+        JSON.stringify({
+          thinkingSummary: "Retry with the same two-way split on the backup leader.",
+          delegationSummary: "The backup leader can handle both child buckets cleanly.",
+          subtasks: [
+            {
+              id: "bucket_a",
+              title: "Retry-heavy bucket",
+              instructions: "Collect the retry-heavy source bucket.",
+              expectedOutput: "Retry-heavy findings."
+            },
+            {
+              id: "bucket_b",
+              title: "Stable bucket",
+              instructions: "Collect the stable source bucket.",
+              expectedOutput: "Stable findings."
+            }
+          ]
+        }),
+        buildWorkerOutput("Backup bucket A completed."),
+        buildWorkerOutput("Backup bucket B completed."),
+        buildLeaderSynthesis("Backup leader merged both buckets after the retry threshold fallback.")
+      ])
+    ]
+  ]);
+
+  const result = await runClusterAnalysis({
+    task: "Use 4 agents in total to collect the latest facts with web search and summarize the conclusion.",
+    config,
+    providerRegistry,
+    onEvent(event) {
+      events.push(event);
+    }
+  });
+
+  assert.equal(result.executions.length, 1);
+  assert.equal(result.executions[0].workerId, "leader_backup");
+  assert.equal(result.executions[0].status, "completed");
+  assert.equal(
+    events.filter((event) => event.stage === "subagent_retry").length,
+    5
+  );
+  assert.equal(
+    events.some((event) => event.stage === "subagent_retry_threshold_reached"),
+    true
+  );
+  assert.equal(
+    events.some(
+      (event) =>
+        event.stage === "worker_fallback" &&
+        event.previousWorkerId === "leader_primary" &&
+        event.fallbackWorkerId === "leader_backup"
+    ),
+    true
+  );
 });
 
 test("runClusterAnalysis falls back to a backup controller during planning after a retryable provider failure", async () => {

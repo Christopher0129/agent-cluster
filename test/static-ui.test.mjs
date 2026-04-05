@@ -168,7 +168,8 @@ test("index.html preserves critical control ids for app bindings", async () => {
     "consoleNav",
     "agentVizStage",
     "schemeConnectivityRetestButton",
-    "clearWorkspaceCacheButton"
+    "clearWorkspaceCacheButton",
+    "subagentRetryFallbackThresholdInput"
   ];
 
   for (const id of requiredIds) {
@@ -327,11 +328,12 @@ test("cluster run live feed uses operation-event localization directly", async (
 test("cluster run UI finalizes local cancellation immediately and syncs backend cancel asynchronously", async () => {
   const runUiJs = await readFile(new URL("../src/static/cluster-run-ui.js", import.meta.url), "utf8");
 
-  assert.match(runUiJs, /const CANCEL_REQUEST_TIMEOUT_MS = 1800;/);
+  assert.match(runUiJs, /const CANCEL_REQUEST_TIMEOUT_MS = 4000;/);
   assert.match(runUiJs, /locale:\s*typeof getLocale === "function" \? getLocale\(\) : resolveRuntimeLocale\(\)/);
   assert.match(runUiJs, /void finalizeRemoteCancellation\(operationId\);/);
   assert.match(runUiJs, /finishOperation\(\{ closeDelayMs: 0 \}\);/);
-  assert.match(runUiJs, /setSaveStatus\?\.\(translate\("run\.cancel\.renderRemote"\), "ok"\);/);
+  assert.match(runUiJs, /run\.cancel\.renderRemote/);
+  assert.match(runUiJs, /run\.cancel\.renderRemoteSettled/);
   assert.match(runUiJs, /setSaveStatus\?\.\(translate\("run\.cancel\.renderRemoteFailed"\), "warning"\);/);
   assert.match(runUiJs, /onOperationEvent = null/);
   assert.match(runUiJs, /onOperationStart = null/);

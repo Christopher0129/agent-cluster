@@ -1,7 +1,7 @@
 import { describeOperationEvent as describeOperationEventMessage } from "./operation-events.js";
 
 const LIVE_EVENT_LIMIT = 60;
-const CANCEL_REQUEST_TIMEOUT_MS = 1800;
+const CANCEL_REQUEST_TIMEOUT_MS = 4000;
 const CANCEL_REQUEST_MAX_ATTEMPTS = 3;
 
 function interpolate(template, values = {}) {
@@ -62,6 +62,7 @@ function createFallbackTranslator() {
       "run.cancel.requestLocal": "\u5df2\u7acb\u5373\u7ec8\u6b62\u672c\u5730\u7b49\u5f85\uff0c\u6b63\u5728\u8bf7\u6c42\u540e\u7aef\u505c\u6b62\u4efb\u52a1\u3002",
       "run.cancel.renderLocal": "\u5df2\u7acb\u5373\u7ec8\u6b62\u5f53\u524d\u4efb\u52a1\uff0c\u6b63\u5728\u6e05\u7406\u8fdc\u7aef\u8bf7\u6c42\u3002",
       "run.cancel.renderRemote": "\u4efb\u52a1\u5df2\u7acb\u5373\u7ec8\u6b62\uff0c\u5e76\u5df2\u901a\u77e5\u540e\u7aef\u505c\u6b62\u5f53\u524d\u8bf7\u6c42\u3002",
+      "run.cancel.renderRemoteSettled": "\u4efb\u52a1\u5df2\u7ec8\u6b62\uff0c\u540e\u7aef\u4efb\u52a1\u5df2\u505c\u6b62\u6216\u5df2\u7ed3\u675f\u3002",
       "run.cancel.renderRemoteFailed": "\u672c\u5730\u7b49\u5f85\u5df2\u505c\u6b62\uff0c\u4f46\u540e\u7aef\u53d6\u6d88\u5931\u8d25\uff0c\u8bf7\u518d\u70b9\u4e00\u6b21\u201c\u7ec8\u6b62\u4efb\u52a1\u201d\u3002",
       "run.cancel.failed": "\u7ec8\u6b62\u4efb\u52a1\u5931\u8d25\uff1a{error}"
     },
@@ -110,6 +111,7 @@ function createFallbackTranslator() {
       "run.cancel.requestLocal": "Local waiting stopped. Requesting backend cancellation now.",
       "run.cancel.renderLocal": "The current task was stopped locally. Cleaning up remote requests.",
       "run.cancel.renderRemote": "The task was cancelled and the backend was notified to stop the request.",
+      "run.cancel.renderRemoteSettled": "The task was cancelled and the backend run was already stopped or already finished.",
       "run.cancel.renderRemoteFailed": "Local waiting stopped, but backend cancellation failed. Click Cancel Task again.",
       "run.cancel.failed": "Failed to cancel task: {error}"
     }
@@ -356,6 +358,13 @@ export function createClusterRunUi({
         }
         return payload;
       } catch (error) {
+        if (error?.status === 404 || error?.status === 409) {
+          return {
+            ok: true,
+            operationId,
+            alreadyStopped: true
+          };
+        }
         lastError = error;
         const isTimeout =
           error?.name === "AbortError" || error?.message === "Cancel request timed out.";
@@ -375,9 +384,16 @@ export function createClusterRunUi({
     const canReportStatus = () => !currentOperationId || currentOperationId === operationId;
 
     try {
-      await requestOperationCancellation(operationId);
+      const payload = await requestOperationCancellation(operationId);
       if (canReportStatus()) {
-        setSaveStatus?.(translate("run.cancel.renderRemote"), "ok");
+        setSaveStatus?.(
+          translate(
+            payload?.alreadyStopped
+              ? "run.cancel.renderRemoteSettled"
+              : "run.cancel.renderRemote"
+          ),
+          "ok"
+        );
       }
     } catch (error) {
       if (canReportStatus()) {

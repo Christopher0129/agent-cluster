@@ -184,6 +184,11 @@
                     <input id="phaseHandoffInput" type="number" min="0" placeholder="默认 1，0 表示不限制" />
                     <small class="field-hint">最终文档和汇总。通常 1 就够，避免重复输出。</small>
                   </label>
+                  <label class="field">
+                    <span>子 Agent 重试接管阈值</span>
+                    <input id="subagentRetryFallbackThresholdInput" type="number" min="0" placeholder="默认 5，0 表示关闭自动接管" />
+                    <small class="field-hint">任一子 Agent 的模型重试达到该次数后，主控会立即改派备用组长接手当前任务。</small>
+                  </label>
                 </div>
               </section>
             </section>

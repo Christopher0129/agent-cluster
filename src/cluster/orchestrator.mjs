@@ -12,7 +12,7 @@ import {
   writeWorkspaceFiles
 } from "../workspace/fs.mjs";
 import { runWorkspaceToolLoop } from "../workspace/agent-loop.mjs";
-import { isAbortError, throwIfAborted } from "../utils/abort.mjs";
+import { combineAbortSignals, isAbortError, throwIfAborted } from "../utils/abort.mjs";
 import { createSessionRuntime } from "../session/runtime.mjs";
 import {
   buildRetryPayload,
@@ -43,6 +43,7 @@ const PHASE_ORDER = ["research", "implementation", "validation", "handoff"];
 const DEFAULT_SUBORDINATE_MAX_PARALLEL = 3;
 const DEFAULT_GROUP_LEADER_MAX_DELEGATES = 10;
 const DEFAULT_DELEGATION_MAX_DEPTH = 1;
+const DEFAULT_SUBAGENT_RETRY_FALLBACK_THRESHOLD = 5;
 const PHASE_CONCURRENCY_CAPS = {};
 const RETRYABLE_PROVIDER_STATUSES = new Set([408, 409, 425, 429, 500, 502, 503, 504, 520, 521, 522, 523, 524, 529]);
 const DELEGATION_FILE_REFERENCE_PATTERNS = [
@@ -304,6 +305,15 @@ function resolveSubordinateMaxParallel(config) {
   const configured = Number(config?.cluster?.subordinateMaxParallel);
   if (!Number.isFinite(configured) || configured < 0) {
     return DEFAULT_SUBORDINATE_MAX_PARALLEL;
+  }
+
+  return Math.floor(configured);
+}
+
+function resolveSubagentRetryFallbackThreshold(config) {
+  const configured = Number(config?.cluster?.subagentRetryFallbackThreshold);
+  if (!Number.isFinite(configured) || configured < 0) {
+    return DEFAULT_SUBAGENT_RETRY_FALLBACK_THRESHOLD;
   }
 
   return Math.floor(configured);
@@ -2198,6 +2208,7 @@ async function executeSingleTask({
     config?.cluster?.capabilityRoutingPolicy
   );
   const primaryWorker = config.models[task.assignedWorker];
+  const subagentRetryFallbackThreshold = resolveSubagentRetryFallbackThreshold(config);
   let attemptChildAgentReservations = 0;
 
   function buildDependencyOutputs() {
@@ -2270,18 +2281,82 @@ async function executeSingleTask({
       errorMessage: failure.errorMessage,
       errorStatus: failure.errorStatus,
       circuitState: failure.circuitState,
-      failedWorkerId: agent.id,
-      failedWorkerLabel: agent.label
+      failedWorkerId: safeString(error?.failedWorkerId) || agent.id,
+      failedWorkerLabel: safeString(error?.failedWorkerLabel) || agent.label
     };
   }
 
-  async function runWithExecutionGate(work) {
+  function maybeEscalateSubagentRetry(agent, agentTask, retry) {
+    if (agent.agentKind !== "subordinate") {
+      return;
+    }
+    if (subagentRetryFallbackThreshold <= 0) {
+      return;
+    }
+    if (Number(retry?.attempt || 0) < subagentRetryFallbackThreshold) {
+      return;
+    }
+
+    emitAgentEvent(
+      onEvent,
+      agent,
+      {
+        type: "status",
+        stage: "subagent_retry_threshold_reached",
+        tone: "warning",
+        detail: localizeRunText(
+          runLocale,
+          `${agent.displayLabel || agent.label} reached the subagent retry fallback threshold (${subagentRetryFallbackThreshold}). The controller will hand this task to a standby leader.`,
+          `${agent.displayLabel || agent.label} 已达到子 Agent 重试接管阈值（${subagentRetryFallbackThreshold} 次），主控将把当前任务改派给备用组长。`
+        ),
+        attempt: retry?.attempt ?? 0,
+        maxRetries: retry?.maxRetries ?? 0
+      },
+      agentTask
+    );
+
+    const error = new Error(
+      localizeRunText(
+        runLocale,
+        `${agent.displayLabel || agent.label} reached the subagent retry fallback threshold (${subagentRetryFallbackThreshold}).`,
+        `${agent.displayLabel || agent.label} 达到子 Agent 重试接管阈值（${subagentRetryFallbackThreshold} 次）。`
+      )
+    );
+    error.status = retry?.status || 524;
+    error.retryable = true;
+    error.failedWorkerId = agent.id;
+    error.failedWorkerLabel = agent.label;
+    throw error;
+  }
+
+  function buildDelegatedRetryableFailure(agent, agentTask, childExecution) {
+    const childLabel =
+      childExecution?.agentLabel ||
+      childExecution?.workerLabel ||
+      childExecution?.failedWorkerLabel ||
+      childExecution?.failedWorkerId ||
+      languagePack.subtaskTitle(0);
+    const error = new Error(
+      localizeRunText(
+        runLocale,
+        `Delegated child ${childLabel} hit a retryable provider failure. Reroute this task to a standby leader immediately.`,
+        `委派子 Agent ${childLabel} 触发了可重试的 provider 故障，当前任务将立即改派给备用组长接手。`
+      )
+    );
+    error.status = childExecution?.errorStatus || 524;
+    error.retryable = true;
+    error.failedWorkerId = childExecution?.failedWorkerId || agent.id;
+    error.failedWorkerLabel = childExecution?.failedWorkerLabel || agent.label;
+    return error;
+  }
+
+  async function runWithExecutionGate(work, signalOverride = signal) {
     if (!executionGate) {
-      throwIfAborted(signal);
+      throwIfAborted(signalOverride);
       return work();
     }
 
-    return executionGate.run(work, { signal });
+    return executionGate.run(work, { signal: signalOverride });
   }
 
   async function executeDirectAgentTask({
@@ -2290,9 +2365,10 @@ async function executeSingleTask({
     agentTask,
     dependencyOutputs,
     emitLifecycle = true,
-    taskSpanId = ""
+    taskSpanId = "",
+    signalOverride = signal
   }) {
-    throwIfAborted(signal);
+    throwIfAborted(signalOverride);
     const lifecycle = resolveLifecycleStages(agent);
     const startedAt = Date.now();
     const prompt = buildWorkerExecutionRequest({
@@ -2364,9 +2440,10 @@ async function executeSingleTask({
                 },
                 agentTask
               );
+              maybeEscalateSubagentRetry(agent, agentTask, retry);
             },
             onEvent,
-            signal
+            signal: signalOverride
           });
           return;
         }
@@ -2380,7 +2457,7 @@ async function executeSingleTask({
           instructions: prompt.instructions,
           input: prompt.input,
           purpose: agent.agentKind === "subordinate" ? "subordinate_execution" : "worker_execution",
-          signal,
+          signal: signalOverride,
           buildAgentEventBase,
           onRetry(retry) {
             emitAgentEvent(
@@ -2398,12 +2475,13 @@ async function executeSingleTask({
               },
               agentTask
             );
+            maybeEscalateSubagentRetry(agent, agentTask, retry);
           }
         });
 
         rawText = response.text;
         parsed = parseStructuredJsonOrFallback(agent.displayLabel || agent.label, response.text);
-      });
+      }, signalOverride);
 
       const endedAt = Date.now();
       const output = applyTaskOutputGuards(
@@ -2502,7 +2580,8 @@ async function executeSingleTask({
     depthRemaining,
     defaultToRequested,
     preferDelegation,
-    parentSpanId = ""
+    parentSpanId = "",
+    signalOverride = signal
   }) {
     const delegationSpanId = sessionRuntime?.startSpan({
       ...buildAgentEventBase(agent, agentTask),
@@ -2550,7 +2629,7 @@ async function executeSingleTask({
           instructions: prompt.instructions,
           input: prompt.input,
           purpose: "leader_delegation",
-          signal,
+          signal: signalOverride,
           buildAgentEventBase,
           onRetry(retry) {
             emitAgentEvent(
@@ -2570,7 +2649,7 @@ async function executeSingleTask({
             );
           }
         })
-      );
+      , signalOverride);
 
       let parsed;
       try {
@@ -2777,7 +2856,8 @@ async function executeSingleTask({
     subordinateExecutions,
     delegationPlan,
     startedAt,
-    parentSpanId = ""
+    parentSpanId = "",
+    signalOverride = signal
   }) {
     const synthesisSpanId = sessionRuntime?.startSpan({
       ...buildAgentEventBase(agent, agentTask),
@@ -2820,7 +2900,7 @@ async function executeSingleTask({
         task: agentTask,
         parentSpanId: synthesisSpanId || parentSpanId,
         purpose: "leader_synthesis",
-        signal,
+        signal: signalOverride,
         buildAgentEventBase,
         onRetry(retry) {
           emitAgentEvent(
@@ -2840,7 +2920,7 @@ async function executeSingleTask({
           );
         }
       })
-    );
+    , signalOverride);
 
     let parsed;
     parsed = parseStructuredJsonOrFallback(agent.displayLabel || agent.label, response.text);
@@ -2999,9 +3079,10 @@ async function executeSingleTask({
     depthRemaining = 0,
     defaultToRequested = false,
     emitLifecycle = true,
-    parentSpanId: inheritedParentSpanId = ""
+    parentSpanId: inheritedParentSpanId = "",
+    signalOverride = signal
   }) {
-    throwIfAborted(signal);
+    throwIfAborted(signalOverride);
     const lifecycle = resolveLifecycleStages(agent);
     const startedAt = Date.now();
     const taskSpanId = sessionRuntime?.startSpan({
@@ -3047,7 +3128,8 @@ async function executeSingleTask({
           agentTask,
           dependencyOutputs,
           emitLifecycle: false,
-          taskSpanId: taskSpanId || inheritedParentSpanId || parentSpanId
+          taskSpanId: taskSpanId || inheritedParentSpanId || parentSpanId,
+          signalOverride
         });
 
         if (emitLifecycle) {
@@ -3092,7 +3174,8 @@ async function executeSingleTask({
           branchFactor,
           depthRemaining
         ),
-        parentSpanId: taskSpanId || inheritedParentSpanId || parentSpanId
+        parentSpanId: taskSpanId || inheritedParentSpanId || parentSpanId,
+        signalOverride
       });
 
       if (!delegationPlan.subtasks.length) {
@@ -3102,7 +3185,8 @@ async function executeSingleTask({
           agentTask,
           dependencyOutputs,
           emitLifecycle: false,
-          taskSpanId: taskSpanId || inheritedParentSpanId || parentSpanId
+          taskSpanId: taskSpanId || inheritedParentSpanId || parentSpanId,
+          signalOverride
         });
 
         if (emitLifecycle) {
@@ -3146,7 +3230,8 @@ async function executeSingleTask({
           agentTask,
           dependencyOutputs,
           emitLifecycle: false,
-          taskSpanId: taskSpanId || inheritedParentSpanId || parentSpanId
+          taskSpanId: taskSpanId || inheritedParentSpanId || parentSpanId,
+          signalOverride
         });
 
         if (emitLifecycle) {
@@ -3242,6 +3327,7 @@ async function executeSingleTask({
       });
       const completedSubordinateExecutions = new Map();
       const runningSubordinateExecutions = new Map();
+      const subordinateBatchAbortController = new AbortController();
 
       while (completedSubordinateExecutions.size < delegatedEntries.length) {
         for (const entry of delegatedEntries) {
@@ -3286,6 +3372,10 @@ async function executeSingleTask({
               .filter(Boolean)
               .map(summarizeExecutionForDependency)
           ];
+          const childSignal = combineAbortSignals(
+            signalOverride,
+            subordinateBatchAbortController.signal
+          );
           const executionPromise = executeAgentHierarchy({
             agent: entry.subordinateAgent,
             provider,
@@ -3294,7 +3384,8 @@ async function executeSingleTask({
             preferredDelegateCount: childPreferredDelegateCount,
             depthRemaining: Math.max(0, depthRemaining - 1),
             defaultToRequested: false,
-            parentSpanId: taskSpanId || inheritedParentSpanId || parentSpanId
+            parentSpanId: taskSpanId || inheritedParentSpanId || parentSpanId,
+            signalOverride: childSignal
           }).then((execution) => ({
             subtaskId: entry.subtask.id,
             execution
@@ -3317,6 +3408,15 @@ async function executeSingleTask({
         const settled = await Promise.race(runningSubordinateExecutions.values());
         runningSubordinateExecutions.delete(settled.subtaskId);
         completedSubordinateExecutions.set(settled.subtaskId, settled.execution);
+        if (settled.execution?.retryableProviderFailure) {
+          if (!subordinateBatchAbortController.signal.aborted) {
+            subordinateBatchAbortController.abort(
+              new Error("Delegated child batch aborted after a retryable failure.")
+            );
+          }
+          await Promise.allSettled(runningSubordinateExecutions.values());
+          throw buildDelegatedRetryableFailure(agent, agentTask, settled.execution);
+        }
       }
 
       const subordinateExecutions = delegatedEntries.map((entry) =>
@@ -3331,7 +3431,8 @@ async function executeSingleTask({
         subordinateExecutions,
         delegationPlan,
         startedAt,
-        parentSpanId: taskSpanId || inheritedParentSpanId || parentSpanId
+        parentSpanId: taskSpanId || inheritedParentSpanId || parentSpanId,
+        signalOverride
       });
 
       if (emitLifecycle) {

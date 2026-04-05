@@ -265,19 +265,23 @@ export async function handleOperationCancel(
   });
 
   if (!result.ok && result.code === "not_found") {
-    sendJson(response, 404, {
-      ok: false,
+    sendJson(response, 200, {
+      ok: true,
       operationId,
-      error: "Operation not found."
+      cancellationRequested: false,
+      alreadyStopped: true,
+      notFound: true
     });
     return;
   }
 
   if (!result.ok && result.code === "already_finished") {
-    sendJson(response, 409, {
-      ok: false,
+    sendJson(response, 200, {
+      ok: true,
       operationId,
-      error: "Operation has already finished."
+      cancellationRequested: false,
+      alreadyStopped: true,
+      alreadyFinished: true
     });
     return;
   }

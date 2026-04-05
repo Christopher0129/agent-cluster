@@ -70,6 +70,7 @@ export function createSettingsUi({
     subordinateParallelInput,
     groupLeaderMaxDelegatesInput,
     delegateMaxDepthInput,
+    subagentRetryFallbackThresholdInput,
     controllerSelect,
     secretList,
     configHint,
@@ -138,6 +139,7 @@ export function createSettingsUi({
         subordinateMaxParallel: parallelInput.value,
         groupLeaderMaxDelegates: groupLeaderMaxDelegatesInput?.value,
         delegateMaxDepth: delegateMaxDepthInput?.value,
+        subagentRetryFallbackThreshold: subagentRetryFallbackThresholdInput?.value,
         phaseParallel: collectPhaseParallelSettings()
       },
       workspace: workspaceUi.collectSettings(),
@@ -160,6 +162,10 @@ export function createSettingsUi({
     }
     if (delegateMaxDepthInput) {
       delegateMaxDepthInput.value = settings.cluster?.delegateMaxDepth ?? 1;
+    }
+    if (subagentRetryFallbackThresholdInput) {
+      subagentRetryFallbackThresholdInput.value =
+        settings.cluster?.subagentRetryFallbackThreshold ?? 5;
     }
 
     for (const [phase, input] of Object.entries(phaseParallelInputs)) {

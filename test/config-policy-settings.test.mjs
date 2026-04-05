@@ -222,6 +222,43 @@ test("saveEditableSettings links subordinateMaxParallel to maxParallel", async (
   }
 });
 
+test("saveEditableSettings persists the subagent retry fallback threshold", async () => {
+  const projectDir = await mkdtemp(join(process.cwd(), ".tmp-config-subagent-retry-threshold-"));
+
+  try {
+    await writeFile(
+      join(projectDir, "cluster.config.json"),
+      `${JSON.stringify(buildBaseConfig(), null, 2)}\n`,
+      "utf8"
+    );
+
+    await saveEditableSettings(projectDir, {
+      cluster: {
+        controller: "controller",
+        maxParallel: 4,
+        subordinateMaxParallel: 4,
+        groupLeaderMaxDelegates: 3,
+        delegateMaxDepth: 1,
+        subagentRetryFallbackThreshold: 7
+      },
+      workspace: { dir: "./workspace" },
+      bot: {},
+      secrets: [],
+      models: buildModelsPayload()
+    });
+
+    const editable = getEditableSettings(projectDir);
+    const runtime = loadRuntimeConfig(projectDir);
+    const persisted = JSON.parse(await readFile(join(projectDir, "runtime.settings.json"), "utf8"));
+
+    assert.equal(editable.settings.cluster.subagentRetryFallbackThreshold, 7);
+    assert.equal(runtime.cluster.subagentRetryFallbackThreshold, 7);
+    assert.equal(persisted.cluster.subagentRetryFallbackThreshold, 7);
+  } finally {
+    await rm(projectDir, { recursive: true, force: true });
+  }
+});
+
 test("saveEditableSettings migrates legacy kimi-coding base URLs to the anthropic route", async () => {
   const projectDir = await mkdtemp(join(process.cwd(), ".tmp-config-kimi-coding-"));
 

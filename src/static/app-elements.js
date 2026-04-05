@@ -18,6 +18,7 @@ export function queryAppElements(root = document) {
     subordinateParallelInput: query("#subordinateParallelInput"),
     groupLeaderMaxDelegatesInput: query("#groupLeaderMaxDelegatesInput"),
     delegateMaxDepthInput: query("#delegateMaxDepthInput"),
+    subagentRetryFallbackThresholdInput: query("#subagentRetryFallbackThresholdInput"),
     schemeSelect: query("#schemeSelect"),
     schemeNameInput: query("#schemeNameInput"),
     addSchemeButton: query("#addSchemeButton"),
