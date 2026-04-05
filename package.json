@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node src/server.mjs",
     "dev": "node --watch src/server.mjs",
-    "check": "node --check src/server.mjs && node --check src/app.mjs && node --check src/cluster/orchestrator.mjs && node --check scripts/build-win-exe.mjs && node --check src/static/app-bootstrap.js && node --check src/static/app-elements.js && node --check src/static/app-shell-ui.js && node --check src/static/app-state.js && node --check src/static/app.js && node --check src/static/locale-ui.js && node --check src/static/models-schemes-ui.js && node --check src/static/agent-viz-ui.js && node --check src/static/cluster-run-ui.js && node --check src/static/model-connectivity-service.js && node --check src/static/model-status-ui.js && node --check src/static/secrets-ui.js && node --check src/static/settings-ui.js && node --check src/static/ui-core.js && node --check src/static/workspace-ui.js && node --check src/workspace/cache.mjs",
+    "check": "node scripts/check-syntax.mjs",
     "test:smoke": "node test/run-tests.mjs",
     "test:unit": "node --test test/*.test.mjs",
     "test": "npm run test:smoke && npm run test:unit",

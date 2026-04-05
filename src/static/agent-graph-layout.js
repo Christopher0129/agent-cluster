@@ -11,6 +11,23 @@ function polarToCartesian(centerX, centerY, radius, angle) {
   };
 }
 
+function computeMinimumChordRadius(span, itemCount, minimumDistance, fallbackRadius = 0) {
+  const count = Math.max(0, Number(itemCount) || 0);
+  if (count <= 1) {
+    return Math.max(0, fallbackRadius);
+  }
+
+  const normalizedSpan = Math.max(0.001, Math.abs(Number(span) || 0));
+  const step = normalizedSpan / Math.max(1, count - 1);
+  const sine = Math.sin(Math.min(Math.PI - 0.001, step) / 2);
+
+  if (!Number.isFinite(sine) || sine <= 0.001) {
+    return Math.max(fallbackRadius, minimumDistance * count);
+  }
+
+  return Math.max(fallbackRadius, minimumDistance / (2 * sine));
+}
+
 function getAgentNodeRadius(agent) {
   if (agent?.kind === "controller") {
     return 58;
@@ -198,6 +215,10 @@ export function buildAgentLayout(agents, options = {}) {
   const rootLeaderCache = new Map();
   const subtreeWeightCache = new Map();
   const subtreeDepthCache = new Map();
+  const maxSiblingCount = Array.from(childrenByParent.values()).reduce(
+    (maximum, children) => Math.max(maximum, children.length),
+    0
+  );
 
   const computeSubtreeWeight = (agentId) => {
     if (subtreeWeightCache.has(agentId)) {
@@ -244,29 +265,46 @@ export function buildAgentLayout(agents, options = {}) {
   });
 
   const maxDepth = groups.reduce((maxDepthValue, group) => Math.max(maxDepthValue, group.maxDepth), 0);
-  const leaderOrbitRadius = leaders.length ? (controller ? 250 : 180) : 0;
-  const firstSubordinateRadius = maxDepth > 0 ? leaderOrbitRadius + (controller ? 178 : 150) : 0;
-  const subordinateRingSpacing = 112;
-  const subordinateRings = Array.from({ length: maxDepth }, (_, index) => firstSubordinateRadius + index * subordinateRingSpacing);
-  const outerContentRadius = subordinateRings[subordinateRings.length - 1] || leaderOrbitRadius || 180;
-  const sectorInnerRadius = controller ? Math.max(118, leaderOrbitRadius - 88) : Math.max(94, outerContentRadius - 132);
-  const sectorOuterRadius = outerContentRadius + 88;
-  const graphRadius = sectorOuterRadius + 134;
-  const width = Math.max(1320, Math.round(graphRadius * 2));
-  const height = Math.max(960, Math.round(graphRadius * 2));
-  const centerX = width / 2;
-  const centerY = height / 2;
+  const maxLeaderChildCount = leaders.reduce(
+    (maximum, leader) => Math.max(maximum, (childrenByParent.get(leader.id) || []).length),
+    0
+  );
+  const leaderOrbitRadius =
+    leaders.length
+      ? (controller ? 250 : 180) + Math.max(0, leaders.length - 4) * 18
+      : 0;
+  const firstSubordinateRadius =
+    maxDepth > 0
+      ? Math.max(
+          leaderOrbitRadius + (controller ? 178 : 150),
+          leaderOrbitRadius + 132 + Math.max(0, maxLeaderChildCount - 3) * 34,
+          leaderOrbitRadius + 118 + Math.max(0, maxSiblingCount - 3) * 20
+        )
+      : 0;
+  const subordinateRingSpacing = Math.max(112, 112 + Math.max(0, maxSiblingCount - 4) * 18);
+  const outerContentRadiusEstimate =
+    maxDepth > 0
+      ? firstSubordinateRadius + Math.max(0, maxDepth - 1) * subordinateRingSpacing
+      : leaderOrbitRadius || 180;
+  const sectorInnerRadius =
+    controller
+      ? Math.max(118, leaderOrbitRadius - 88)
+      : Math.max(94, outerContentRadiusEstimate - 132);
+  const centerX = 0;
+  const centerY = 0;
   const nodes = [];
   const edges = [];
-  const orbits = [leaderOrbitRadius, ...subordinateRings]
-    .filter((radius) => Number(radius) > 0)
-    .map((radius, index) => ({
-      radius,
-      kind: index === 0 ? "leaders" : index === 1 ? "subordinates" : "subordinates-outer"
-    }));
+  const nodeById = new Map();
+
+  function pushNode(entry) {
+    nodes.push(entry);
+    if (entry?.agent?.id) {
+      nodeById.set(entry.agent.id, entry);
+    }
+  }
 
   if (controller) {
-    nodes.push({
+    pushNode({
       agent: controller,
       x: centerX,
       y: centerY,
@@ -287,7 +325,7 @@ export function buildAgentLayout(agents, options = {}) {
     const endAngle = angleCursor + span;
     const centerAngle = startAngle + span / 2;
     const leaderPoint = polarToCartesian(centerX, centerY, leaderOrbitRadius, centerAngle);
-    nodes.push({
+    pushNode({
       agent: group.leader,
       x: leaderPoint.x,
       y: leaderPoint.y,
@@ -305,17 +343,13 @@ export function buildAgentLayout(agents, options = {}) {
       });
     }
 
-    const phaseBandOuterRadius =
-      group.maxDepth > 0
-        ? (subordinateRings[group.maxDepth - 1] || outerContentRadius) + 72
-        : leaderOrbitRadius + 80;
     const sectorPadding = Math.min(0.22, span * 0.14);
     group.startAngle = startAngle;
     group.endAngle = endAngle;
     group.centerAngle = centerAngle;
     group.bandInnerRadius = sectorInnerRadius;
-    group.bandOuterRadius = phaseBandOuterRadius;
-    group.labelPoint = polarToCartesian(centerX, centerY, phaseBandOuterRadius - 30, centerAngle);
+    group.bandOuterRadius = leaderOrbitRadius + 80;
+    let groupMaxOrbitRadius = leaderOrbitRadius + getAgentNodeRadius(group.leader);
 
     const placeChildren = (parentAgent, rangeStart, rangeEnd, fallbackAngle, depth) => {
       const children = childrenByParent.get(parentAgent.id) || [];
@@ -325,11 +359,31 @@ export function buildAgentLayout(agents, options = {}) {
 
       const spanSize = rangeEnd - rangeStart;
       const padding = Math.min(0.18, Math.max(0, spanSize) * 0.08);
-      const effectiveStart = rangeStart + padding;
-      const effectiveEnd = rangeEnd - padding;
-      const orbitRadius =
-        subordinateRings[Math.max(0, depth - 1)] ||
+      let effectiveStart = rangeStart + padding;
+      let effectiveEnd = rangeEnd - padding;
+      if (effectiveEnd - effectiveStart < 0.08) {
+        effectiveStart = rangeStart;
+        effectiveEnd = rangeEnd;
+      }
+      const effectiveSpan = Math.max(0.08, effectiveEnd - effectiveStart);
+      const parentNode = nodeById.get(parentAgent.id);
+      const parentOrbitRadius = Math.max(0, Number(parentNode?.orbitRadius) || 0);
+      const baseOrbitRadius =
         firstSubordinateRadius + Math.max(0, depth - 1) * subordinateRingSpacing;
+      const siblingDrivenRadius = computeMinimumChordRadius(
+        effectiveSpan,
+        children.length,
+        116,
+        baseOrbitRadius
+      );
+      const edgeDrivenRadius =
+        parentOrbitRadius +
+        Math.max(
+          138,
+          getAgentNodeRadius(parentAgent) + 72 + Math.max(0, children.length - 3) * 16
+        );
+      const orbitRadius = Math.max(baseOrbitRadius, siblingDrivenRadius, edgeDrivenRadius);
+      groupMaxOrbitRadius = Math.max(groupMaxOrbitRadius, orbitRadius + 48);
       const segments = allocateAngularSegments(
         children,
         effectiveStart,
@@ -341,14 +395,16 @@ export function buildAgentLayout(agents, options = {}) {
       segments.forEach((segment) => {
         const child = segment.item;
         const point = polarToCartesian(centerX, centerY, orbitRadius, segment.centerAngle);
-        nodes.push({
+        const childRadius = getAgentNodeRadius(child);
+        pushNode({
           agent: child,
           x: point.x,
           y: point.y,
           angle: segment.centerAngle,
           orbitRadius,
-          radius: getAgentNodeRadius(child)
+          radius: childRadius
         });
+        groupMaxOrbitRadius = Math.max(groupMaxOrbitRadius, orbitRadius + childRadius + 18);
         edges.push({
           from: parentAgent.id,
           to: child.id,
@@ -361,6 +417,8 @@ export function buildAgentLayout(agents, options = {}) {
     };
 
     placeChildren(group.leader, startAngle + sectorPadding, endAngle - sectorPadding, centerAngle, 1);
+    group.bandOuterRadius = groupMaxOrbitRadius + 92;
+    group.labelPoint = polarToCartesian(centerX, centerY, group.bandOuterRadius - 28, centerAngle);
     angleCursor = endAngle;
   });
 
@@ -369,9 +427,76 @@ export function buildAgentLayout(agents, options = {}) {
     nodes[0].y = centerY;
   }
 
+  const orbitKinds = new Map();
+  for (const node of nodes) {
+    const orbitRadius = Math.max(0, Number(node.orbitRadius) || 0);
+    if (!orbitRadius) {
+      continue;
+    }
+
+    const roundedRadius = Math.max(1, Math.round(orbitRadius / 12) * 12);
+    if (!orbitKinds.has(roundedRadius)) {
+      orbitKinds.set(roundedRadius, node.agent?.kind === "leader" ? "leaders" : "subordinates");
+    }
+  }
+
+  const orbits = Array.from(orbitKinds.entries())
+    .sort((left, right) => left[0] - right[0])
+    .map(([radius, kind], index) => ({
+      radius,
+      kind: kind || (index === 0 ? "leaders" : "subordinates")
+    }));
+
+  const bounds = {
+    minX: Infinity,
+    maxX: -Infinity,
+    minY: Infinity,
+    maxY: -Infinity
+  };
+  const updateBounds = (x, y, padding = 0) => {
+    bounds.minX = Math.min(bounds.minX, x - padding);
+    bounds.maxX = Math.max(bounds.maxX, x + padding);
+    bounds.minY = Math.min(bounds.minY, y - padding);
+    bounds.maxY = Math.max(bounds.maxY, y + padding);
+  };
+
+  for (const node of nodes) {
+    updateBounds(node.x, node.y, node.radius + 28);
+  }
+
+  for (const group of groups) {
+    updateBounds(0, 0, group.bandOuterRadius + 8);
+    updateBounds(group.labelPoint.x, group.labelPoint.y, 128);
+  }
+
+  if (!Number.isFinite(bounds.minX)) {
+    updateBounds(0, 0, 180);
+  }
+
+  const margin = 160;
+  const width = Math.max(1320, Math.ceil(bounds.maxX - bounds.minX + margin * 2));
+  const height = Math.max(960, Math.ceil(bounds.maxY - bounds.minY + margin * 2));
+  const offsetX = margin - bounds.minX;
+  const offsetY = margin - bounds.minY;
+
+  for (const node of nodes) {
+    node.x = Number((node.x + offsetX).toFixed(2));
+    node.y = Number((node.y + offsetY).toFixed(2));
+  }
+
+  for (const group of groups) {
+    group.labelPoint = {
+      x: Number((group.labelPoint.x + offsetX).toFixed(2)),
+      y: Number((group.labelPoint.y + offsetY).toFixed(2))
+    };
+  }
+
+  const finalCenterX = Number(offsetX.toFixed(2));
+  const finalCenterY = Number(offsetY.toFixed(2));
+
   return {
-    centerX,
-    centerY,
+    centerX: finalCenterX,
+    centerY: finalCenterY,
     controller,
     orbits,
     groups,

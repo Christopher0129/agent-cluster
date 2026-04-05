@@ -9,6 +9,7 @@ const RAW_PROVIDER_CATALOG = [
     defaultApiKeyHeader: "",
     capabilities: {
       reasoning: true,
+      thinking: true,
       webSearch: true,
       temperature: false
     },
@@ -25,6 +26,7 @@ const RAW_PROVIDER_CATALOG = [
     defaultApiKeyHeader: "",
     capabilities: {
       reasoning: false,
+      thinking: false,
       webSearch: false,
       temperature: true
     },
@@ -41,6 +43,7 @@ const RAW_PROVIDER_CATALOG = [
     defaultApiKeyHeader: "x-api-key",
     capabilities: {
       reasoning: false,
+      thinking: true,
       webSearch: false,
       temperature: true
     },
@@ -57,6 +60,7 @@ const RAW_PROVIDER_CATALOG = [
     defaultApiKeyHeader: "",
     capabilities: {
       reasoning: false,
+      thinking: false,
       webSearch: false,
       temperature: true
     },
@@ -73,6 +77,7 @@ const RAW_PROVIDER_CATALOG = [
     defaultApiKeyHeader: "",
     capabilities: {
       reasoning: false,
+      thinking: false,
       webSearch: false,
       temperature: false
     },
@@ -89,27 +94,31 @@ const RAW_PROVIDER_CATALOG = [
     defaultApiKeyHeader: "",
     capabilities: {
       reasoning: false,
+      thinking: true,
       webSearch: true,
       temperature: true
     },
     exampleModels: ["kimi-k2.5", "moonshot-v1-32k"],
-    description: "Moonshot Kimi OpenAI-compatible chat endpoint."
+    description:
+      "Moonshot Kimi OpenAI-compatible chat endpoint. Web search uses the official $web_search built-in tool."
   },
   {
     id: "kimi-coding",
     label: "Kimi Coding",
     group: "China",
     protocol: "anthropic-messages",
-    defaultBaseUrl: "https://api.moonshot.cn/v1",
+    defaultBaseUrl: "https://api.moonshot.cn/anthropic",
     defaultAuthStyle: "api-key",
     defaultApiKeyHeader: "x-api-key",
     capabilities: {
       reasoning: false,
-      webSearch: false,
+      thinking: true,
+      webSearch: true,
       temperature: true
     },
-    exampleModels: ["k2p5"],
-    description: "Moonshot Kimi Coding Anthropic-compatible endpoint."
+    exampleModels: ["kimi-k2.5"],
+    description:
+      "Moonshot Kimi Coding Anthropic-compatible endpoint. Use the /anthropic base URL and the Anthropic web search tool."
   },
   {
     id: "doubao-chat",
@@ -121,6 +130,7 @@ const RAW_PROVIDER_CATALOG = [
     defaultApiKeyHeader: "",
     capabilities: {
       reasoning: false,
+      thinking: false,
       webSearch: false,
       temperature: true
     },
@@ -137,6 +147,7 @@ const RAW_PROVIDER_CATALOG = [
     defaultApiKeyHeader: "",
     capabilities: {
       reasoning: false,
+      thinking: false,
       webSearch: false,
       temperature: false
     },
@@ -154,6 +165,7 @@ export const PROVIDER_CATALOG = Object.freeze(
       exampleModels: Object.freeze([...(entry.exampleModels || [])]),
       capabilities: Object.freeze({
         reasoning: Boolean(entry.capabilities?.reasoning),
+        thinking: Boolean(entry.capabilities?.thinking),
         webSearch: Boolean(entry.capabilities?.webSearch),
         temperature: Boolean(entry.capabilities?.temperature)
       })

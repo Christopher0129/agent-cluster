@@ -15,8 +15,12 @@ import { postJson } from "../../src/providers/http-client.mjs";
 import { testModelConnectivity } from "../../src/providers/connectivity-test.mjs";
 import { createProviderForModel } from "../../src/providers/factory.mjs";
 import { AnthropicMessagesProvider } from "../../src/providers/anthropic-messages.mjs";
+import { OpenAIChatProvider } from "../../src/providers/openai-chat.mjs";
 import { OpenAIResponsesProvider } from "../../src/providers/openai-responses.mjs";
-import { providerSupportsCapability } from "../../src/static/provider-catalog.js";
+import {
+  getProviderDefinition,
+  providerSupportsCapability
+} from "../../src/static/provider-catalog.js";
 import {
   buildAgentLayout,
   resolveAgentGraphParentId,
@@ -63,12 +67,21 @@ function runProviderCatalogSupportTests() {
     id: "kimi_coding_worker",
     provider: "kimi-coding",
     model: "k2p5",
-    baseUrl: "https://api.moonshot.cn/v1"
+    baseUrl: "https://api.moonshot.cn/anthropic"
   });
 
   assert.equal(claudeProvider instanceof AnthropicMessagesProvider, true);
   assert.equal(kimiCodingProvider instanceof AnthropicMessagesProvider, true);
+  assert.equal(providerSupportsCapability("openai-responses", "thinking"), true);
+  assert.equal(providerSupportsCapability("claude-chat", "thinking"), true);
+  assert.equal(providerSupportsCapability("kimi-chat", "thinking"), true);
+  assert.equal(providerSupportsCapability("kimi-coding", "thinking"), true);
   assert.equal(providerSupportsCapability("kimi-chat", "webSearch"), true);
+  assert.equal(providerSupportsCapability("kimi-coding", "webSearch"), true);
+  assert.equal(
+    getProviderDefinition("kimi-coding")?.defaultBaseUrl,
+    "https://api.moonshot.cn/anthropic"
+  );
 }
 
 function runAgentGraphLayoutTests() {

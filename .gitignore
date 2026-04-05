@@ -2,6 +2,8 @@
 .env
 .env.*
 !.env.example
+.env.local
+.env.*.local
 runtime.settings.json
 runtime.settings.*.json
 .agent-cluster.key
@@ -10,25 +12,38 @@ dist/runtime.settings.json
 
 # Local workspaces and generated outputs
 # Ignore all local workspace content and generated cluster materials.
-workspace/
-workspace/**
-dist/workspace/
-dist/workspace/**
-bot-connectors/
+/workspace/
+/workspace/**
+/dist/workspace/
+/dist/workspace/**
+/bot-connectors/
+/build/sea/
+!/src/workspace/
+!/src/workspace/**
 .tmp-cluster-cancel-*/
+.tmp-config-*/
 
 # Logs and temporary files
 *.log
 logs/
+task-logs/
+/dist/task-logs/
+/dist/task-logs/**
 *.tmp
 *.temp
+*.cache
 
 # Build/package artifacts created locally
 build/
 dist/clean-package/
+/dist-verify/
+/dist-verify/**
 dist/*.exe
 dist/*.zip
+dist/*.blockmap
 
 # OS/editor noise
 .DS_Store
 Thumbs.db
+.vscode/
+.idea/

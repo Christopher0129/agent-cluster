@@ -55,7 +55,7 @@ function isCodexLikeModel(modelConfig) {
 }
 
 function isRetryableStatus(status) {
-  return [408, 409, 425, 429, 500, 502, 503, 504].includes(status);
+  return [408, 409, 425, 429, 500, 502, 503, 504, 520, 521, 522, 523, 524, 529].includes(status);
 }
 
 function isRetryableNetworkError(error) {
@@ -163,6 +163,12 @@ function isMoonshotResponsesRoute(urlOrBaseUrl) {
   return /^https:\/\/api\.moonshot\.cn\/v1(?:\/responses)?$/i.test(String(urlOrBaseUrl || "").replace(/\/+$/, ""));
 }
 
+function isMoonshotAnthropicMisroute(urlOrBaseUrl) {
+  return /^https:\/\/api\.moonshot\.cn\/v1(?:\/messages)?$/i.test(
+    String(urlOrBaseUrl || "").replace(/\/+$/, "")
+  );
+}
+
 function buildMoonshotResponsesHint(modelConfig, url, response, parsedBody, responseText) {
   if (!isMoonshotResponsesRoute(url) && !isMoonshotResponsesRoute(modelConfig?.baseUrl)) {
     return "";
@@ -175,6 +181,25 @@ function buildMoonshotResponsesHint(modelConfig, url, response, parsedBody, resp
   }
 
   return ' Moonshot 的公开 API 通常走 "/chat/completions"。如果你当前 baseUrl 是 "https://api.moonshot.cn/v1"，请把 provider 改成 "openai-chat"，不要选 "openai-responses"。';
+}
+
+function buildMoonshotAnthropicHint(modelConfig, url, response, parsedBody, responseText) {
+  const provider = String(modelConfig?.provider || "").trim().toLowerCase();
+  if (
+    provider !== "kimi-coding" &&
+    !isMoonshotAnthropicMisroute(url) &&
+    !isMoonshotAnthropicMisroute(modelConfig?.baseUrl)
+  ) {
+    return "";
+  }
+
+  const status = Number(response?.status) || 0;
+  const detail = `${parsedBody?.error?.message || ""} ${parsedBody?.message || ""} ${responseText || ""}`.trim();
+  if (status !== 404 && !/没找到对象|not found|404/i.test(detail)) {
+    return "";
+  }
+
+  return ' Moonshot 的 Anthropic 兼容接口通常走 "https://api.moonshot.cn/anthropic/messages"。如果你在使用 Kimi Coding / Claude Code 兼容路由，请把 baseUrl 改成 "https://api.moonshot.cn/anthropic"。';
 }
 
 function buildErrorMessage(response, url, responseText, parsedBody, modelConfig) {
@@ -192,7 +217,7 @@ function buildErrorMessage(response, url, responseText, parsedBody, modelConfig)
     compactWhitespace(responseText).slice(0, 300) ||
     `HTTP ${response.status}`;
 
-  return `Request to ${url} failed: ${detail}${buildMoonshotResponsesHint(modelConfig, url, response, parsedBody, responseText)}`;
+  return `Request to ${url} failed: ${detail}${buildMoonshotResponsesHint(modelConfig, url, response, parsedBody, responseText)}${buildMoonshotAnthropicHint(modelConfig, url, response, parsedBody, responseText)}`;
 }
 
 function createTimeoutError(url, timeoutMs, cause = undefined) {

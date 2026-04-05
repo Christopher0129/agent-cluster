@@ -15,8 +15,12 @@ import { postJson } from "../../src/providers/http-client.mjs";
 import { testModelConnectivity } from "../../src/providers/connectivity-test.mjs";
 import { createProviderForModel } from "../../src/providers/factory.mjs";
 import { AnthropicMessagesProvider } from "../../src/providers/anthropic-messages.mjs";
+import { OpenAIChatProvider } from "../../src/providers/openai-chat.mjs";
 import { OpenAIResponsesProvider } from "../../src/providers/openai-responses.mjs";
-import { providerSupportsCapability } from "../../src/static/provider-catalog.js";
+import {
+  getProviderDefinition,
+  providerSupportsCapability
+} from "../../src/static/provider-catalog.js";
 import {
   buildAgentLayout,
   resolveAgentGraphParentId,
@@ -170,7 +174,7 @@ async function runResearchConcurrencyTests() {
   });
 
   assert.equal(result.executions.length, 3);
-  assert.equal(concurrency.max, 1);
+  assert.equal(concurrency.max, 3);
 }
 
 async function runCustomPhaseConcurrencyTests() {
@@ -628,9 +632,16 @@ async function runConnectivityTestTests() {
   }
 }
 
-async function runConnectivityEmptyTextTests() {
+async function runAnthropicConnectivityWebSearchTests() {
+  const capturedBodies = [];
   let attempt = 0;
   const server = createServer(async (request, response) => {
+    const chunks = [];
+    for await (const chunk of request) {
+      chunks.push(chunk);
+    }
+
+    capturedBodies.push(JSON.parse(Buffer.concat(chunks).toString("utf8")));
     attempt += 1;
     response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
 
@@ -656,8 +667,8 @@ async function runConnectivityEmptyTextTests() {
             type: "text",
             text: JSON.stringify({
               status: "ok",
-              usedWebSearch: false,
-              checks: ["anthropic-structured:k2p5"],
+              usedWebSearch: true,
+              checks: ["anthropic-structured:kimi-k2.5", "web-search:kimi-k2.5"],
               note: "workflow probe ok"
             })
           }
@@ -676,17 +687,193 @@ async function runConnectivityEmptyTextTests() {
         id: "kimi_coding_test",
         label: "Kimi Coding Test",
         provider: "kimi-coding",
-        model: "k2p5",
+        model: "kimi-k2.5",
         baseUrl: `http://127.0.0.1:${port}`,
         apiKeyEnv: "KIMI_CODING_KEY",
         authStyle: "api-key",
-        apiKeyHeader: "x-api-key"
+        apiKeyHeader: "x-api-key",
+        webSearch: true
       }
     });
 
     assert.equal(result.ok, true);
     assert.equal(result.reply.startsWith("[empty text response;"), true);
-    assert.deepEqual(result.diagnostics.workflowProbe.checks, ["anthropic-structured:k2p5"]);
+    assert.equal(result.degraded, false);
+    assert.equal(result.diagnostics.workflowProbe.usedWebSearch, true);
+    assert.equal(result.diagnostics.webSearch.verified, true);
+    assert.deepEqual(result.diagnostics.workflowProbe.checks, [
+      "anthropic-structured:kimi-k2.5",
+      "web-search:kimi-k2.5"
+    ]);
+    assert.deepEqual(capturedBodies[0].tools, [
+      {
+        type: "web_search_20250305",
+        name: "web_search",
+        max_uses: 3
+      }
+    ]);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+}
+
+async function runConnectivityThinkingTests() {
+  let attempt = 0;
+  const server = createServer(async (request, response) => {
+    const chunks = [];
+    for await (const chunk of request) {
+      chunks.push(chunk);
+    }
+
+    const raw = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    attempt += 1;
+    response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+
+    if (attempt === 1) {
+      response.end(
+        JSON.stringify({
+          choices: [
+            {
+              message: {
+                content: `OK:${raw.model}`
+              }
+            }
+          ]
+        })
+      );
+      return;
+    }
+
+    if (attempt === 2) {
+      response.end(
+        JSON.stringify({
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  status: "ok",
+                  usedWebSearch: false,
+                  checks: [`structured:${raw.model}`],
+                  note: "workflow probe ok"
+                })
+              }
+            }
+          ]
+        })
+      );
+      return;
+    }
+
+    response.end(
+      JSON.stringify({
+        choices: [
+          {
+            message: {
+              content: "THINKING_OK",
+              reasoning_content: "Verified with an internal reasoning trace."
+            }
+          }
+        ]
+      })
+    );
+  });
+
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = server.address().port;
+
+  try {
+    const result = await testModelConnectivity({
+      secrets: [{ name: "TEST_GATEWAY_KEY", value: "secret-value" }],
+      model: {
+        id: "kimi_thinking_test",
+        label: "Kimi Thinking Test",
+        provider: "kimi-chat",
+        model: "kimi-k2.5",
+        baseUrl: `http://127.0.0.1:${port}`,
+        apiKeyEnv: "TEST_GATEWAY_KEY",
+        authStyle: "bearer",
+        thinkingEnabled: true
+      }
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(result.degraded, false);
+    assert.equal(result.diagnostics.thinking.enabled, true);
+    assert.equal(result.diagnostics.thinking.verified, true);
+    assert.match(result.summary, /thinking mode/i);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+}
+
+async function runConnectivityWebSearchProbeDegradedTests() {
+  let attempt = 0;
+  const server = createServer(async (request, response) => {
+    const chunks = [];
+    for await (const chunk of request) {
+      chunks.push(chunk);
+    }
+
+    const raw = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    attempt += 1;
+    response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+
+    if (attempt === 1) {
+      response.end(
+        JSON.stringify({
+          choices: [
+            {
+              message: {
+                content: `OK:${raw.model}`
+              }
+            }
+          ]
+        })
+      );
+      return;
+    }
+
+    response.end(
+      JSON.stringify({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                status: "ok",
+                usedWebSearch: false,
+                checks: [`structured:${raw.model}`],
+                note: "workflow probe could not confirm search"
+              })
+            }
+          }
+        ]
+      })
+    );
+  });
+
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = server.address().port;
+
+  try {
+    const result = await testModelConnectivity({
+      secrets: [{ name: "TEST_GATEWAY_KEY", value: "secret-value" }],
+      model: {
+        id: "kimi_chat_search_probe_test",
+        label: "Kimi Chat Search Probe Test",
+        provider: "kimi-chat",
+        model: "kimi-k2.5",
+        baseUrl: `http://127.0.0.1:${port}`,
+        apiKeyEnv: "TEST_GATEWAY_KEY",
+        authStyle: "bearer",
+        webSearch: true
+      }
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(result.degraded, true);
+    assert.equal(result.diagnostics.webSearch.enabled, true);
+    assert.equal(result.diagnostics.webSearch.used, false);
+    assert.match(result.summary, /did not confirm that web search executed successfully/i);
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }
@@ -789,6 +976,8 @@ async function runResponsesProviderCompatibilityTests() {
       baseUrl: `http://127.0.0.1:${port}`,
       apiKeyEnv: "TEST_RESPONSES_KEY",
       authStyle: "bearer",
+      thinkingEnabled: true,
+      reasoning: { effort: "high" },
       webSearch: true,
       maxOutputTokens: 32,
       retryAttempts: 0
@@ -822,8 +1011,184 @@ async function runResponsesProviderCompatibilityTests() {
       }
     ]);
     assert.deepEqual(capturedBody.tools, [{ type: "web_search" }]);
+    assert.deepEqual(capturedBody.reasoning, { effort: "high" });
     assert.equal("metadata" in capturedBody, false);
   } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+}
+
+async function runOpenAIChatWebSearchProviderCompatibilityTests() {
+  const capturedBodies = [];
+  let attempt = 0;
+  const server = createServer(async (request, response) => {
+    const chunks = [];
+    for await (const chunk of request) {
+      chunks.push(chunk);
+    }
+
+    const parsed = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    capturedBodies.push(parsed);
+    attempt += 1;
+    response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+
+    if (attempt === 1) {
+      response.end(
+        JSON.stringify({
+          choices: [
+            {
+              finish_reason: "tool_calls",
+              message: {
+                role: "assistant",
+                content: "",
+                tool_calls: [
+                  {
+                    id: "call_web_1",
+                    type: "function",
+                    function: {
+                      name: "$web_search",
+                      arguments: '{"query":"Moonshot Kimi web search compatibility"}'
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        })
+      );
+      return;
+    }
+
+    response.end(
+      JSON.stringify({
+        choices: [
+          {
+            finish_reason: "stop",
+            message: {
+              role: "assistant",
+              content: JSON.stringify({
+                status: "ok",
+                usedWebSearch: true,
+                checks: ["structured:kimi-k2.5", "web-search:kimi-k2.5"],
+                note: "workflow probe ok"
+              })
+            }
+          }
+        ]
+      })
+    );
+  });
+
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = server.address().port;
+
+  try {
+    process.env.TEST_KIMI_CHAT_KEY = "kimi-chat-key";
+    const provider = new OpenAIChatProvider({
+      id: "kimi_chat_worker",
+      provider: "kimi-chat",
+      model: "kimi-k2.5",
+      baseUrl: `http://127.0.0.1:${port}`,
+      apiKeyEnv: "TEST_KIMI_CHAT_KEY",
+      authStyle: "bearer",
+      thinkingEnabled: true,
+      webSearch: true,
+      maxOutputTokens: 96,
+      retryAttempts: 0
+    });
+
+    const result = await provider.invoke({
+      instructions: "Use web search once, then return JSON only.",
+      input: "Verify Kimi web search wiring.",
+      purpose: "compatibility_test"
+    });
+
+    assert.equal(result.text.includes('"usedWebSearch":true'), true);
+    assert.deepEqual(capturedBodies[0].tools, [
+      {
+        type: "builtin_function",
+        function: {
+          name: "$web_search"
+        }
+      }
+    ]);
+    assert.deepEqual(capturedBodies[0].thinking, { type: "disabled" });
+    assert.equal(
+      capturedBodies[1].messages.some(
+        (message) =>
+          message.role === "tool" &&
+          message.tool_call_id === "call_web_1" &&
+          message.name === "$web_search"
+      ),
+      true
+    );
+  } finally {
+    delete process.env.TEST_KIMI_CHAT_KEY;
+    await new Promise((resolve) => server.close(resolve));
+  }
+}
+
+async function runAnthropicThinkingProviderCompatibilityTests() {
+  let capturedBody = null;
+  const server = createServer(async (request, response) => {
+    const chunks = [];
+    for await (const chunk of request) {
+      chunks.push(chunk);
+    }
+
+    capturedBody = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+    response.end(
+      JSON.stringify({
+        id: "msg_thinking_test",
+        type: "message",
+        role: "assistant",
+        content: [
+          {
+            type: "thinking",
+            thinking: "Short internal reasoning summary."
+          },
+          {
+            type: "text",
+            text: "THINKING_OK"
+          }
+        ]
+      })
+    );
+  });
+
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = server.address().port;
+
+  try {
+    process.env.TEST_ANTHROPIC_THINKING_KEY = "anthropic-thinking-key";
+    const provider = new AnthropicMessagesProvider({
+      id: "claude_thinking_worker",
+      provider: "claude-chat",
+      model: "claude-sonnet-4-5",
+      baseUrl: `http://127.0.0.1:${port}`,
+      apiKeyEnv: "TEST_ANTHROPIC_THINKING_KEY",
+      authStyle: "api-key",
+      apiKeyHeader: "x-api-key",
+      thinkingEnabled: true,
+      reasoning: { effort: "high" },
+      retryAttempts: 0
+    });
+
+    const result = await provider.invoke({
+      instructions: "Think first, then reply with THINKING_OK.",
+      input: "Compatibility probe.",
+      purpose: "compatibility_test"
+    });
+
+    assert.equal(result.text, "THINKING_OK");
+    assert.deepEqual(capturedBody.thinking, {
+      type: "enabled",
+      budget_tokens: 3072
+    });
+    assert.equal(capturedBody.max_tokens >= 3584, true);
+  } finally {
+    delete process.env.TEST_ANTHROPIC_THINKING_KEY;
     await new Promise((resolve) => server.close(resolve));
   }
 }
@@ -839,7 +1204,11 @@ export async function runNetworkSmokeTests() {
   await runHttpNetworkRetryTests();
   await runHttpAbortTests();
   await runConnectivityTestTests();
-  await runConnectivityEmptyTextTests();
+  await runConnectivityThinkingTests();
+  await runAnthropicConnectivityWebSearchTests();
+  await runConnectivityWebSearchProbeDegradedTests();
   await runConnectivityWorkflowDegradedTests();
   await runResponsesProviderCompatibilityTests();
+  await runOpenAIChatWebSearchProviderCompatibilityTests();
+  await runAnthropicThinkingProviderCompatibilityTests();
 }

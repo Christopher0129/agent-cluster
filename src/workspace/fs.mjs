@@ -1,7 +1,8 @@
 import { existsSync } from "node:fs";
 import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
-import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
-import { readDocumentText } from "./document-reader.mjs";
+import { dirname, extname, isAbsolute, relative, resolve, sep } from "node:path";
+import { isSupportedReadableDocument, readDocumentText } from "./document-reader.mjs";
+import { createDocxBuffer } from "./docx.mjs";
 
 const DEFAULT_MAX_TREE_ENTRIES = 200;
 const DEFAULT_MAX_TREE_DEPTH = 4;
@@ -165,20 +166,62 @@ export async function writeWorkspaceFiles(workspaceDir, files, options = {}) {
 
   for (const file of normalizedFiles.slice(0, maxFiles)) {
     const resolved = assertPathWithinWorkspace(workspaceDir, file?.path);
-    const encoding = String(file?.encoding || "utf8");
+    const encoding = String(file?.encoding || "utf8").trim().toLowerCase() || "utf8";
+    const extension = extname(resolved.relativePath).toLowerCase();
     const content =
-      encoding === "base64"
-        ? Buffer.from(String(file?.content ?? ""), "base64")
-        : Buffer.from(String(file?.content ?? ""), "utf8");
+      extension === ".docx" && encoding !== "base64"
+        ? createDocxBuffer({
+          title: String(file?.title || ""),
+          content: String(file?.content ?? "")
+        })
+        : encoding === "base64"
+          ? Buffer.from(String(file?.content ?? ""), "base64")
+          : Buffer.from(String(file?.content ?? ""), "utf8");
     await mkdir(dirname(resolved.absolutePath), { recursive: true });
     await writeFile(resolved.absolutePath, content);
     writtenFiles.push({
       path: resolved.relativePath,
-      bytes: content.byteLength
+      bytes: content.byteLength,
+      materializedAs: extension === ".docx" && encoding !== "base64" ? "docx" : "raw"
     });
   }
 
   return writtenFiles;
+}
+
+export async function verifyWorkspaceArtifacts(workspaceDir, filePaths, options = {}) {
+  const normalizedPaths = Array.isArray(filePaths) ? filePaths : [];
+  const maxFiles = Math.max(1, Number(options.maxFiles || DEFAULT_MAX_WRITE_FILES));
+  const results = [];
+
+  for (const filePath of normalizedPaths.slice(0, maxFiles)) {
+    const resolved = assertPathWithinWorkspace(workspaceDir, filePath);
+
+    try {
+      const fileStat = await stat(resolved.absolutePath);
+      if (!fileStat.isFile()) {
+        throw new Error(`Path "${resolved.relativePath}" is not a file.`);
+      }
+
+      if (isSupportedReadableDocument(resolved.absolutePath)) {
+        await readDocumentText(resolved.absolutePath);
+      }
+
+      results.push({
+        path: resolved.relativePath,
+        verified: true,
+        bytes: fileStat.size
+      });
+    } catch (error) {
+      results.push({
+        path: resolved.relativePath,
+        verified: false,
+        error: error.message
+      });
+    }
+  }
+
+  return results;
 }
 
 export async function getWorkspaceFilePreview(workspaceDir, filePath, options = {}) {

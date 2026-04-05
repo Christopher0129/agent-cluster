@@ -20,6 +20,10 @@ export function createAppState() {
     traceUiState: {
       spans: new Map(),
       session: null
+    },
+    multiAgentUiState: {
+      settings: null,
+      session: null
     }
   };
 }

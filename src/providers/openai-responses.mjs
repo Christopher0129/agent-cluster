@@ -61,12 +61,65 @@ function hasStructuredResponsesOutput(response) {
   return typeof response?.status === "string" || typeof response?.id === "string";
 }
 
+function responseMentionsWebSearch(response) {
+  if (
+    Array.isArray(response?.output) &&
+    response.output.some((item) =>
+      String(item?.type || "")
+        .trim()
+        .toLowerCase()
+        .includes("web_search")
+    )
+  ) {
+    return true;
+  }
+
+  return Array.isArray(response?.output)
+    ? response.output.some((item) =>
+        Array.isArray(item?.content)
+          ? item.content.some((content) =>
+              Array.isArray(content?.annotations)
+                ? content.annotations.some((annotation) => {
+                    const type = String(annotation?.type || "")
+                      .trim()
+                      .toLowerCase();
+                    return type.includes("web_search") || type.includes("citation");
+                  })
+                : false
+            )
+          : false
+      )
+    : false;
+}
+
 function buildResponseTools(modelConfig) {
   const tools = [];
   if (modelConfig.webSearch) {
     tools.push({ type: "web_search" });
   }
   return tools;
+}
+
+function buildReasoningConfig(modelConfig) {
+  if (modelConfig?.thinkingEnabled === false) {
+    return null;
+  }
+
+  const explicitEffort = String(modelConfig?.reasoning?.effort || "")
+    .trim()
+    .toLowerCase();
+  if (explicitEffort) {
+    return {
+      ...modelConfig.reasoning,
+      effort: explicitEffort
+    };
+  }
+
+  if (modelConfig?.thinkingEnabled) {
+    return { effort: "medium" };
+  }
+
+  return null;
 }
 
 export class OpenAIResponsesProvider {
@@ -81,8 +134,9 @@ export class OpenAIResponsesProvider {
       input: buildInputItems({ instructions, input })
     };
 
-    if (this.modelConfig.reasoning) {
-      body.reasoning = this.modelConfig.reasoning;
+    const reasoning = buildReasoningConfig(this.modelConfig);
+    if (reasoning) {
+      body.reasoning = reasoning;
     }
 
     const tools = buildResponseTools(this.modelConfig);
@@ -102,11 +156,23 @@ export class OpenAIResponsesProvider {
     const text = extractTextFromResponse(raw);
     if (!text) {
       if (allowEmptyText && hasStructuredResponsesOutput(raw)) {
-        return { text: "", raw };
+        return {
+          text: "",
+          raw,
+          meta: {
+            webSearchObserved: responseMentionsWebSearch(raw)
+          }
+        };
       }
       throw new Error(`Model "${this.modelConfig.id}" returned no text output.`);
     }
 
-    return { text, raw };
+    return {
+      text,
+      raw,
+      meta: {
+        webSearchObserved: responseMentionsWebSearch(raw)
+      }
+    };
   }
 }

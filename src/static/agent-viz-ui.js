@@ -5,13 +5,167 @@ import {
 } from "./agent-graph-layout.js";
 import { describeOperationEvent as describeOperationEventMessage } from "./operation-events.js";
 
-const AGENT_PREFIXES = {
-  research: { leader: "Research Lead", subordinate: "Research Agent" },
-  implementation: { leader: "Build Lead", subordinate: "Build Agent" },
-  validation: { leader: "Validation Lead", subordinate: "Validation Agent" },
-  handoff: { leader: "Handoff Lead", subordinate: "Handoff Agent" },
-  general: { leader: "General Lead", subordinate: "General Agent" }
+const AGENT_VIZ_CATALOG = {
+  "zh-CN": {
+    "phase.research": "调研",
+    "phase.implementation": "实现",
+    "phase.validation": "验证",
+    "phase.handoff": "交付",
+    "phase.general": "通用",
+    "kind.controller": "主控",
+    "kind.leader": "组长",
+    "kind.subordinate": "子 Agent",
+    "status.thinking": "思考中",
+    "status.delegating": "分工中",
+    "status.spawning": "生成中",
+    "status.running": "运行中",
+    "status.retrying": "重试中",
+    "status.synthesizing": "汇总中",
+    "status.done": "已完成",
+    "status.failed": "失败",
+    "status.cancelled": "已取消",
+    "status.idle": "空闲",
+    "prefix.research.leader": "调研组长",
+    "prefix.research.subordinate": "调研下属",
+    "prefix.implementation.leader": "实现组长",
+    "prefix.implementation.subordinate": "实现下属",
+    "prefix.validation.leader": "验证组长",
+    "prefix.validation.subordinate": "验证下属",
+    "prefix.handoff.leader": "交付组长",
+    "prefix.handoff.subordinate": "交付下属",
+    "prefix.general.leader": "协作组长",
+    "prefix.general.subordinate": "协作下属",
+    "label.role": "角色",
+    "label.status": "状态",
+    "label.phase": "阶段",
+    "label.model": "模型",
+    "label.task": "任务",
+    "label.controllerAgent": "主控 Agent",
+    "group.label": "{phase}组",
+    "summary.active": "活跃 {active} / 总计 {total}",
+    "summary.synced": "已同步 {total}",
+    "empty.title": "等待集群启动",
+    "empty.copy": "任务开始后，这里会显示实时 Agent 图谱。",
+    "inspector.placeholder": "运行后点击节点可查看当前 Agent 的详情。",
+    "inspector.kicker": "Agent 详情",
+    "inspector.notesTitle": "公开推理与轨迹",
+    "inspector.noNotes": "暂无公开推理备注。",
+    "tooltip.noNotes": "暂无公开推理备注。",
+    "action.waiting": "等待工作",
+    "action.breakdown": "正在拆解并分配任务",
+    "action.combine": "正在汇总各组输出",
+    "action.clusterDone": "集群汇总已完成",
+    "action.cancelled": "运行已取消",
+    "action.failed": "运行失败",
+    "action.refresh": "正在刷新计划",
+    "action.preparedDelegates": "已准备 {count} 个下属 Agent",
+    "action.readyDirect": "准备直接执行",
+    "action.leaderStart": "组长开始执行",
+    "action.leaderDone": "组长执行完成",
+    "action.leaderFailed": "组长执行失败",
+    "action.designDelegation": "正在设计分工",
+    "action.delegationPrepared": "分工已准备",
+    "action.delegationRetry": "分工重试 {attempt}/{maxRetries}",
+    "action.collectOutputs": "正在收集下属输出",
+    "action.synthesisRetry": "汇总重试 {attempt}/{maxRetries}",
+    "action.subCreated": "已创建下属 Agent",
+    "action.subStart": "下属开始执行",
+    "action.subDone": "下属执行完成",
+    "action.subFailed": "下属执行失败",
+    "action.retry": "重试 {attempt}/{maxRetries}",
+    "state.waitingRun": "等待运行"
+  },
+  "en-US": {
+    "phase.research": "Research",
+    "phase.implementation": "Implementation",
+    "phase.validation": "Validation",
+    "phase.handoff": "Handoff",
+    "phase.general": "General",
+    "kind.controller": "Controller",
+    "kind.leader": "Leader",
+    "kind.subordinate": "Sub-agent",
+    "status.thinking": "Thinking",
+    "status.delegating": "Delegating",
+    "status.spawning": "Spawning",
+    "status.running": "Running",
+    "status.retrying": "Retrying",
+    "status.synthesizing": "Synthesizing",
+    "status.done": "Done",
+    "status.failed": "Failed",
+    "status.cancelled": "Cancelled",
+    "status.idle": "Idle",
+    "prefix.research.leader": "Research Lead",
+    "prefix.research.subordinate": "Research Agent",
+    "prefix.implementation.leader": "Build Lead",
+    "prefix.implementation.subordinate": "Build Agent",
+    "prefix.validation.leader": "Validation Lead",
+    "prefix.validation.subordinate": "Validation Agent",
+    "prefix.handoff.leader": "Handoff Lead",
+    "prefix.handoff.subordinate": "Handoff Agent",
+    "prefix.general.leader": "General Lead",
+    "prefix.general.subordinate": "General Agent",
+    "label.role": "Role",
+    "label.status": "Status",
+    "label.phase": "Phase",
+    "label.model": "Model",
+    "label.task": "Task",
+    "label.controllerAgent": "Controller Agent",
+    "group.label": "{phase} Group",
+    "summary.active": "Active {active} / Total {total}",
+    "summary.synced": "Synced {total}",
+    "empty.title": "Waiting For Cluster Start",
+    "empty.copy": "The live agent graph will appear here once the run begins.",
+    "inspector.placeholder": "Run the cluster and click a node to inspect the current agent.",
+    "inspector.kicker": "Agent Detail",
+    "inspector.notesTitle": "Public Reasoning And Trail",
+    "inspector.noNotes": "No public reasoning notes yet.",
+    "tooltip.noNotes": "No public reasoning notes yet.",
+    "action.waiting": "Waiting for work",
+    "action.breakdown": "Breaking down and assigning work",
+    "action.combine": "Combining group outputs",
+    "action.clusterDone": "Cluster synthesis completed",
+    "action.cancelled": "Run cancelled",
+    "action.failed": "Run failed",
+    "action.refresh": "Refreshing plan",
+    "action.preparedDelegates": "Prepared {count} subordinate agent(s)",
+    "action.readyDirect": "Ready for direct execution",
+    "action.leaderStart": "Leader execution started",
+    "action.leaderDone": "Leader execution completed",
+    "action.leaderFailed": "Leader execution failed",
+    "action.designDelegation": "Designing delegation plan",
+    "action.delegationPrepared": "Delegation prepared",
+    "action.delegationRetry": "Delegation retry {attempt}/{maxRetries}",
+    "action.collectOutputs": "Collecting subordinate outputs",
+    "action.synthesisRetry": "Synthesis retry {attempt}/{maxRetries}",
+    "action.subCreated": "Subordinate agent created",
+    "action.subStart": "Subordinate execution started",
+    "action.subDone": "Subordinate execution completed",
+    "action.subFailed": "Subordinate execution failed",
+    "action.retry": "Retry {attempt}/{maxRetries}",
+    "state.waitingRun": "Waiting for run"
+  }
 };
+
+function interpolate(template, values = {}) {
+  return String(template || "").replace(/\{(\w+)\}/g, (_, key) => String(values[key] ?? ""));
+}
+
+function resolveRuntimeLocale() {
+  if (
+    typeof document !== "undefined" &&
+    String(document.documentElement?.lang || "").toLowerCase().startsWith("en")
+  ) {
+    return "en-US";
+  }
+  return "zh-CN";
+}
+
+function createAgentVizTranslator() {
+  return (key, values = {}) => {
+    const locale = resolveRuntimeLocale();
+    return interpolate(AGENT_VIZ_CATALOG[locale]?.[key] ?? AGENT_VIZ_CATALOG["zh-CN"]?.[key] ?? key, values);
+  };
+}
 
 export function createAgentVizUi({
   elements,
@@ -35,6 +189,12 @@ export function createAgentVizUi({
     agentVizZoomInButton,
     agentVizResetButton
   } = elements;
+  const translate = createAgentVizTranslator();
+
+  function translateOrNull(key, values = {}) {
+    const result = translate(key, values);
+    return result === key ? "" : result;
+  }
 
   const agentGraphState = {
     agents: new Map(),
@@ -82,18 +242,7 @@ export function createAgentVizUi({
   }
 
   function resolvePhaseLabel(phase) {
-    switch (phase) {
-      case "research":
-        return "Research";
-      case "implementation":
-        return "Implementation";
-      case "validation":
-        return "Validation";
-      case "handoff":
-        return "Handoff";
-      default:
-        return "General";
-    }
+    return translateOrNull(`phase.${String(phase || "").trim().toLowerCase() || "general"}`) || translate("phase.general");
   }
 
   function resolveNodePalette(agent) {
@@ -186,8 +335,12 @@ export function createAgentVizUi({
   }
 
   function resolveAgentPrefix(phase, kind) {
-    const bucket = AGENT_PREFIXES[String(phase || "").trim()] || AGENT_PREFIXES.general;
-    return bucket[kind] || AGENT_PREFIXES.general[kind] || "";
+    const normalizedPhase = String(phase || "").trim().toLowerCase() || "general";
+    return (
+      translateOrNull(`prefix.${normalizedPhase}.${kind}`) ||
+      translateOrNull(`prefix.general.${kind}`) ||
+      ""
+    );
   }
 
   function formatLeaderDisplayLabel(workerId, phase) {
@@ -197,28 +350,14 @@ export function createAgentVizUi({
   }
 
   function summarizeAgentStatus(agent) {
-    switch (agent.status) {
-      case "thinking":
-        return "Thinking";
-      case "delegating":
-        return "Delegating";
-      case "spawning":
-        return "Spawning";
-      case "running":
-        return "Running";
-      case "retrying":
-        return "Retrying";
-      case "synthesizing":
-        return "Synthesizing";
-      case "done":
-        return "Done";
-      case "failed":
-        return "Failed";
-      case "cancelled":
-        return "Cancelled";
-      default:
-        return "Idle";
-    }
+    return (
+      translateOrNull(`status.${String(agent?.status || "idle").trim().toLowerCase() || "idle"}`) ||
+      translate("status.idle")
+    );
+  }
+
+  function resolveKindLabel(kind) {
+    return translate(`kind.${String(kind || "").trim().toLowerCase() || "subordinate"}`);
   }
 
   function ensureAgentState(partial = {}) {
@@ -298,36 +437,36 @@ export function createAgentVizUi({
 
     if (!selectedAgent) {
       agentVizInspector.innerHTML =
-        '<p class="placeholder">Run the cluster and click a node to inspect the current agent.</p>';
+        `<p class="placeholder">${escapeHtml(translate("inspector.placeholder"))}</p>`;
       return;
     }
 
     const metaItems = [
-      `Role: ${selectedAgent.kind === "controller" ? "Controller" : selectedAgent.kind === "leader" ? "Leader" : "Subordinate"}`,
-      `Status: ${summarizeAgentStatus(selectedAgent)}`,
-      selectedAgent.phase ? `Phase: ${resolvePhaseLabel(selectedAgent.phase)}` : "",
-      selectedAgent.modelLabel ? `Model: ${selectedAgent.modelLabel}` : "",
-      selectedAgent.taskTitle ? `Task: ${selectedAgent.taskTitle}` : ""
+      `${translate("label.role")}: ${resolveKindLabel(selectedAgent.kind)}`,
+      `${translate("label.status")}: ${summarizeAgentStatus(selectedAgent)}`,
+      selectedAgent.phase ? `${translate("label.phase")}: ${resolvePhaseLabel(selectedAgent.phase)}` : "",
+      selectedAgent.modelLabel ? `${translate("label.model")}: ${selectedAgent.modelLabel}` : "",
+      selectedAgent.taskTitle ? `${translate("label.task")}: ${selectedAgent.taskTitle}` : ""
     ].filter(Boolean);
 
     const notes = selectedAgent.notes?.length
       ? `<ul>${selectedAgent.notes.map((note) => `<li>${escapeHtml(note)}</li>`).join("")}</ul>`
-      : '<p class="placeholder">No public reasoning notes yet.</p>';
+      : `<p class="placeholder">${escapeHtml(translate("inspector.noNotes"))}</p>`;
 
     agentVizInspector.innerHTML = `
       <div class="agent-inspector-head">
         <div>
-          <p class="panel-kicker">Agent Detail</p>
+          <p class="panel-kicker">${escapeHtml(translate("inspector.kicker"))}</p>
           <h3>${escapeHtml(selectedAgent.label || selectedAgent.id)}</h3>
         </div>
         <span class="badge">${escapeHtml(summarizeAgentStatus(selectedAgent))}</span>
       </div>
-      <p class="agent-inspector-action">${escapeHtml(selectedAgent.action || "Waiting for work")}</p>
+      <p class="agent-inspector-action">${escapeHtml(selectedAgent.action || translate("action.waiting"))}</p>
       <div class="agent-inspector-meta">
         ${metaItems.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}
       </div>
       <div class="agent-inspector-notes">
-        <h4>Public Reasoning And Trail</h4>
+        <h4>${escapeHtml(translate("inspector.notesTitle"))}</h4>
         ${notes}
       </div>
     `;
@@ -365,14 +504,14 @@ export function createAgentVizUi({
     const latestNotes = (agent.notes || []).slice(-4);
     const noteMarkup = latestNotes.length
       ? `<ul>${latestNotes.map((note) => `<li>${escapeHtml(note)}</li>`).join("")}</ul>`
-      : '<p class="placeholder">No public reasoning notes yet.</p>';
+      : `<p class="placeholder">${escapeHtml(translate("tooltip.noNotes"))}</p>`;
 
     agentVizTooltip.innerHTML = `
       <div class="agent-tooltip-head">
         <strong>${escapeHtml(agent.label || agent.id)}</strong>
         <span>${escapeHtml(summarizeAgentStatus(agent))}</span>
       </div>
-      <p class="agent-tooltip-action">${escapeHtml(agent.action || "Waiting for work")}</p>
+      <p class="agent-tooltip-action">${escapeHtml(agent.action || translate("action.waiting"))}</p>
       ${noteMarkup}
     `;
     agentVizTooltip.hidden = false;
@@ -508,7 +647,7 @@ export function createAgentVizUi({
       .join("");
     const groupMarkup = layout.groups
       .map((group) => {
-        const label = `${resolvePhaseLabel(group.leader.phase)} Group`;
+        const label = translate("group.label", { phase: resolvePhaseLabel(group.leader.phase) });
         return `
           <g class="agent-group" data-phase="${escapeAttribute(group.leader.phase || "general")}">
             <path
@@ -647,8 +786,8 @@ export function createAgentVizUi({
               repeatCount="indefinite"
             ></animateTransform>
           </circle>
-          <text class="agent-empty-title" x="0" y="146">Waiting For Cluster Start</text>
-          <text class="agent-empty-copy" x="0" y="176">The live agent graph will appear here once the run begins.</text>
+          <text class="agent-empty-title" x="0" y="146">${escapeHtml(translate("empty.title"))}</text>
+          <text class="agent-empty-copy" x="0" y="176">${escapeHtml(translate("empty.copy"))}</text>
         </g>
       `;
     }
@@ -699,7 +838,9 @@ export function createAgentVizUi({
 
     const activity = summarizeAgentActivity(agents);
     setSummary(
-      activity.activeCount ? `Active ${activity.activeCount} / Total ${activity.totalCount}` : `Synced ${activity.totalCount}`,
+      activity.activeCount
+        ? translate("summary.active", { active: activity.activeCount, total: activity.totalCount })
+        : translate("summary.synced", { total: activity.totalCount }),
       activity.activeCount ? "warning" : "ok"
     );
   }
@@ -890,7 +1031,7 @@ export function createAgentVizUi({
   function resolveControllerEventMeta() {
     const fallbackId = agentGraphState.controllerId || getSelectedControllerId?.() || "controller";
     const knownModel = knownModelConfigs.get(fallbackId);
-    const fallbackLabel = agentGraphState.controllerLabel || knownModel?.label || "Controller Agent";
+    const fallbackLabel = agentGraphState.controllerLabel || knownModel?.label || translate("label.controllerAgent");
     return {
       agentId: fallbackId,
       agentLabel: fallbackLabel,
@@ -907,6 +1048,7 @@ export function createAgentVizUi({
       event.stage === "planning_start" ||
       event.stage === "planning_done" ||
       event.stage === "planning_retry" ||
+      event.stage === "controller_fallback" ||
       event.stage === "synthesis_start" ||
       event.stage === "synthesis_retry" ||
       event.stage === "cluster_done" ||
@@ -926,10 +1068,12 @@ export function createAgentVizUi({
         status:
           event.stage === "planning_start"
             ? "thinking"
-            : event.stage === "planning_retry" || event.stage === "synthesis_retry"
+            : event.stage === "planning_retry" ||
+                event.stage === "synthesis_retry" ||
+                event.stage === "controller_fallback"
               ? "retrying"
-              : event.stage === "synthesis_start"
-                ? "synthesizing"
+            : event.stage === "synthesis_start"
+              ? "synthesizing"
                 : event.stage === "cluster_done"
                   ? "done"
                   : event.stage === "cluster_cancelled"
@@ -939,16 +1083,18 @@ export function createAgentVizUi({
                       : "delegating",
         action:
           event.stage === "planning_start"
-            ? "Breaking down and assigning work"
+            ? translate("action.breakdown")
+            : event.stage === "controller_fallback"
+              ? describeOperationEventMessage(event, { formatDelay })
             : event.stage === "synthesis_start"
-              ? "Combining group outputs"
+              ? translate("action.combine")
               : event.stage === "cluster_done"
-                ? "Cluster synthesis completed"
+                ? translate("action.clusterDone")
                 : event.stage === "cluster_cancelled"
-                  ? "Run cancelled"
+                  ? translate("action.cancelled")
                   : event.stage === "cluster_failed"
-                    ? "Run failed"
-                    : event.detail || "Refreshing plan"
+                    ? translate("action.failed")
+                    : event.detail || translate("action.refresh")
       });
       appendAgentNote(
         controller.id,
@@ -968,8 +1114,8 @@ export function createAgentVizUi({
             phase: task.phase,
             status: task.delegateCount ? "delegating" : "idle",
             action: task.delegateCount
-              ? `Prepared ${task.delegateCount} subordinate agent(s)`
-              : "Ready for direct execution",
+              ? translate("action.preparedDelegates", { count: task.delegateCount })
+              : translate("action.readyDirect"),
             taskTitle: task.title
           });
         }
@@ -1016,62 +1162,79 @@ export function createAgentVizUi({
     switch (event.stage) {
       case "worker_start":
         agent.status = "running";
-        agent.action = event.detail || "Leader execution started";
+        agent.action = event.detail || translate("action.leaderStart");
         break;
       case "worker_done":
         agent.status = event.tone === "warning" ? "failed" : "done";
-        agent.action = "Leader execution completed";
+        agent.action = translate("action.leaderDone");
         break;
       case "worker_failed":
         agent.status = "failed";
-        agent.action = "Leader execution failed";
+        agent.action = translate("action.leaderFailed");
         break;
       case "worker_retry":
         agent.status = "retrying";
-        agent.action = `Retry ${event.attempt || ""}/${event.maxRetries || ""}`.trim();
+        agent.action = translate("action.retry", {
+          attempt: event.attempt || "",
+          maxRetries: event.maxRetries || ""
+        }).trim();
+        break;
+      case "worker_fallback":
+        agent.status = "retrying";
+        agent.action = describeOperationEventMessage(event, { formatDelay });
         break;
       case "leader_delegate_start":
         agent.status = "thinking";
-        agent.action = "Designing delegation plan";
+        agent.action = translate("action.designDelegation");
         break;
       case "leader_delegate_done":
         agent.status = "delegating";
-        agent.action = event.detail || "Delegation prepared";
+        agent.action = event.detail || translate("action.delegationPrepared");
         break;
       case "leader_delegate_retry":
         agent.status = "retrying";
-        agent.action = `Delegation retry ${event.attempt || ""}/${event.maxRetries || ""}`.trim();
+        agent.action = translate("action.delegationRetry", {
+          attempt: event.attempt || "",
+          maxRetries: event.maxRetries || ""
+        }).trim();
         break;
       case "leader_synthesis_start":
         agent.status = "synthesizing";
-        agent.action = "Collecting subordinate outputs";
+        agent.action = translate("action.collectOutputs");
         break;
       case "leader_synthesis_retry":
         agent.status = "retrying";
-        agent.action = `Synthesis retry ${event.attempt || ""}/${event.maxRetries || ""}`.trim();
+        agent.action = translate("action.synthesisRetry", {
+          attempt: event.attempt || "",
+          maxRetries: event.maxRetries || ""
+        }).trim();
         break;
       case "subagent_created":
         agent.status = "spawning";
-        agent.action = event.detail || "Subordinate agent created";
+        agent.action = event.detail || translate("action.subCreated");
         break;
       case "subagent_start":
         agent.status = "running";
-        agent.action = "Subordinate execution started";
+        agent.action = translate("action.subStart");
         break;
       case "subagent_done":
         agent.status = "done";
-        agent.action = "Subordinate execution completed";
+        agent.action = translate("action.subDone");
         break;
       case "subagent_failed":
         agent.status = "failed";
-        agent.action = "Subordinate execution failed";
+        agent.action = translate("action.subFailed");
         break;
       case "subagent_retry":
         agent.status = "retrying";
-        agent.action = `Retry ${event.attempt || ""}/${event.maxRetries || ""}`.trim();
+        agent.action = translate("action.retry", {
+          attempt: event.attempt || "",
+          maxRetries: event.maxRetries || ""
+        }).trim();
         break;
       case "workspace_list":
       case "workspace_read":
+      case "workspace_web_search":
       case "workspace_write":
       case "workspace_command":
       case "workspace_tool_blocked":
@@ -1103,11 +1266,22 @@ export function createAgentVizUi({
     agentVizState.pointerDownAgentId = "";
     stopRunTimer();
     renderEmpty();
-    setSummary("Waiting for run", "neutral");
+    setSummary(translate("state.waitingRun"), "neutral");
+  }
+
+  function refreshLocale() {
+    if (agentGraphState.agents.size) {
+      renderGraph();
+      return;
+    }
+
+    renderEmpty();
+    setSummary(translate("state.waitingRun"), "neutral");
   }
 
   return {
     bindEvents,
+    refreshLocale,
     reset,
     resolveControllerEventMeta,
     startRunTimer,

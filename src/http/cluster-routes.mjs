@@ -1,9 +1,85 @@
+import { resolve } from "node:path";
 import { createProviderRegistry } from "../providers/factory.mjs";
 import { testModelConnectivity } from "../providers/connectivity-test.mjs";
 import { runClusterAnalysis } from "../cluster/orchestrator.mjs";
-import { loadRuntimeConfig } from "../config.mjs";
+import { loadRuntimeConfig, summarizeConfig } from "../config.mjs";
+import { writeClusterRunLog } from "../run-log-store.mjs";
 import { isAbortError } from "../utils/abort.mjs";
 import { readRequestBody, resolveOperationId, sendJson } from "./common.mjs";
+
+function resolveLogWorkspaceDir(projectDir, runtimeConfigOptions, schemeId = "", config = null) {
+  if (config?.workspace?.resolvedDir) {
+    return config.workspace.resolvedDir;
+  }
+
+  try {
+    return loadRuntimeConfig(projectDir, {
+      ...runtimeConfigOptions,
+      ...(schemeId ? { schemeId } : {})
+    }).workspace.resolvedDir;
+  } catch {
+    return resolve(projectDir, "workspace");
+  }
+}
+
+async function persistClusterOperationLog({
+  task,
+  operationId,
+  schemeId,
+  projectDir,
+  runtimeConfigOptions,
+  operationTracker,
+  config = null,
+  status,
+  result = null,
+  error = null
+}) {
+  const workspaceDir = resolveLogWorkspaceDir(projectDir, runtimeConfigOptions, schemeId, config);
+  const snapshot = operationTracker.getSnapshot(operationId, { afterSeq: 0 });
+  const payload = {
+    version: 1,
+    kind: "cluster_run_log",
+    operationId,
+    status,
+    savedAt: new Date().toISOString(),
+    task,
+    schemeId,
+    workspace: {
+      dir: config?.workspace?.dir || "./workspace",
+      resolvedDir: workspaceDir
+    },
+    configSummary: config ? summarizeConfig(config) : null,
+    operation: snapshot,
+    result,
+    error: error
+      ? {
+          message: error.message,
+          stack: String(error.stack || "")
+        }
+      : null
+  };
+
+  try {
+    const written = await writeClusterRunLog(projectDir, operationId, payload);
+    operationTracker.publish(operationId, {
+      type: "status",
+      stage: "run_log_saved",
+      tone: "ok",
+      detail: `本次任务日志已保存：${written.textPath}`,
+      logPath: written.textPath,
+      jsonPath: written.jsonPath
+    });
+    return written;
+  } catch (logError) {
+    operationTracker.publish(operationId, {
+      type: "status",
+      stage: "run_log_save_failed",
+      tone: "warning",
+      detail: `任务已结束，但保存日志失败：${logError.message}`
+    });
+    return null;
+  }
+}
 
 export async function executeClusterOperation({
   task,
@@ -13,20 +89,25 @@ export async function executeClusterOperation({
   runtimeConfigOptions,
   operationTracker
 }) {
+  let config = null;
   try {
-    operationTracker.ensureOperation(operationId, { kind: "cluster_run" });
+    operationTracker.ensureOperation(operationId, {
+      kind: "cluster_run",
+      task,
+      schemeId
+    });
     operationTracker.publish(operationId, {
       type: "status",
       stage: "submitted",
       tone: "neutral"
     });
 
-    const config = loadRuntimeConfig(projectDir, {
+    config = loadRuntimeConfig(projectDir, {
       ...runtimeConfigOptions,
       ...(schemeId ? { schemeId } : {})
     });
     const providers = createProviderRegistry(config);
-    return await runClusterAnalysis({
+    const result = await runClusterAnalysis({
       task,
       config,
       signal: operationTracker.getSignal(operationId),
@@ -35,6 +116,21 @@ export async function executeClusterOperation({
         operationTracker.publish(operationId, event);
       }
     });
+    const log = await persistClusterOperationLog({
+      task,
+      operationId,
+      schemeId,
+      projectDir,
+      runtimeConfigOptions,
+      operationTracker,
+      config,
+      status: "completed",
+      result
+    });
+    return {
+      ...result,
+      log
+    };
   } catch (error) {
     if (isAbortError(error)) {
       operationTracker.publish(operationId, {
@@ -42,6 +138,17 @@ export async function executeClusterOperation({
         stage: "cluster_cancelled",
         tone: "warning",
         detail: error.message
+      });
+      await persistClusterOperationLog({
+        task,
+        operationId,
+        schemeId,
+        projectDir,
+        runtimeConfigOptions,
+        operationTracker,
+        config,
+        status: "cancelled",
+        error
       });
       throw error;
     }
@@ -51,6 +158,17 @@ export async function executeClusterOperation({
       stage: "cluster_failed",
       tone: "error",
       detail: error.message
+    });
+    await persistClusterOperationLog({
+      task,
+      operationId,
+      schemeId,
+      projectDir,
+      runtimeConfigOptions,
+      operationTracker,
+      config,
+      status: "failed",
+      error
     });
     throw error;
   }

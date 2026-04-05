@@ -7,10 +7,15 @@ import {
 } from "./security/secrets.mjs";
 import { applySecretMapToProcessEnv } from "./security/process-env.mjs";
 import {
+  getProviderDefinition,
   isSupportedProvider,
   listProviderDefinitions,
   providerSupportsCapability
 } from "./static/provider-catalog.js";
+import {
+  normalizeAgentBudgetProfiles,
+  normalizeCapabilityRoutingPolicy
+} from "./cluster/policies.mjs";
 
 const SUPPORTED_AUTH_STYLES = new Set(["bearer", "api-key", "none"]);
 const DEFAULT_SETTINGS_PATH = "./runtime.settings.json";
@@ -21,7 +26,40 @@ const DEFAULT_GROUP_LEADER_MAX_DELEGATES = 10;
 const DEFAULT_DELEGATION_MAX_DEPTH = 1;
 const DEFAULT_SCHEME_ID = "gpt_scheme";
 const DEFAULT_SCHEME_LABEL = "gpt方案";
+const DEFAULT_MULTI_AGENT_MODE = "group_chat";
+const DEFAULT_MULTI_AGENT_SPEAKER_STRATEGY = "phase_priority";
+const DEFAULT_MULTI_AGENT_MAX_ROUNDS = 16;
+const DEFAULT_MULTI_AGENT_TERMINATION_KEYWORD = "TERMINATE";
+const DEFAULT_MULTI_AGENT_MESSAGE_WINDOW = 28;
 const CLUSTER_PHASES = ["research", "implementation", "validation", "handoff"];
+const SUPPORTED_REASONING_EFFORTS = new Set(["low", "medium", "high", "xhigh"]);
+const SUPPORTED_MULTI_AGENT_MODES = new Set(["group_chat", "sequential", "workflow"]);
+const SUPPORTED_MULTI_AGENT_SPEAKER_STRATEGIES = new Set([
+  "round_robin",
+  "phase_priority",
+  "random"
+]);
+const SUPPORTED_MODEL_ROLES = new Set(["controller", "worker", "hybrid"]);
+
+function normalizeProviderBaseUrl(provider, baseUrl) {
+  const normalizedProvider = String(provider || "").trim();
+  const normalizedBaseUrl = String(baseUrl || "").trim().replace(/\/+$/, "");
+
+  if (
+    normalizedProvider === "kimi-coding" &&
+    /^https:\/\/api\.moonshot\.cn\/v1$/i.test(normalizedBaseUrl)
+  ) {
+    return getProviderDefinition("kimi-coding")?.defaultBaseUrl || normalizedBaseUrl;
+  }
+
+  return normalizedBaseUrl;
+}
+const MODEL_ROLE_ALIASES = new Map([
+  ["both", "hybrid"],
+  ["dual", "hybrid"],
+  ["dual-role", "hybrid"],
+  ["dual_role", "hybrid"]
+]);
 
 function parseEnvLine(line) {
   const trimmed = line.trim();
@@ -135,6 +173,45 @@ function normalizeSchemeLabel(value, fallback = DEFAULT_SCHEME_LABEL) {
   return normalized || fallback;
 }
 
+function normalizeMultiAgentChoice(value, supportedValues, fallback) {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase();
+  return supportedValues.has(normalized) ? normalized : fallback;
+}
+
+function normalizeMultiAgentSettings(value, fallback = {}) {
+  const source = value && typeof value === "object" ? value : {};
+  const backup = fallback && typeof fallback === "object" ? fallback : {};
+
+  return {
+    enabled: Boolean(source.enabled ?? backup.enabled ?? false),
+    mode: normalizeMultiAgentChoice(
+      source.mode ?? backup.mode,
+      SUPPORTED_MULTI_AGENT_MODES,
+      DEFAULT_MULTI_AGENT_MODE
+    ),
+    speakerStrategy: normalizeMultiAgentChoice(
+      source.speakerStrategy ?? backup.speakerStrategy,
+      SUPPORTED_MULTI_AGENT_SPEAKER_STRATEGIES,
+      DEFAULT_MULTI_AGENT_SPEAKER_STRATEGY
+    ),
+    maxRounds: normalizePositiveInteger(
+      source.maxRounds,
+      normalizePositiveInteger(backup.maxRounds, DEFAULT_MULTI_AGENT_MAX_ROUNDS)
+    ),
+    terminationKeyword:
+      String(source.terminationKeyword ?? backup.terminationKeyword ?? "").trim() ||
+      DEFAULT_MULTI_AGENT_TERMINATION_KEYWORD,
+    messageWindow: normalizePositiveInteger(
+      source.messageWindow,
+      normalizePositiveInteger(backup.messageWindow, DEFAULT_MULTI_AGENT_MESSAGE_WINDOW)
+    ),
+    summarizeLongMessages: source.summarizeLongMessages ?? backup.summarizeLongMessages ?? true,
+    includeSystemMessages: source.includeSystemMessages ?? backup.includeSystemMessages ?? true
+  };
+}
+
 function normalizePhaseParallelSettings(value, fallback = {}) {
   const source = value && typeof value === "object" ? value : {};
   const backup = fallback && typeof fallback === "object" ? fallback : {};
@@ -167,6 +244,35 @@ function parseSpecialties(value) {
     .filter(Boolean);
 }
 
+function parseModelRole(value) {
+  const trimmed = String(value || "").trim().toLowerCase();
+  if (!trimmed) {
+    return "";
+  }
+
+  const normalized = MODEL_ROLE_ALIASES.get(trimmed) || trimmed;
+  return SUPPORTED_MODEL_ROLES.has(normalized) ? normalized : null;
+}
+
+function inferModelRole(modelConfig, modelId, controllerId) {
+  const explicitRole = parseModelRole(modelConfig?.role);
+  if (explicitRole === null) {
+    throw new Error(`Model "${modelId}" has unsupported role "${modelConfig?.role}".`);
+  }
+  if (explicitRole) {
+    return explicitRole;
+  }
+  return modelId === controllerId ? "controller" : "worker";
+}
+
+function modelRoleAllowsController(role) {
+  return role === "controller" || role === "hybrid";
+}
+
+function modelRoleAllowsWorker(role) {
+  return role === "worker" || role === "hybrid";
+}
+
 function normalizeStringList(value, fallback = []) {
   const source = Array.isArray(value)
     ? value
@@ -183,6 +289,77 @@ function normalizeStringList(value, fallback = []) {
         .filter(Boolean)
     )
   );
+}
+
+function normalizeJsonObjectSetting(value, fallback, label) {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return fallback;
+    }
+    try {
+      return JSON.parse(trimmed);
+    } catch (error) {
+      throw new Error(`Invalid JSON for ${label}: ${error.message}`);
+    }
+  }
+
+  if (value && typeof value === "object") {
+    return value;
+  }
+
+  return fallback;
+}
+
+function normalizeReasoningEffort(value, fallback = "") {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase();
+  if (!normalized) {
+    return fallback;
+  }
+  return SUPPORTED_REASONING_EFFORTS.has(normalized) ? normalized : fallback;
+}
+
+function inferThinkingEnabled(modelConfig, provider, fallback = false) {
+  if (!providerSupportsCapability(provider, "thinking")) {
+    return false;
+  }
+
+  if (typeof modelConfig?.thinkingEnabled === "boolean") {
+    return modelConfig.thinkingEnabled;
+  }
+
+  if (typeof modelConfig?.thinking === "boolean") {
+    return modelConfig.thinking;
+  }
+
+  if (modelConfig?.thinking && typeof modelConfig.thinking === "object") {
+    if (typeof modelConfig.thinking.enabled === "boolean") {
+      return modelConfig.thinking.enabled;
+    }
+
+    const thinkingType = String(modelConfig.thinking.type || "")
+      .trim()
+      .toLowerCase();
+    if (thinkingType === "enabled") {
+      return true;
+    }
+    if (thinkingType === "disabled") {
+      return false;
+    }
+  }
+
+  if (providerSupportsCapability(provider, "reasoning")) {
+    const reasoningEffort = normalizeReasoningEffort(
+      modelConfig?.reasoning?.effort || modelConfig?.reasoningEffort || ""
+    );
+    if (reasoningEffort) {
+      return true;
+    }
+  }
+
+  return fallback;
 }
 
 function normalizeBotConfig(value, fallback = {}) {
@@ -299,7 +476,7 @@ function normalizeModelsPayload(modelsArray, controllerId, secrets) {
     }
 
     const model = String(source.model || "").trim();
-    const baseUrl = String(source.baseUrl || "").trim().replace(/\/+$/, "");
+    const baseUrl = normalizeProviderBaseUrl(provider, source.baseUrl);
     if (!model) {
       throw new Error(`Model "${modelId}" is missing a model name.`);
     }
@@ -324,17 +501,23 @@ function normalizeModelsPayload(modelsArray, controllerId, secrets) {
       apiKeyEnv,
       authStyle,
       label: String(source.label || modelId).trim() || modelId,
+      role: inferModelRole(source, modelId, controllerId),
       specialties: parseSpecialties(source.specialties)
     };
+
+    const thinkingEnabled = inferThinkingEnabled(source, provider, false);
+    if (providerSupportsCapability(provider, "thinking")) {
+      normalizedModel.thinkingEnabled = thinkingEnabled;
+    }
 
     const apiKeyHeader = String(source.apiKeyHeader || "").trim();
     if (authStyle === "api-key") {
       normalizedModel.apiKeyHeader = apiKeyHeader || "api-key";
     }
 
-    const reasoningEffort = String(source.reasoningEffort || "").trim();
-    if (providerSupportsCapability(provider, "reasoning") && reasoningEffort) {
-      normalizedModel.reasoning = { effort: reasoningEffort };
+    const reasoningEffort = normalizeReasoningEffort(source.reasoningEffort || source.reasoning?.effort);
+    if (providerSupportsCapability(provider, "reasoning") && thinkingEnabled) {
+      normalizedModel.reasoning = { effort: reasoningEffort || "medium" };
     }
 
     if (providerSupportsCapability(provider, "webSearch")) {
@@ -362,8 +545,16 @@ function normalizeModelsPayload(modelsArray, controllerId, secrets) {
     throw new Error(`Selected controller "${controllerId}" does not exist in the model list.`);
   }
 
-  if (Object.keys(normalizedModels).length < 2) {
-    throw new Error("At least one worker model is required besides the controller.");
+  if (!modelRoleAllowsController(normalizedModels[controllerId].role)) {
+    throw new Error(`Selected controller "${controllerId}" is not allowed to act as a controller.`);
+  }
+
+  if (
+    !Object.values(normalizedModels).some(
+      (modelConfig) => modelConfig !== normalizedModels[controllerId] && modelRoleAllowsWorker(modelConfig.role)
+    )
+  ) {
+    throw new Error("At least one worker-capable model is required besides the controller.");
   }
 
   return normalizedModels;
@@ -394,12 +585,14 @@ function buildEditableModelsFromScheme(scheme, savedSecrets = {}) {
       provider: model.provider,
       model: model.model,
       baseUrl: model.baseUrl,
+      role: model.role,
       apiKeyEnv: model.apiKeyEnv || "",
       apiKeyValue: model.apiKeyEnv
         ? String(savedSecrets[model.apiKeyEnv] ?? process.env[model.apiKeyEnv] ?? "")
         : "",
       authStyle: model.authStyle || "bearer",
       apiKeyHeader: model.apiKeyHeader || "",
+      thinkingEnabled: inferThinkingEnabled(model, model.provider, false),
       reasoningEffort: model.reasoning?.effort || "",
       webSearch: Boolean(model.webSearch),
       temperature: model.temperature ?? "",
@@ -495,6 +688,14 @@ function mergeBaseConfigWithSettings(baseConfig, savedSettings) {
       savedSettings.cluster.phaseParallel,
       merged.cluster?.phaseParallel
     );
+    nextCluster.agentBudgetProfiles = normalizeAgentBudgetProfiles(
+      savedSettings.cluster.agentBudgetProfiles,
+      merged.cluster?.agentBudgetProfiles
+    );
+    nextCluster.capabilityRoutingPolicy = normalizeCapabilityRoutingPolicy(
+      savedSettings.cluster.capabilityRoutingPolicy,
+      merged.cluster?.capabilityRoutingPolicy
+    );
     merged.cluster = {
       ...nextCluster
     };
@@ -512,6 +713,13 @@ function mergeBaseConfigWithSettings(baseConfig, savedSettings) {
       ...(merged.bot || {}),
       ...savedSettings.bot
     };
+  }
+
+  if (savedSettings?.multiAgent && typeof savedSettings.multiAgent === "object") {
+    merged.multiAgent = normalizeMultiAgentSettings(
+      savedSettings.multiAgent,
+      merged.multiAgent
+    );
   }
 
   if (savedSettings?.schemes && typeof savedSettings.schemes === "object" && Object.keys(savedSettings.schemes).length) {
@@ -532,7 +740,7 @@ function normalizeModelConfig(modelId, modelConfig, controllerId) {
 
   const provider = String(modelConfig.provider || "").trim();
   const model = String(modelConfig.model || "").trim();
-  const baseUrl = String(modelConfig.baseUrl || "").trim().replace(/\/+$/, "");
+  const baseUrl = normalizeProviderBaseUrl(provider, modelConfig.baseUrl);
 
   if (!provider) {
     throw new Error(`Model "${modelId}" is missing "provider".`);
@@ -551,6 +759,15 @@ function normalizeModelConfig(modelId, modelConfig, controllerId) {
   if (!SUPPORTED_AUTH_STYLES.has(authStyle)) {
     throw new Error(`Model "${modelId}" has unsupported authStyle "${authStyle}".`);
   }
+  const role = inferModelRole(modelConfig, modelId, controllerId);
+  const thinkingEnabled = inferThinkingEnabled(modelConfig, provider, false);
+  const reasoningEffort = normalizeReasoningEffort(
+    modelConfig.reasoning?.effort || modelConfig.reasoningEffort || ""
+  );
+  const normalizedReasoning =
+    providerSupportsCapability(provider, "reasoning") && thinkingEnabled
+      ? { effort: reasoningEffort || "medium" }
+      : null;
 
   return {
     ...modelConfig,
@@ -559,10 +776,13 @@ function normalizeModelConfig(modelId, modelConfig, controllerId) {
     model,
     baseUrl,
     label: String(modelConfig.label || modelId),
-    role: modelId === controllerId ? "controller" : "worker",
+    role,
     authStyle,
     apiKeyEnv: String(modelConfig.apiKeyEnv || "").trim(),
     apiKeyHeader: String(modelConfig.apiKeyHeader || "").trim(),
+    thinkingEnabled,
+    reasoning: normalizedReasoning,
+    webSearch: providerSupportsCapability(provider, "webSearch") ? Boolean(modelConfig.webSearch) : false,
     specialties: parseSpecialties(modelConfig.specialties)
   };
 }
@@ -573,13 +793,7 @@ function normalizeSavedSettingsPayload(payload, fallbackConfig) {
     payload?.cluster?.maxParallel,
     normalizeNonNegativeInteger(fallbackConfig?.cluster?.maxParallel, 3)
   );
-  const subordinateMaxParallel = normalizeNonNegativeInteger(
-    payload?.cluster?.subordinateMaxParallel,
-    normalizeNonNegativeInteger(
-      fallbackConfig?.cluster?.subordinateMaxParallel,
-      DEFAULT_SUBORDINATE_MAX_PARALLEL
-    )
-  );
+  const subordinateMaxParallel = maxParallel;
   const groupLeaderMaxDelegates = normalizeNonNegativeInteger(
     payload?.cluster?.groupLeaderMaxDelegates,
     normalizeNonNegativeInteger(
@@ -597,6 +811,22 @@ function normalizeSavedSettingsPayload(payload, fallbackConfig) {
   const phaseParallel = normalizePhaseParallelSettings(
     payload?.cluster?.phaseParallel,
     fallbackConfig?.cluster?.phaseParallel
+  );
+  const agentBudgetProfiles = normalizeAgentBudgetProfiles(
+    normalizeJsonObjectSetting(
+      payload?.cluster?.agentBudgetProfiles,
+      fallbackConfig?.cluster?.agentBudgetProfiles,
+      "cluster.agentBudgetProfiles"
+    ),
+    fallbackConfig?.cluster?.agentBudgetProfiles
+  );
+  const capabilityRoutingPolicy = normalizeCapabilityRoutingPolicy(
+    normalizeJsonObjectSetting(
+      payload?.cluster?.capabilityRoutingPolicy,
+      fallbackConfig?.cluster?.capabilityRoutingPolicy,
+      "cluster.capabilityRoutingPolicy"
+    ),
+    fallbackConfig?.cluster?.capabilityRoutingPolicy
   );
   const workspaceDir = normalizeWorkspaceDir(payload?.workspace?.dir, fallbackConfig?.workspace?.dir);
 
@@ -679,12 +909,15 @@ function normalizeSavedSettingsPayload(payload, fallbackConfig) {
       subordinateMaxParallel,
       groupLeaderMaxDelegates,
       delegateMaxDepth,
-      phaseParallel
+      phaseParallel,
+      agentBudgetProfiles,
+      capabilityRoutingPolicy
     },
     workspace: {
       dir: workspaceDir
     },
     bot: normalizeBotConfig(payload?.bot, fallbackConfig?.bot),
+    multiAgent: normalizeMultiAgentSettings(payload?.multiAgent, fallbackConfig?.multiAgent),
     secrets,
     models: activeScheme.models,
     schemes
@@ -801,12 +1034,17 @@ export function getEditableSettings(projectDir, options = {}) {
         subordinateMaxParallel: runtimeConfig.cluster.subordinateMaxParallel,
         groupLeaderMaxDelegates: runtimeConfig.cluster.groupLeaderMaxDelegates,
         delegateMaxDepth: runtimeConfig.cluster.delegateMaxDepth,
-        phaseParallel: normalizePhaseParallelSettings(mergedConfig?.cluster?.phaseParallel)
+        phaseParallel: normalizePhaseParallelSettings(mergedConfig?.cluster?.phaseParallel),
+        agentBudgetProfiles: normalizeAgentBudgetProfiles(mergedConfig?.cluster?.agentBudgetProfiles),
+        capabilityRoutingPolicy: normalizeCapabilityRoutingPolicy(
+          mergedConfig?.cluster?.capabilityRoutingPolicy
+        )
       },
       workspace: {
         dir: normalizeWorkspaceDir(mergedConfig?.workspace?.dir, DEFAULT_WORKSPACE_DIR)
       },
       bot: normalizeBotConfig(mergedConfig?.bot),
+      multiAgent: normalizeMultiAgentSettings(mergedConfig?.multiAgent),
       secrets: buildEditableSecrets(schemes.flatMap((scheme) => scheme.models), settings?.secrets || {}),
       schemes,
       models
@@ -865,10 +1103,18 @@ export function loadRuntimeConfig(projectDir, options = {}) {
     models[modelId] = normalizeModelConfig(modelId, modelConfig, controllerId);
   }
 
-  const workerIds = Object.keys(models).filter((modelId) => modelId !== controllerId);
-  if (!workerIds.length) {
-    throw new Error(`At least one worker model is required besides the controller.`);
+  if (!modelRoleAllowsController(models[controllerId].role)) {
+    throw new Error(`Selected scheme "${activeScheme?.label || activeSchemeId}" uses a model that cannot act as a controller.`);
   }
+
+  const workerIds = Object.keys(models).filter(
+    (modelId) => modelId !== controllerId && modelRoleAllowsWorker(models[modelId].role)
+  );
+  if (!workerIds.length) {
+    throw new Error(`At least one worker-capable model is required besides the controller.`);
+  }
+
+  const maxParallel = normalizeNonNegativeInteger(parsed?.cluster?.maxParallel, 3);
 
   return {
     projectDir,
@@ -881,11 +1127,8 @@ export function loadRuntimeConfig(projectDir, options = {}) {
       activeSchemeId,
       activeSchemeLabel: activeScheme.label,
       controller: controllerId,
-      maxParallel: normalizeNonNegativeInteger(parsed?.cluster?.maxParallel, 3),
-      subordinateMaxParallel: normalizeNonNegativeInteger(
-        parsed?.cluster?.subordinateMaxParallel,
-        DEFAULT_SUBORDINATE_MAX_PARALLEL
-      ),
+      maxParallel,
+      subordinateMaxParallel: maxParallel,
       groupLeaderMaxDelegates: normalizeNonNegativeInteger(
         parsed?.cluster?.groupLeaderMaxDelegates,
         DEFAULT_GROUP_LEADER_MAX_DELEGATES
@@ -895,6 +1138,10 @@ export function loadRuntimeConfig(projectDir, options = {}) {
         DEFAULT_DELEGATION_MAX_DEPTH
       ),
       phaseParallel: normalizePhaseParallelSettings(parsed?.cluster?.phaseParallel),
+      agentBudgetProfiles: normalizeAgentBudgetProfiles(parsed?.cluster?.agentBudgetProfiles),
+      capabilityRoutingPolicy: normalizeCapabilityRoutingPolicy(
+        parsed?.cluster?.capabilityRoutingPolicy
+      ),
       schemes: configuredSchemes.map((scheme) => ({
         id: scheme.id,
         label: scheme.label,
@@ -910,6 +1157,7 @@ export function loadRuntimeConfig(projectDir, options = {}) {
       )
     },
     bot: normalizeBotConfig(parsed?.bot),
+    multiAgent: normalizeMultiAgentSettings(parsed?.multiAgent),
     models
   };
 }
@@ -926,6 +1174,7 @@ export function summarizeConfig(config) {
       label: controller.label,
       model: controller.model,
       provider: controller.provider,
+      role: controller.role,
       specialties: controller.specialties
     },
     activeScheme: {
@@ -938,6 +1187,7 @@ export function summarizeConfig(config) {
       label: worker.label,
       model: worker.model,
       provider: worker.provider,
+      role: worker.role,
       specialties: worker.specialties
     })),
     maxParallel: config.cluster.maxParallel,
@@ -945,6 +1195,8 @@ export function summarizeConfig(config) {
     groupLeaderMaxDelegates: config.cluster.groupLeaderMaxDelegates,
     delegateMaxDepth: config.cluster.delegateMaxDepth,
     phaseParallel: config.cluster.phaseParallel,
+    agentBudgetProfiles: config.cluster.agentBudgetProfiles,
+    capabilityRoutingPolicy: config.cluster.capabilityRoutingPolicy,
     workspace: {
       dir: config.workspace.dir,
       resolvedDir: config.workspace.resolvedDir
@@ -952,6 +1204,7 @@ export function summarizeConfig(config) {
     bot: {
       installDir: config.bot.installDir,
       enabledPresets: config.bot.enabledPresets
-    }
+    },
+    multiAgent: normalizeMultiAgentSettings(config.multiAgent)
   };
 }

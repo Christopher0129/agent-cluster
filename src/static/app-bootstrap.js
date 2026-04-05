@@ -10,6 +10,7 @@ import {
   createModelConnectivityService,
   formatModelTestRetryStatus
 } from "./model-connectivity-service.js";
+import { createMultiAgentUi } from "./multi-agent-ui.js";
 import { createModelsSchemesUi } from "./models-schemes-ui.js";
 import { setModelTestStatus } from "./model-status-ui.js";
 import { createRunConsoleUi } from "./run-console-ui.js";
@@ -44,13 +45,20 @@ async function runBootstrapStep(shellUi, stepLabel, task) {
 
 export function createAppBootstrap(root = document) {
   const elements = queryAppElements(root);
-  const { knownModelConfigs, schemeUiState, botUiState, traceUiState } = createAppState();
+  const {
+    knownModelConfigs,
+    schemeUiState,
+    botUiState,
+    traceUiState,
+    multiAgentUiState
+  } = createAppState();
   const shellUi = createAppShellUi({ elements });
   let runConsoleUi = null;
   let connectivityUi = null;
   let clusterRunUi = null;
   let settingsUi = null;
   let workspaceUi = null;
+  let multiAgentUi = null;
   const localeUi = createLocaleUi({
     root,
     elements,
@@ -60,9 +68,11 @@ export function createAppBootstrap(root = document) {
       connectivityUi?.refreshLocale?.();
       clusterRunUi?.refreshLocale?.();
       settingsUi?.refreshLocale?.();
+      agentVizUi?.refreshLocale?.();
       workspaceUi?.refreshLocale?.();
       modelsSchemesUi?.refreshLocale?.();
       botUi?.refreshLocale?.();
+      multiAgentUi?.refreshLocale?.();
     }
   });
   const secretsUi = createSecretsUi({
@@ -78,7 +88,8 @@ export function createAppBootstrap(root = document) {
     traceUiState,
     escapeHtml,
     escapeAttribute,
-    renderList
+    renderList,
+    getLocale: () => localeUi.getLocale()
   });
 
   workspaceUi = createWorkspaceUi({
@@ -145,10 +156,12 @@ export function createAppBootstrap(root = document) {
       batchProviderSelect: elements.batchProviderSelect,
       batchProviderHint: elements.batchProviderHint,
       batchModelNameInput: elements.batchModelNameInput,
+      batchRoleSelect: elements.batchRoleSelect,
       batchBaseUrlInput: elements.batchBaseUrlInput,
       batchAuthStyleSelect: elements.batchAuthStyleSelect,
       batchApiKeyHeaderInput: elements.batchApiKeyHeaderInput,
       batchReasoningSelect: elements.batchReasoningSelect,
+      batchThinkingInput: elements.batchThinkingInput,
       batchWebSearchInput: elements.batchWebSearchInput,
       batchTemperatureInput: elements.batchTemperatureInput,
       batchCapabilityList: elements.batchCapabilityList,
@@ -183,6 +196,28 @@ export function createAppBootstrap(root = document) {
     collectModelFromCard: (card) => modelsSchemesUi.collectModelFromCard(card),
     runModelConnectivityTest: modelConnectivityService.runModelConnectivityTest,
     formatModelTestRetryStatus
+  });
+
+  multiAgentUi = createMultiAgentUi({
+    state: multiAgentUiState,
+    elements: {
+      multiAgentEnabledInput: elements.multiAgentEnabledInput,
+      multiAgentModeSelect: elements.multiAgentModeSelect,
+      multiAgentSpeakerStrategySelect: elements.multiAgentSpeakerStrategySelect,
+      multiAgentMaxRoundsInput: elements.multiAgentMaxRoundsInput,
+      multiAgentTerminationKeywordInput: elements.multiAgentTerminationKeywordInput,
+      multiAgentMessageWindowInput: elements.multiAgentMessageWindowInput,
+      multiAgentSummarizeInput: elements.multiAgentSummarizeInput,
+      multiAgentIncludeSystemInput: elements.multiAgentIncludeSystemInput,
+      multiAgentSettingsHint: elements.multiAgentSettingsHint,
+      multiAgentChatTitle: elements.multiAgentChatTitle,
+      multiAgentChatDescription: elements.multiAgentChatDescription,
+      multiAgentChatStatus: elements.multiAgentChatStatus,
+      multiAgentChatMeta: elements.multiAgentChatMeta,
+      multiAgentChatSummary: elements.multiAgentChatSummary,
+      multiAgentChatroom: elements.multiAgentChatroom
+    },
+    translate: (...args) => localeUi.t(...args)
   });
 
   modelsSchemesUi.setCallbacks({
@@ -238,7 +273,8 @@ export function createAppBootstrap(root = document) {
     getCurrentScheme: () => modelsSchemesUi.getCurrentScheme(),
     captureCurrentSchemeDraft: () => modelsSchemesUi.captureCurrentSchemeDraft(),
     openOperationStream,
-    createOperationId
+    createOperationId,
+    multiAgentUi
   });
 
   settingsUi = createSettingsUi({
@@ -262,6 +298,7 @@ export function createAppBootstrap(root = document) {
     schemeUiState,
     workspaceUi,
     botUi,
+    multiAgentUi,
     modelsSchemesUi,
     clusterRunUi,
     setSaveStatus: shellUi.setSaveStatus,
@@ -282,6 +319,7 @@ export function createAppBootstrap(root = document) {
     ["方案区接线", () => modelsSchemesUi.bindEvents()],
     ["工作区接线", () => workspaceUi.bindEvents()],
     ["Bot 区接线", () => botUi.bindEvents()]
+    , ["Multi-agent UI bindings", () => multiAgentUi.bindEvents()]
   ];
 
   async function bindAppModules() {
@@ -302,7 +340,7 @@ export function createAppBootstrap(root = document) {
     await runBootstrapStep(shellUi, "拓扑视图重置", () => agentVizUi.reset());
     await runBootstrapStep(shellUi, "方案区初始化", () => modelsSchemesUi.initialize());
     await runBootstrapStep(shellUi, "Bot 预设加载", () => botUi.loadPresets());
-    await runBootstrapStep(shellUi, "本地设置加载", () => settingsUi.loadSettings());
+    await runBootstrapStep(shellUi, "本地配置加载", () => settingsUi.loadSettings());
   }
 
   return {
@@ -315,6 +353,7 @@ export function createAppBootstrap(root = document) {
       connectivityUi,
       localeUi,
       modelsSchemesUi,
+      multiAgentUi,
       runConsoleUi,
       secretsUi,
       settingsUi,

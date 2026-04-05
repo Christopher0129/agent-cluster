@@ -16,50 +16,52 @@ function resolveRuntimeLocale() {
 function createFallbackTranslator() {
   const catalog = {
     "zh-CN": {
-      "run.state.planning": "规划中",
-      "run.state.research": "调研中",
-      "run.state.validation": "验证中",
-      "run.state.handoff": "交付中",
-      "run.state.implementation": "执行中",
-      "run.state.retrying": "重试中 {attempt}/{maxRetries}",
-      "run.state.delegating": "分配中",
-      "run.state.subagent": "子代理执行中",
-      "run.state.leaderSynthesis": "组长汇总中",
-      "run.state.cancelling": "终止中...",
-      "run.state.synthesizing": "汇总中",
-      "run.state.cancelled": "已终止",
-      "run.state.done": "已完成",
-      "run.state.failed": "失败",
-      "run.state.needTask": "需填写任务",
-      "run.state.missingScheme": "缺少方案",
-      "run.state.starting": "启动中",
-      "run.livePlaceholder": "运行后会在这里显示计划、重试和完成状态。",
-      "run.synthesis.meta": "总耗时: {totalMs} ms",
-      "run.synthesis.executiveSummary": "执行摘要",
-      "run.synthesis.consensus": "共识",
-      "run.synthesis.disagreements": "分歧",
-      "run.synthesis.nextActions": "下一步",
-      "run.synthesis.noFinalAnswer": "未返回最终结论。",
-      "run.synthesis.noExecutiveSummary": "未提供执行摘要。",
-      "run.synthesis.noConsensus": "未提供共识项。",
-      "run.synthesis.noDisagreements": "未提供分歧项。",
-      "run.synthesis.noNextActions": "未提供下一步建议。",
-      "run.cancelled.default": "运行已被手动取消。",
-      "run.cancelled.plan": "任务已终止: {message}",
-      "run.cancelled.workers": "任务已终止，已停止等待剩余工作模型结果。",
-      "run.cancelled.synthesis": "任务已终止: {message}",
-      "run.toast.missingScheme": "请先配置至少一个可运行方案。",
-      "run.plan.planning": "主控模型正在规划...",
-      "run.workers.waiting": "工作模型等待任务分配...",
-      "run.synthesis.waiting": "等待主控模型汇总...",
-      "run.failed.plan": "执行失败: {error}",
-      "run.failed.workers": "未生成工作模型结果。",
-      "run.failed.synthesis": "执行失败: {error}",
-      "run.cancel.requestLocal": "已立即终止本地等待，正在请求后端停止任务。",
-      "run.cancel.renderLocal": "已立即终止当前任务，正在清理远端请求。",
-      "run.cancel.renderRemote": "任务已立即终止，并已通知后端停止当前请求。",
-      "run.cancel.renderRemoteFailed": "本地等待已停止，但后端终止请求失败，请再次点击“终止任务”。",
-      "run.cancel.failed": "终止任务失败: {error}"
+      "run.state.planning": "\u89c4\u5212\u4e2d",
+      "run.state.research": "\u8c03\u7814\u4e2d",
+      "run.state.validation": "\u9a8c\u8bc1\u4e2d",
+      "run.state.handoff": "\u4ea4\u4ed8\u4e2d",
+      "run.state.implementation": "\u6267\u884c\u4e2d",
+      "run.state.retrying": "\u91cd\u8bd5\u4e2d {attempt}/{maxRetries}",
+      "run.state.fallback": "\u5207\u6362\u5de5\u4f5c\u6a21\u578b\u4e2d",
+      "run.state.controllerFallback": "\u5207\u6362\u4e3b\u63a7\u4e2d",
+      "run.state.delegating": "\u5206\u914d\u4e2d",
+      "run.state.subagent": "\u5b50\u4ee3\u7406\u6267\u884c\u4e2d",
+      "run.state.leaderSynthesis": "\u7ec4\u957f\u6c47\u603b\u4e2d",
+      "run.state.cancelling": "\u7ec8\u6b62\u4e2d...",
+      "run.state.synthesizing": "\u6c47\u603b\u4e2d",
+      "run.state.cancelled": "\u5df2\u7ec8\u6b62",
+      "run.state.done": "\u5df2\u5b8c\u6210",
+      "run.state.failed": "\u5931\u8d25",
+      "run.state.needTask": "\u9700\u8981\u586b\u5199\u4efb\u52a1",
+      "run.state.missingScheme": "\u7f3a\u5c11\u65b9\u6848",
+      "run.state.starting": "\u542f\u52a8\u4e2d",
+      "run.livePlaceholder": "\u8fd0\u884c\u540e\u4f1a\u5728\u8fd9\u91cc\u663e\u793a\u8ba1\u5212\u3001\u91cd\u8bd5\u548c\u5b8c\u6210\u72b6\u6001\u3002",
+      "run.synthesis.meta": "\u603b\u8017\u65f6: {totalMs} ms",
+      "run.synthesis.executiveSummary": "\u6267\u884c\u6458\u8981",
+      "run.synthesis.consensus": "\u5171\u8bc6",
+      "run.synthesis.disagreements": "\u5206\u6b67",
+      "run.synthesis.nextActions": "\u4e0b\u4e00\u6b65",
+      "run.synthesis.noFinalAnswer": "\u672a\u8fd4\u56de\u6700\u7ec8\u7ed3\u8bba\u3002",
+      "run.synthesis.noExecutiveSummary": "\u672a\u63d0\u4f9b\u6267\u884c\u6458\u8981\u3002",
+      "run.synthesis.noConsensus": "\u672a\u63d0\u4f9b\u5171\u8bc6\u9879\u3002",
+      "run.synthesis.noDisagreements": "\u672a\u63d0\u4f9b\u5206\u6b67\u9879\u3002",
+      "run.synthesis.noNextActions": "\u672a\u63d0\u4f9b\u4e0b\u4e00\u6b65\u5efa\u8bae\u3002",
+      "run.cancelled.default": "\u8fd0\u884c\u5df2\u88ab\u624b\u52a8\u53d6\u6d88\u3002",
+      "run.cancelled.plan": "\u4efb\u52a1\u5df2\u7ec8\u6b62\uff1a{message}",
+      "run.cancelled.workers": "\u4efb\u52a1\u5df2\u7ec8\u6b62\uff0c\u5df2\u505c\u6b62\u7b49\u5f85\u5269\u4f59\u5de5\u4f5c\u6a21\u578b\u7ed3\u679c\u3002",
+      "run.cancelled.synthesis": "\u4efb\u52a1\u5df2\u7ec8\u6b62\uff1a{message}",
+      "run.toast.missingScheme": "\u8bf7\u5148\u914d\u7f6e\u81f3\u5c11\u4e00\u4e2a\u53ef\u8fd0\u884c\u65b9\u6848\u3002",
+      "run.plan.planning": "\u4e3b\u63a7\u6a21\u578b\u6b63\u5728\u89c4\u5212...",
+      "run.workers.waiting": "\u5de5\u4f5c\u6a21\u578b\u7b49\u5f85\u4efb\u52a1\u5206\u914d...",
+      "run.synthesis.waiting": "\u7b49\u5f85\u4e3b\u63a7\u6a21\u578b\u6c47\u603b...",
+      "run.failed.plan": "\u6267\u884c\u5931\u8d25\uff1a{error}",
+      "run.failed.workers": "\u672a\u751f\u6210\u5de5\u4f5c\u6a21\u578b\u7ed3\u679c\u3002",
+      "run.failed.synthesis": "\u6267\u884c\u5931\u8d25\uff1a{error}",
+      "run.cancel.requestLocal": "\u5df2\u7acb\u5373\u7ec8\u6b62\u672c\u5730\u7b49\u5f85\uff0c\u6b63\u5728\u8bf7\u6c42\u540e\u7aef\u505c\u6b62\u4efb\u52a1\u3002",
+      "run.cancel.renderLocal": "\u5df2\u7acb\u5373\u7ec8\u6b62\u5f53\u524d\u4efb\u52a1\uff0c\u6b63\u5728\u6e05\u7406\u8fdc\u7aef\u8bf7\u6c42\u3002",
+      "run.cancel.renderRemote": "\u4efb\u52a1\u5df2\u7acb\u5373\u7ec8\u6b62\uff0c\u5e76\u5df2\u901a\u77e5\u540e\u7aef\u505c\u6b62\u5f53\u524d\u8bf7\u6c42\u3002",
+      "run.cancel.renderRemoteFailed": "\u672c\u5730\u7b49\u5f85\u5df2\u505c\u6b62\uff0c\u4f46\u540e\u7aef\u53d6\u6d88\u5931\u8d25\uff0c\u8bf7\u518d\u70b9\u4e00\u6b21\u201c\u7ec8\u6b62\u4efb\u52a1\u201d\u3002",
+      "run.cancel.failed": "\u7ec8\u6b62\u4efb\u52a1\u5931\u8d25\uff1a{error}"
     },
     "en-US": {
       "run.state.planning": "Planning",
@@ -68,6 +70,8 @@ function createFallbackTranslator() {
       "run.state.handoff": "Handing Off",
       "run.state.implementation": "Executing",
       "run.state.retrying": "Retrying {attempt}/{maxRetries}",
+      "run.state.fallback": "Switching Worker",
+      "run.state.controllerFallback": "Switching Controller",
       "run.state.delegating": "Delegating",
       "run.state.subagent": "Subagent Running",
       "run.state.leaderSynthesis": "Leader Synthesizing",
@@ -142,6 +146,10 @@ export function getRunStateTextForEvent(event, translate = createFallbackTransla
         maxRetries: event.maxRetries,
         nextDelayMs: event.nextDelayMs
       });
+    case "worker_fallback":
+      return translate("run.state.fallback");
+    case "controller_fallback":
+      return translate("run.state.controllerFallback");
     case "leader_delegate_start":
       return translate("run.state.delegating");
     case "subagent_start":
@@ -177,6 +185,7 @@ export function createClusterRunUi({
   captureCurrentSchemeDraft,
   openOperationStream,
   createOperationId,
+  multiAgentUi,
   translate = createFallbackTranslator()
 }) {
   const {
@@ -345,7 +354,7 @@ export function createClusterRunUi({
     item.innerHTML = `
       <div class="feed-time">${escapeHtml(formatTimestamp(event.timestamp) || "--:--:--")}</div>
       <div class="feed-message">${escapeHtml(
-        describeOperationEventMessage(event, { formatDelay, translate })
+        describeOperationEventMessage(event, { formatDelay })
       )}</div>
     `;
     liveOutput.append(item);
@@ -373,6 +382,7 @@ export function createClusterRunUi({
     agentVizUi.updateFromEvent(event);
     runConsoleUi.updateTraceStateFromEvent(event);
     runConsoleUi.updateSessionStateFromEvent(event);
+    multiAgentUi?.updateFromEvent?.(event);
     appendLiveEvent(event);
     setRunStateFromEvent(event);
   }
@@ -413,6 +423,7 @@ export function createClusterRunUi({
     resetLiveFeed();
     agentVizUi.reset();
     runConsoleUi.resetTracePanels();
+    multiAgentUi?.resetChatroom?.();
     beginOperation(operationId, handleOperationEvent);
 
     if (runButton) {
@@ -470,6 +481,9 @@ export function createClusterRunUi({
           stage: "cluster_done",
           session: payload.session
         });
+      }
+      if (payload.multiAgentSession) {
+        multiAgentUi?.applySession?.(payload.multiAgentSession);
       }
       if (runState) {
         runState.textContent = translate("run.state.done");

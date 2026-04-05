@@ -12,6 +12,8 @@ const ALLOWED_EXECUTABLES = new Set([
   "npx",
   "pnpm",
   "yarn",
+  "rg",
+  "rg.exe",
   "python",
   "py",
   "pytest",

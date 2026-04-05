@@ -14,15 +14,27 @@ import {
   buildRetryPayload,
   invokeProviderWithSession
 } from "./provider-session.mjs";
+import {
+  createMultiAgentRuntime,
+  normalizeMultiAgentRuntimeSettings
+} from "./multi-agent-runtime.mjs";
+import {
+  buildComplexityBudget,
+  createRunAgentBudget,
+  normalizeCapabilityRoutingPolicy,
+  resolveEffectiveDelegateMaxDepth,
+  resolveEffectiveGroupLeaderMaxDelegates,
+  resolveTopLevelTaskLimit,
+  summarizeCapabilityRoutingPolicy
+} from "./policies.mjs";
+import { deriveTaskRequirements } from "../workspace/task-requirements.mjs";
 
 const PHASE_ORDER = ["research", "implementation", "validation", "handoff"];
 const DEFAULT_SUBORDINATE_MAX_PARALLEL = 3;
 const DEFAULT_GROUP_LEADER_MAX_DELEGATES = 10;
 const DEFAULT_DELEGATION_MAX_DEPTH = 1;
-const PHASE_CONCURRENCY_CAPS = {
-  research: 2,
-  handoff: 1
-};
+const PHASE_CONCURRENCY_CAPS = {};
+const RETRYABLE_PROVIDER_STATUSES = new Set([408, 409, 425, 429, 500, 502, 503, 504, 520, 521, 522, 523, 524, 529]);
 const AGENT_PREFIX = {
   research: {
     leader: "调研组长",
@@ -71,11 +83,51 @@ function emitEvent(onEvent, payload) {
 }
 
 function workerListFromConfig(config) {
-  return Object.values(config.models).filter((model) => model.id !== config.cluster.controller);
+  const candidates = Object.values(config.models).filter(
+    (model) => model.id !== config.cluster.controller
+  );
+  const workerCapableCandidates = candidates.filter((model) => modelCanActAsWorker(model));
+  return workerCapableCandidates.length ? workerCapableCandidates : candidates;
+}
+
+function modelListFromConfig(config) {
+  return Object.values(config?.models || {});
 }
 
 function safeArray(value) {
   return Array.isArray(value) ? value.map((item) => String(item)) : [];
+}
+
+function normalizeModelRole(value, fallback = "") {
+  const trimmed = String(value || "").trim().toLowerCase();
+  if (!trimmed) {
+    return fallback;
+  }
+
+  if (trimmed === "both" || trimmed === "dual" || trimmed === "dual-role" || trimmed === "dual_role") {
+    return "hybrid";
+  }
+
+  return ["controller", "worker", "hybrid"].includes(trimmed) ? trimmed : fallback;
+}
+
+function inferModelRole(worker) {
+  const explicitRole = normalizeModelRole(worker?.role);
+  if (explicitRole) {
+    return explicitRole;
+  }
+
+  return workerHasSpecialty(worker, "controller") ? "controller" : "worker";
+}
+
+function modelCanActAsController(worker) {
+  const role = inferModelRole(worker);
+  return role === "controller" || role === "hybrid";
+}
+
+function modelCanActAsWorker(worker) {
+  const role = inferModelRole(worker);
+  return role === "worker" || role === "hybrid";
 }
 
 function uniqueArray(items) {
@@ -125,6 +177,15 @@ function resolveSubordinateMaxParallel(config) {
   return Math.floor(configured);
 }
 
+function resolveSharedResearchGatewayMaxParallel(config) {
+  const configured = Number(config?.cluster?.sharedResearchGatewayMaxParallel);
+  if (!Number.isFinite(configured) || configured < 0) {
+    return 0;
+  }
+
+  return Math.floor(configured);
+}
+
 function normalizeDelegateCount(value, maxDelegates = DEFAULT_GROUP_LEADER_MAX_DELEGATES) {
   const count = Number(value);
   if (!Number.isFinite(count) || count < 1) {
@@ -150,14 +211,20 @@ function hasExplicitDelegateCount(value) {
 function taskLooksAtomic(task, phase) {
   const normalizedPhase = normalizePhase(phase, "implementation");
   const text = textBlob(task?.title, task?.instructions, task?.expectedOutput);
+  const compactText = text.replace(/\s+/g, " ").trim();
+  const hasScaleSignal = /(compare|survey|collect|batch|multiple|parallel|delegate|split|across|recursive|non-overlapping|several|\u591a\u4e2a|\u5e76\u884c|\u62c6\u5206|\u6279\u91cf|\u9012\u5f52|\u59d4\u6d3e)/.test(
+    text
+  );
 
   if (normalizedPhase === "handoff") {
     return true;
   }
 
-  return /(atomic|single file|single document|single report|one file|one document|one report|directly|handle directly)/.test(
-    text
-  );
+  if (/(atomic|single file|single document|single report|one file|one document|one report|directly|handle directly|\u539f\u5b50|\u5355\u6587\u4ef6|\u5355\u6587\u6863|\u76f4\u63a5\u5904\u7406)/.test(text)) {
+    return true;
+  }
+
+  return Boolean(compactText) && compactText.length <= 96 && !hasScaleSignal;
 }
 
 function shouldPreferDelegation(task, phase, groupLeaderMaxDelegates, delegateMaxDepth) {
@@ -249,6 +316,13 @@ function taskLooksCodeRelated(task) {
   );
 }
 
+function taskLooksCodeReview(task) {
+  const text = textBlob(task?.title, task?.instructions, task?.expectedOutput);
+  return /(\bcode review\b|\breview generated code\b|\bfinal review\b|\bcoding[- ]manager\b|\bmanager review\b|\breview all generated code\b|\u4ee3\u7801\u590d\u6838|\u4ee3\u7801\u8bc4\u5ba1|\u5ba1\u67e5\u4ee3\u7801|\u6700\u7ec8\u590d\u6838)/.test(
+    text
+  );
+}
+
 function taskRequiresConcreteArtifact(task) {
   const text = textBlob(task?.title, task?.instructions, task?.expectedOutput);
   return (
@@ -256,6 +330,64 @@ function taskRequiresConcreteArtifact(task) {
     /(write|create|generate|save|export|deliver).{0,40}(file|document|report|artifact)/.test(text) ||
     /(\u6587\u4ef6|\u6587\u6863|\u62a5\u544a|\u4ea4\u4ed8\u7269|\u751f\u6210doc|\u751f\u6210docx)/.test(text)
   );
+}
+
+function taskNeedsFreshFacts(task) {
+  const text = textBlob(task?.title, task?.instructions, task?.expectedOutput);
+  return /(\blatest\b|\brecent\b|\bcurrent\b|\btoday\b|\byesterday\b|\btomorrow\b|\breal[- ]time\b|\bannouncement\b|\bmarket\b|\bquote\b|\bfact[- ]check\b|\bverify\b|\bverification\b|\bsource\b|\bbrowse\b|\bweb\b|\bsearch\b|\bresearch\b|\bnews\b|\b行情\b|\b公告\b|\b最新\b|\b最近\b|\b实时\b|\b核验\b|\b验证\b|\b来源\b|\b网页\b|\b搜索\b|\b交易日\b|\b市场\b)/.test(
+    text
+  );
+}
+
+function filterWorkersForTask(workers, phase, task, capabilityRoutingPolicy) {
+  const policy = normalizeCapabilityRoutingPolicy(capabilityRoutingPolicy);
+  let eligibleWorkers = Array.isArray(workers) ? workers.slice() : [];
+  if (!eligibleWorkers.length) {
+    return [];
+  }
+
+  const workersWithWebSearch = eligibleWorkers.filter((worker) => worker?.webSearch);
+  if (
+    phase === "research" &&
+    taskNeedsFreshFacts(task) &&
+    policy.requireWebSearchForFreshFacts &&
+    workersWithWebSearch.length
+  ) {
+    eligibleWorkers = workersWithWebSearch;
+  }
+
+  if (phase === "validation" && policy.requireValidationSpecialistForValidation) {
+    const validationSpecialists = eligibleWorkers.filter((worker) =>
+      inferWorkerPhases(worker).includes("validation")
+    );
+    if (validationSpecialists.length) {
+      eligibleWorkers = validationSpecialists;
+    }
+  }
+
+  if (
+    phase === "validation" &&
+    taskLooksCodeReview(task) &&
+    policy.requireCodingManagerForCodeReview
+  ) {
+    const codingManagers = eligibleWorkers.filter((worker) =>
+      workerHasSpecialty(worker, "coding_manager")
+    );
+    if (codingManagers.length) {
+      eligibleWorkers = codingManagers;
+    }
+  }
+
+  if (phase === "handoff" && policy.requirePhaseSpecialistForHandoff) {
+    const handoffSpecialists = eligibleWorkers.filter((worker) =>
+      inferWorkerPhases(worker).includes("handoff")
+    );
+    if (handoffSpecialists.length) {
+      eligibleWorkers = handoffSpecialists;
+    }
+  }
+
+  return eligibleWorkers;
 }
 
 function inferWorkerPhases(worker) {
@@ -313,7 +445,8 @@ function inferPhase(task, worker) {
   return inferWorkerPhases(worker)[0] || "implementation";
 }
 
-function scoreWorkerForTask(worker, phase, task) {
+function scoreWorkerForTask(worker, phase, task, capabilityRoutingPolicy = null) {
+  const policy = normalizeCapabilityRoutingPolicy(capabilityRoutingPolicy);
   const workerPhases = inferWorkerPhases(worker);
   const specialties = safeArray(worker?.specialties).map((item) => item.toLowerCase());
   const text = textBlob(task?.title, task?.instructions, task?.expectedOutput);
@@ -322,12 +455,22 @@ function scoreWorkerForTask(worker, phase, task) {
   if (phase === "research" && worker?.webSearch) {
     score += 4;
   }
+  if (phase === "research" && policy.preferWebSearchForResearch && worker?.webSearch) {
+    score += 4;
+  }
 
   if (phase === "implementation" && String(worker?.model || "").toLowerCase().includes("codex")) {
     score += 4;
   }
+  if (
+    phase === "implementation" &&
+    policy.preferCodexForImplementation &&
+    String(worker?.model || "").toLowerCase().includes("codex")
+  ) {
+    score += 4;
+  }
 
-  if (phase === "validation" && workerHasSpecialty(worker, "coding_manager") && taskLooksCodeRelated(task)) {
+  if (phase === "validation" && workerHasSpecialty(worker, "coding_manager") && taskLooksCodeReview(task)) {
     score += 8;
   }
 
@@ -343,9 +486,314 @@ function scoreWorkerForTask(worker, phase, task) {
   return score;
 }
 
-function pickBestWorkerForTask(workers, phase, task) {
-  return [...workers]
-    .sort((left, right) => scoreWorkerForTask(right, phase, task) - scoreWorkerForTask(left, phase, task))[0];
+function normalizeStatusCode(value) {
+  const status = Number(value);
+  return Number.isFinite(status) && status > 0 ? Math.floor(status) : 0;
+}
+
+function isRetryableProviderStatus(status) {
+  return RETRYABLE_PROVIDER_STATUSES.has(normalizeStatusCode(status));
+}
+
+function looksLikeRetryableProviderMessage(message) {
+  const text = safeString(message).toLowerCase();
+  if (!text) {
+    return false;
+  }
+
+  return /timed out|timeout|gateway|bad gateway|service unavailable|temporarily down|upstream|rate limit|429|fetch failed|network|econnreset|econnrefused|socket|enotfound|eai_again|other side closed|circuit breaker/.test(
+    text
+  );
+}
+
+function classifyProviderTaskError(error, worker = null, sessionRuntime = null) {
+  const status = normalizeStatusCode(error?.status);
+  const errorMessage = safeString(error?.message || error);
+  const retryableFromStatus = isRetryableProviderStatus(status);
+  const retryableFromFlag = Boolean(error?.retryable);
+  const retryableFromMessage = looksLikeRetryableProviderMessage(errorMessage);
+  const circuitState = safeString(sessionRuntime?.getCircuitState?.(worker?.id)?.state);
+  const retryableFromCircuit = /circuit breaker|circuit for/i.test(errorMessage);
+  const retryableProviderFailure =
+    retryableFromFlag || retryableFromStatus || retryableFromMessage || retryableFromCircuit;
+  const providerFailure =
+    retryableProviderFailure ||
+    status > 0 ||
+    /request to https?:\/\//i.test(errorMessage) ||
+    /provider/i.test(errorMessage);
+
+  return {
+    failureKind: retryableProviderFailure ? "provider_retryable" : providerFailure ? "provider" : "task",
+    retryableProviderFailure,
+    providerFailure,
+    errorStatus: status || null,
+    errorMessage,
+    circuitState
+  };
+}
+
+function normalizeWorkerBaseUrl(worker) {
+  return safeString(worker?.baseUrl).toLowerCase();
+}
+
+function normalizeWorkerProvider(worker) {
+  return safeString(worker?.provider).toLowerCase();
+}
+
+function createControllerRuntimeAgent(modelConfig, currentRuntimeAgent = null) {
+  return {
+    ...modelConfig,
+    runtimeId:
+      currentRuntimeAgent?.runtimeId ||
+      `controller:${currentRuntimeAgent?.id || modelConfig.id}`,
+    displayLabel: modelConfig.label || modelConfig.id,
+    agentKind: "controller",
+    parentAgentId: null,
+    parentAgentLabel: "",
+    phase: "controller",
+    delegationDepth: 0,
+    ordinalIndex: 0
+  };
+}
+
+function rebindControllerRuntimeAgent(agent, modelConfig) {
+  return createControllerRuntimeAgent(modelConfig, agent);
+}
+
+function scoreControllerCandidateForPurpose(worker, purpose, primaryController) {
+  const phases = inferWorkerPhases(worker);
+  let score = 0;
+
+  if (modelCanActAsController(worker)) {
+    score += 10;
+  }
+
+  if (purpose === "planning") {
+    if (phases.includes("research")) {
+      score += 4;
+    }
+    if (phases.includes("validation")) {
+      score += 2;
+    }
+    if (phases.includes("handoff")) {
+      score += 1;
+    }
+    if (worker?.webSearch) {
+      score += 1;
+    }
+  } else if (purpose === "synthesis") {
+    if (phases.includes("handoff")) {
+      score += 6;
+    }
+    if (phases.includes("validation")) {
+      score += 2;
+    }
+    if (phases.includes("research")) {
+      score += 1;
+    }
+  }
+
+  if (
+    normalizeWorkerBaseUrl(worker) &&
+    normalizeWorkerBaseUrl(worker) !== normalizeWorkerBaseUrl(primaryController)
+  ) {
+    score += 6;
+  }
+
+  if (
+    normalizeWorkerProvider(worker) &&
+    normalizeWorkerProvider(worker) !== normalizeWorkerProvider(primaryController)
+  ) {
+    score += 3;
+  }
+
+  return score;
+}
+
+function rankFallbackControllers({
+  models,
+  primaryController,
+  purpose,
+  providerRegistry
+}) {
+  const candidates = (Array.isArray(models) ? models : []).filter(
+    (modelConfig) =>
+      modelConfig?.id &&
+      modelConfig.id !== primaryController?.id &&
+      providerRegistry?.get(modelConfig.id)
+  );
+  const controllerSpecialists = candidates.filter((modelConfig) =>
+    modelCanActAsController(modelConfig)
+  );
+  const eligibleCandidates = controllerSpecialists.length ? controllerSpecialists : candidates;
+
+  return eligibleCandidates
+    .sort((left, right) => {
+      const leftScore = scoreControllerCandidateForPurpose(left, purpose, primaryController);
+      const rightScore = scoreControllerCandidateForPurpose(right, purpose, primaryController);
+
+      if (rightScore !== leftScore) {
+        return rightScore - leftScore;
+      }
+
+      return safeString(left.label || left.id).localeCompare(safeString(right.label || right.id));
+    });
+}
+
+function rankFallbackWorkersForTask({
+  workers,
+  primaryWorker,
+  phase,
+  task,
+  capabilityRoutingPolicy,
+  providerRegistry
+}) {
+  const eligibleWorkers = filterWorkersForTask(
+    Array.isArray(workers) ? workers : [],
+    phase,
+    task,
+    capabilityRoutingPolicy
+  );
+  const primaryBaseUrl = normalizeWorkerBaseUrl(primaryWorker);
+  const primaryProvider = normalizeWorkerProvider(primaryWorker);
+
+  return eligibleWorkers
+    .filter(
+      (worker) =>
+        worker?.id &&
+        worker.id !== primaryWorker?.id &&
+        providerRegistry?.get(worker.id)
+    )
+    .sort((left, right) => {
+      const leftScore =
+        scoreWorkerForTask(left, phase, task, capabilityRoutingPolicy) +
+        (normalizeWorkerBaseUrl(left) && normalizeWorkerBaseUrl(left) !== primaryBaseUrl ? 6 : 0) +
+        (normalizeWorkerProvider(left) && normalizeWorkerProvider(left) !== primaryProvider ? 3 : 0);
+      const rightScore =
+        scoreWorkerForTask(right, phase, task, capabilityRoutingPolicy) +
+        (normalizeWorkerBaseUrl(right) && normalizeWorkerBaseUrl(right) !== primaryBaseUrl ? 6 : 0) +
+        (normalizeWorkerProvider(right) && normalizeWorkerProvider(right) !== primaryProvider ? 3 : 0);
+
+      if (rightScore !== leftScore) {
+        return rightScore - leftScore;
+      }
+
+      return safeString(left.label).localeCompare(safeString(right.label));
+    });
+}
+
+function pickBestWorkerForTask(workers, phase, task, capabilityRoutingPolicy = null) {
+  const eligibleWorkers = filterWorkersForTask(workers, phase, task, capabilityRoutingPolicy);
+  const candidateWorkers = eligibleWorkers.length ? eligibleWorkers : [...workers];
+  return [...candidateWorkers]
+    .sort(
+      (left, right) =>
+        scoreWorkerForTask(right, phase, task, capabilityRoutingPolicy) -
+        scoreWorkerForTask(left, phase, task, capabilityRoutingPolicy)
+    )[0];
+}
+
+function normalizeConcurrencyLimit(value, fallback = 1) {
+  const configured = Number(value);
+  if (!Number.isFinite(configured) || configured < 0) {
+    return fallback;
+  }
+
+  return Math.floor(configured);
+}
+
+function formatConcurrencyLimit(limit) {
+  return Number.isFinite(limit) && limit > 0 ? String(limit) : "unlimited";
+}
+
+function createExecutionGate(maxParallel) {
+  const normalizedLimit = normalizeConcurrencyLimit(maxParallel, 1);
+  if (normalizedLimit === 0) {
+    return {
+      limit: Number.POSITIVE_INFINITY,
+      async run(work, { signal } = {}) {
+        throwIfAborted(signal);
+        return work();
+      }
+    };
+  }
+
+  let active = 0;
+  const queue = [];
+
+  function createRelease() {
+    let released = false;
+    return () => {
+      if (released) {
+        return;
+      }
+      released = true;
+      active = Math.max(0, active - 1);
+
+      while (queue.length && active < normalizedLimit) {
+        const waiter = queue.shift();
+        if (!waiter || waiter.cancelled) {
+          continue;
+        }
+
+        waiter.cleanup?.();
+        waiter.cleanup = null;
+        active += 1;
+        waiter.resolve(createRelease());
+        break;
+      }
+    };
+  }
+
+  function acquire(signal) {
+    throwIfAborted(signal);
+
+    if (active < normalizedLimit) {
+      active += 1;
+      return Promise.resolve(createRelease());
+    }
+
+    return new Promise((resolve, reject) => {
+      const waiter = {
+        resolve,
+        reject,
+        cancelled: false,
+        cleanup: null
+      };
+
+      const abortHandler = () => {
+        waiter.cancelled = true;
+        const index = queue.indexOf(waiter);
+        if (index >= 0) {
+          queue.splice(index, 1);
+        }
+        waiter.cleanup?.();
+        waiter.cleanup = null;
+        reject(signal?.reason instanceof Error ? signal.reason : new Error("Operation aborted."));
+      };
+
+      if (signal) {
+        signal.addEventListener("abort", abortHandler, { once: true });
+        waiter.cleanup = () => signal.removeEventListener("abort", abortHandler);
+      }
+
+      queue.push(waiter);
+    });
+  }
+
+  return {
+    limit: normalizedLimit,
+    async run(work, { signal } = {}) {
+      const release = await acquire(signal);
+
+      try {
+        throwIfAborted(signal);
+        return await work();
+      } finally {
+        release();
+      }
+    }
+  };
 }
 
 function resolvePhaseConcurrency(phase, maxParallel, config) {
@@ -354,9 +802,7 @@ function resolvePhaseConcurrency(phase, maxParallel, config) {
     Number.isFinite(configuredCap) && configuredCap >= 0
       ? Math.floor(configuredCap)
       : PHASE_CONCURRENCY_CAPS[phase] ?? 0;
-  const clusterCap = Number.isFinite(Number(maxParallel)) && Number(maxParallel) >= 0
-    ? Math.floor(Number(maxParallel))
-    : 1;
+  const clusterCap = normalizeConcurrencyLimit(maxParallel, 1);
 
   if (hardCap === 0 && clusterCap === 0) {
     return Number.POSITIVE_INFINITY;
@@ -407,7 +853,14 @@ function canStartTaskForPhase(task, runningTaskIds, taskById, config) {
     return true;
   }
 
-  return countRunningResearchTasksForBaseUrl(runningTaskIds, taskById, config, baseUrl) < 1;
+  const sharedGatewayCap = resolveSharedResearchGatewayMaxParallel(config);
+  if (sharedGatewayCap === 0) {
+    return true;
+  }
+
+  return (
+    countRunningResearchTasksForBaseUrl(runningTaskIds, taskById, config, baseUrl) < sharedGatewayCap
+  );
 }
 
 function resolveAgentPrefix(phase, kind) {
@@ -415,33 +868,67 @@ function resolveAgentPrefix(phase, kind) {
   return bucket[kind] || AGENT_PREFIX.general[kind] || "";
 }
 
+function buildRuntimeDisplayLabel(worker, phase, kind, ordinalIndex = 0) {
+  const prefix = resolveAgentPrefix(phase, kind);
+  if (kind === "subordinate") {
+    return `${prefix}${padAgentIndex(Math.max(1, Number(ordinalIndex) || 1))} 路 ${worker.label}`;
+  }
+
+  return `${prefix} 路 ${worker.label}`;
+}
+
+function formatRuntimeDisplayLabel(worker, phase, kind, ordinalIndex = 0) {
+  const prefix = resolveAgentPrefix(phase, kind);
+  if (kind === "subordinate") {
+    return `${prefix}${padAgentIndex(Math.max(1, Number(ordinalIndex) || 1))} · ${worker.label}`;
+  }
+
+  return `${prefix} · ${worker.label}`;
+}
+
 function createLeaderRuntimeAgent(worker, task) {
   const phase = normalizePhase(task?.phase, inferWorkerPhases(worker)[0] || "implementation");
-  const prefix = resolveAgentPrefix(phase, "leader");
   return {
     ...worker,
     runtimeId: `leader:${worker.id}`,
-    displayLabel: `${prefix} · ${worker.label}`,
+    displayLabel: formatRuntimeDisplayLabel(worker, phase, "leader"),
     agentKind: "leader",
     parentAgentId: null,
     phase,
-    delegationDepth: 0
+    delegationDepth: 0,
+    ordinalIndex: 0
   };
 }
 
 function createSubordinateRuntimeAgent(leaderAgent, task, index) {
   const phase = normalizePhase(task?.phase, leaderAgent.phase || "implementation");
-  const prefix = resolveAgentPrefix(phase, "subordinate");
-  const ordinal = padAgentIndex(index + 1);
+  const ordinalIndex = index + 1;
   return {
     ...leaderAgent,
-    runtimeId: `${leaderAgent.runtimeId || leaderAgent.id}::${task.id}:${ordinal}`,
-    displayLabel: `${prefix}${ordinal} · ${leaderAgent.label}`,
+    runtimeId: `${leaderAgent.runtimeId || leaderAgent.id}::${task.id}:${padAgentIndex(ordinalIndex)}`,
+    displayLabel: formatRuntimeDisplayLabel(leaderAgent, phase, "subordinate", ordinalIndex),
     agentKind: "subordinate",
     parentAgentId: leaderAgent.runtimeId,
     parentAgentLabel: leaderAgent.displayLabel,
     phase,
-    delegationDepth: Math.max(0, Number(leaderAgent.delegationDepth || 0) + 1)
+    delegationDepth: Math.max(0, Number(leaderAgent.delegationDepth || 0) + 1),
+    ordinalIndex
+  };
+}
+
+function rebindRuntimeAgent(agent, worker) {
+  const agentKind = safeString(agent?.agentKind) || "leader";
+  const phase = normalizePhase(agent?.phase, inferWorkerPhases(worker)[0] || "implementation");
+  return {
+    ...worker,
+    runtimeId: agent.runtimeId || `${agentKind}:${worker.id}`,
+    displayLabel: formatRuntimeDisplayLabel(worker, phase, agentKind, agent.ordinalIndex),
+    agentKind,
+    parentAgentId: agent.parentAgentId || null,
+    parentAgentLabel: agent.parentAgentLabel || "",
+    phase,
+    delegationDepth: Math.max(0, Number(agent.delegationDepth || 0)),
+    ordinalIndex: Math.max(0, Number(agent.ordinalIndex || 0))
   };
 }
 
@@ -572,7 +1059,7 @@ function injectWorkflowTasks(tasks, workers, originalTask) {
       assignedWorker: worker.id,
       delegateCount: 0,
       instructions:
-        "Review generated changes, run the most relevant safe tests or build commands in the workspace, and report whether the workflow result is actually usable.",
+        "Review only the files and artifacts explicitly produced by upstream implementation tasks unless dependency outputs require a broader workspace inspection. Ignore unrelated pre-existing workspace files, run the most relevant safe tests or build commands for the produced outputs, and report whether the workflow result is actually usable.",
       dependsOn: implementationTasks.map((task) => task.id),
       expectedOutput: "Validation verdict with test/build results."
     });
@@ -599,7 +1086,7 @@ function injectWorkflowTasks(tasks, workers, originalTask) {
       assignedWorker: worker.id,
       delegateCount: 0,
       instructions:
-        "Perform the final code-management review for all implementation outputs. Review generated code and workspace changes, run the most relevant safe test, build, or lint commands, and report whether the coding results are cohesive and ready for handoff.",
+        "Perform the final code-management review for all implementation outputs. Focus first on files and artifacts explicitly produced by upstream implementation tasks, ignore unrelated pre-existing workspace files unless a dependency output points to them, run the most relevant safe test, build, or lint commands for those outputs, and report whether the coding results are cohesive and ready for handoff.",
       dependsOn: uniqueArray([
         ...implementationTasks.map((task) => task.id),
         ...validationDependencies
@@ -633,9 +1120,11 @@ function normalizePlan(
   rawPlan,
   workers,
   originalTask,
-  maxParallel,
+  topLevelTaskLimit,
   groupLeaderMaxDelegates,
-  delegateMaxDepth
+  delegateMaxDepth,
+  capabilityRoutingPolicy = null,
+  multiAgentConfig = null
 ) {
   const workerIds = new Set(workers.map((worker) => worker.id));
   const fallbackTasks = buildDefaultFallbackTasks(workers, originalTask);
@@ -643,7 +1132,7 @@ function normalizePlan(
   const taskCandidates = Array.isArray(rawPlan?.tasks) && rawPlan.tasks.length ? rawPlan.tasks : fallbackTasks;
   const seenIds = new Set();
   const preliminaryTasks = taskCandidates
-    .slice(0, Math.max(workers.length, maxParallel))
+    .slice(0, Math.max(1, Number(topLevelTaskLimit) || 1))
     .map((task, index) => {
     const preferredId = String(task?.id || `task_${index + 1}`).replace(/[^\w-]/g, "_");
     let taskId = preferredId || `task_${index + 1}`;
@@ -656,10 +1145,22 @@ function normalizePlan(
       : workers[index % workers.length];
     const phase = inferPhase(task, requestedWorker);
     const assignedWorkerCandidate = requestedWorker || workers[index % workers.length];
+    const eligibleWorkers = filterWorkersForTask(
+      workers,
+      phase,
+      task,
+      capabilityRoutingPolicy
+    );
     const reroutedWorker =
-      scoreWorkerForTask(assignedWorkerCandidate, phase, task) > 0
+      eligibleWorkers.includes(assignedWorkerCandidate) &&
+      scoreWorkerForTask(assignedWorkerCandidate, phase, task, capabilityRoutingPolicy) > 0
         ? assignedWorkerCandidate
-        : pickBestWorkerForTask(workers, phase, task) || assignedWorkerCandidate;
+        : pickBestWorkerForTask(
+            eligibleWorkers.length ? eligibleWorkers : workers,
+            phase,
+            task,
+            capabilityRoutingPolicy
+          ) || assignedWorkerCandidate;
     seenIds.add(taskId);
 
     return {
@@ -699,6 +1200,10 @@ function normalizePlan(
       }
       return left.id.localeCompare(right.id);
     });
+  const modeAdjustedTasks = applyMultiAgentModeToTasks(tasks, multiAgentConfig).map((task) => ({
+    ...task,
+    requirements: deriveTaskRequirements(task)
+  }));
 
   return {
     objective: String(rawPlan?.objective || originalTask),
@@ -706,8 +1211,57 @@ function normalizePlan(
       rawPlan?.strategy ||
         "Run the workflow in phases: research, implementation, validation, then handoff before the controller synthesizes the final answer."
     ),
-    tasks
+    tasks: modeAdjustedTasks
   };
+}
+
+function applyMultiAgentModeToTasks(tasks, multiAgentConfig = null) {
+  const settings = normalizeMultiAgentRuntimeSettings(multiAgentConfig);
+  const normalizedTasks = Array.isArray(tasks) ? tasks.map((task) => ({ ...task })) : [];
+  if (!settings.enabled || !normalizedTasks.length) {
+    return normalizedTasks;
+  }
+
+  if (settings.mode === "sequential") {
+    let previousTaskId = "";
+    return normalizedTasks.map((task) => {
+      const nextTask = {
+        ...task,
+        dependsOn: uniqueArray([
+          ...safeArray(task.dependsOn),
+          ...(previousTaskId ? [previousTaskId] : [])
+        ])
+      };
+      previousTaskId = task.id;
+      return nextTask;
+    });
+  }
+
+  if (settings.mode === "workflow") {
+    const completedByPreviousPhases = [];
+    let currentPhase = normalizedTasks[0]?.phase || "";
+
+    return normalizedTasks.map((task) => {
+      if (task.phase !== currentPhase) {
+        currentPhase = task.phase;
+        completedByPreviousPhases.push(
+          ...normalizedTasks
+            .filter((candidate) => phaseIndex(candidate.phase) < phaseIndex(task.phase))
+            .map((candidate) => candidate.id)
+        );
+      }
+
+      return {
+        ...task,
+        dependsOn: uniqueArray([
+          ...safeArray(task.dependsOn),
+          ...completedByPreviousPhases
+        ])
+      };
+    });
+  }
+
+  return normalizedTasks;
 }
 
 function applyTaskOutputGuards(task, output, extras = {}) {
@@ -861,17 +1415,7 @@ async function invokeProviderWithSessionLegacy({
 function resolveSubordinateConcurrency(agent, task, config, requestedCount) {
   const total = Math.max(1, Number(requestedCount) || 1);
   const phaseCap = resolvePhaseConcurrency(task?.phase, config?.cluster?.maxParallel, config);
-  const subordinateCap = resolveSubordinateMaxParallel(config);
-
-  if (task?.phase === "research" && agent?.webSearch) {
-    return 1;
-  }
-
-  if (task?.phase === "handoff") {
-    return 1;
-  }
-
-  const limits = [phaseCap, subordinateCap].filter((value) => Number.isFinite(value) && value > 0);
+  const limits = [phaseCap].filter((value) => Number.isFinite(value) && value > 0);
   return Math.max(1, limits.length ? Math.min(total, ...limits) : total);
 }
 
@@ -907,11 +1451,20 @@ async function executeSingleTask({
   completedResults,
   providerRegistry,
   config,
+  executionGate,
+  runAgentBudget = null,
   sessionRuntime,
   parentSpanId = "",
   onEvent,
   signal
 }) {
+  const allWorkers = workerListFromConfig(config);
+  const capabilityRoutingPolicy = normalizeCapabilityRoutingPolicy(
+    config?.cluster?.capabilityRoutingPolicy
+  );
+  const primaryWorker = config.models[task.assignedWorker];
+  let attemptChildAgentReservations = 0;
+
   function buildDependencyOutputs() {
     return task.dependsOn
       .map((dependencyId) => completedResults.get(dependencyId))
@@ -944,13 +1497,14 @@ async function executeSingleTask({
 
   function buildFailureResult(agent, agentTask, error, startedAt) {
     const endedAt = Date.now();
+    const failure = classifyProviderTaskError(error, agent, sessionRuntime);
     const output = applyTaskOutputGuards(
       agentTask,
       normalizeWorkerResult(
         {
           thinkingSummary: "",
-          summary: `${agent.displayLabel || agent.label} execution failed: ${error.message}`,
-          risks: [error.message],
+          summary: `${agent.displayLabel || agent.label} execution failed: ${failure.errorMessage}`,
+          risks: [failure.errorMessage],
           confidence: "low",
           followUps: ["Check the provider baseUrl, API key, and model id."]
         },
@@ -974,8 +1528,25 @@ async function executeSingleTask({
       endedAt,
       durationMs: endedAt - startedAt,
       rawText: "",
-      output
+      output,
+      failureKind: failure.failureKind,
+      providerFailure: failure.providerFailure,
+      retryableProviderFailure: failure.retryableProviderFailure,
+      errorMessage: failure.errorMessage,
+      errorStatus: failure.errorStatus,
+      circuitState: failure.circuitState,
+      failedWorkerId: agent.id,
+      failedWorkerLabel: agent.label
     };
+  }
+
+  async function runWithExecutionGate(work) {
+    if (!executionGate) {
+      throwIfAborted(signal);
+      return work();
+    }
+
+    return executionGate.run(work, { signal });
   }
 
   async function executeDirectAgentTask({
@@ -1013,53 +1584,56 @@ async function executeSingleTask({
     try {
       let parsed;
       let rawText = "";
-      if (config.workspace?.resolvedDir) {
-        parsed = await runWorkspaceToolLoop({
-          provider,
-          invokeModel(options) {
-            return invokeProviderWithSession({
-              sessionRuntime,
-              provider: options.provider,
-              agent: options.worker,
-              task: options.task,
-              parentSpanId: options.parentSpanId || taskSpanId,
-              purpose: options.purpose,
-              instructions: options.instructions,
-              input: options.input,
-              onRetry: options.onRetry,
-              signal: options.signal,
-              buildAgentEventBase
-            });
-          },
-          worker: agent,
-          task: agentTask,
-          originalTask,
-          clusterPlan: plan,
-          dependencyOutputs,
-          workspaceRoot: config.workspace.resolvedDir,
-          sessionRuntime,
-          parentSpanId: taskSpanId,
-          onRetry(retry) {
-            emitAgentEvent(
-              onEvent,
-              agent,
-              {
-                ...buildRetryPayload({
-                  stage: lifecycle.retry,
-                  model: agent,
-                  retry,
-                  taskId: agentTask.id,
-                  taskTitle: agentTask.title
-                }),
-                agentKind: agent.agentKind || "leader"
-              },
-              agentTask
-            );
-          },
-          onEvent,
-          signal
-        });
-      } else {
+      await runWithExecutionGate(async () => {
+        if (config.workspace?.resolvedDir) {
+          parsed = await runWorkspaceToolLoop({
+            provider,
+            invokeModel(options) {
+              return invokeProviderWithSession({
+                sessionRuntime,
+                provider: options.provider,
+                agent: options.worker,
+                task: options.task,
+                parentSpanId: options.parentSpanId || taskSpanId,
+                purpose: options.purpose,
+                instructions: options.instructions,
+                input: options.input,
+                onRetry: options.onRetry,
+                signal: options.signal,
+                buildAgentEventBase
+              });
+            },
+            worker: agent,
+            task: agentTask,
+            originalTask,
+            clusterPlan: plan,
+            dependencyOutputs,
+            workspaceRoot: config.workspace.resolvedDir,
+            sessionRuntime,
+            parentSpanId: taskSpanId,
+            onRetry(retry) {
+              emitAgentEvent(
+                onEvent,
+                agent,
+                {
+                  ...buildRetryPayload({
+                    stage: lifecycle.retry,
+                    model: agent,
+                    retry,
+                    taskId: agentTask.id,
+                    taskTitle: agentTask.title
+                  }),
+                  agentKind: agent.agentKind || "leader"
+                },
+                agentTask
+              );
+            },
+            onEvent,
+            signal
+          });
+          return;
+        }
+
         const response = await invokeProviderWithSession({
           sessionRuntime,
           provider,
@@ -1096,14 +1670,16 @@ async function executeSingleTask({
         } catch (error) {
           parsed = createStructuredFallback(agent.displayLabel || agent.label, response.text, error);
         }
-      }
+      });
 
       const endedAt = Date.now();
       const output = applyTaskOutputGuards(
         agentTask,
         normalizeWorkerResult(parsed, rawText),
         {
-          actualGeneratedFiles: parsed?.verifiedGeneratedFiles || parsed?.generatedFiles || []
+          actualGeneratedFiles: Array.isArray(parsed?.workspaceActions) && parsed.workspaceActions.length
+            ? parsed?.verifiedGeneratedFiles || []
+            : parsed?.verifiedGeneratedFiles || parsed?.generatedFiles || []
         }
       );
       const result = {
@@ -1120,7 +1696,15 @@ async function executeSingleTask({
         endedAt,
         durationMs: endedAt - startedAt,
         rawText,
-        output
+        output,
+        failureKind: "",
+        providerFailure: false,
+        retryableProviderFailure: false,
+        errorMessage: "",
+        errorStatus: null,
+        circuitState: "",
+        failedWorkerId: "",
+        failedWorkerLabel: ""
       };
 
       sessionRuntime?.remember(
@@ -1197,7 +1781,10 @@ async function executeSingleTask({
         type: "status",
         stage: "leader_delegate_start",
         tone: "neutral",
-        detail: `Planning up to ${delegateCount} child agent(s) for this task.`
+        detail:
+          Number(runAgentBudget?.requestedTotalAgents) > 0
+            ? `Planning up to ${delegateCount} child agent(s) for this task within the run-wide total target of ${runAgentBudget.requestedTotalAgents} agent(s).`
+            : `Planning up to ${delegateCount} child agent(s) for this task.`
       },
       agentTask
     );
@@ -1209,39 +1796,42 @@ async function executeSingleTask({
       task: agentTask,
       dependencyOutputs,
       delegateCount,
-      depthRemaining
+      depthRemaining,
+      runAgentBudget
     });
 
     try {
-      const response = await invokeProviderWithSession({
-        sessionRuntime,
-        provider,
-        agent,
-        task: agentTask,
-        parentSpanId: delegationSpanId || parentSpanId,
-        instructions: prompt.instructions,
-        input: prompt.input,
-        purpose: "leader_delegation",
-        signal,
-        buildAgentEventBase,
-        onRetry(retry) {
-          emitAgentEvent(
-            onEvent,
-            agent,
-            {
-              ...buildRetryPayload({
-                stage: "leader_delegate_retry",
-                model: agent,
-                retry,
-                taskId: agentTask.id,
-                taskTitle: agentTask.title
-              }),
-              agentKind: agent.agentKind || "leader"
-            },
-            agentTask
-          );
-        }
-      });
+      const response = await runWithExecutionGate(() =>
+        invokeProviderWithSession({
+          sessionRuntime,
+          provider,
+          agent,
+          task: agentTask,
+          parentSpanId: delegationSpanId || parentSpanId,
+          instructions: prompt.instructions,
+          input: prompt.input,
+          purpose: "leader_delegation",
+          signal,
+          buildAgentEventBase,
+          onRetry(retry) {
+            emitAgentEvent(
+              onEvent,
+              agent,
+              {
+                ...buildRetryPayload({
+                  stage: "leader_delegate_retry",
+                  model: agent,
+                  retry,
+                  taskId: agentTask.id,
+                  taskTitle: agentTask.title
+                }),
+                agentKind: agent.agentKind || "leader"
+              },
+              agentTask
+            );
+          }
+        })
+      );
 
       let parsed;
       try {
@@ -1309,35 +1899,37 @@ async function executeSingleTask({
       subordinateResults: subordinateExecutions.map(summarizeExecutionForDependency)
     });
 
-    const response = await invokeProviderWithSession({
-      sessionRuntime,
-      instructions: prompt.instructions,
-      input: prompt.input,
-      provider,
-      agent,
-      task: agentTask,
-      parentSpanId: synthesisSpanId || parentSpanId,
-      purpose: "leader_synthesis",
-      signal,
-      buildAgentEventBase,
-      onRetry(retry) {
-        emitAgentEvent(
-          onEvent,
-          agent,
-          {
-            ...buildRetryPayload({
-              stage: "leader_synthesis_retry",
-              model: agent,
-              retry,
-              taskId: agentTask.id,
-              taskTitle: agentTask.title
-            }),
-            agentKind: agent.agentKind || "leader"
-          },
-          agentTask
-        );
-      }
-    });
+    const response = await runWithExecutionGate(() =>
+      invokeProviderWithSession({
+        sessionRuntime,
+        instructions: prompt.instructions,
+        input: prompt.input,
+        provider,
+        agent,
+        task: agentTask,
+        parentSpanId: synthesisSpanId || parentSpanId,
+        purpose: "leader_synthesis",
+        signal,
+        buildAgentEventBase,
+        onRetry(retry) {
+          emitAgentEvent(
+            onEvent,
+            agent,
+            {
+              ...buildRetryPayload({
+                stage: "leader_synthesis_retry",
+                model: agent,
+                retry,
+                taskId: agentTask.id,
+                taskTitle: agentTask.title
+              }),
+              agentKind: agent.agentKind || "leader"
+            },
+            agentTask
+          );
+        }
+      })
+    );
 
     let parsed;
     try {
@@ -1403,6 +1995,9 @@ async function executeSingleTask({
       }
     );
 
+    const retryableChildProviderFailure = subordinateExecutions.find(
+      (execution) => execution.retryableProviderFailure
+    );
     const status = subordinateExecutions.some((execution) => execution.status === "failed")
       ? "failed"
       : "completed";
@@ -1438,24 +2033,45 @@ async function executeSingleTask({
       endedAt,
       durationMs: endedAt - startedAt,
       rawText: response.text,
-      output
+      output,
+      failureKind: retryableChildProviderFailure?.failureKind || "",
+      providerFailure: Boolean(retryableChildProviderFailure?.providerFailure),
+      retryableProviderFailure: Boolean(retryableChildProviderFailure),
+      errorMessage: retryableChildProviderFailure?.errorMessage || "",
+      errorStatus: retryableChildProviderFailure?.errorStatus ?? null,
+      circuitState: retryableChildProviderFailure?.circuitState || "",
+      failedWorkerId: retryableChildProviderFailure?.failedWorkerId || "",
+      failedWorkerLabel: retryableChildProviderFailure?.failedWorkerLabel || ""
     };
   }
 
   throwIfAborted(signal);
-  const worker = config.models[task.assignedWorker];
-  const provider = providerRegistry.get(task.assignedWorker);
-  if (!provider) {
+  if (!primaryWorker) {
+    throw new Error(`Worker "${task.assignedWorker}" was not found in the active scheme.`);
+  }
+  const primaryProvider = providerRegistry.get(task.assignedWorker);
+  if (!primaryProvider) {
     throw new Error(`No provider found for worker "${task.assignedWorker}".`);
   }
 
   const dependencyOutputs = buildDependencyOutputs();
-  const leaderAgent = createLeaderRuntimeAgent(worker, task);
-  const branchFactor = resolveGroupLeaderMaxDelegates(config);
-  const maxDelegationDepth = resolveDelegateMaxDepth(config);
+  const globalConcurrencyLabel = formatConcurrencyLimit(executionGate?.limit ?? Number.POSITIVE_INFINITY);
+  const branchFactor = runAgentBudget
+    ? Math.min(
+        resolveGroupLeaderMaxDelegates(config),
+        Math.max(0, Number(runAgentBudget.maxChildrenPerLeader || 0))
+      )
+    : resolveGroupLeaderMaxDelegates(config);
+  const maxDelegationDepth = runAgentBudget
+    ? Math.min(
+        resolveDelegateMaxDepth(config),
+        Math.max(0, Number(runAgentBudget.maxDelegationDepth || 0))
+      )
+    : resolveDelegateMaxDepth(config);
 
   async function executeAgentHierarchy({
     agent,
+    provider,
     agentTask,
     dependencyOutputs,
     preferredDelegateCount = 0,
@@ -1496,8 +2112,13 @@ async function executeSingleTask({
         depthRemaining > 0
           ? normalizeDelegateCount(preferredDelegateCount, branchFactor)
           : 0;
+      const remainingChildBudget = Math.max(
+        0,
+        Number(runAgentBudget?.remainingChildAgents ?? requestedDelegateCount)
+      );
+      const delegateBudgetCeiling = Math.min(requestedDelegateCount, remainingChildBudget);
 
-      if (!requestedDelegateCount) {
+      if (!delegateBudgetCeiling) {
         const directResult = await executeDirectAgentTask({
           agent,
           provider,
@@ -1537,7 +2158,7 @@ async function executeSingleTask({
         provider,
         agentTask,
         dependencyOutputs,
-        delegateCount: requestedDelegateCount,
+        delegateCount: delegateBudgetCeiling,
         depthRemaining: Math.max(0, depthRemaining - 1),
         defaultToRequested,
         preferDelegation: shouldPreferDelegation(
@@ -1584,11 +2205,52 @@ async function executeSingleTask({
         return directResult;
       }
 
+      const grantedChildCount = runAgentBudget
+        ? runAgentBudget.reserveChildAgents(delegationPlan.subtasks.length)
+        : delegationPlan.subtasks.length;
+      attemptChildAgentReservations += grantedChildCount;
+      const delegatedSubtasks = delegationPlan.subtasks.slice(0, grantedChildCount);
+
+      if (!delegatedSubtasks.length) {
+        const directResult = await executeDirectAgentTask({
+          agent,
+          provider,
+          agentTask,
+          dependencyOutputs,
+          emitLifecycle: false,
+          taskSpanId: taskSpanId || inheritedParentSpanId || parentSpanId
+        });
+
+        if (emitLifecycle) {
+          emitAgentEvent(
+            onEvent,
+            agent,
+            {
+              type: "status",
+              stage: lifecycle.done,
+              tone: directResult.status === "failed" ? "warning" : "ok",
+              thinkingSummary: directResult.output.thinkingSummary || ""
+            },
+            agentTask
+          );
+        }
+        if (taskSpanId) {
+          sessionRuntime.endSpan(taskSpanId, {
+            status: directResult.status === "failed" ? "error" : "ok",
+            detail:
+              directResult.output.summary ||
+              directResult.output.thinkingSummary ||
+              "Task completed after the run-wide child-agent budget was exhausted."
+          });
+        }
+        return directResult;
+      }
+
       const subordinateConcurrency = resolveSubordinateConcurrency(
         agent,
         agentTask,
         config,
-        delegationPlan.subtasks.length
+        delegatedSubtasks.length
       );
       emitAgentEvent(
         onEvent,
@@ -1598,9 +2260,11 @@ async function executeSingleTask({
           stage: "leader_delegate_done",
           tone: "ok",
           detail:
-            subordinateConcurrency === 1
-              ? `Delegated ${delegationPlan.subtasks.length} child task(s); execution continues sequentially.`
-              : `Delegated ${delegationPlan.subtasks.length} child task(s); child concurrency cap is ${subordinateConcurrency}.`,
+            grantedChildCount < delegationPlan.subtasks.length
+              ? `Delegated ${delegatedSubtasks.length} child task(s) after applying the run-wide child-agent budget; local child launch cap is ${subordinateConcurrency} and the global execution cap is ${globalConcurrencyLabel}.`
+              : subordinateConcurrency === 1
+                ? `Delegated ${delegatedSubtasks.length} child task(s); local child launch continues sequentially and the global execution cap is ${globalConcurrencyLabel}.`
+                : `Delegated ${delegatedSubtasks.length} child task(s); local child launch cap is ${subordinateConcurrency} and the global execution cap is ${globalConcurrencyLabel}.`,
           thinkingSummary: delegationPlan.thinkingSummary || ""
         },
         agentTask
@@ -1608,7 +2272,7 @@ async function executeSingleTask({
 
       const childPreferredDelegateCount = depthRemaining > 1 ? branchFactor : 0;
       const subordinateExecutions = await mapWithConcurrency(
-        delegationPlan.subtasks,
+        delegatedSubtasks,
         subordinateConcurrency,
         async (subtask, index) => {
           const subordinateTask = {
@@ -1621,6 +2285,10 @@ async function executeSingleTask({
             dependsOn: [],
             expectedOutput: subtask.expectedOutput
           };
+          subordinateTask.requirements = deriveTaskRequirements(subordinateTask, {
+            parentRequirements: agentTask.requirements,
+            inheritConcreteArtifactRequirement: false
+          });
           const subordinateAgent = createSubordinateRuntimeAgent(agent, subordinateTask, index);
           emitAgentEvent(
             onEvent,
@@ -1637,6 +2305,7 @@ async function executeSingleTask({
 
           return executeAgentHierarchy({
             agent: subordinateAgent,
+            provider,
             agentTask: subordinateTask,
             dependencyOutputs,
             preferredDelegateCount: childPreferredDelegateCount,
@@ -1717,22 +2386,93 @@ async function executeSingleTask({
   }
 
   const preferredDelegateCount = normalizeDelegateCount(task.delegateCount, branchFactor);
-  return executeAgentHierarchy({
-    agent: leaderAgent,
-    agentTask: task,
-    dependencyOutputs,
-    preferredDelegateCount,
-    depthRemaining: maxDelegationDepth,
-    defaultToRequested: preferredDelegateCount > 0,
-    parentSpanId
+  const fallbackWorkers = rankFallbackWorkersForTask({
+    workers: allWorkers,
+    primaryWorker,
+    phase: normalizePhase(task.phase, inferPhase(task, primaryWorker)),
+    task,
+    capabilityRoutingPolicy,
+    providerRegistry
   });
+  const executionCandidates = [primaryWorker, ...fallbackWorkers];
+  let leaderAgent = createLeaderRuntimeAgent(primaryWorker, task);
+  let currentTask = task;
+  let lastResult = null;
+
+  for (let attemptIndex = 0; attemptIndex < executionCandidates.length; attemptIndex += 1) {
+    const currentWorker = executionCandidates[attemptIndex];
+    const currentProvider =
+      currentWorker.id === primaryWorker.id
+        ? primaryProvider
+        : providerRegistry.get(currentWorker.id);
+    if (!currentProvider) {
+      continue;
+    }
+
+    attemptChildAgentReservations = 0;
+    currentTask =
+      attemptIndex === 0
+        ? task
+        : {
+            ...task,
+            assignedWorker: currentWorker.id
+          };
+    leaderAgent =
+      attemptIndex === 0
+        ? leaderAgent
+        : rebindRuntimeAgent(leaderAgent, currentWorker);
+
+    const result = await executeAgentHierarchy({
+      agent: leaderAgent,
+      provider: currentProvider,
+      agentTask: currentTask,
+      dependencyOutputs,
+      preferredDelegateCount,
+      depthRemaining: maxDelegationDepth,
+      defaultToRequested: preferredDelegateCount > 0,
+      parentSpanId
+    });
+
+    lastResult = result;
+    const hasMoreCandidates = attemptIndex < executionCandidates.length - 1;
+    if (!result.retryableProviderFailure || !hasMoreCandidates) {
+      return result;
+    }
+
+    if (runAgentBudget && attemptChildAgentReservations > 0) {
+      runAgentBudget.releaseChildAgents(attemptChildAgentReservations);
+    }
+
+    const nextWorker = executionCandidates[attemptIndex + 1];
+    emitAgentEvent(
+      onEvent,
+      leaderAgent,
+      {
+        type: "status",
+        stage: "worker_fallback",
+        tone: "warning",
+        detail: `Retryable provider failure on ${currentWorker.label}; rerouting this task to ${nextWorker.label}.`,
+        previousWorkerId: currentWorker.id,
+        previousWorkerLabel: currentWorker.label,
+        fallbackWorkerId: nextWorker.id,
+        fallbackWorkerLabel: nextWorker.label,
+        attempt: attemptIndex + 1,
+        maxAttempts: executionCandidates.length
+      },
+      currentTask
+    );
+  }
+
+  return lastResult;
 }
 
 async function executePlan(
   plan,
   originalTask,
   config,
+  executionGate,
   providerRegistry,
+  runAgentBudget,
   sessionRuntime,
   parentSpanId,
   onEvent,
@@ -1789,6 +2529,8 @@ async function executePlan(
           completedResults,
           providerRegistry,
           config,
+          executionGate,
+          runAgentBudget,
           sessionRuntime,
           parentSpanId,
           onEvent,
@@ -1857,75 +2599,369 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
 
   throwIfAborted(signal);
   const startedAt = Date.now();
-  const sessionRuntime = createSessionRuntime({
-    emitEvent(payload) {
-      emitEvent(onEvent, payload);
-    }
-  });
+  const executionGate = createExecutionGate(config.cluster.maxParallel);
   const controllerId = config.cluster.controller;
-  const controller = config.models[controllerId];
+  const controllerModel = config.models[controllerId];
+  const controller = controllerModel;
+  if (!controllerModel) {
+    throw new Error(`Controller "${controllerId}" was not found in the active scheme.`);
+  }
   const controllerProvider = providerRegistry.get(controllerId);
   if (!controllerProvider) {
     throw new Error(`No provider found for controller "${controllerId}".`);
   }
+  const controllerModels = modelListFromConfig(config);
+  let activeController = createControllerRuntimeAgent(controllerModel);
+  let activeControllerProvider = controllerProvider;
+  const multiAgentRuntime = createMultiAgentRuntime(config.multiAgent);
+  
+  function resolveRuntimeAgentFromEvent(payload = {}) {
+    const runtimeId = safeString(
+      payload.agentId || payload.parentAgentId || activeController?.runtimeId || controllerId
+    );
+    const displayLabel = safeString(
+      payload.agentLabel ||
+        payload.parentAgentLabel ||
+        activeController?.displayLabel ||
+        activeController?.label ||
+        controllerModel?.label ||
+        controllerId
+    );
+
+    return {
+      runtimeId,
+      displayLabel,
+      label: safeString(payload.modelLabel || payload.agentLabel || displayLabel || controllerId),
+      id: safeString(payload.modelId || activeController?.id || controllerId),
+      agentKind: safeString(payload.agentKind || "leader") || "leader"
+    };
+  }
+
+  function resolveParentRuntimeAgent(payload = {}) {
+    if (!payload.parentAgentId && !payload.parentAgentLabel) {
+      return null;
+    }
+
+    return {
+      runtimeId: safeString(payload.parentAgentId),
+      displayLabel: safeString(payload.parentAgentLabel || payload.parentAgentId),
+      label: safeString(payload.parentAgentLabel || payload.parentAgentId),
+      id: safeString(payload.parentAgentId || payload.parentAgentLabel),
+      agentKind: "leader"
+    };
+  }
+
+  function translateClusterEventToMultiAgentMessage(payload = {}) {
+    const stage = safeString(payload.stage);
+    const agent = resolveRuntimeAgentFromEvent(payload);
+    const parentAgent = resolveParentRuntimeAgent(payload);
+    const taskTitle = safeString(payload.taskTitle || payload.taskId);
+    const detail = safeString(payload.detail);
+    const phase = safeString(payload.phase);
+    const tone = safeString(payload.tone || "neutral") || "neutral";
+
+    switch (stage) {
+      case "planning_start":
+        return {
+          kind: "system",
+          stage,
+          tone,
+          speaker: agent,
+          content: detail || `${agent.displayLabel} started planning the collaboration.`
+        };
+      case "planning_done":
+        return {
+          kind: "summary",
+          stage,
+          tone: "ok",
+          speaker: agent,
+          content: detail || `${agent.displayLabel} created ${payload.taskCount ?? 0} top-level task(s).`
+        };
+      case "phase_start":
+      case "phase_done":
+        return {
+          kind: "system",
+          stage,
+          tone,
+          phase,
+          speaker: agent,
+          content: detail || `${stage === "phase_start" ? "Entering" : "Completed"} ${phase} phase.`
+        };
+      case "worker_start":
+      case "subagent_start":
+      case "leader_delegate_start":
+      case "leader_synthesis_start":
+      case "workspace_list":
+      case "workspace_read":
+      case "workspace_write":
+      case "workspace_web_search":
+      case "workspace_command":
+      case "workspace_tool_blocked":
+      case "workspace_json_repair":
+      case "memory_read":
+      case "memory_write":
+        return {
+          kind: "message",
+          stage,
+          tone,
+          phase,
+          speaker: agent,
+          content:
+            detail ||
+            (taskTitle ? `${agent.displayLabel} is handling ${taskTitle}.` : `${agent.displayLabel} sent an update.`)
+        };
+      case "subagent_created":
+        return {
+          kind: "message",
+          stage,
+          tone,
+          phase,
+          speaker: parentAgent || agent,
+          target: agent,
+          content: detail || `Created ${agent.displayLabel}${taskTitle ? ` for ${taskTitle}` : ""}.`
+        };
+      case "worker_done":
+      case "subagent_done":
+      case "worker_fallback":
+      case "controller_fallback":
+      case "cluster_cancelled":
+      case "cluster_failed":
+        return {
+          kind: "summary",
+          stage,
+          tone,
+          phase,
+          speaker: agent,
+          content:
+            detail ||
+            (taskTitle ? `${agent.displayLabel} completed ${taskTitle}.` : `${agent.displayLabel} completed an update.`)
+        };
+      case "planning_retry":
+      case "worker_retry":
+      case "subagent_retry":
+      case "leader_delegate_retry":
+      case "leader_synthesis_retry":
+      case "synthesis_retry":
+      case "circuit_opened":
+      case "circuit_half_open":
+      case "circuit_closed":
+      case "circuit_blocked":
+      case "validation_gate_failed":
+      case "cancel_requested":
+      case "synthesis_start":
+        return {
+          kind: "system",
+          stage,
+          tone,
+          phase,
+          speaker: agent,
+          content:
+            detail ||
+            safeString(payload.finalAnswer) ||
+            `${agent.displayLabel} reported ${stage.replaceAll("_", " ")}.`
+        };
+      default:
+        return null;
+    }
+  }
+
+  function captureMultiAgentFromEvent(payload = {}) {
+    if (!multiAgentRuntime.isEnabled()) {
+      return;
+    }
+
+    const message = translateClusterEventToMultiAgentMessage(payload);
+    if (!message) {
+      return;
+    }
+
+    if (message.kind === "summary") {
+      multiAgentRuntime.recordSummary(message);
+      return;
+    }
+
+    if (message.kind === "system") {
+      multiAgentRuntime.recordSystem(message);
+      return;
+    }
+
+    multiAgentRuntime.recordMessage(message);
+  }
+
+  function forwardClusterEvent(payload) {
+    captureMultiAgentFromEvent(payload);
+    emitEvent(onEvent, payload);
+  }
+
+  const sessionRuntime = createSessionRuntime({
+    emitEvent(payload) {
+      forwardClusterEvent(payload);
+    }
+  });
   const operationSpanId = sessionRuntime.startSpan({
-    ...buildAgentEventBase(controller, null),
+    ...buildAgentEventBase(activeController, null),
     spanKind: "operation",
     spanLabel: `Cluster run · ${originalTask.slice(0, 72) || "task"}`
   });
 
   try {
     const workers = workerListFromConfig(config);
+    const capabilityRoutingPolicy = normalizeCapabilityRoutingPolicy(
+      config?.cluster?.capabilityRoutingPolicy
+    );
+    multiAgentRuntime.start({
+      task: originalTask,
+      controller: activeController,
+      detail: `Collaboration started in ${multiAgentRuntime.settings.mode} mode.`
+    });
+
+    async function invokeControllerStageWithFallback({
+      purpose,
+      prompt,
+      startStage,
+      retryStage
+    }) {
+      const primaryController = activeController;
+      const primaryProvider = activeControllerProvider;
+      const fallbackControllers = rankFallbackControllers({
+        models: controllerModels,
+        primaryController,
+        purpose,
+        providerRegistry
+      }).map((modelConfig) => rebindControllerRuntimeAgent(primaryController, modelConfig));
+      const stageCandidates = [primaryController, ...fallbackControllers];
+      let lastError = null;
+
+      for (let attemptIndex = 0; attemptIndex < stageCandidates.length; attemptIndex += 1) {
+        const stageController = stageCandidates[attemptIndex];
+        const stageProvider =
+          attemptIndex === 0 ? primaryProvider : providerRegistry.get(stageController.id);
+        if (!stageProvider) {
+          continue;
+        }
+
+        const stageSpanId = sessionRuntime.startSpan({
+          ...buildAgentEventBase(stageController, null),
+          parentSpanId: operationSpanId,
+          spanKind: purpose,
+          spanLabel: `${stageController.displayLabel || stageController.label} 路 ${purpose}`
+        });
+
+        forwardClusterEvent({
+          ...buildAgentEventBase(stageController, null),
+          type: "status",
+          stage: startStage,
+          tone: "neutral"
+        });
+
+        try {
+          const response = await executionGate.run(
+            () =>
+              invokeProviderWithSession({
+                sessionRuntime,
+                provider: stageProvider,
+                agent: stageController,
+                parentSpanId: stageSpanId,
+                instructions: prompt.instructions,
+                input: prompt.input,
+                purpose,
+                signal,
+                buildAgentEventBase,
+                onRetry(retry) {
+                  forwardClusterEvent({
+                    ...buildAgentEventBase(stageController, null),
+                    ...buildRetryPayload({
+                      stage: retryStage,
+                      model: stageController,
+                      retry
+                    })
+                  });
+                }
+              }),
+            { signal }
+          );
+
+          sessionRuntime.endSpan(stageSpanId, {
+            status: "ok",
+            detail: `Controller ${purpose} completed.`
+          });
+          activeController = stageController;
+          activeControllerProvider = stageProvider;
+          return {
+            response,
+            controller: stageController,
+            provider: stageProvider,
+            spanId: stageSpanId
+          };
+        } catch (error) {
+          sessionRuntime.endSpan(stageSpanId, {
+            status: isAbortError(error) ? "warning" : "error",
+            detail: error.message
+          });
+
+          if (isAbortError(error)) {
+            throw error;
+          }
+
+          lastError = error;
+          const failure = classifyProviderTaskError(error, stageController, sessionRuntime);
+          const hasMoreCandidates = attemptIndex < stageCandidates.length - 1;
+          if (!failure.retryableProviderFailure || !hasMoreCandidates) {
+            throw error;
+          }
+
+          const nextController = stageCandidates[attemptIndex + 1];
+          forwardClusterEvent({
+            ...buildAgentEventBase(nextController, null),
+            type: "status",
+            stage: "controller_fallback",
+            tone: "warning",
+            detail: `Retryable provider failure on ${stageController.label}; rerouting ${purpose} to ${nextController.label}.`,
+            previousControllerId: stageController.id,
+            previousControllerLabel: stageController.label,
+            fallbackControllerId: nextController.id,
+            fallbackControllerLabel: nextController.label,
+            purpose,
+            attempt: attemptIndex + 1,
+            maxAttempts: stageCandidates.length
+          });
+        }
+      }
+
+      throw lastError || new Error(`No controller provider was available for ${purpose}.`);
+    }
+
+    const prePlanningBudget = buildComplexityBudget({
+      originalTask,
+      workers,
+      config
+    });
     const workspaceSummary = config.workspace?.resolvedDir
       ? await getWorkspaceTree(config.workspace.resolvedDir)
       : null;
     const planningPrompt = buildPlanningRequest({
       task: originalTask,
       workers,
-      maxParallel: config.cluster.maxParallel,
+      maxParallel: resolveTopLevelTaskLimit(
+        config.cluster.maxParallel,
+        workers,
+        prePlanningBudget
+      ),
       workspaceSummary,
-      delegateMaxDepth: config.cluster.delegateMaxDepth,
-      delegateBranchFactor: config.cluster.groupLeaderMaxDelegates
+      delegateMaxDepth: resolveEffectiveDelegateMaxDepth(config, prePlanningBudget),
+      delegateBranchFactor: resolveEffectiveGroupLeaderMaxDelegates(config, prePlanningBudget),
+      complexityBudget: prePlanningBudget,
+      capabilityRoutingPolicySummary: summarizeCapabilityRoutingPolicy(capabilityRoutingPolicy)
     });
-    const planningSpanId = sessionRuntime.startSpan({
-      ...buildAgentEventBase(controller, null),
-      parentSpanId: operationSpanId,
-      spanKind: "planning",
+    const planningStage = await invokeControllerStageWithFallback({
+      purpose: "planning",
+      prompt: planningPrompt,
+      startStage: "planning_start",
+      retryStage: "planning_retry",
       spanLabel: `${controller.label} · planning`
     });
 
-    emitEvent(onEvent, {
-      type: "status",
-      stage: "planning_start",
-      tone: "neutral",
-      agentId: controller.id,
-      agentLabel: controller.label,
-      agentKind: "controller",
-      modelId: controller.id,
-      modelLabel: controller.label
-    });
-
-    const planningResponse = await invokeProviderWithSession({
-      sessionRuntime,
-      provider: controllerProvider,
-      agent: controller,
-      parentSpanId: planningSpanId,
-      instructions: planningPrompt.instructions,
-      input: planningPrompt.input,
-      purpose: "planning",
-      signal,
-      buildAgentEventBase,
-      onRetry(retry) {
-        emitEvent(
-          onEvent,
-          buildRetryPayload({
-            stage: "planning_retry",
-            model: controller,
-            retry
-          })
-        );
-      }
-    });
+    const planningResponse = planningStage.response;
 
     let rawPlan;
     try {
@@ -1934,42 +2970,53 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
       rawPlan = null;
     }
 
-    const groupLeaderMaxDelegates = resolveGroupLeaderMaxDelegates(config);
+    const complexityBudget = buildComplexityBudget({
+      originalTask,
+      rawPlan,
+      workers,
+      config
+    });
+    const topLevelTaskLimit = resolveTopLevelTaskLimit(
+      config.cluster.maxParallel,
+      workers,
+      complexityBudget
+    );
+    const groupLeaderMaxDelegates = resolveEffectiveGroupLeaderMaxDelegates(
+      config,
+      complexityBudget
+    );
+    const delegateMaxDepth = resolveEffectiveDelegateMaxDepth(config, complexityBudget);
     const plan = normalizePlan(
       rawPlan,
       workers,
       originalTask,
-      config.cluster.maxParallel,
+      topLevelTaskLimit,
       groupLeaderMaxDelegates,
-      config.cluster.delegateMaxDepth
+      delegateMaxDepth,
+      capabilityRoutingPolicy,
+      config.multiAgent
     );
-    sessionRuntime.endSpan(planningSpanId, {
-      status: "ok",
-      detail: `Planned ${plan.tasks.length} task(s).`
-    });
+    const runAgentBudget = createRunAgentBudget(complexityBudget, plan.tasks.length);
     sessionRuntime.remember(
       {
         title: "Cluster planning",
         content: plan.strategy,
-        tags: ["planning", controller.id]
+        tags: ["planning", activeController.id]
       },
       {
-        ...buildAgentEventBase(controller, null),
-        parentSpanId: planningSpanId
+        ...buildAgentEventBase(activeController, null),
+        parentSpanId: planningStage.spanId
       }
     );
 
-    emitEvent(onEvent, {
+    forwardClusterEvent({
+      ...buildAgentEventBase(activeController, null),
       type: "status",
       stage: "planning_done",
       tone: "ok",
-      agentId: controller.id,
-      agentLabel: controller.label,
-      agentKind: "controller",
-      modelId: controller.id,
-      modelLabel: controller.label,
       taskCount: plan.tasks.length,
       detail: plan.strategy,
+      budget: runAgentBudget.snapshot(),
       planStrategy: plan.strategy,
       planTasks: plan.tasks.map((taskItem) => ({
         id: taskItem.id,
@@ -1984,10 +3031,12 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
       plan,
       originalTask,
       config,
+      executionGate,
       providerRegistry,
+      runAgentBudget,
       sessionRuntime,
       operationSpanId,
-      onEvent,
+      forwardClusterEvent,
       signal
     );
 
@@ -1996,45 +3045,15 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
       plan,
       executions
     });
-    const synthesisSpanId = sessionRuntime.startSpan({
-      ...buildAgentEventBase(controller, null),
-      parentSpanId: operationSpanId,
-      spanKind: "synthesis",
+    const synthesisStage = await invokeControllerStageWithFallback({
+      purpose: "synthesis",
+      prompt: synthesisPrompt,
+      startStage: "synthesis_start",
+      retryStage: "synthesis_retry",
       spanLabel: `${controller.label} · synthesis`
     });
 
-    emitEvent(onEvent, {
-      type: "status",
-      stage: "synthesis_start",
-      tone: "neutral",
-      agentId: controller.id,
-      agentLabel: controller.label,
-      agentKind: "controller",
-      modelId: controller.id,
-      modelLabel: controller.label
-    });
-
-    const synthesisResponse = await invokeProviderWithSession({
-      sessionRuntime,
-      provider: controllerProvider,
-      agent: controller,
-      parentSpanId: synthesisSpanId,
-      instructions: synthesisPrompt.instructions,
-      input: synthesisPrompt.input,
-      purpose: "synthesis",
-      signal,
-      buildAgentEventBase,
-      onRetry(retry) {
-        emitEvent(
-          onEvent,
-          buildRetryPayload({
-            stage: "synthesis_retry",
-            model: controller,
-            retry
-          })
-        );
-      }
-    });
+    const synthesisResponse = synthesisStage.response;
 
     let synthesisParsed;
     try {
@@ -2044,19 +3063,15 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
     }
 
     const normalizedSynthesis = normalizeSynthesis(synthesisParsed, synthesisResponse.text);
-    sessionRuntime.endSpan(synthesisSpanId, {
-      status: "ok",
-      detail: "Controller synthesis completed."
-    });
     sessionRuntime.remember(
       {
         title: "Cluster synthesis",
         content: normalizedSynthesis.finalAnswer,
-        tags: ["synthesis", controller.id]
+        tags: ["synthesis", activeController.id]
       },
       {
-        ...buildAgentEventBase(controller, null),
-        parentSpanId: synthesisSpanId
+        ...buildAgentEventBase(activeController, null),
+        parentSpanId: synthesisStage.spanId
       }
     );
 
@@ -2066,19 +3081,20 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
       detail: normalizedSynthesis.finalAnswer || "Cluster run completed."
     });
     sessionRuntime.publishSessionUpdate("Cluster run completed.");
-    emitEvent(onEvent, {
+    multiAgentRuntime.complete({
+      content: normalizedSynthesis.finalAnswer || "Cluster run completed.",
+      tone: "ok"
+    });
+    forwardClusterEvent({
+      ...buildAgentEventBase(activeController, null),
       type: "complete",
       stage: "cluster_done",
       tone: "ok",
-      agentId: controller.id,
-      agentLabel: controller.label,
-      agentKind: "controller",
-      modelId: controller.id,
-      modelLabel: controller.label,
       totalMs,
       finalAnswer: normalizedSynthesis.finalAnswer,
       executiveSummary: normalizedSynthesis.executiveSummary,
-      session: sessionRuntime.buildSnapshot()
+      session: sessionRuntime.buildSnapshot(),
+      multiAgentSession: multiAgentRuntime.buildSnapshot()
     });
 
     return {
@@ -2086,14 +3102,16 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
       executions,
       synthesis: normalizedSynthesis,
       controller: {
-        id: controller.id,
-        label: controller.label,
-        model: controller.model
+        id: activeController.id,
+        label: activeController.label,
+        model: activeController.model
       },
+      budget: runAgentBudget.snapshot(),
       timings: {
         totalMs
       },
-      session: sessionRuntime.buildSnapshot()
+      session: sessionRuntime.buildSnapshot(),
+      multiAgentSession: multiAgentRuntime.buildSnapshot()
     };
   } catch (error) {
     sessionRuntime.endSpan(operationSpanId, {
@@ -2103,6 +3121,10 @@ export async function runClusterAnalysis({ task, config, providerRegistry, onEve
     sessionRuntime.publishSessionUpdate(
       isAbortError(error) ? "Cluster run cancelled." : "Cluster run failed."
     );
+    multiAgentRuntime.complete({
+      content: error.message,
+      tone: isAbortError(error) ? "warning" : "error"
+    });
     throw error;
   }
 }

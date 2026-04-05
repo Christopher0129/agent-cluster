@@ -14,6 +14,10 @@ test("resolveRequiredWorkspaceCommandScope classifies command tiers", () => {
     WORKSPACE_COMMAND_SCOPES.READ_ONLY
   );
   assert.equal(
+    resolveRequiredWorkspaceCommandScope("rg", ["TODO", "src"]),
+    WORKSPACE_COMMAND_SCOPES.READ_ONLY
+  );
+  assert.equal(
     resolveRequiredWorkspaceCommandScope("node", ["scripts/verify.js"]),
     WORKSPACE_COMMAND_SCOPES.VERIFY
   );
@@ -30,6 +34,12 @@ test("assertWorkspaceCommandAllowedForScope rejects commands above the task tier
       error instanceof WorkspaceCommandScopeError &&
       error.allowedScope === WORKSPACE_COMMAND_SCOPES.VERIFY &&
       error.requiredScope === WORKSPACE_COMMAND_SCOPES.SAFE_EXECUTION
+  );
+});
+
+test("assertWorkspaceCommandAllowedForScope allows read-only rg under verification scope", () => {
+  assert.doesNotThrow(() =>
+    assertWorkspaceCommandAllowedForScope("rg", ["TODO", "src"], WORKSPACE_COMMAND_SCOPES.VERIFY)
   );
 });
 
@@ -71,5 +81,45 @@ test("deriveTaskRequirements clamps child task authority to its parent", () => {
   );
 
   assert.equal(childRequirements.workspaceCommandScope, WORKSPACE_COMMAND_SCOPES.VERIFY);
+  assert.equal(childRequirements.allowsWorkspaceWrite, false);
+});
+
+test("deriveTaskRequirements allows artifact-producing handoff tasks to write and run safe commands", () => {
+  const requirements = deriveTaskRequirements({
+    phase: "handoff",
+    title: "Generate delivery report.docx",
+    instructions: "Create and deliver report.docx in the workspace.",
+    expectedOutput: "A concrete report.docx artifact."
+  });
+
+  assert.equal(requirements.requiresConcreteArtifact, true);
+  assert.equal(requirements.allowsWorkspaceWrite, true);
+  assert.equal(requirements.allowsWorkspaceCommand, true);
+  assert.equal(requirements.workspaceCommandScope, WORKSPACE_COMMAND_SCOPES.SAFE_EXECUTION);
+});
+
+test("deriveTaskRequirements can stop propagating concrete-artifact requirements to delegated child tasks", () => {
+  const parentRequirements = deriveTaskRequirements({
+    phase: "handoff",
+    title: "Generate delivery report.docx",
+    instructions: "Create and deliver report.docx in the workspace.",
+    expectedOutput: "A concrete report.docx artifact."
+  });
+
+  const childRequirements = deriveTaskRequirements(
+    {
+      phase: "research",
+      title: "Verify market facts only",
+      instructions: "Collect verified facts and hand them back to the parent leader.",
+      expectedOutput: "Structured verified facts."
+    },
+    {
+      parentRequirements,
+      inheritConcreteArtifactRequirement: false
+    }
+  );
+
+  assert.equal(parentRequirements.requiresConcreteArtifact, true);
+  assert.equal(childRequirements.requiresConcreteArtifact, false);
   assert.equal(childRequirements.allowsWorkspaceWrite, false);
 });

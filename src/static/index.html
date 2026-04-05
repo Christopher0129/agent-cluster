@@ -13,13 +13,13 @@
     <main class="shell">
       <section class="hero">
         <div class="hero-side">
-          <p class="eyebrow">Agent Cluster Workbench</p>
+          <p class="eyebrow">Agent 集群工作台</p>
           <h1 class="credit-title">多模型集群控制台</h1>
           <p class="hero-copy hero-copy-compact">design by 想画世界送给你</p>
         </div>
 
         <div class="hero-center">
-          <p class="dream-kicker">Dream Console</p>
+          <p class="dream-kicker">梦境控制台</p>
           <div class="dream-title">控制与协作</div>
         </div>
       </section>
@@ -29,7 +29,7 @@
           <div class="console-sidebar-head">
             <p class="panel-kicker">Navigation</p>
             <h2>工作台导航</h2>
-            <p class="muted section-copy">点击左侧选项，右侧切换到对应设置界面。</p>
+            <p class="muted section-copy">点击左侧选项，右侧切换到对应设置面板。</p>
           </div>
 
           <div class="console-nav-group">
@@ -41,6 +41,8 @@
               <button type="button" class="console-nav-button" data-console-nav="secrets">共享密钥</button>
               <button type="button" class="console-nav-button" data-console-nav="batch">批量添加</button>
               <button type="button" class="console-nav-button" data-console-nav="models">模型列表</button>
+              <button type="button" class="console-nav-button" data-console-nav="multiAgent">协作框架</button>
+              <button type="button" class="console-nav-button" data-console-nav="connectivity">模型通联</button>
               <button type="button" class="console-nav-button" data-console-nav="bot">Bot 配置</button>
               <button type="button" class="console-nav-button" data-console-nav="workspace">工作区</button>
               <button type="button" class="console-nav-button" data-console-nav="run">运行任务</button>
@@ -49,7 +51,7 @@
 
           <div class="console-sidebar-status">
             <span class="run-state" id="runState">空闲</span>
-            <p class="muted">右侧固定面板仍保留 Agent 拓扑图和全模型连接检测。</p>
+            <p class="muted">右侧固定面板保留 Agent 拓扑图和全模型连通性检测。</p>
           </div>
         </aside>
 
@@ -58,7 +60,7 @@
             <div class="console-main-copy">
               <p class="panel-kicker" id="consolePanelKicker">配置</p>
               <h2 id="consolePanelTitle">集群设置</h2>
-              <p id="consolePanelDescription" class="muted section-copy">设置全局并发、主控模型和委派深度。</p>
+              <p id="consolePanelDescription" class="muted section-copy">配置全局并发、主控模型和委派深度。</p>
             </div>
             <div class="panel-actions">
               <label class="field language-switch">
@@ -80,12 +82,12 @@
               data-console-panel="cluster"
               data-panel-kicker="配置"
               data-panel-title="集群设置"
-              data-panel-description="设置全局并发、主控模型和委派深度。"
+              data-panel-description="配置全局并发、主控模型和委派深度。"
             >
               <section class="subpanel">
                 <div class="subpanel-head">
                   <h3>基础设置</h3>
-                  <span class="chip">Cluster</span>
+                  <span class="chip">集群</span>
                 </div>
                 <div class="field-grid">
                   <label class="field">
@@ -127,7 +129,7 @@
               <section class="subpanel">
                 <div class="subpanel-head">
                   <h3>方案配置</h3>
-                  <span class="chip">Schemes</span>
+                  <span class="chip">方案</span>
                 </div>
                 <div class="field-grid">
                   <label class="field">
@@ -142,7 +144,7 @@
                 <div class="inline-actions">
                   <button id="addSchemeButton" type="button" class="ghost small">新增方案</button>
                   <button id="removeSchemeButton" type="button" class="ghost danger small">删除当前方案</button>
-                  <span id="schemeHint" class="muted">模型列表、连接测试和运行都会跟随当前方案。</span>
+                  <span id="schemeHint" class="muted">模型列表、连通性测试和运行都会跟随当前方案。</span>
                 </div>
               </section>
             </section>
@@ -158,7 +160,7 @@
               <section class="subpanel">
                 <div class="subpanel-head">
                   <h3>阶段并发</h3>
-                  <span class="chip">Phases</span>
+                  <span class="chip">阶段</span>
                 </div>
                 <p class="muted section-copy">留空表示使用系统默认值。实际生效值不会超过“最大并发”。</p>
                 <div class="field-grid phase-grid">
@@ -211,14 +213,14 @@
               data-console-panel="batch"
               data-panel-kicker="批量"
               data-panel-title="批量添加模型"
-              data-panel-description="同一 Base URL、同一模型名、不同 API Key 的场景可一次生成。"
+              data-panel-description="同一接口地址、同一模型名、不同 API Key 的场景可一次生成。"
               hidden
             >
               <section class="subpanel">
                 <div class="subpanel-head compact">
                   <div>
                     <h3>批量添加模型</h3>
-                    <p class="muted section-copy">适合同一 URL 和模型、不同 API Key 的多组配置。</p>
+                    <p class="muted section-copy">适合同一 URL 和模型名、不同 API Key 的多组配置。</p>
                   </div>
                   <button id="batchAddButton" type="button" class="ghost small">批量生成</button>
                 </div>
@@ -229,15 +231,15 @@
                     <input id="batchIdPrefixInput" type="text" placeholder="codex_worker" />
                   </label>
                   <label class="field">
-                    <span>显示名此前缀</span>
-                    <input id="batchLabelPrefixInput" type="text" placeholder="Codex Worker" />
+                    <span>显示名称前缀</span>
+                    <input id="batchLabelPrefixInput" type="text" placeholder="Codex 执行" />
                   </label>
                   <label class="field">
                     <span>密钥变量名前缀</span>
                     <input id="batchEnvPrefixInput" type="text" placeholder="CODEX_API_KEY" />
                   </label>
                   <label class="field">
-                    <span>Provider</span>
+                    <span>服务商</span>
                     <select id="batchProviderSelect"></select>
                     <small id="batchProviderHint" class="field-hint"></small>
                   </label>
@@ -245,8 +247,16 @@
                     <span>模型名</span>
                     <input id="batchModelNameInput" type="text" placeholder="gpt-5.3-codex" />
                   </label>
+                  <label class="field">
+                    <span>角色</span>
+                    <select id="batchRoleSelect">
+                      <option value="worker">仅工作</option>
+                      <option value="controller">仅主控</option>
+                      <option value="hybrid">主控 + 工作</option>
+                    </select>
+                  </label>
                   <label class="field field-wide">
-                    <span>Base URL</span>
+                    <span>基础 URL</span>
                     <input id="batchBaseUrlInput" type="text" placeholder="https://api.openai.com/v1" />
                   </label>
                   <label class="field">
@@ -258,7 +268,7 @@
                     </select>
                   </label>
                   <label class="field">
-                    <span>API Key Header</span>
+                    <span>API Key 请求头</span>
                     <input id="batchApiKeyHeaderInput" type="text" placeholder="api-key" />
                   </label>
                   <label class="field">
@@ -272,14 +282,21 @@
                     </select>
                   </label>
                   <div class="field toggle-field">
+                    <span>开启 Thinking 模式</span>
+                    <div class="toggle-control">
+                      <input id="batchThinkingInput" type="checkbox" />
+                      <span>适合复杂任务，部分服务商会在联网搜索时自动关闭。</span>
+                    </div>
+                  </div>
+                  <div class="field toggle-field">
                     <span>允许联网搜索</span>
                     <div class="toggle-control">
                       <input id="batchWebSearchInput" type="checkbox" />
-                      <span>仅在所选 Provider 支持时生效。</span>
+                      <span>仅在所选服务商支持时生效。</span>
                     </div>
                   </div>
                   <label class="field">
-                    <span>Temperature</span>
+                    <span>温度</span>
                     <input id="batchTemperatureInput" type="number" step="0.1" min="0" max="2" placeholder="仅 chat 模型使用" />
                   </label>
                   <div class="field field-wide">
@@ -304,18 +321,118 @@
               data-console-panel="models"
               data-panel-kicker="模型"
               data-panel-title="模型列表"
-              data-panel-description="管理当前方案下的所有模型，并在这里做单模型连接测试。"
+              data-panel-description="管理当前方案下的所有模型，并在这里做单模型连通性测试。"
               hidden
             >
               <section class="subpanel">
                 <div class="subpanel-head compact">
                   <div>
                     <h3>模型列表</h3>
-                    <p class="muted section-copy">逐个编辑模型配置、切换 Provider，并直接测试连接。</p>
+                    <p class="muted section-copy">逐个编辑模型配置、切换服务商，并直接测试连接。</p>
                   </div>
                   <button id="addModelButton" type="button" class="ghost small">添加模型</button>
                 </div>
                 <div id="modelList" class="list-stack"></div>
+              </section>
+            </section>
+
+            <section
+              class="console-panel"
+              data-console-panel="multiAgent"
+              data-panel-kicker="框架"
+              data-panel-title="多智能体框架"
+              data-panel-description="单独启用协作框架，并调整会话展示和执行模式参数。"
+              hidden
+            >
+              <section class="subpanel">
+                <div class="subpanel-head">
+                  <div>
+                    <h3>框架设置</h3>
+                    <p class="muted section-copy">关闭时保持当前原始集群编排；开启后会记录协作消息，并根据模式调整任务接线方式。</p>
+                  </div>
+                  <span class="chip">框架</span>
+                </div>
+
+                <div class="field-grid">
+                  <div class="field toggle-field">
+                    <span>启用框架</span>
+                    <div class="toggle-control">
+                      <input id="multiAgentEnabledInput" type="checkbox" />
+                      <span>开启后，右侧聊天室会展示主控、组长和子 Agent 的协作细节。</span>
+                    </div>
+                  </div>
+                  <label class="field">
+                    <span>协作模式</span>
+                    <select id="multiAgentModeSelect">
+                      <option value="group_chat">动态群聊</option>
+                      <option value="sequential">顺序协作</option>
+                      <option value="workflow">嵌套工作流</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>发言策略</span>
+                    <select id="multiAgentSpeakerStrategySelect">
+                      <option value="phase_priority">阶段优先</option>
+                      <option value="round_robin">轮询发言</option>
+                      <option value="random">随机发言</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>最大轮次</span>
+                    <input id="multiAgentMaxRoundsInput" type="number" min="1" />
+                  </label>
+                  <label class="field">
+                    <span>终止关键词</span>
+                    <input id="multiAgentTerminationKeywordInput" type="text" placeholder="例如：TERMINATE" />
+                  </label>
+                  <label class="field">
+                    <span>消息窗口</span>
+                    <input id="multiAgentMessageWindowInput" type="number" min="1" />
+                  </label>
+                  <div class="field toggle-field">
+                    <span>长消息摘要化</span>
+                    <div class="toggle-control">
+                      <input id="multiAgentSummarizeInput" type="checkbox" />
+                      <span>避免单条协作消息过长，便于在聊天室连续查看。</span>
+                    </div>
+                  </div>
+                  <div class="field toggle-field">
+                    <span>包含系统消息</span>
+                    <div class="toggle-control">
+                      <input id="multiAgentIncludeSystemInput" type="checkbox" />
+                      <span>把阶段切换、重试、熔断等系统提示也纳入聊天室。</span>
+                    </div>
+                  </div>
+                </div>
+
+                <p id="multiAgentSettingsHint" class="field-hint">
+                  开启后会记录协作消息、阶段接力和最终会话快照。群聊模式保留并行，顺序模式会串行化顶层任务，工作流模式会强化跨阶段交接。
+                </p>
+              </section>
+            </section>
+
+            <section
+              class="console-panel"
+              data-console-panel="connectivity"
+              data-panel-kicker="通联"
+              data-panel-title="模型通联"
+              data-panel-description="把当前方案的模型连通性测试移动到左侧菜单，不再占用右侧运行态视图。"
+              hidden
+            >
+              <section class="subpanel">
+                <div class="subpanel-head">
+                  <div>
+                    <h3>当前方案通联测试</h3>
+                    <p class="muted section-copy">程序启动后会自动检测当前方案下全部模型的连通性，也可以在这里手动重试。</p>
+                  </div>
+                  <div class="agent-inspector-meta">
+                    <span id="schemeConnectivityStatus" class="chip">等待检测</span>
+                    <button id="schemeConnectivityRetestButton" type="button" class="ghost small">重新检测</button>
+                  </div>
+                </div>
+                <div id="schemeConnectivityList" class="scheme-connectivity-list">
+                  <p class="placeholder">等待自动检测...</p>
+                </div>
               </section>
             </section>
 
@@ -385,7 +502,7 @@
               class="console-panel"
               id="workspace"
               data-console-panel="workspace"
-              data-panel-kicker="Workspace"
+              data-panel-kicker="工作区"
               data-panel-title="工作区"
               data-panel-description="模型只能在当前工作区内读取、生成和修改文件。"
               hidden
@@ -405,7 +522,7 @@
                 <div class="field-grid">
                   <label class="field field-wide">
                     <span>目录路径</span>
-                    <input id="workspaceDirInput" type="text" placeholder="例如：D:\\projects\\my-app 或 .\\workspace" />
+                    <input id="workspaceDirInput" type="text" placeholder="例如：D:\projects\my-app 或 ./workspace" />
                   </label>
                 </div>
                 <div class="workspace-browser">
@@ -415,7 +532,7 @@
                         <h4>文件树</h4>
                         <p class="muted section-copy">默认折叠，避免超长目录直接铺满界面。</p>
                       </div>
-                      <span class="chip">Workspace</span>
+                      <span class="chip">工作区</span>
                     </summary>
                     <div class="workspace-tree-body">
                       <pre id="workspaceTreeOutput">保存配置后可在这里查看工作区文件树。</pre>
@@ -454,7 +571,7 @@
               data-console-panel="run"
               data-panel-kicker="运行"
               data-panel-title="运行任务"
-              data-panel-description="输入任务，查看实时状态、规划、工作模型结果和最终汇总。"
+              data-panel-description="输入任务，查看实时状态、计划、工作模型结果和最终汇总。"
               hidden
             >
               <section class="subpanel">
@@ -475,7 +592,7 @@
               <section class="subpanel">
                 <div class="subpanel-head">
                   <h3>实时状态</h3>
-                  <span class="chip">Live</span>
+                  <span class="chip">&#23454;&#26102;</span>
                 </div>
                 <div id="liveOutput" class="status-feed">
                   <p class="placeholder">运行后会在这里显示计划、重试和完成状态。</p>
@@ -486,7 +603,7 @@
                 <article class="subpanel">
                   <div class="subpanel-head">
                     <h3>任务计划</h3>
-                    <span class="chip">Controller</span>
+                    <span class="chip">&#20027;&#25511;</span>
                   </div>
                   <pre id="planOutput">等待运行...</pre>
                 </article>
@@ -494,7 +611,7 @@
                 <article class="subpanel">
                   <div class="subpanel-head">
                     <h3>工作模型结果</h3>
-                    <span class="chip">Workers</span>
+                    <span class="chip">&#24037;&#20316;&#27169;&#22411;</span>
                   </div>
                   <div id="workerOutput" class="worker-list">
                     <p class="placeholder">运行后会在这里显示每个工作模型的结果。</p>
@@ -504,7 +621,7 @@
                 <article class="subpanel synthesis-panel">
                   <div class="subpanel-head">
                     <h3>最终汇总</h3>
-                    <span class="chip">Synthesis</span>
+                    <span class="chip">&#27719;&#24635;</span>
                   </div>
                   <div id="synthesisOutput" class="synthesis">
                     <p class="placeholder">主控模型会在这里给出最终结论。</p>
@@ -513,8 +630,8 @@
 
                 <article class="subpanel">
                   <div class="subpanel-head">
-                    <h3>Task Trace</h3>
-                    <span class="chip">Trace</span>
+                    <h3>&#20219;&#21153; Trace</h3>
+                    <span class="chip">&#35843;&#29992;&#38142;</span>
                   </div>
                   <div id="traceOutput" class="trace-list">
                     <p class="placeholder">运行后会在这里显示 trace 和调用链。</p>
@@ -523,8 +640,8 @@
 
                 <article class="subpanel">
                   <div class="subpanel-head">
-                    <h3>Session Stats</h3>
-                    <span class="chip">Session</span>
+                    <h3>&#20250;&#35805;&#32479;&#35745;</h3>
+                    <span class="chip">&#20250;&#35805;</span>
                   </div>
                   <div id="sessionOutput" class="session-summary">
                     <p class="placeholder">运行后会在这里显示记忆、token/cost 和 retry / circuit breaker 状态。</p>
@@ -541,7 +658,7 @@
       <section class="agent-viewport-shell">
         <div class="agent-viewport-head">
           <div>
-            <p class="panel-kicker">Agents</p>
+            <p class="panel-kicker">&#20195;&#29702;&#38598;&#32676;</p>
             <h2>虚拟集群图</h2>
           </div>
           <div class="agent-viewport-meta">
@@ -574,20 +691,26 @@
               <p class="placeholder">运行后点击节点查看详情，悬停可预览当前动作。</p>
             </div>
 
-            <div class="agent-viz-connectivity">
+            <div class="agent-viz-chatroom">
               <div class="agent-inspector-head">
                 <div>
-                  <h3>当前方案连接测试</h3>
-                  <p class="muted section-copy">程序启动后会自动检测当前方案下全部模型的连通性。</p>
+                  <h3 id="multiAgentChatTitle">Agent 聊天室</h3>
+                  <p id="multiAgentChatDescription" class="muted section-copy">
+                    开启左侧的多智能体框架后，这里会展示主控、组长和子 Agent 之间的交流细节。
+                  </p>
                 </div>
                 <div class="agent-inspector-meta">
-                  <span id="schemeConnectivityStatus" class="chip">等待检测</span>
-                  <button id="schemeConnectivityRetestButton" type="button" class="ghost small">重新检测</button>
+                  <span id="multiAgentChatStatus" class="chip">未启用</span>
+                  <span id="multiAgentChatMeta" class="chip">动态群聊 · 0 条消息</span>
                 </div>
               </div>
 
-              <div id="schemeConnectivityList" class="scheme-connectivity-list">
-                <p class="placeholder">等待自动检测...</p>
+              <div id="multiAgentChatSummary" class="multi-agent-chat-summary">
+                <p class="placeholder">等待运行后生成会话摘要。</p>
+              </div>
+
+              <div id="multiAgentChatroom" class="multi-agent-chatroom">
+                <p class="placeholder">当前还没有协作消息。</p>
               </div>
             </div>
           </div>
@@ -637,16 +760,24 @@
             <input data-model-label type="text" placeholder="GPT-5.4 主控" />
           </label>
           <label class="field">
-            <span>Provider</span>
+            <span>服务商</span>
             <select data-model-provider></select>
             <small data-model-provider-hint class="field-hint"></small>
+          </label>
+          <label class="field">
+            <span>角色</span>
+            <select data-model-role>
+              <option value="worker">仅工作</option>
+              <option value="controller">仅主控</option>
+              <option value="hybrid">主控 + 工作</option>
+            </select>
           </label>
           <label class="field">
             <span>远端模型名</span>
             <input data-model-name type="text" placeholder="gpt-5.4" />
           </label>
           <label class="field field-wide">
-            <span>Base URL</span>
+            <span>基础 URL</span>
             <input data-model-base-url type="text" placeholder="https://api.openai.com/v1" />
           </label>
           <label class="field">
@@ -655,7 +786,7 @@
           </label>
           <label class="field">
             <span>API Key</span>
-            <input data-model-api-key-value type="password" placeholder="可直接填写到当前模型卡" />
+            <input data-model-api-key-value type="password" placeholder="可直接填到当前模型卡片" />
           </label>
           <label class="field">
             <span>鉴权方式</span>
@@ -666,7 +797,7 @@
             </select>
           </label>
           <label class="field">
-            <span>API Key Header</span>
+            <span>API Key 请求头</span>
             <input data-model-api-key-header type="text" placeholder="api-key" />
           </label>
           <label class="field">
@@ -680,14 +811,21 @@
             </select>
           </label>
           <div class="field toggle-field">
+            <span>开启 Thinking 模式</span>
+            <div class="toggle-control">
+              <input data-model-thinking type="checkbox" />
+              <span>适合复杂任务，部分服务商会在联网搜索时自动关闭。</span>
+            </div>
+          </div>
+          <div class="field toggle-field">
             <span>允许联网搜索</span>
             <div class="toggle-control">
               <input data-model-web-search type="checkbox" />
-              <span>仅在所选 Provider 支持联网搜索工具时生效。</span>
+              <span>仅在所选服务商支持联网搜索工具时生效。</span>
             </div>
           </div>
           <label class="field">
-            <span>Temperature</span>
+            <span>温度</span>
             <input data-model-temperature type="number" step="0.1" min="0" max="2" placeholder="仅 chat 模型使用" />
           </label>
           <div class="field field-wide">

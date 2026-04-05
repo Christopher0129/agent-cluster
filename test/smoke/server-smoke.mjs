@@ -268,6 +268,171 @@ async function runClusterCancelRouteTests() {
   }
 }
 
+async function runClusterRouteLogPersistenceTests() {
+  const projectDir = await mkdtemp(join(process.cwd(), ".tmp-cluster-log-route-"));
+  const workspaceDir = join(projectDir, "workspace");
+  let requestCount = 0;
+  const modelServer = createServer(async (request, response) => {
+    const chunks = [];
+    for await (const chunk of request) {
+      chunks.push(chunk);
+    }
+
+    requestCount += 1;
+    response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+
+    if (requestCount === 1) {
+      response.end(
+        JSON.stringify({
+          output_text: JSON.stringify({
+            objective: "Create a note",
+            strategy: "Use one worker to write the note, then synthesize the result.",
+            tasks: [
+              {
+                id: "task_1",
+                phase: "implementation",
+                title: "Write note",
+                assignedWorker: "worker",
+                instructions: "Create notes/hello.txt in the workspace.",
+                expectedOutput: "A concrete notes/hello.txt artifact.",
+                dependsOn: []
+              }
+            ]
+          })
+        })
+      );
+      return;
+    }
+
+    if (requestCount === 2) {
+      response.end(
+        JSON.stringify({
+          output_text: JSON.stringify({
+            action: "write_files",
+            reason: "Create the requested note.",
+            files: [
+              {
+                path: "notes/hello.txt",
+                content: "hello from route log test\n"
+              }
+            ]
+          })
+        })
+      );
+      return;
+    }
+
+    if (requestCount === 3) {
+      response.end(
+        JSON.stringify({
+          output_text: JSON.stringify({
+            action: "final",
+            summary: "The note was written.",
+            keyFindings: ["notes/hello.txt now exists in the workspace."],
+            risks: [],
+            deliverables: ["notes/hello.txt"],
+            generatedFiles: ["notes/hello.txt"],
+            confidence: "high",
+            followUps: [],
+            verificationStatus: "passed"
+          })
+        })
+      );
+      return;
+    }
+
+    response.end(
+      JSON.stringify({
+        output_text: JSON.stringify({
+          finalAnswer: "Route log persistence completed.",
+          executiveSummary: ["The run finished and its log was persisted automatically."],
+          consensus: ["Automatic task logging works for cluster runs."],
+          disagreements: [],
+          nextActions: []
+        })
+      })
+    );
+  });
+
+  await new Promise((resolve) => modelServer.listen(0, "127.0.0.1", resolve));
+  const modelPort = modelServer.address().port;
+
+  try {
+    process.env.TEST_ROUTE_LOG_KEY = "route-log-key";
+    await writeFile(
+      join(projectDir, "cluster.config.json"),
+      `${JSON.stringify(
+        {
+          server: { port: 4040 },
+          cluster: { controller: "controller", maxParallel: 1 },
+          workspace: { dir: "./workspace" },
+          models: {
+            controller: {
+              provider: "openai-responses",
+              model: "gpt-5.4",
+              baseUrl: `http://127.0.0.1:${modelPort}`,
+              apiKeyEnv: "TEST_ROUTE_LOG_KEY",
+              label: "Controller"
+            },
+            worker: {
+              provider: "openai-responses",
+              model: "gpt-5.4-mini",
+              baseUrl: `http://127.0.0.1:${modelPort}`,
+              apiKeyEnv: "TEST_ROUTE_LOG_KEY",
+              label: "Worker"
+            }
+          }
+        },
+        null,
+        2
+      )}\n`,
+      "utf8"
+    );
+
+    const appServer = createAppServer({
+      projectDir,
+      staticAssetLoader: async (assetPath) =>
+        assetPath === "index.html" ? "<!doctype html><html><body>ok</body></html>" : ""
+    });
+    await new Promise((resolve) => appServer.listen(0, "127.0.0.1", resolve));
+    const appPort = appServer.address().port;
+
+    try {
+      const operationId = "cluster_route_log_test";
+      const response = await fetch(`http://127.0.0.1:${appPort}/api/cluster/run`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          task: "Create a note and persist the run log.",
+          operationId
+        })
+      });
+      const payload = await response.json();
+      const logJsonPath = join(projectDir, "task-logs", `${operationId}.json`);
+      const logTextPath = join(projectDir, "task-logs", `${operationId}.log`);
+      const logJson = JSON.parse(await readFile(logJsonPath, "utf8"));
+      const logText = await readFile(logTextPath, "utf8");
+      const noteText = await readFile(join(workspaceDir, "notes", "hello.txt"), "utf8");
+
+      assert.equal(payload.ok, true);
+      assert.equal(payload.log.textPath, `task-logs/${operationId}.log`);
+      assert.equal(logJson.status, "completed");
+      assert.equal(logJson.operationId, operationId);
+      assert.match(logText, /Agent Cluster Task Log/);
+      assert.match(logText, /cluster_done/);
+      assert.match(logText, /Create a note and persist the run log/);
+      assert.equal(noteText, "hello from route log test\n");
+    } finally {
+      await new Promise((resolve) => appServer.close(resolve));
+    }
+  } finally {
+    await new Promise((resolve) => modelServer.close(resolve));
+    await rm(projectDir, { recursive: true, force: true });
+  }
+}
+
 async function runSystemExitRouteTests() {
   const projectDir = await mkdtemp(join(process.cwd(), ".tmp-system-exit-"));
   let exitCode = null;
@@ -333,6 +498,7 @@ async function runSystemExitRouteTests() {
 export async function runServerSmokeTests() {
   await runWorkspaceServerRouteTests();
   await runStaticAssetRouteTests();
+  await runClusterRouteLogPersistenceTests();
   await runClusterCancelRouteTests();
   await runSystemExitRouteTests();
 }

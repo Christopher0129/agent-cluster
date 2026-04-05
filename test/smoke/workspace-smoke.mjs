@@ -23,6 +23,7 @@ import {
   summarizeAgentActivity
 } from "../../src/static/agent-graph-layout.js";
 import { runWorkspaceToolLoop } from "../../src/workspace/agent-loop.mjs";
+import { readDocumentText } from "../../src/workspace/document-reader.mjs";
 import { DelayedJsonProvider, FakeProvider, waitForDelay } from "../helpers/providers.mjs";
 
 async function runWorkspaceToolLayerMemoryTests() {
@@ -386,15 +387,12 @@ async function runArtifactVerificationGuardTests() {
       providerRegistry
     });
 
+    const reportPath = join(workspaceDir, "report.docx");
+    const reportText = await readDocumentText(reportPath);
     assert.equal(result.executions.length, 1);
-    assert.equal(result.executions[0].output.verificationStatus, "failed");
-    assert.deepEqual(result.executions[0].output.verifiedGeneratedFiles, []);
-    assert.equal(
-      result.executions[0].output.risks.includes(
-        "Task expected a concrete file artifact, but no generated file was verified in the workspace."
-      ),
-      true
-    );
+    assert.equal(result.executions[0].output.verificationStatus, "passed");
+    assert.deepEqual(result.executions[0].output.verifiedGeneratedFiles, ["report.docx"]);
+    assert.equal(reportText.includes("The report is ready."), true);
   } finally {
     await rm(projectDir, { recursive: true, force: true });
   }

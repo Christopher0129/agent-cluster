@@ -1,0 +1,676 @@
+import { describeOperationEvent } from "./operation-events.js";
+
+const DEFAULT_SETTINGS = Object.freeze({
+  enabled: false,
+  mode: "group_chat",
+  speakerStrategy: "phase_priority",
+  maxRounds: 16,
+  terminationKeyword: "TERMINATE",
+  messageWindow: 28,
+  summarizeLongMessages: true,
+  includeSystemMessages: true
+});
+
+const CHATTY_STAGE_KINDS = new Map([
+  ["planning_start", "system"],
+  ["planning_done", "summary"],
+  ["phase_start", "system"],
+  ["phase_done", "system"],
+  ["worker_start", "message"],
+  ["worker_done", "summary"],
+  ["leader_delegate_start", "message"],
+  ["leader_synthesis_start", "message"],
+  ["subagent_created", "message"],
+  ["subagent_start", "message"],
+  ["subagent_done", "summary"],
+  ["worker_fallback", "summary"],
+  ["controller_fallback", "summary"],
+  ["planning_retry", "system"],
+  ["worker_retry", "system"],
+  ["subagent_retry", "system"],
+  ["leader_delegate_retry", "system"],
+  ["leader_synthesis_retry", "system"],
+  ["synthesis_start", "system"],
+  ["synthesis_retry", "system"],
+  ["workspace_list", "message"],
+  ["workspace_read", "message"],
+  ["workspace_write", "message"],
+  ["workspace_web_search", "message"],
+  ["workspace_command", "message"],
+  ["workspace_tool_blocked", "message"],
+  ["workspace_json_repair", "message"],
+  ["memory_read", "message"],
+  ["memory_write", "message"],
+  ["circuit_opened", "system"],
+  ["circuit_half_open", "system"],
+  ["circuit_closed", "system"],
+  ["circuit_blocked", "system"],
+  ["validation_gate_failed", "system"],
+  ["cancel_requested", "system"],
+  ["cluster_done", "summary"],
+  ["cluster_cancelled", "summary"],
+  ["cluster_failed", "summary"]
+]);
+
+function interpolate(template, values = {}) {
+  return String(template || "").replace(/\{(\w+)\}/g, (_, key) => String(values[key] ?? ""));
+}
+
+function resolveRuntimeLocale() {
+  if (typeof document !== "undefined" && String(document.documentElement?.lang || "").toLowerCase().startsWith("en")) {
+    return "en-US";
+  }
+  return "zh-CN";
+}
+
+function createFallbackTranslator() {
+  const catalog = {
+    "zh-CN": {
+      "multiAgent.mode.group_chat": "动态群聊",
+      "multiAgent.mode.sequential": "顺序协作",
+      "multiAgent.mode.workflow": "嵌套工作流",
+      "multiAgent.strategy.round_robin": "轮询发言",
+      "multiAgent.strategy.phase_priority": "阶段优先",
+      "multiAgent.strategy.random": "随机发言",
+      "multiAgent.hint.disabled": "关闭后维持当前原始集群编排，右侧聊天室只保留占位说明。",
+      "multiAgent.hint.enabled": "开启后会记录协作消息、阶段接力和最终会话快照。群聊模式保留并行，顺序模式会串行化顶层任务，工作流模式会强化跨阶段交接。",
+      "multiAgent.status.disabled": "未启用",
+      "multiAgent.status.ready": "等待运行",
+      "multiAgent.status.running": "协作中",
+      "multiAgent.status.completed": "已完成",
+      "multiAgent.status.terminated": "已终止",
+      "multiAgent.meta": "{mode} · {messages} 条消息",
+      "multiAgent.chat.title": "Agent 聊天室",
+      "multiAgent.chat.copy.disabled": "开启左侧的多智能体框架后，这里会展示主控、组长和子 Agent 之间的交流细节。",
+      "multiAgent.chat.copy.ready": "运行任务后，这里会按会话窗口实时展示协作过程与结果回放。",
+      "multiAgent.chat.empty": "当前还没有协作消息。",
+      "multiAgent.chat.summary.mode": "协作模式",
+      "multiAgent.chat.summary.strategy": "发言策略",
+      "multiAgent.chat.summary.turns": "可见轮次",
+      "multiAgent.chat.summary.participants": "参与 Agent",
+      "multiAgent.chat.summary.window": "消息窗口",
+      "multiAgent.chat.summary.folded": "折叠消息",
+      "multiAgent.chat.summary.none": "等待运行后生成会话摘要。",
+      "multiAgent.chat.folded": "超过轮次上限的协作消息已折叠 {count} 条。",
+      "multiAgent.chat.target": "发送给 {target}",
+      "multiAgent.chat.phase.research": "调研",
+      "multiAgent.chat.phase.implementation": "实现",
+      "multiAgent.chat.phase.validation": "验证",
+      "multiAgent.chat.phase.handoff": "交付"
+    },
+    "en-US": {
+      "multiAgent.mode.group_chat": "Group Chat",
+      "multiAgent.mode.sequential": "Sequential",
+      "multiAgent.mode.workflow": "Workflow",
+      "multiAgent.strategy.round_robin": "Round Robin",
+      "multiAgent.strategy.phase_priority": "Phase Priority",
+      "multiAgent.strategy.random": "Random",
+      "multiAgent.hint.disabled": "When disabled, the cluster keeps the original orchestration and the chatroom stays as an explanation panel.",
+      "multiAgent.hint.enabled": "When enabled, the app records collaboration messages, phase handoffs, and the final session snapshot. Group chat keeps parallel execution, sequential mode serializes top-level tasks, and workflow mode strengthens phase handoffs.",
+      "multiAgent.status.disabled": "Disabled",
+      "multiAgent.status.ready": "Ready",
+      "multiAgent.status.running": "Running",
+      "multiAgent.status.completed": "Completed",
+      "multiAgent.status.terminated": "Terminated",
+      "multiAgent.meta": "{mode} · {messages} messages",
+      "multiAgent.chat.title": "Agent Chatroom",
+      "multiAgent.chat.copy.disabled": "Enable the multi-agent framework on the left to inspect controller, leader, and child-agent collaboration here.",
+      "multiAgent.chat.copy.ready": "Run a task to stream collaboration updates and synthesis handoff details into this chatroom.",
+      "multiAgent.chat.empty": "No collaboration messages yet.",
+      "multiAgent.chat.summary.mode": "Mode",
+      "multiAgent.chat.summary.strategy": "Speaker Strategy",
+      "multiAgent.chat.summary.turns": "Visible Turns",
+      "multiAgent.chat.summary.participants": "Participants",
+      "multiAgent.chat.summary.window": "Window",
+      "multiAgent.chat.summary.folded": "Folded",
+      "multiAgent.chat.summary.none": "The session summary appears here after a run starts.",
+      "multiAgent.chat.folded": "{count} collaboration message(s) were folded after reaching the round cap.",
+      "multiAgent.chat.target": "To {target}",
+      "multiAgent.chat.phase.research": "Research",
+      "multiAgent.chat.phase.implementation": "Implementation",
+      "multiAgent.chat.phase.validation": "Validation",
+      "multiAgent.chat.phase.handoff": "Handoff"
+    }
+  };
+
+  return (key, values = {}) =>
+    interpolate(catalog[resolveRuntimeLocale()]?.[key] ?? catalog["zh-CN"]?.[key] ?? key, values);
+}
+
+function normalizePositiveInteger(value, fallback) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < 1) {
+    return fallback;
+  }
+  return Math.floor(number);
+}
+
+function normalizeChoice(value, supportedValues, fallback) {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase();
+  return supportedValues.has(normalized) ? normalized : fallback;
+}
+
+function normalizeSettings(value, fallback = DEFAULT_SETTINGS) {
+  const source = value && typeof value === "object" ? value : {};
+  const backup = fallback && typeof fallback === "object" ? fallback : DEFAULT_SETTINGS;
+
+  return {
+    enabled: Boolean(source.enabled ?? backup.enabled ?? DEFAULT_SETTINGS.enabled),
+    mode: normalizeChoice(
+      source.mode ?? backup.mode,
+      new Set(["group_chat", "sequential", "workflow"]),
+      DEFAULT_SETTINGS.mode
+    ),
+    speakerStrategy: normalizeChoice(
+      source.speakerStrategy ?? backup.speakerStrategy,
+      new Set(["round_robin", "phase_priority", "random"]),
+      DEFAULT_SETTINGS.speakerStrategy
+    ),
+    maxRounds: normalizePositiveInteger(source.maxRounds, backup.maxRounds ?? DEFAULT_SETTINGS.maxRounds),
+    terminationKeyword:
+      String(source.terminationKeyword ?? backup.terminationKeyword ?? DEFAULT_SETTINGS.terminationKeyword).trim() ||
+      DEFAULT_SETTINGS.terminationKeyword,
+    messageWindow: normalizePositiveInteger(
+      source.messageWindow,
+      backup.messageWindow ?? DEFAULT_SETTINGS.messageWindow
+    ),
+    summarizeLongMessages: source.summarizeLongMessages ?? backup.summarizeLongMessages ?? true,
+    includeSystemMessages: source.includeSystemMessages ?? backup.includeSystemMessages ?? true
+  };
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function resolvePhaseLabel(phase, translate) {
+  const normalized = String(phase || "").trim().toLowerCase();
+  if (!normalized) {
+    return "";
+  }
+  return translate(`multiAgent.chat.phase.${normalized}`);
+}
+
+function summarizeContent(content, settings) {
+  const normalized = String(content || "").replace(/\s+/g, " ").trim();
+  if (!normalized) {
+    return "";
+  }
+
+  if (!settings.summarizeLongMessages || normalized.length <= 320) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, 317)}...`;
+}
+
+function shouldIgnoreEvent(event) {
+  const stage = String(event?.stage || "").trim();
+  return (
+    !stage ||
+    stage === "submitted" ||
+    stage === "session_update" ||
+    stage.startsWith("trace_") ||
+    stage.startsWith("model_test_")
+  );
+}
+
+function createEmptySession(settings) {
+  return {
+    enabled: settings.enabled,
+    settings,
+    status: settings.enabled ? "ready" : "disabled",
+    objective: "",
+    startedAt: "",
+    endedAt: "",
+    rounds: 0,
+    totalMessageCount: 0,
+    foldedMessageCount: 0,
+    terminatedByKeyword: false,
+    summary: "",
+    participantCount: 0,
+    participants: [],
+    phaseCounts: {},
+    messages: []
+  };
+}
+
+function upsertParticipant(session, speakerLabel = "") {
+  const label = String(speakerLabel || "").trim();
+  if (!label) {
+    return;
+  }
+
+  const existing = session.participants.find((item) => item.label === label);
+  if (existing) {
+    existing.messageCount += 1;
+  } else {
+    session.participants.push({
+      id: label,
+      label,
+      kind: "agent",
+      messageCount: 1
+    });
+  }
+  session.participantCount = session.participants.length;
+}
+
+function buildChatEntryFromEvent(event, settings) {
+  if (shouldIgnoreEvent(event)) {
+    return null;
+  }
+
+  const stage = String(event.stage || "").trim();
+  const kind = CHATTY_STAGE_KINDS.get(stage);
+  if (!kind) {
+    return null;
+  }
+
+  if (!settings.includeSystemMessages && kind === "system") {
+    return null;
+  }
+
+  const sourceLabel = String(event.parentAgentLabel || event.agentLabel || event.modelLabel || "").trim();
+  const speakerLabel =
+    stage === "subagent_created"
+      ? String(event.parentAgentLabel || event.agentLabel || "").trim()
+      : sourceLabel;
+  const targetLabel =
+    stage === "subagent_created" ? String(event.agentLabel || "").trim() : "";
+
+  return {
+    id: `${stage}:${event.timestamp || Date.now()}:${event.agentId || event.modelId || Math.random()}`,
+    kind,
+    stage,
+    tone: String(event.tone || "neutral").trim() || "neutral",
+    phase: String(event.phase || "").trim(),
+    round: 0,
+    timestamp: String(event.timestamp || new Date().toISOString()),
+    speakerLabel,
+    targetLabel,
+    content: summarizeContent(describeOperationEvent(event), settings)
+  };
+}
+
+export function createMultiAgentUi({
+  state = {},
+  elements,
+  translate = createFallbackTranslator()
+}) {
+  const {
+    multiAgentEnabledInput,
+    multiAgentModeSelect,
+    multiAgentSpeakerStrategySelect,
+    multiAgentMaxRoundsInput,
+    multiAgentTerminationKeywordInput,
+    multiAgentMessageWindowInput,
+    multiAgentSummarizeInput,
+    multiAgentIncludeSystemInput,
+    multiAgentSettingsHint,
+    multiAgentChatTitle,
+    multiAgentChatDescription,
+    multiAgentChatStatus,
+    multiAgentChatMeta,
+    multiAgentChatSummary,
+    multiAgentChatroom
+  } = elements;
+
+  state.settings = normalizeSettings(state.settings);
+  state.session = createEmptySession(state.settings);
+
+  function collectSettings() {
+    return normalizeSettings({
+      enabled: multiAgentEnabledInput?.checked,
+      mode: multiAgentModeSelect?.value,
+      speakerStrategy: multiAgentSpeakerStrategySelect?.value,
+      maxRounds: multiAgentMaxRoundsInput?.value,
+      terminationKeyword: multiAgentTerminationKeywordInput?.value,
+      messageWindow: multiAgentMessageWindowInput?.value,
+      summarizeLongMessages: multiAgentSummarizeInput?.checked,
+      includeSystemMessages: multiAgentIncludeSystemInput?.checked
+    });
+  }
+
+  function syncFieldState() {
+    const enabled = Boolean(multiAgentEnabledInput?.checked);
+    for (const input of [
+      multiAgentModeSelect,
+      multiAgentSpeakerStrategySelect,
+      multiAgentMaxRoundsInput,
+      multiAgentTerminationKeywordInput,
+      multiAgentMessageWindowInput,
+      multiAgentSummarizeInput,
+      multiAgentIncludeSystemInput
+    ]) {
+      if (input) {
+        input.disabled = !enabled;
+      }
+    }
+
+    if (multiAgentSettingsHint) {
+      multiAgentSettingsHint.textContent = enabled
+        ? translate("multiAgent.hint.enabled")
+        : translate("multiAgent.hint.disabled");
+    }
+  }
+
+  function applySettings(settings = {}) {
+    state.settings = normalizeSettings(settings, state.settings);
+    if (multiAgentEnabledInput) {
+      multiAgentEnabledInput.checked = state.settings.enabled;
+    }
+    if (multiAgentModeSelect) {
+      multiAgentModeSelect.value = state.settings.mode;
+    }
+    if (multiAgentSpeakerStrategySelect) {
+      multiAgentSpeakerStrategySelect.value = state.settings.speakerStrategy;
+    }
+    if (multiAgentMaxRoundsInput) {
+      multiAgentMaxRoundsInput.value = state.settings.maxRounds;
+    }
+    if (multiAgentTerminationKeywordInput) {
+      multiAgentTerminationKeywordInput.value = state.settings.terminationKeyword;
+    }
+    if (multiAgentMessageWindowInput) {
+      multiAgentMessageWindowInput.value = state.settings.messageWindow;
+    }
+    if (multiAgentSummarizeInput) {
+      multiAgentSummarizeInput.checked = state.settings.summarizeLongMessages;
+    }
+    if (multiAgentIncludeSystemInput) {
+      multiAgentIncludeSystemInput.checked = state.settings.includeSystemMessages;
+    }
+
+    if (!state.session || !state.session.startedAt) {
+      state.session = createEmptySession(state.settings);
+    } else {
+      state.session.settings = state.settings;
+      state.session.enabled = state.settings.enabled;
+    }
+
+    syncFieldState();
+    render();
+  }
+
+  function appendEntry(entry) {
+    if (!entry) {
+      return;
+    }
+
+    if (!state.session.startedAt) {
+      state.session.startedAt = entry.timestamp;
+    }
+
+    state.session.status = "running";
+    state.session.totalMessageCount += 1;
+    if (entry.kind === "message") {
+      if (state.session.rounds >= state.settings.maxRounds) {
+        state.session.foldedMessageCount += 1;
+        const foldedEntry = state.session.messages.find((item) => item.summaryType === "folded");
+        if (foldedEntry) {
+          foldedEntry.content = translate("multiAgent.chat.folded", {
+            count: state.session.foldedMessageCount
+          });
+        } else {
+          state.session.messages.push({
+            id: `folded:${entry.id}`,
+            kind: "summary",
+            summaryType: "folded",
+            tone: "warning",
+            phase: "",
+            round: state.session.rounds,
+            timestamp: entry.timestamp,
+            speakerLabel: "",
+            targetLabel: "",
+            content: translate("multiAgent.chat.folded", {
+              count: state.session.foldedMessageCount
+            })
+          });
+        }
+        return;
+      }
+
+      state.session.rounds += 1;
+      entry.round = state.session.rounds;
+    }
+
+    upsertParticipant(state.session, entry.speakerLabel);
+    if (entry.phase) {
+      state.session.phaseCounts[entry.phase] = (state.session.phaseCounts[entry.phase] || 0) + 1;
+    }
+
+    state.session.messages.push(entry);
+    const maxVisibleMessages = Math.max(1, state.settings.messageWindow);
+    if (state.session.messages.length > maxVisibleMessages) {
+      state.session.messages = state.session.messages.slice(-maxVisibleMessages);
+    }
+  }
+
+  function updateFromEvent(event) {
+    if (!state.settings.enabled) {
+      return;
+    }
+
+    if (!state.session.objective && String(event?.stage || "") === "planning_start") {
+      state.session.status = "running";
+    }
+
+    appendEntry(buildChatEntryFromEvent(event, state.settings));
+
+    if (event?.stage === "cluster_done") {
+      state.session.status = "completed";
+      state.session.endedAt = String(event.timestamp || new Date().toISOString());
+      state.session.summary = summarizeContent(event.finalAnswer || event.detail || "", state.settings);
+    } else if (event?.stage === "cluster_cancelled") {
+      state.session.status = "terminated";
+      state.session.endedAt = String(event.timestamp || new Date().toISOString());
+    }
+
+    render();
+  }
+
+  function applySession(session = null) {
+    if (!session || typeof session !== "object") {
+      return;
+    }
+
+    state.settings = normalizeSettings(session.settings || state.settings);
+    state.session = {
+      ...createEmptySession(state.settings),
+      ...session,
+      settings: state.settings,
+      enabled: state.settings.enabled,
+      messages: Array.isArray(session.messages) ? session.messages : []
+    };
+    syncFieldState();
+    render();
+  }
+
+  function resetChatroom() {
+    state.session = createEmptySession(state.settings);
+    render();
+  }
+
+  function renderSummaryCards() {
+    if (!multiAgentChatSummary) {
+      return;
+    }
+
+    const session = state.session;
+    if (!session.messages.length) {
+      multiAgentChatSummary.innerHTML = `<p class="placeholder">${escapeHtml(
+        translate("multiAgent.chat.summary.none")
+      )}</p>`;
+      return;
+    }
+
+    const cards = [
+      [translate("multiAgent.chat.summary.mode"), translate(`multiAgent.mode.${state.settings.mode}`)],
+      [
+        translate("multiAgent.chat.summary.strategy"),
+        translate(`multiAgent.strategy.${state.settings.speakerStrategy}`)
+      ],
+      [translate("multiAgent.chat.summary.turns"), session.rounds || 0],
+      [translate("multiAgent.chat.summary.participants"), session.participantCount || 0],
+      [translate("multiAgent.chat.summary.window"), state.settings.messageWindow],
+      [translate("multiAgent.chat.summary.folded"), session.foldedMessageCount || 0]
+    ];
+
+    multiAgentChatSummary.innerHTML = cards
+      .map(
+        ([label, value]) => `
+          <article class="multi-agent-summary-card">
+            <span>${escapeHtml(label)}</span>
+            <strong>${escapeHtml(value)}</strong>
+          </article>
+        `
+      )
+      .join("");
+  }
+
+  function renderMessages() {
+    if (!multiAgentChatroom) {
+      return;
+    }
+
+    if (!state.settings.enabled) {
+      multiAgentChatroom.innerHTML = `<p class="placeholder">${escapeHtml(
+        translate("multiAgent.chat.copy.disabled")
+      )}</p>`;
+      return;
+    }
+
+    if (!state.session.messages.length) {
+      multiAgentChatroom.innerHTML = `<p class="placeholder">${escapeHtml(
+        translate("multiAgent.chat.empty")
+      )}</p>`;
+      return;
+    }
+
+    multiAgentChatroom.innerHTML = state.session.messages
+      .map((entry) => {
+        const phaseLabel = resolvePhaseLabel(entry.phase, translate);
+        const targetCopy = entry.targetLabel
+          ? `<span class="multi-agent-message-target">${escapeHtml(
+              translate("multiAgent.chat.target", { target: entry.targetLabel })
+            )}</span>`
+          : "";
+
+        return `
+          <article class="multi-agent-message" data-kind="${escapeHtml(entry.kind)}" data-tone="${escapeHtml(
+            entry.tone || "neutral"
+          )}">
+            <div class="multi-agent-message-head">
+              <div class="multi-agent-message-meta">
+                <strong>${escapeHtml(entry.speakerLabel || translate("multiAgent.chat.title"))}</strong>
+                ${phaseLabel ? `<span class="chip">${escapeHtml(phaseLabel)}</span>` : ""}
+                ${targetCopy}
+              </div>
+              <span class="multi-agent-message-time">${escapeHtml(
+                String(entry.timestamp || "").slice(11, 19) || "--:--:--"
+              )}</span>
+            </div>
+            <p>${escapeHtml(entry.content)}</p>
+          </article>
+        `;
+      })
+      .join("");
+    multiAgentChatroom.scrollTop = multiAgentChatroom.scrollHeight;
+  }
+
+  function renderHeader() {
+    if (multiAgentChatTitle) {
+      multiAgentChatTitle.textContent = translate("multiAgent.chat.title");
+    }
+    if (multiAgentChatDescription) {
+      multiAgentChatDescription.textContent = !state.settings.enabled
+        ? translate("multiAgent.chat.copy.disabled")
+        : translate("multiAgent.chat.copy.ready");
+    }
+    if (multiAgentChatStatus) {
+      const statusKey =
+        state.session.status === "completed"
+          ? "multiAgent.status.completed"
+          : state.session.status === "terminated"
+            ? "multiAgent.status.terminated"
+            : state.session.status === "running"
+              ? "multiAgent.status.running"
+              : state.settings.enabled
+                ? "multiAgent.status.ready"
+                : "multiAgent.status.disabled";
+      multiAgentChatStatus.textContent = translate(statusKey);
+      multiAgentChatStatus.dataset.tone =
+        state.session.status === "completed"
+          ? "ok"
+          : state.session.status === "terminated"
+            ? "warning"
+            : state.session.status === "running"
+              ? "testing"
+              : "neutral";
+    }
+    if (multiAgentChatMeta) {
+      multiAgentChatMeta.textContent = translate("multiAgent.meta", {
+        mode: translate(`multiAgent.mode.${state.settings.mode}`),
+        messages: state.session.totalMessageCount || 0
+      });
+    }
+  }
+
+  function render() {
+    renderHeader();
+    renderSummaryCards();
+    renderMessages();
+  }
+
+  function refreshLocale() {
+    syncFieldState();
+    render();
+  }
+
+  function bindEvents() {
+    const syncDraftSettings = () => {
+      state.settings = collectSettings();
+      state.session.settings = state.settings;
+      state.session.enabled = state.settings.enabled;
+      if (!state.settings.enabled) {
+        state.session.status = "disabled";
+      } else if (state.session.status === "disabled") {
+        state.session.status = "ready";
+      }
+      syncFieldState();
+      render();
+    };
+
+    for (const input of [
+      multiAgentEnabledInput,
+      multiAgentModeSelect,
+      multiAgentSpeakerStrategySelect,
+      multiAgentMaxRoundsInput,
+      multiAgentTerminationKeywordInput,
+      multiAgentMessageWindowInput,
+      multiAgentSummarizeInput,
+      multiAgentIncludeSystemInput
+    ]) {
+      input?.addEventListener("change", syncDraftSettings);
+      input?.addEventListener?.("input", syncDraftSettings);
+    }
+  }
+
+  applySettings(state.settings);
+
+  return {
+    applySession,
+    applySettings,
+    bindEvents,
+    collectSettings,
+    refreshLocale,
+    resetChatroom,
+    updateFromEvent
+  };
+}

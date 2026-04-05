@@ -14,16 +14,16 @@ function createFallbackTranslator() {
     "zh-CN": {
       "settings.loading": "正在读取本地配置...",
       "settings.loaded": "本地配置已加载。",
-      "settings.loadFailed": "加载配置失败: {error}",
+      "settings.loadFailed": "加载配置失败：{error}",
       "settings.saving": "正在保存配置...",
       "settings.saved": "配置已保存，敏感字段会加密存储。",
-      "settings.saveFailed": "保存配置失败: {error}",
-      "settings.configPath": "配置文件: {path}",
+      "settings.saveFailed": "保存配置失败：{error}",
+      "settings.configPath": "配置文件：{path}",
       "settings.exiting": "正在退出程序并清理后台进程...",
       "settings.exitingBot": "正在退出程序...",
       "settings.runStateExiting": "退出中...",
       "settings.exitSuccess": "程序正在退出，后台连接器和本地服务会一并关闭。",
-      "settings.exitFailed": "退出程序失败: {error}",
+      "settings.exitFailed": "退出程序失败：{error}",
       "settings.runStateExitFailed": "退出失败"
     },
     "en-US": {
@@ -53,6 +53,7 @@ export function createSettingsUi({
   schemeUiState,
   workspaceUi,
   botUi,
+  multiAgentUi,
   modelsSchemesUi,
   clusterRunUi,
   setSaveStatus,
@@ -82,6 +83,23 @@ export function createSettingsUi({
 
   let lastSettingsPath = "";
 
+  function syncLinkedConcurrencyControls() {
+    if (subordinateParallelInput) {
+      subordinateParallelInput.value = parallelInput.value;
+    }
+  }
+
+  function hideDeprecatedSubordinateField() {
+    const field = subordinateParallelInput?.closest(".field, .toggle-field");
+    if (!field) {
+      return;
+    }
+
+    field.hidden = true;
+    field.setAttribute("aria-hidden", "true");
+    syncLinkedConcurrencyControls();
+  }
+
   function renderSettingsPath(path = lastSettingsPath) {
     lastSettingsPath = String(path || "");
     if (configHint && lastSettingsPath) {
@@ -106,6 +124,7 @@ export function createSettingsUi({
     const schemeState = modelsSchemesUi.collectState();
     const currentScheme = schemeState.currentScheme;
     const botSettings = botUi.collectSettings();
+    syncLinkedConcurrencyControls();
 
     return {
       server: {
@@ -116,13 +135,14 @@ export function createSettingsUi({
         activeSchemeLabel: currentScheme?.label || "",
         controller: controllerSelect.value,
         maxParallel: parallelInput.value,
-        subordinateMaxParallel: subordinateParallelInput?.value,
+        subordinateMaxParallel: parallelInput.value,
         groupLeaderMaxDelegates: groupLeaderMaxDelegatesInput?.value,
         delegateMaxDepth: delegateMaxDepthInput?.value,
         phaseParallel: collectPhaseParallelSettings()
       },
       workspace: workspaceUi.collectSettings(),
       bot: botSettings,
+      multiAgent: multiAgentUi.collectSettings(),
       secrets: mergeSecretEntries(collectSecrets(), botUi.collectSecretEntries()),
       schemes: schemeState.schemes,
       models: schemeState.models
@@ -133,7 +153,7 @@ export function createSettingsUi({
     portInput.value = settings.server?.port ?? 4040;
     parallelInput.value = settings.cluster?.maxParallel ?? 3;
     if (subordinateParallelInput) {
-      subordinateParallelInput.value = settings.cluster?.subordinateMaxParallel ?? 3;
+      subordinateParallelInput.value = settings.cluster?.maxParallel ?? settings.cluster?.subordinateMaxParallel ?? 3;
     }
     if (groupLeaderMaxDelegatesInput) {
       groupLeaderMaxDelegatesInput.value = settings.cluster?.groupLeaderMaxDelegates ?? 10;
@@ -150,6 +170,7 @@ export function createSettingsUi({
 
     workspaceUi.applySettings(settings.workspace || {});
     botUi.applySettings(settings.bot || {}, settings.secrets || []);
+    multiAgentUi.applySettings(settings.multiAgent || {});
 
     secretList.innerHTML = "";
     for (const secret of botUi.filterVisibleSharedSecrets(settings.secrets || [])) {
@@ -160,6 +181,7 @@ export function createSettingsUi({
     }
 
     modelsSchemesUi.applySettings(settings);
+    syncLinkedConcurrencyControls();
   }
 
   async function loadSettings() {
@@ -300,6 +322,9 @@ export function createSettingsUi({
   }
 
   function bindEvents() {
+    hideDeprecatedSubordinateField();
+    parallelInput?.addEventListener("input", syncLinkedConcurrencyControls);
+    parallelInput?.addEventListener("change", syncLinkedConcurrencyControls);
     saveButton?.addEventListener("click", saveSettings);
     reloadButton?.addEventListener("click", loadSettings);
     exitAppButton?.addEventListener("click", exitApplication);

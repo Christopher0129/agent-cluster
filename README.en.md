@@ -1,29 +1,101 @@
 # Agent Cluster Workbench
 
-Agent Cluster Workbench is a local-first multi-model agent cluster console for orchestrating controller/worker workflows, visualizing task traces and call chains, managing workspace tool execution, and tracking session memory, retries, circuit breakers, and estimated cost.
+<div align="center">
 
-## Attribution
+Desktop-first multi-model agent cluster runtime for controller-led orchestration, capability-aware delegation, traceable workspace execution, and packaged local delivery.
 
-- Author: 想画世界送给你
+[Root Landing README](./README.md) | [Simplified Chinese](./README.zh-CN.md)
 
-## License
+<p>
+  <img alt="Node.js" src="https://img.shields.io/badge/Node.js-20%2B-2f6b3b" />
+  <img alt="License" src="https://img.shields.io/badge/License-GPL--2.0--only-1f2937" />
+  <img alt="Desktop" src="https://img.shields.io/badge/Desktop-Windows-0f4c81" />
+  <img alt="Runtime" src="https://img.shields.io/badge/Runtime-Local--First-7a4b2a" />
+  <img alt="Observability" src="https://img.shields.io/badge/Observability-Trace%20%2B%20Call%20Chain-5b3f8c" />
+</p>
 
-- License: `GPL-2.0-only`
-- Full text: [LICENSE](./LICENSE)
+</div>
 
-## Features
+## Overview
 
-- Task Trace and call-chain visualization
-- Workspace tool layer for worker models
-- Session memory, token and cost statistics, retries, and circuit breakers
-- Scheme-based multi-model routing and staged execution
-- Chinese / English runtime language switch
-- Workspace cache clearing and stricter task-scope restrictions
+Agent Cluster Workbench is a local-first desktop control plane for running coordinated controller, leader, worker, and child-agent workflows across multiple model providers. It is designed as runtime infrastructure rather than a thin prompt wrapper: runs are routed by scheme, bounded by tool and role policies, observed through live traces, and delivered through a Windows desktop package.
 
-## Requirements
+## At A Glance
 
-- Node.js 20+
-- Windows / PowerShell recommended for the packaged workflow
+| Dimension | Summary |
+| --- | --- |
+| Runtime shape | Controller-led multi-agent orchestration with staged execution |
+| Execution stages | Research, implementation, validation, and handoff |
+| Observability | Live status feed, Task Trace, call chain, virtual cluster graph |
+| Safety model | Capability-aware routing, child-agent inheritance, task-scope guards |
+| Runtime state | Session memory, retry, fallback, circuit breaker, cost estimates |
+| Delivery target | Local web console and packaged `dist/AgentClusterWorkbench.exe` |
+
+## Capability Matrix
+
+| Capability | Included |
+| --- | --- |
+| Controller / leader / worker delegation | Yes |
+| Child-agent inheritance of enabled capabilities | Yes |
+| Workspace file and command tool layer | Yes |
+| Task Trace and call-chain visualization | Yes |
+| Session memory, token usage, cost summaries | Yes |
+| Retry, fallback, circuit breaker | Yes |
+| Per-model Thinking mode toggle | Yes |
+| Web-search capability verification | Yes |
+| Chinese / English runtime UI | Yes |
+| Windows EXE packaging | Yes |
+
+## Module Layers
+
+```text
+UI Layer
+  src/static/        web UI, trace panels, connectivity console, agent graph
+
+Runtime Orchestration
+  src/cluster/       controller planning, staged routing, delegation, synthesis
+  src/session/       trace spans, session memory, retries, cost accounting
+
+Execution Adapters
+  src/providers/     OpenAI / Anthropic / Kimi-compatible adapters
+  src/workspace/     file tools, command policy, artifact generation
+
+Server / Packaging
+  src/http/          API routes for settings, runs, tests, logs
+  scripts/           packaging, verification, syntax checks
+```
+
+## Execution Flow
+
+```mermaid
+flowchart TD
+    UI[Desktop Console]
+    CFG[Scheme and Model Config]
+    CTRL[Controller]
+    PLAN[Planning]
+    LEAD[Phase Leaders]
+    WORK[Workers and Child Agents]
+    WS[Workspace Tool Layer]
+    TRACE[Trace, Session, Cost]
+    LOG[Task Logs]
+    OUT[Final Synthesis]
+
+    UI --> CFG
+    CFG --> CTRL
+    CTRL --> PLAN
+    PLAN --> LEAD
+    LEAD --> WORK
+    WORK --> WS
+    CTRL --> TRACE
+    LEAD --> TRACE
+    WORK --> TRACE
+    WS --> TRACE
+    TRACE --> LOG
+    WORK --> OUT
+    LEAD --> OUT
+    CTRL --> OUT
+    OUT --> UI
+```
 
 ## Quick Start
 
@@ -46,37 +118,59 @@ http://127.0.0.1:4040
 
 ## Validation
 
+Run the full validation suite:
+
 ```powershell
 npm test
 ```
 
-Smoke tests only:
+Run focused checks:
 
 ```powershell
 npm run test:smoke
-```
-
-Unit tests only:
-
-```powershell
 npm run test:unit
-```
-
-Syntax checks only:
-
-```powershell
 npm run check
 ```
 
-## Build Windows EXE
+The left-side `Connectivity` panel validates three different paths independently:
+
+- basic reply
+- web-search execution
+- Thinking-mode execution
+
+This matters because a model can respond successfully while still failing to execute web search or Thinking mode in real requests.
+
+## Kimi / Kimi Code Web Search Setup
+
+- `Kimi Chat`:
+  Use provider `kimi-chat` with `Base URL` set to `https://api.moonshot.cn/v1`. When `Allow Web Search` is enabled, the runtime turns on Moonshot's built-in `$web_search` tool and disables Thinking automatically for compatibility.
+- `Kimi Coding` / `Kimi Code`:
+  Use provider `kimi-coding` with `Base URL` set to `https://api.moonshot.cn/anthropic`, not the older `/v1` route. When `Allow Web Search` is enabled, the runtime sends the Anthropic-compatible `web_search_20250305` server tool.
+- If third-party IDE docs tell you to disable browser-style search tools, that refers to host-tool browser integrations rather than Kimi API web search itself.
+
+## Thinking Mode
+
+- `OpenAI Responses`: enabling Thinking sends a `reasoning` payload. If no effort is selected, the runtime defaults to `medium`.
+- `Claude` / `Kimi Coding`: enabling Thinking sends an Anthropic-compatible `thinking` payload with an effort-mapped budget.
+- `Kimi Chat`: Thinking works for normal chat requests. If built-in web search is enabled for the same request, the runtime disables Thinking automatically for compatibility.
+
+## Build and Packaging
+
+Build the Windows executable:
 
 ```powershell
 npm run build:win-exe
 ```
 
-By default, the EXE embeds `cluster.config.blank.json`, not your local `cluster.config.json` or `runtime.settings.json`.
+Output:
 
-If you explicitly override the base config before building, the packaged EXE may include your custom config data:
+```text
+dist/AgentClusterWorkbench.exe
+```
+
+By default, packaging embeds `cluster.config.blank.json`, not your local `cluster.config.json` or `runtime.settings.json`.
+
+If you explicitly override the base config before building, the packaged EXE may include your custom runtime data:
 
 ```powershell
 $env:AGENT_CLUSTER_BASE_CONFIG = "cluster.config.json"
@@ -85,36 +179,56 @@ npm run build:win-exe
 
 ## Privacy and Git Safety
 
-The repo ignores local secrets and private runtime artifacts, including:
+The repository ignores local-sensitive runtime artifacts by default, including:
 
-- `.env` and local env variants
+- `.env`, `.env.local`, and local environment variants
 - `cluster.config.json`
 - `runtime.settings.json`
 - `dist/runtime.settings.json`
 - local encryption key files
-- workspace cache and bot connector folders
-- packaged binaries such as `dist/*.exe`
+- `workspace/` and `dist/workspace/`
+- `task-logs/` and `dist/task-logs/`
+- `bot-connectors/`
+- `build/sea/`
+- `dist-verify/`
+- packaged artifacts such as `dist/*.exe`, `dist/*.zip`, and `dist/*.blockmap`
 
 Important:
 
 - `runtime.settings.json` stores secrets in encrypted form, but it still should not be committed.
-- `.gitignore` only affects untracked files. If a sensitive file was already tracked before, remove it from the Git index:
+- `.gitignore` only protects untracked files. If a sensitive file was tracked earlier, remove it from the Git index first:
 
 ```powershell
-git rm --cached cluster.config.json dist/runtime.settings.json dist/AgentClusterWorkbench.exe
+git rm --cached cluster.config.json runtime.settings.json dist/runtime.settings.json dist/AgentClusterWorkbench.exe
 ```
 
-## Project Structure
+## Runtime Characteristics
 
-```text
-src/
-  cluster/      orchestration, routing, synthesis
-  http/         HTTP routes
-  providers/    model provider adapters
-  session/      runtime session, trace, memory, stats
-  static/       frontend modules and visualization
-  system/       desktop/runtime integration
-  workspace/    workspace file and command tools
-scripts/        build scripts
-test/           smoke tests and unit tests
-```
+- Controller authority, worker capability, and child-agent inheritance are separated deliberately.
+- Workspace execution is explicit, policy-scoped, and auditable.
+- Connectivity testing checks whether advanced features really execute, not just whether a provider returns a reply.
+- Packaging, logging, privacy boundaries, and local generated artifacts are treated as operational concerns.
+
+## FAQ
+
+### Why split controller and worker responsibilities?
+
+Planning, delegation, synthesis, and concrete execution fail in different ways and require different capabilities. Separate layers make routing clearer and fallback safer.
+
+### Why test web search and Thinking separately?
+
+Because "the model answered" is weaker than "the feature actually executed". This runtime verifies concrete capability paths.
+
+### Will the packaged EXE include my API keys?
+
+Not by default. The normal build path embeds `cluster.config.blank.json`, not your local runtime settings. The risk appears only if you explicitly override the base config before packaging.
+
+### Why keep separate language files if the root README is bilingual?
+
+The root `README.md` acts as the project landing page. `README.en.md` and `README.zh-CN.md` remain useful as direct links for releases, mirrors, and language-specific sharing.
+
+## Attribution and License
+
+- Author: 想画世界送给你
+- License: `GPL-2.0-only`
+- Full text: [LICENSE](./LICENSE)

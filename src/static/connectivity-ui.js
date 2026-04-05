@@ -1,3 +1,84 @@
+function interpolate(template, values = {}) {
+  return String(template || "").replace(/\{(\w+)\}/g, (_, key) => String(values[key] ?? ""));
+}
+
+function resolveRuntimeLocale() {
+  if (typeof document !== "undefined" && String(document.documentElement?.lang || "").toLowerCase().startsWith("en")) {
+    return "en-US";
+  }
+  return "zh-CN";
+}
+
+function createFallbackTranslator() {
+  const catalog = {
+    "zh-CN": {
+      "scheme.none": "无方案",
+      "connectivity.waiting": "等待检测",
+      "connectivity.untitledModel": "未命名模型",
+      "connectivity.untested": "未测试",
+      "connectivity.available": "可用",
+      "connectivity.availableDegraded": "可用（降级）",
+      "connectivity.workflowFallback": "Workflow 探针使用了兼容回退。",
+      "connectivity.webSearchVerified": "联网搜索：已通过实际探针验证。",
+      "connectivity.webSearchUnavailable": "联网搜索：探针未观测到成功执行。",
+      "connectivity.thinkingVerified": "Thinking 模式：已验证可用。",
+      "connectivity.thinkingUnavailable": "Thinking 模式：未确认成功执行。",
+      "connectivity.basicReply": "基础回复：{reply}",
+      "connectivity.noModels": "当前方案没有模型",
+      "connectivity.summary.testing": "并发检测中 {completed}/{total} · 可用 {available} · 失败 {error}",
+      "connectivity.summary.doneWarning": "检测完成 · 可用 {available}/{total} · 降级 {warning} · 失败 {error}",
+      "connectivity.summary.doneOk": "检测完成 · 全部可用 {ok}/{total}",
+      "connectivity.placeholder.addScheme": "请先添加至少一个方案。",
+      "connectivity.placeholder.noModels": "当前方案还没有可检测的模型。",
+      "connectivity.result.waiting": "等待连接测试结果。",
+      "connectivity.stats.total": "总数",
+      "connectivity.stats.available": "可用",
+      "connectivity.stats.degraded": "降级",
+      "connectivity.stats.failed": "失败",
+      "connectivity.stats.testing": "检测中",
+      "connectivity.dirty": "配置已修改，请重新检测。",
+      "connectivity.testing": "检测中",
+      "connectivity.submitted": "已提交测试请求...",
+      "connectivity.requesting": "正在发送连接测试请求...",
+      "connectivity.failedPrefix": "连接失败："
+    },
+    "en-US": {
+      "scheme.none": "No scheme",
+      "connectivity.waiting": "Waiting for checks",
+      "connectivity.untitledModel": "Untitled model",
+      "connectivity.untested": "Untested",
+      "connectivity.available": "Available",
+      "connectivity.availableDegraded": "Available (degraded)",
+      "connectivity.workflowFallback": "Workflow probe used compatibility fallback.",
+      "connectivity.webSearchVerified": "Web search: verified by live probe.",
+      "connectivity.webSearchUnavailable": "Web search: the probe did not observe a successful run.",
+      "connectivity.thinkingVerified": "Thinking: verified.",
+      "connectivity.thinkingUnavailable": "Thinking: execution was not confirmed.",
+      "connectivity.basicReply": "Basic reply: {reply}",
+      "connectivity.noModels": "The current scheme has no models.",
+      "connectivity.summary.testing": "Testing {completed}/{total} · Available {available} · Failed {error}",
+      "connectivity.summary.doneWarning": "Checks complete · Available {available}/{total} · Degraded {warning} · Failed {error}",
+      "connectivity.summary.doneOk": "Checks complete · All available {ok}/{total}",
+      "connectivity.placeholder.addScheme": "Add at least one scheme first.",
+      "connectivity.placeholder.noModels": "The current scheme has no models to test yet.",
+      "connectivity.result.waiting": "Waiting for connectivity test results.",
+      "connectivity.stats.total": "Total",
+      "connectivity.stats.available": "Available",
+      "connectivity.stats.degraded": "Degraded",
+      "connectivity.stats.failed": "Failed",
+      "connectivity.stats.testing": "Testing",
+      "connectivity.dirty": "Configuration changed. Re-run the test.",
+      "connectivity.testing": "Testing",
+      "connectivity.submitted": "Test request submitted...",
+      "connectivity.requesting": "Sending connectivity test request...",
+      "connectivity.failedPrefix": "Connection failed: "
+    }
+  };
+
+  return (key, values = {}) =>
+    interpolate(catalog[resolveRuntimeLocale()]?.[key] ?? catalog["zh-CN"]?.[key] ?? key, values);
+}
+
 export function createConnectivityUi({
   state,
   elements,
@@ -8,7 +89,8 @@ export function createConnectivityUi({
   collectSecrets,
   collectModelFromCard,
   runModelConnectivityTest,
-  formatModelTestRetryStatus
+  formatModelTestRetryStatus,
+  translate = createFallbackTranslator()
 }) {
   const {
     schemeConnectivityStatus,
@@ -26,28 +108,28 @@ export function createConnectivityUi({
     if (!normalizedSchemeId) {
       return {
         tone: "neutral",
-        message: "等待检测",
+        message: translate("connectivity.waiting"),
         results: []
       };
     }
 
     const existing = state.connectivityBySchemeId.get(normalizedSchemeId) || {
       tone: "neutral",
-      message: "等待检测",
+      message: translate("connectivity.waiting"),
       results: []
     };
     const existingById = new Map(existing.results.map((item) => [item.id, item]));
     const normalizedResults = (Array.isArray(models) ? models : []).map((model) => ({
       id: model.id || "",
-      label: model.label || model.id || "未命名模型",
+      label: model.label || model.id || translate("connectivity.untitledModel"),
       tone: existingById.get(model.id)?.tone || "neutral",
-      status: existingById.get(model.id)?.status || "未测试",
+      status: existingById.get(model.id)?.status || translate("connectivity.untested"),
       detail: existingById.get(model.id)?.detail || ""
     }));
 
     const next = {
       tone: existing.tone || "neutral",
-      message: existing.message || "等待检测",
+      message: existing.message || translate("connectivity.waiting"),
       results: normalizedResults
     };
     state.connectivityBySchemeId.set(normalizedSchemeId, next);
@@ -81,15 +163,35 @@ export function createConnectivityUi({
       parts.push(summary);
     }
     if (workflowMode === "fallback" && !degraded) {
-      parts.push("Workflow probe used compatibility fallback.");
+      parts.push(translate("connectivity.workflowFallback"));
+    }
+    if (payload?.diagnostics?.webSearch?.enabled) {
+      parts.push(
+        translate(
+          payload?.diagnostics?.webSearch?.used
+            ? "connectivity.webSearchVerified"
+            : "connectivity.webSearchUnavailable"
+        )
+      );
+    }
+    if (payload?.diagnostics?.thinking?.enabled) {
+      parts.push(
+        translate(
+          payload?.diagnostics?.thinking?.verified
+            ? "connectivity.thinkingVerified"
+            : "connectivity.thinkingUnavailable"
+        )
+      );
     }
     if (reply) {
-      parts.push(`Basic reply: ${reply}`);
+      parts.push(translate("connectivity.basicReply", { reply }));
     }
 
     return {
       tone: degraded ? "warning" : "ok",
-      status: degraded ? "可用(降级)" : "可用",
+      status: degraded
+        ? translate("connectivity.availableDegraded")
+        : translate("connectivity.available"),
       detail: parts.join(" ")
     };
   }
@@ -135,7 +237,7 @@ export function createConnectivityUi({
     if (!counts.total) {
       return {
         tone: "neutral",
-        message: "当前方案没有模型",
+        message: translate("connectivity.noModels"),
         counts
       };
     }
@@ -143,7 +245,7 @@ export function createConnectivityUi({
     if (counts.testing > 0) {
       return {
         tone: "testing",
-        message: `并发检测中 ${counts.completed}/${counts.total} · 可用 ${counts.available} · 失败 ${counts.error}`,
+        message: translate("connectivity.summary.testing", counts),
         counts
       };
     }
@@ -151,7 +253,7 @@ export function createConnectivityUi({
     if (counts.error > 0 || counts.warning > 0) {
       return {
         tone: "warning",
-        message: `检测完成 · 可用 ${counts.available}/${counts.total} · 降级 ${counts.warning} · 失败 ${counts.error}`,
+        message: translate("connectivity.summary.doneWarning", counts),
         counts
       };
     }
@@ -159,14 +261,14 @@ export function createConnectivityUi({
     if (counts.ok === counts.total) {
       return {
         tone: "ok",
-        message: `检测完成 · 全部可用 ${counts.ok}/${counts.total}`,
+        message: translate("connectivity.summary.doneOk", counts),
         counts
       };
     }
 
     return {
       tone: "neutral",
-      message: "等待检测",
+      message: translate("connectivity.waiting"),
       counts
     };
   }
@@ -190,7 +292,7 @@ export function createConnectivityUi({
 
       return String(left?.label || left?.id || "").localeCompare(
         String(right?.label || right?.id || ""),
-        "zh-CN"
+        resolveRuntimeLocale()
       );
     });
   }
@@ -215,9 +317,11 @@ export function createConnectivityUi({
 
     const currentScheme = getCurrentScheme();
     if (!currentScheme) {
-      schemeConnectivityStatus.textContent = "无方案";
+      schemeConnectivityStatus.textContent = translate("scheme.none");
       schemeConnectivityStatus.dataset.tone = "neutral";
-      schemeConnectivityList.innerHTML = '<p class="placeholder">请先添加至少一个方案。</p>';
+      schemeConnectivityList.innerHTML = `<p class="placeholder">${escapeHtml(
+        translate("connectivity.placeholder.addScheme")
+      )}</p>`;
       return;
     }
 
@@ -229,18 +333,20 @@ export function createConnectivityUi({
       ? Math.round((summary.counts.completed / summary.counts.total) * 100)
       : 0;
     const overviewCards = [
-      { label: "总数", value: summary.counts.total, tone: "neutral" },
-      { label: "可用", value: summary.counts.available, tone: "ok" },
-      { label: "降级", value: summary.counts.warning, tone: "warning" },
-      { label: "失败", value: summary.counts.error, tone: "error" },
-      { label: "检测中", value: summary.counts.testing, tone: "testing" }
+      { label: translate("connectivity.stats.total"), value: summary.counts.total, tone: "neutral" },
+      { label: translate("connectivity.stats.available"), value: summary.counts.available, tone: "ok" },
+      { label: translate("connectivity.stats.degraded"), value: summary.counts.warning, tone: "warning" },
+      { label: translate("connectivity.stats.failed"), value: summary.counts.error, tone: "error" },
+      { label: translate("connectivity.stats.testing"), value: summary.counts.testing, tone: "testing" }
     ];
 
-    schemeConnectivityStatus.textContent = summary.message || "等待检测";
+    schemeConnectivityStatus.textContent = summary.message || translate("connectivity.waiting");
     schemeConnectivityStatus.dataset.tone = summary.tone || "neutral";
 
     if (!sortedResults.length) {
-      schemeConnectivityList.innerHTML = '<p class="placeholder">当前方案还没有可检测的模型。</p>';
+      schemeConnectivityList.innerHTML = `<p class="placeholder">${escapeHtml(
+        translate("connectivity.placeholder.noModels")
+      )}</p>`;
       return;
     }
 
@@ -248,7 +354,7 @@ export function createConnectivityUi({
       '<section class="scheme-connectivity-overview">',
       '  <div class="scheme-connectivity-progress">',
       `    <div class="scheme-connectivity-progress-bar" aria-hidden="true"><span style="width:${progressPercent}%"></span></div>`,
-      `    <p class="scheme-connectivity-progress-copy">${escapeHtml(summary.message || "等待检测")}</p>`,
+      `    <p class="scheme-connectivity-progress-copy">${escapeHtml(summary.message || translate("connectivity.waiting"))}</p>`,
       "  </div>",
       '  <div class="scheme-connectivity-stats">',
       overviewCards
@@ -268,12 +374,12 @@ export function createConnectivityUi({
             `<article class="scheme-connectivity-row" data-tone="${escapeAttribute(result.tone || "neutral")}">`,
             '  <div class="scheme-connectivity-head">',
             '    <div class="scheme-connectivity-title">',
-            `      <strong>${escapeHtml(result.label || result.id || "未命名模型")}</strong>`,
+            `      <strong>${escapeHtml(result.label || result.id || translate("connectivity.untitledModel"))}</strong>`,
             `      <span class="scheme-connectivity-meta">${escapeHtml(meta || result.id || "")}</span>`,
             "    </div>",
-            `    <span class="chip" data-tone="${escapeAttribute(result.tone || "neutral")}">${escapeHtml(result.status || "未测试")}</span>`,
+            `    <span class="chip" data-tone="${escapeAttribute(result.tone || "neutral")}">${escapeHtml(result.status || translate("connectivity.untested"))}</span>`,
             "  </div>",
-            `  <p class="scheme-connectivity-copy">${escapeHtml(result.detail || "等待连接测试结果。")}</p>`,
+            `  <p class="scheme-connectivity-copy">${escapeHtml(result.detail || translate("connectivity.result.waiting"))}</p>`,
             "</article>"
           ].join("");
         })
@@ -294,10 +400,10 @@ export function createConnectivityUi({
       const modelId = card.querySelector("[data-model-id]")?.value.trim() || "";
       const result = resultsById.get(modelId);
       if (!result) {
-        setModelTestStatus(card, "未测试");
+        setModelTestStatus(card, translate("connectivity.untested"));
         continue;
       }
-      setModelTestStatus(card, result.status || "未测试", result.tone || "neutral");
+      setModelTestStatus(card, result.status || translate("connectivity.untested"), result.tone || "neutral");
     }
   }
 
@@ -310,8 +416,8 @@ export function createConnectivityUi({
 
     updateEntry(currentScheme.id, normalizedModelId, {
       tone: "neutral",
-      status: "未测试",
-      detail: "配置已修改，请重新检测。"
+      status: translate("connectivity.untested"),
+      detail: translate("connectivity.dirty")
     });
     renderList();
   }
@@ -321,14 +427,14 @@ export function createConnectivityUi({
     const model = collectModelFromCard(card);
 
     button.disabled = true;
-    setModelTestStatus(card, "测试中...", "testing");
+    setModelTestStatus(card, translate("connectivity.testing"), "testing");
 
     try {
       const payload = await runModelConnectivityTest(model, {
         secrets: collectSecrets(),
         onEvent(event) {
           if (event.stage === "submitted") {
-            setModelTestStatus(card, "已提交测试请求...", "testing");
+            setModelTestStatus(card, translate("connectivity.submitted"), "testing");
             return;
           }
 
@@ -338,7 +444,11 @@ export function createConnectivityUi({
           }
 
           if (event.stage === "model_test_failed") {
-            setModelTestStatus(card, `连接失败：${event.detail || "未知错误"}`, "error");
+            setModelTestStatus(
+              card,
+              `${translate("connectivity.failedPrefix")}${event.detail || "Unknown error"}`,
+              "error"
+            );
           }
         }
       });
@@ -351,13 +461,13 @@ export function createConnectivityUi({
         renderList();
       }
     } catch (error) {
-      const detail = `连接失败：${error.message}`;
+      const detail = `${translate("connectivity.failedPrefix")}${error.message}`;
       setModelTestStatus(card, detail, "error");
       const currentScheme = getCurrentScheme();
       if (currentScheme?.id) {
         updateEntry(currentScheme.id, model.id, {
           tone: "error",
-          status: "失败",
+          status: translate("connectivity.stats.failed"),
           detail
         });
         renderList();
@@ -382,9 +492,8 @@ export function createConnectivityUi({
       existingState.results.every(
         (item) =>
           item.status &&
-          item.status !== "未测试" &&
-          item.status !== "检测中" &&
-          item.status !== "排队中"
+          item.status !== translate("connectivity.untested") &&
+          item.status !== translate("connectivity.testing")
       );
     if (shouldSkip) {
       renderList();
@@ -399,7 +508,7 @@ export function createConnectivityUi({
     if (!total) {
       state.connectivityBySchemeId.set(currentScheme.id, {
         tone: "neutral",
-        message: "当前方案没有模型",
+        message: translate("connectivity.noModels"),
         results: []
       });
       renderList();
@@ -408,13 +517,18 @@ export function createConnectivityUi({
 
     state.connectivityBySchemeId.set(currentScheme.id, {
       tone: "testing",
-      message: `并发检测中 0/${total}`,
+      message: translate("connectivity.summary.testing", {
+        completed: 0,
+        total,
+        available: 0,
+        error: 0
+      }),
       results: currentScheme.models.map((model) => ({
         id: model.id || "",
-        label: model.label || model.id || "未命名模型",
+        label: model.label || model.id || translate("connectivity.untitledModel"),
         tone: "testing",
-        status: "检测中",
-        detail: "正在发送连接测试请求..."
+        status: translate("connectivity.testing"),
+        detail: translate("connectivity.requesting")
       }))
     });
     renderList();
@@ -432,8 +546,8 @@ export function createConnectivityUi({
 
           updateEntry(currentScheme.id, model.id, {
             tone: "testing",
-            status: "检测中",
-            detail: "正在发送连接测试请求..."
+            status: translate("connectivity.testing"),
+            detail: translate("connectivity.requesting")
           });
           renderList();
           applyStoredStatusesToVisibleCards();
@@ -449,7 +563,7 @@ export function createConnectivityUi({
                 if (event.stage === "model_test_retry") {
                   updateEntry(currentScheme.id, model.id, {
                     tone: "testing",
-                    status: "重试中",
+                    status: translate("connectivity.testing"),
                     detail: formatModelTestRetryStatus(event)
                   });
                   renderList();
@@ -470,8 +584,8 @@ export function createConnectivityUi({
 
             updateEntry(currentScheme.id, model.id, {
               tone: "error",
-              status: "失败",
-              detail: `连接失败：${error.message}`
+              status: translate("connectivity.stats.failed"),
+              detail: `${translate("connectivity.failedPrefix")}${error.message}`
             });
           }
 
@@ -496,10 +610,16 @@ export function createConnectivityUi({
     }
   }
 
+  function refreshLocale() {
+    renderList();
+    applyStoredStatusesToVisibleCards();
+  }
+
   return {
     applyStoredStatusesToVisibleCards,
     ensureState,
     markModelDirty,
+    refreshLocale,
     renderList,
     runCurrentSchemeConnectivityTests,
     testSingleModel,

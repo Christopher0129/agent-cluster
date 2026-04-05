@@ -1,5 +1,27 @@
 const DEFAULT_GROUP_LEADER_MAX_DELEGATES = 10;
 const DEFAULT_DELEGATION_MAX_DEPTH = 1;
+const AGENT_COUNT_UNIT_PATTERN = String.raw`(?:\u4e2a|\u540d|\u4f4d|\u53f0)`;
+const AGENT_COUNT_TERM_PATTERN = String.raw`(?:child\s+agents?|sub-?agents?|agents?|agent|workers?|worker|\u667a\u80fd\u4f53|\u4ee3\u7406|\u5b50\u4ee3\u7406|\u5b50agent)`;
+const GLOBAL_AGENT_COUNT_PATTERNS = [
+  new RegExp(
+    String.raw`(?:\u603b\u5171|\u4e00\u5171|\u603b\u6570|\u603b\u8ba1|\u6574\u4f53|\u5168\u90e8|\u5168\u5c40|overall|total(?:\s+of)?|in\s+total)\s*(?:\u8c03\u7528|\u8c03\u5ea6|\u5b89\u6392|\u4f7f\u7528|\u542f\u7528|use|run|launch|spawn|create|start|deploy|assign|schedule|call)?\s*(\d{1,4})\s*(?:${AGENT_COUNT_UNIT_PATTERN})?\s*(?:${AGENT_COUNT_TERM_PATTERN})`,
+    "giu"
+  ),
+  new RegExp(
+    String.raw`(?:${AGENT_COUNT_TERM_PATTERN})\s*(?:\u603b\u6570|\u603b\u5171|overall|total)\s*(?::|=|\u4e3a)?\s*(\d{1,4})`,
+    "giu"
+  )
+];
+const DIRECT_AGENT_COUNT_PATTERNS = [
+  new RegExp(
+    String.raw`(?:\u8c03\u7528|\u8c03\u5ea6|\u5b89\u6392|\u4f7f\u7528|\u542f\u7528|\u751f\u6210|\u521b\u5efa|use|run|launch|spawn|create|start|deploy|assign|schedule|call)\s*(\d{1,4})\s*(?:${AGENT_COUNT_UNIT_PATTERN})?\s*(?:${AGENT_COUNT_TERM_PATTERN})`,
+    "giu"
+  ),
+  new RegExp(
+    String.raw`(\d{1,4})\s*(?:${AGENT_COUNT_UNIT_PATTERN})?\s*(?:${AGENT_COUNT_TERM_PATTERN})`,
+    "giu"
+  )
+];
 
 export const DEFAULT_AGENT_BUDGET_PROFILES = Object.freeze({
   simple: Object.freeze({
@@ -52,6 +74,19 @@ function clampNonNegativeInt(value, fallback = 0) {
   }
 
   return Math.floor(numeric);
+}
+
+function collectPositiveMatches(text, patterns) {
+  const source = safeString(text);
+  if (!source) {
+    return [];
+  }
+
+  return patterns.flatMap((pattern) =>
+    Array.from(source.matchAll(pattern), (match) => clampNonNegativeInt(match[1], 0)).filter(
+      (value) => value > 0
+    )
+  );
 }
 
 function textBlob(...values) {
@@ -163,8 +198,8 @@ function scoreTextComplexity(text) {
   const signalBuckets = [
     /\b(multiple|several|many|parallel|split|batch|compare|survey|collect|across|cross-check|recursive|hierarchical|delegate|coordinate|streams?|tracks?)\b|(?:多个|并行|拆分|批量|对比|调研|收集|跨|递归|层级|委派|分线)/,
     /\b(implementation|implement|refactor|debug|fix(?:es|ing)?|changes?|validate|validation|review|test|build|migrate|integrate|workspace|repository|repo|code|document|report|artifact)\b|(?:实现|重构|调试|修复|变更|验证|测试|构建|工作区|仓库|代码|文档|报告|交付)/,
-    /\b(research|evidence|sources?|facts?|current|fresh|web|search|browse|verification)\b|(?:研究|证据|来源|事实|最新|实时|网页|搜索|校验)/,
-    /\b(2|3|4|5|6|7|8|9|two|three|four|five|six|seven|eight|nine|double|triple)\b|(?:两|二|三|四|五|六|七|八|九|双|三个|两个)/
+    /\b(research|evidence|sources?|facts?|current|fresh|web|search|browse|verification)\b|(?:研究|证据|来源|事实|最新|实时|网页|搜索|浏览|核验)/,
+    /\b(2|3|4|5|6|7|8|9|two|three|four|five|six|seven|eight|nine|double|triple)\b|(?:两个|三个|四个|五个|六个|七个|八个|九个|两名|三名)/
   ];
   for (const bucket of signalBuckets) {
     if (bucket.test(normalized)) {
@@ -188,7 +223,7 @@ function scoreTextComplexity(text) {
   }
 
   const atomic =
-    /(atomic|single(?: file| document| report)?|one file|one document|one report|directly|quick fix|minor|typo|small change|one step)|(?:单个|单文件|单文档|直接|快速修复|小改动|错字|一步)/.test(
+    /(atomic|single(?: file| document| report)?|one file|one document|one report|directly|quick fix|minor|typo|small change|one step)|(?:单个|单文件|单文档|单报告|直接|快速修复|小改动|错字|一步)/.test(
       normalized
     );
   const strongScaleSignal =
@@ -300,6 +335,20 @@ function buildStructuralAgentCeiling(topLevelLimit, childrenPerLeader, delegatio
   return total;
 }
 
+export function parseExplicitTotalAgentRequest(text) {
+  const globalMatches = collectPositiveMatches(text, GLOBAL_AGENT_COUNT_PATTERNS);
+  if (globalMatches.length) {
+    return Math.max(...globalMatches);
+  }
+
+  const directMatches = collectPositiveMatches(text, DIRECT_AGENT_COUNT_PATTERNS);
+  if (directMatches.length) {
+    return Math.max(...directMatches);
+  }
+
+  return null;
+}
+
 export function resolveTopLevelTaskLimit(maxParallel, workers, complexityBudget = null) {
   const budgetLimit = clampNonNegativeInt(complexityBudget?.maxTopLevelTasks, 0);
   if (budgetLimit > 0) {
@@ -331,6 +380,7 @@ export function buildComplexityBudget({ originalTask, rawPlan = null, workers = 
   const profiles = getOrderedAgentBudgetProfiles(config?.cluster?.agentBudgetProfiles);
   const workerCount = Math.max(1, workers.length || 0);
   const objectiveComplexity = scoreTextComplexity(originalTask);
+  const requestedTotalAgents = parseExplicitTotalAgentRequest(originalTask);
   let score = objectiveComplexity.score;
 
   if (rawPlan) {
@@ -345,25 +395,68 @@ export function buildComplexityBudget({ originalTask, rawPlan = null, workers = 
     const configured = clampNonNegativeInt(config?.cluster?.maxParallel, 0);
     return configured > 0 ? Math.max(1, configured) : workerCount;
   })();
-  const maxTopLevelTasks = Math.max(1, Math.min(profile.maxTopLevelTasks, configuredTopLevelLimit));
-  const maxDelegationDepth = resolveEffectiveDelegateMaxDepth(config, {
+  const profileMaxTopLevelTasks = Math.max(1, Math.min(profile.maxTopLevelTasks, configuredTopLevelLimit));
+  const profileMaxDelegationDepth = resolveEffectiveDelegateMaxDepth(config, {
     maxDelegationDepth: profile.maxDelegationDepth
   });
-  const maxChildrenPerLeader =
-    maxDelegationDepth > 0
+  const profileMaxChildrenPerLeader =
+    profileMaxDelegationDepth > 0
       ? resolveEffectiveGroupLeaderMaxDelegates(config, {
         maxChildrenPerLeader: profile.maxChildrenPerLeader
       })
       : 0;
-  const structuralAgentCeiling = buildStructuralAgentCeiling(
+  let maxTopLevelTasks = profileMaxTopLevelTasks;
+  let maxDelegationDepth = profileMaxDelegationDepth;
+  let maxChildrenPerLeader = profileMaxChildrenPerLeader;
+  let structuralAgentCeiling = buildStructuralAgentCeiling(
     maxTopLevelTasks,
     maxChildrenPerLeader,
     maxDelegationDepth
   );
-  const maxTotalAgents = Math.max(
+  let maxTotalAgents = Math.max(
     maxTopLevelTasks,
     Math.min(profile.maxTotalAgents, structuralAgentCeiling)
   );
+  let budgetSource = "complexity_profile";
+
+  if (requestedTotalAgents) {
+    const configuredMaxDelegationDepth = resolveEffectiveDelegateMaxDepth(config, null);
+    const configuredMaxChildrenPerLeader =
+      configuredMaxDelegationDepth > 0 ? resolveEffectiveGroupLeaderMaxDelegates(config, null) : 0;
+    const perLeaderCapacity = buildStructuralAgentCeiling(
+      1,
+      configuredMaxChildrenPerLeader,
+      configuredMaxDelegationDepth
+    );
+    const minimumTopLevelTasksNeeded = Math.max(
+      1,
+      Math.ceil(requestedTotalAgents / Math.max(1, perLeaderCapacity))
+    );
+
+    maxDelegationDepth = configuredMaxDelegationDepth;
+    maxChildrenPerLeader = configuredMaxChildrenPerLeader;
+    maxTopLevelTasks = Math.max(
+      1,
+      Math.min(
+        configuredTopLevelLimit,
+        Math.max(
+          Math.min(profileMaxTopLevelTasks, requestedTotalAgents),
+          minimumTopLevelTasksNeeded
+        )
+      )
+    );
+    structuralAgentCeiling = buildStructuralAgentCeiling(
+      maxTopLevelTasks,
+      maxChildrenPerLeader,
+      maxDelegationDepth
+    );
+    maxTotalAgents = Math.max(
+      maxTopLevelTasks,
+      Math.min(requestedTotalAgents, structuralAgentCeiling)
+    );
+    budgetSource =
+      maxTotalAgents >= requestedTotalAgents ? "user_request" : "user_request_capped_by_runtime";
+  }
 
   return {
     level: profile.level,
@@ -371,7 +464,10 @@ export function buildComplexityBudget({ originalTask, rawPlan = null, workers = 
     maxTopLevelTasks,
     maxChildrenPerLeader,
     maxDelegationDepth,
-    maxTotalAgents
+    maxTotalAgents,
+    requestedTotalAgents,
+    autoBudgetMaxTotalAgents: profile.maxTotalAgents,
+    budgetSource
   };
 }
 
@@ -382,6 +478,10 @@ export function createRunAgentBudget(complexityBudget, topLevelTaskCount) {
     clampNonNegativeInt(complexityBudget?.maxTotalAgents, normalizedTopLevelCount || 1)
   );
   const initialChildBudget = Math.max(0, initialMaxTotalAgents - normalizedTopLevelCount);
+  const requestedTotalAgents = clampNonNegativeInt(complexityBudget?.requestedTotalAgents, 0) || null;
+  const autoBudgetMaxTotalAgents =
+    clampNonNegativeInt(complexityBudget?.autoBudgetMaxTotalAgents, 0) || null;
+  const budgetSource = safeString(complexityBudget?.budgetSource) || "complexity_profile";
   let remainingChildAgents = initialChildBudget;
 
   return {
@@ -391,6 +491,9 @@ export function createRunAgentBudget(complexityBudget, topLevelTaskCount) {
     maxChildrenPerLeader: Math.max(0, clampNonNegativeInt(complexityBudget?.maxChildrenPerLeader, 0)),
     maxDelegationDepth: Math.max(0, clampNonNegativeInt(complexityBudget?.maxDelegationDepth, 0)),
     maxTotalAgents: initialMaxTotalAgents,
+    requestedTotalAgents,
+    autoBudgetMaxTotalAgents,
+    budgetSource,
     topLevelTaskCount: normalizedTopLevelCount,
     initialChildAgentBudget: initialChildBudget,
     get remainingChildAgents() {
@@ -414,6 +517,9 @@ export function createRunAgentBudget(complexityBudget, topLevelTaskCount) {
         maxChildrenPerLeader: this.maxChildrenPerLeader,
         maxDelegationDepth: this.maxDelegationDepth,
         maxTotalAgents: this.maxTotalAgents,
+        requestedTotalAgents: this.requestedTotalAgents,
+        autoBudgetMaxTotalAgents: this.autoBudgetMaxTotalAgents,
+        budgetSource: this.budgetSource,
         topLevelTaskCount: this.topLevelTaskCount,
         initialChildAgentBudget: this.initialChildAgentBudget,
         remainingChildAgents

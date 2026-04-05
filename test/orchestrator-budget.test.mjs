@@ -384,3 +384,73 @@ test("runClusterAnalysis enforces a run-wide child-agent budget across multiple 
   assert.equal(delegatedChildren, availableChildBudget);
   assert.equal(availableChildBudget < 12, true);
 });
+
+test("runClusterAnalysis honors an explicit user-requested total agent count for the whole run", async () => {
+  const config = {
+    cluster: {
+      controller: "controller",
+      maxParallel: 200,
+      groupLeaderMaxDelegates: 4,
+      delegateMaxDepth: 4
+    },
+    models: {
+      controller: {
+        id: "controller",
+        label: "Controller",
+        model: "gpt-5.4",
+        provider: "mock"
+      },
+      research_leader: {
+        id: "research_leader",
+        label: "Research Leader",
+        model: "gpt-5.4",
+        provider: "mock",
+        webSearch: true,
+        specialties: ["research"]
+      }
+    }
+  };
+
+  const providerRegistry = new Map([
+    [
+      "controller",
+      new FakeProvider([
+        JSON.stringify({
+          objective: "Analyze current geopolitics",
+          strategy: "Use one research leader and preserve enough global budget for delegation.",
+          tasks: [
+            {
+              id: "task_1",
+              phase: "research",
+              title: "Research current geopolitics",
+              assignedWorker: "research_leader",
+              delegateCount: 4,
+              instructions: "Research the current geopolitical picture and summarize it.",
+              dependsOn: []
+            }
+          ]
+        }),
+        JSON.stringify({
+          finalAnswer: "Explicit total-agent request honored.",
+          executiveSummary: ["The run budget respected the user's requested total."],
+          consensus: ["The automatic profile cap was overridden by the user's explicit request."],
+          disagreements: [],
+          nextActions: []
+        })
+      ])
+    ],
+    ["research_leader", new FakeProvider([buildWorkerOutput("Research completed directly.")])]
+  ]);
+
+  const result = await runClusterAnalysis({
+    task: "调用50个agent深度分析今天的国际局势，并形成报告。",
+    config,
+    providerRegistry
+  });
+
+  assert.equal(result.budget.requestedTotalAgents, 50);
+  assert.equal(Number.isFinite(result.budget.autoBudgetMaxTotalAgents), true);
+  assert.equal(result.budget.autoBudgetMaxTotalAgents < result.budget.requestedTotalAgents, true);
+  assert.equal(result.budget.maxTotalAgents, 50);
+  assert.equal(result.budget.budgetSource, "user_request");
+});

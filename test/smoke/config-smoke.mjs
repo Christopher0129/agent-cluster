@@ -114,6 +114,7 @@ async function runSettingsTests() {
           apiKeyEnv: "OPENAI_API_KEY",
           apiKeyValue: "openai-model-key",
           authStyle: "bearer",
+          thinkingEnabled: true,
           reasoningEffort: "medium",
           webSearch: true,
           specialties: "coding, debugging"
@@ -145,6 +146,7 @@ async function runSettingsTests() {
     assert.equal(editable.settings.models.length, 2);
     assert.equal(editable.settings.models[0].apiKeyValue, "moonshot-model-key");
     assert.equal(editable.settings.models[1].apiKeyValue, "openai-model-key");
+    assert.equal(editable.settings.models[1].thinkingEnabled, true);
     assert.equal(editable.settings.models[1].webSearch, true);
     assert.equal(
       editable.settings.secrets.some((entry) => entry.name === "FEISHU_APP_ID" && entry.value === "feishu-app-id"),
@@ -172,6 +174,7 @@ async function runSettingsTests() {
     assert.equal(runtime.bot.presetConfigs.feishu.envText, "HTTP_PROXY=http://127.0.0.1:7890");
     assert.equal(runtime.models.worker.role, "controller");
     assert.deepEqual(runtime.models.worker.specialties, ["analysis", "long context reading"]);
+    assert.equal(runtime.models.coder.thinkingEnabled, true);
     assert.equal(runtime.models.coder.reasoning.effort, "medium");
     assert.equal(runtime.models.coder.webSearch, true);
     assert.equal(runtime.models.worker.temperature, 0.2);
@@ -414,7 +417,7 @@ async function runBlankClusterSettingFallbackTests() {
 
     const runtime = loadRuntimeConfig(projectDir);
     assert.equal(runtime.cluster.maxParallel, 9);
-    assert.equal(runtime.cluster.subordinateMaxParallel, 4);
+    assert.equal(runtime.cluster.subordinateMaxParallel, 9);
     assert.equal(runtime.cluster.groupLeaderMaxDelegates, 6);
     assert.equal(runtime.cluster.delegateMaxDepth, 2);
   } finally {

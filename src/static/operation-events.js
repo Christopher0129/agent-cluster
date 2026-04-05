@@ -4,59 +4,67 @@ const OPERATION_EVENT_CATALOG = {
   "zh-CN": {
     "label.controller": "主控 Agent",
     "label.leader": "组长 Agent",
-    "label.subordinate": "下属 Agent",
-    "label.task": "子任务",
+    "label.subordinate": "子 Agent",
+    "label.task": "任务",
     "fallback.unknownError": "未知错误",
-    "fallback.toolBlocked": "当前任务不允许该工具。",
-    "fallback.memoryRead": "已完成记忆检索。",
-    "fallback.memoryWrite": "已记录新的会话信息。",
-    "fallback.circuitOpened": "连续失败达到阈值。",
-    "fallback.clusterCancelled": "运行已被手动取消。",
+    "fallback.toolBlocked": "当前任务不允许使用该工具。",
+    "fallback.memoryRead": "已完成记忆召回。",
+    "fallback.memoryWrite": "已写入新的会话记忆。",
+    "fallback.circuitOpened": "连续失败已达到阈值。",
+    "fallback.clusterCancelled": "本次运行已被手动取消。",
+    "phase.research": "调研",
+    "phase.implementation": "实现",
+    "phase.validation": "验证",
+    "phase.handoff": "交付",
     "event.submitted": "请求已提交，等待后端处理。",
     "event.modelTestRetry": "模型 {actor} 正在重试，第 {attempt}/{maxRetries} 次，{nextDelay} 后再次请求。",
-    "event.modelTestDone": "模型连通性测试完成。",
-    "event.modelTestFailed": "模型连通性测试失败：{detail}",
-    "event.planningStart": "{actor} 正在拆解任务。",
-    "event.planningDone": "主控 Agent 已生成计划，共 {taskCount} 个子任务。",
-    "event.planningRetry": "{actor} 正在重试，第 {attempt}/{maxRetries} 次，{nextDelay} 后再次请求。",
-    "event.cancelRequested": "已收到终止任务请求，正在停止运行。",
+    "event.modelTestDone": "模型通联测试已完成。",
+    "event.modelTestFailed": "模型通联测试失败：{detail}",
+    "event.planningStart": "{actor} 正在规划任务。",
+    "event.planningDone": "主控已完成规划，共拆分 {taskCount} 个子任务。",
+    "event.planningRetry": "{actor} 正在重试规划，第 {attempt}/{maxRetries} 次，{nextDelay} 后再次请求。",
+    "event.controllerFallback": "{actor} 在 provider 故障后已从 {previousController} 切换到 {fallbackController}。",
+    "event.cancelRequested": "已请求取消，正在停止当前运行。",
     "event.phaseStart": "进入 {phase} 阶段。",
     "event.phaseDone": "已完成 {phase} 阶段。",
-    "event.workerStart": "{actor} 开始执行：{taskTitle}",
+    "event.workerStart": "{actor} 已开始：{taskTitle}",
     "event.workerDone": "{actor} 已完成：{taskTitle}",
-    "event.workspaceList": "{actor} 已查看目录：{detail}",
+    "event.workspaceList": "{actor} 已查看工作区路径：{detail}",
     "event.workspaceRead": "{actor} 已读取文件：{detail}",
     "event.workspaceWrite": "{actor} 已写入文件：{detail}",
-    "event.workspaceCommand": "{actor} 已执行命令：{detail}，退出码 {exitCode}",
+    "event.workspaceWebSearch": "{actor} 已完成网页搜索：{detail}",
+    "event.workspaceCommand": "{actor} 已执行命令：{detail}（退出码 {exitCode}）",
     "event.workspaceJsonRepair": "{actor} 正在修复无效的 workspace JSON 响应。",
+    "event.workspaceToolBlocked.webSearch": "{actor} 的工具调用被限制：当前任务不允许网页搜索。",
     "event.workspaceToolBlocked.runCommand": "{actor} 的工具调用被限制：当前任务不允许执行工作区命令。",
     "event.workspaceToolBlocked.writeFiles": "{actor} 的工具调用被限制：当前任务不允许写入工作区文件。",
     "event.workspaceToolBlocked.default": "{actor} 的工具调用被限制：{detail}",
-    "event.memoryRead": "{actor} 读取了会话记忆：{detail}",
-    "event.memoryWrite": "{actor} 写入了会话记忆：{detail}",
+    "event.memoryRead": "{actor} 已召回会话记忆：{detail}",
+    "event.memoryWrite": "{actor} 已写入会话记忆：{detail}",
     "event.circuitOpened": "{actor} 的熔断器已打开：{detail}",
-    "event.circuitClosed": "{actor} 的熔断器已恢复关闭。",
-    "event.circuitHalfOpen": "{actor} 的熔断器进入半开探测状态。",
-    "event.circuitBlocked": "{actor} 当前被熔断器阻止调用。",
+    "event.circuitClosed": "{actor} 的熔断器已关闭。",
+    "event.circuitHalfOpen": "{actor} 的熔断器已进入半开状态。",
+    "event.circuitBlocked": "{actor} 当前被熔断器阻止。",
     "event.workerRetry": "{actor} 正在重试，第 {attempt}/{maxRetries} 次，{nextDelay} 后再次请求。",
+    "event.workerFallback": "{actor} 在 provider 故障后已从 {previousWorker} 切换到 {fallbackWorker}。",
     "event.workerFailed": "{actor} 执行失败：{detail}",
-    "event.leaderDelegateStart": "{actor} 正在思考如何分配下属任务。",
-    "event.leaderDelegateDone": "{actor} 已完成下属任务分配。",
-    "event.leaderDelegateRetry": "{actor} 的分配方案正在重试，第 {attempt}/{maxRetries} 次。",
+    "event.leaderDelegateStart": "{actor} 正在规划下属分工。",
+    "event.leaderDelegateDone": "{actor} 已完成下属分工。",
+    "event.leaderDelegateRetry": "{actor} 正在重试分工规划，第 {attempt}/{maxRetries} 次。",
     "event.subagentCreated": "已创建 {actor}：{taskTitle}",
-    "event.subagentStart": "{actor} 开始执行：{taskTitle}",
+    "event.subagentStart": "{actor} 已开始：{taskTitle}",
     "event.subagentDone": "{actor} 已完成：{taskTitle}",
     "event.subagentRetry": "{actor} 正在重试，第 {attempt}/{maxRetries} 次，{nextDelay} 后再次请求。",
     "event.subagentFailed": "{actor} 执行失败：{detail}",
-    "event.leaderSynthesisStart": "{actor} 正在回收并汇总下属结果。",
-    "event.leaderSynthesisRetry": "{actor} 的汇总过程正在重试，第 {attempt}/{maxRetries} 次。",
+    "event.leaderSynthesisStart": "{actor} 正在汇总并合并下属结果。",
+    "event.leaderSynthesisRetry": "{actor} 正在重试汇总，第 {attempt}/{maxRetries} 次。",
     "event.validationGateFailed": "验证阶段未通过。",
-    "event.synthesisStart": "{actor} 正在汇总结论。",
-    "event.synthesisRetry": "{actor} 正在重试，第 {attempt}/{maxRetries} 次，{nextDelay} 后再次请求。",
+    "event.synthesisStart": "{actor} 正在汇总最终答案。",
+    "event.synthesisRetry": "{actor} 正在重试汇总，第 {attempt}/{maxRetries} 次，{nextDelay} 后再次请求。",
     "event.clusterDone": "集群运行完成，总耗时 {totalMs} ms。",
-    "event.clusterCancelled": "任务已终止：{detail}",
+    "event.clusterCancelled": "集群运行已取消：{detail}",
     "event.clusterFailed": "集群运行失败：{detail}",
-    "event.default": "收到新的运行事件。"
+    "event.default": "收到新的运行时事件。"
   },
   "en-US": {
     "label.controller": "Controller agent",
@@ -76,6 +84,7 @@ const OPERATION_EVENT_CATALOG = {
     "event.planningStart": "{actor} is planning the task.",
     "event.planningDone": "The controller finished planning with {taskCount} subtasks.",
     "event.planningRetry": "{actor} retrying, attempt {attempt}/{maxRetries}. Next request in {nextDelay}.",
+    "event.controllerFallback": "{actor} switched from {previousController} to {fallbackController} after a provider failure.",
     "event.cancelRequested": "Cancellation requested. Stopping the current run.",
     "event.phaseStart": "Entering the {phase} phase.",
     "event.phaseDone": "Completed the {phase} phase.",
@@ -84,8 +93,10 @@ const OPERATION_EVENT_CATALOG = {
     "event.workspaceList": "{actor} listed the workspace path: {detail}",
     "event.workspaceRead": "{actor} read files: {detail}",
     "event.workspaceWrite": "{actor} wrote files: {detail}",
+    "event.workspaceWebSearch": "{actor} ran a web search: {detail}",
     "event.workspaceCommand": "{actor} ran a command: {detail} (exit code {exitCode})",
     "event.workspaceJsonRepair": "{actor} is repairing an invalid workspace JSON response.",
+    "event.workspaceToolBlocked.webSearch": "{actor} had a tool call blocked: web search is out of scope for this task.",
     "event.workspaceToolBlocked.runCommand": "{actor} had a tool call blocked: workspace commands are out of scope for this task.",
     "event.workspaceToolBlocked.writeFiles": "{actor} had a tool call blocked: workspace writes are out of scope for this task.",
     "event.workspaceToolBlocked.default": "{actor} had a tool call blocked: {detail}",
@@ -96,6 +107,7 @@ const OPERATION_EVENT_CATALOG = {
     "event.circuitHalfOpen": "The circuit breaker for {actor} is now half-open.",
     "event.circuitBlocked": "{actor} is currently blocked by the circuit breaker.",
     "event.workerRetry": "{actor} retrying, attempt {attempt}/{maxRetries}. Next request in {nextDelay}.",
+    "event.workerFallback": "{actor} switched from {previousWorker} to {fallbackWorker} after a provider failure.",
     "event.workerFailed": "{actor} failed: {detail}",
     "event.leaderDelegateStart": "{actor} is planning subordinate assignments.",
     "event.leaderDelegateDone": "{actor} finished assigning subordinate tasks.",
@@ -136,12 +148,31 @@ function resolveLabels(translate) {
   };
 }
 
+function resolvePhaseLabel(phase, translate) {
+  const normalized = String(phase || "").trim().toLowerCase();
+  if (!normalized) {
+    return "";
+  }
+  const key = `phase.${normalized}`;
+  const translated = translate(key);
+  return translated === key ? phase : translated;
+}
+
 function describeWorkspaceToolBlocked(event, actor, translate) {
+  const toolAction = String(event.toolAction || "").trim().toLowerCase();
   const detail = String(event.detail || "").trim();
-  if (/\brun_command\b/i.test(detail)) {
+  if (toolAction === "web_search" || /\bweb_search\b/i.test(detail)) {
+    return translate("event.workspaceToolBlocked.webSearch", { actor });
+  }
+  if (toolAction === "run_command" || /\brun_command\b/i.test(detail)) {
     return translate("event.workspaceToolBlocked.runCommand", { actor });
   }
-  if (/\bwrite_files\b/i.test(detail)) {
+  if (
+    toolAction === "write_docx" ||
+    toolAction === "write_files" ||
+    /\bwrite_docx\b/i.test(detail) ||
+    /\bwrite_files\b/i.test(detail)
+  ) {
     return translate("event.workspaceToolBlocked.writeFiles", { actor });
   }
   return translate("event.workspaceToolBlocked.default", {
@@ -188,15 +219,23 @@ export function describeOperationEvent(
         maxRetries: event.maxRetries ?? 0,
         nextDelay: formatDelay(event.nextDelayMs)
       });
+    case "controller_fallback":
+      return translate("event.controllerFallback", {
+        actor: actor || labels.controller,
+        previousController:
+          event.previousControllerLabel || event.previousControllerId || labels.controller,
+        fallbackController:
+          event.fallbackControllerLabel || event.fallbackControllerId || labels.controller
+      });
     case "cancel_requested":
       return event.detail || translate("event.cancelRequested");
     case "phase_start":
       return translate("event.phaseStart", {
-        phase: event.phase || ""
+        phase: resolvePhaseLabel(event.phase, translate)
       });
     case "phase_done":
       return translate("event.phaseDone", {
-        phase: event.phase || ""
+        phase: resolvePhaseLabel(event.phase, translate)
       });
     case "worker_start":
       return translate("event.workerStart", {
@@ -222,6 +261,11 @@ export function describeOperationEvent(
       return translate("event.workspaceWrite", {
         actor: actor || labels.leader,
         detail: (event.generatedFiles || []).join(", ") || event.detail || ""
+      });
+    case "workspace_web_search":
+      return translate("event.workspaceWebSearch", {
+        actor: actor || labels.leader,
+        detail: event.detail || ""
       });
     case "workspace_command":
       return translate("event.workspaceCommand", {
@@ -268,6 +312,12 @@ export function describeOperationEvent(
         attempt: event.attempt ?? 0,
         maxRetries: event.maxRetries ?? 0,
         nextDelay: formatDelay(event.nextDelayMs)
+      });
+    case "worker_fallback":
+      return translate("event.workerFallback", {
+        actor: actor || labels.leader,
+        previousWorker: event.previousWorkerLabel || event.previousWorkerId || labels.leader,
+        fallbackWorker: event.fallbackWorkerLabel || event.fallbackWorkerId || labels.leader
       });
     case "worker_failed":
       return translate("event.workerFailed", {
@@ -326,7 +376,7 @@ export function describeOperationEvent(
         maxRetries: event.maxRetries ?? 0
       });
     case "validation_gate_failed":
-      return event.detail || translate("event.validationGateFailed");
+      return translate("event.validationGateFailed");
     case "synthesis_start":
       return translate("event.synthesisStart", {
         actor: actor || labels.controller

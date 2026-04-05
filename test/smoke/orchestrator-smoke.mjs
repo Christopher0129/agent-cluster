@@ -551,7 +551,208 @@ async function runHierarchicalDelegationConcurrencyTests() {
 
   assert.equal(result.executions.length, 1);
   assert.equal(result.executions[0].output.subordinateCount, 3);
-  assert.equal(concurrency.max, 1);
+  assert.equal(concurrency.max, 3);
+}
+
+async function runGlobalExecutionGateTests() {
+  const concurrency = {
+    current: 0,
+    max: 0
+  };
+  const config = {
+    cluster: {
+      controller: "controller",
+      maxParallel: 2,
+      groupLeaderMaxDelegates: 3,
+      delegateMaxDepth: 1
+    },
+    models: {
+      controller: {
+        id: "controller",
+        label: "Controller",
+        model: "gpt-5.4",
+        provider: "mock"
+      },
+      direct_worker: {
+        id: "direct_worker",
+        label: "Direct Worker",
+        model: "model-direct",
+        provider: "mock",
+        specialties: ["implementation"]
+      },
+      implementation_leader: {
+        id: "implementation_leader",
+        label: "Implementation Leader",
+        model: "gpt-5.3-codex",
+        provider: "mock",
+        specialties: ["implementation", "coding"]
+      }
+    }
+  };
+
+  const providerRegistry = new Map([
+    [
+      "controller",
+      new FakeProvider([
+        JSON.stringify({
+          objective: "Exercise one direct worker and one delegating leader together",
+          strategy: "Run a direct worker while the leader fans out into three child tasks.",
+          tasks: [
+            {
+              id: "direct_task",
+              phase: "implementation",
+              title: "Direct implementation task",
+              assignedWorker: "direct_worker",
+              instructions: "Handle the direct implementation task.",
+              dependsOn: []
+            },
+            {
+              id: "delegated_task",
+              phase: "implementation",
+              title: "Delegated implementation task",
+              assignedWorker: "implementation_leader",
+              delegateCount: 3,
+              instructions: "Split the implementation work into three independent child tasks.",
+              dependsOn: []
+            }
+          ]
+        }),
+        JSON.stringify({
+          finalAnswer: "The global execution gate capped direct and delegated work together.",
+          executiveSummary: ["One direct worker and a delegating leader shared the same concurrency cap."],
+          consensus: ["Top-level and child executions never exceeded the run-wide limit."],
+          disagreements: [],
+          nextActions: []
+        })
+      ])
+    ],
+    [
+      "direct_worker",
+      new DelayedJsonProvider(
+        {
+          summary: "Direct work completed.",
+          keyFindings: ["Direct worker finished its slice."],
+          risks: [],
+          deliverables: [],
+          confidence: "high",
+          followUps: []
+        },
+        120,
+        concurrency
+      )
+    ],
+    [
+      "implementation_leader",
+      new FakeProvider([
+        JSON.stringify({
+          thinkingSummary: "Split into three independent child slices.",
+          delegationSummary: "Each child covers a disjoint implementation slice.",
+          subtasks: [
+            {
+              id: "slice_a",
+              title: "Implementation slice A",
+              instructions: "Handle slice A.",
+              expectedOutput: "Slice A result."
+            },
+            {
+              id: "slice_b",
+              title: "Implementation slice B",
+              instructions: "Handle slice B.",
+              expectedOutput: "Slice B result."
+            },
+            {
+              id: "slice_c",
+              title: "Implementation slice C",
+              instructions: "Handle slice C.",
+              expectedOutput: "Slice C result."
+            }
+          ]
+        }),
+        async ({ signal }) => {
+          concurrency.current += 1;
+          concurrency.max = Math.max(concurrency.max, concurrency.current);
+          try {
+            await waitForDelay(40, signal);
+            return {
+              text: JSON.stringify({
+                summary: "Slice A done.",
+                keyFindings: ["A"],
+                risks: [],
+                deliverables: [],
+                confidence: "high",
+                followUps: []
+              })
+            };
+          } finally {
+            concurrency.current -= 1;
+          }
+        },
+        async ({ signal }) => {
+          concurrency.current += 1;
+          concurrency.max = Math.max(concurrency.max, concurrency.current);
+          try {
+            await waitForDelay(40, signal);
+            return {
+              text: JSON.stringify({
+                summary: "Slice B done.",
+                keyFindings: ["B"],
+                risks: [],
+                deliverables: [],
+                confidence: "high",
+                followUps: []
+              })
+            };
+          } finally {
+            concurrency.current -= 1;
+          }
+        },
+        async ({ signal }) => {
+          concurrency.current += 1;
+          concurrency.max = Math.max(concurrency.max, concurrency.current);
+          try {
+            await waitForDelay(40, signal);
+            return {
+              text: JSON.stringify({
+                summary: "Slice C done.",
+                keyFindings: ["C"],
+                risks: [],
+                deliverables: [],
+                confidence: "high",
+                followUps: []
+              })
+            };
+          } finally {
+            concurrency.current -= 1;
+          }
+        },
+        JSON.stringify({
+          thinkingSummary: "Merged the delegated slices under the shared run cap.",
+          summary: "Delegated work completed.",
+          keyFindings: ["All three child slices completed."],
+          risks: [],
+          deliverables: ["Merged implementation summary"],
+          confidence: "high",
+          followUps: [],
+          verificationStatus: "not_applicable"
+        })
+      ])
+    ]
+  ]);
+
+  const result = await runClusterAnalysis({
+    task: "Run one direct worker and one delegating leader under a shared concurrency cap.",
+    config,
+    providerRegistry
+  });
+
+  const implementationExecutions = result.executions.filter((execution) => execution.phase === "implementation");
+  assert.equal(implementationExecutions.length, 2);
+  assert.equal(implementationExecutions.find((execution) => execution.workerId === "direct_worker")?.status, "completed");
+  assert.equal(
+    implementationExecutions.find((execution) => execution.workerId === "implementation_leader")?.output.subordinateCount,
+    3
+  );
+  assert.equal(concurrency.max, 2);
 }
 
 async function runConfigurableHierarchicalDelegationTests() {
@@ -1543,6 +1744,7 @@ export async function runOrchestratorSmokeTests() {
   await runCodingManagerWorkflowTests();
   await runHierarchicalDelegationTests();
   await runHierarchicalDelegationConcurrencyTests();
+  await runGlobalExecutionGateTests();
   await runConfigurableHierarchicalDelegationTests();
   await runDeepHierarchicalDelegationTests();
   await runUnlimitedSubordinateConcurrencyTests();

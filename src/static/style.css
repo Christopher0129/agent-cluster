@@ -322,7 +322,8 @@ body::after {
   overflow: auto;
 }
 
-.agent-viz-connectivity {
+.agent-viz-connectivity,
+.agent-viz-chatroom {
   display: grid;
   gap: 0.75rem;
   min-height: 9rem;
@@ -497,14 +498,104 @@ body::after {
   min-height: 0;
 }
 
+.multi-agent-chat-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.65rem;
+}
+
+.multi-agent-summary-card {
+  display: grid;
+  gap: 0.28rem;
+  padding: 0.75rem 0.82rem;
+  border-radius: 16px;
+  border: 1px solid rgba(95, 180, 255, 0.14);
+  background: linear-gradient(180deg, rgba(10, 24, 48, 0.84), rgba(5, 14, 29, 0.8));
+}
+
+.multi-agent-summary-card span {
+  font-size: 0.76rem;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.multi-agent-summary-card strong {
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.multi-agent-chatroom {
+  display: grid;
+  gap: 0.65rem;
+  min-height: 0;
+  max-height: clamp(14rem, 32vh, 23rem);
+  overflow: auto;
+  padding-right: 0.2rem;
+  align-content: start;
+}
+
+.multi-agent-message {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.78rem 0.88rem;
+  border-radius: 16px;
+  border: 1px solid rgba(95, 180, 255, 0.14);
+  background: linear-gradient(180deg, rgba(10, 24, 48, 0.82), rgba(5, 14, 29, 0.78));
+}
+
+.multi-agent-message[data-kind="summary"] {
+  border-color: rgba(54, 239, 177, 0.2);
+  background: linear-gradient(180deg, rgba(9, 45, 36, 0.78), rgba(6, 28, 22, 0.76));
+}
+
+.multi-agent-message[data-kind="system"] {
+  border-color: rgba(255, 211, 109, 0.22);
+  background: linear-gradient(180deg, rgba(55, 46, 14, 0.78), rgba(38, 29, 8, 0.74));
+}
+
+.multi-agent-message[data-tone="error"] {
+  border-color: rgba(255, 110, 141, 0.22);
+}
+
+.multi-agent-message-head,
+.multi-agent-message-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.multi-agent-message-head {
+  align-items: flex-start;
+}
+
+.multi-agent-message-meta strong {
+  font-size: 0.9rem;
+}
+
+.multi-agent-message-target,
+.multi-agent-message-time {
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+.multi-agent-message p {
+  margin: 0;
+  line-height: 1.6;
+}
+
 .agent-viz-inspector::-webkit-scrollbar,
 .scheme-connectivity-results::-webkit-scrollbar,
+.multi-agent-chatroom::-webkit-scrollbar,
 .bot-install-output::-webkit-scrollbar {
   width: 0.6rem;
 }
 
 .agent-viz-inspector::-webkit-scrollbar-thumb,
 .scheme-connectivity-results::-webkit-scrollbar-thumb,
+.multi-agent-chatroom::-webkit-scrollbar-thumb,
 .bot-install-output::-webkit-scrollbar-thumb {
   border-radius: 999px;
   background: rgba(95, 180, 255, 0.34);
@@ -1556,12 +1647,16 @@ button:disabled {
   min-width: 0;
 }
 
-.fold-summary::after {
-  content: "+ 展开";
+.fold-summary-indicator {
   margin-left: auto;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--muted);
+  width: 0.78rem;
+  height: 0.78rem;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease;
 }
 
 .fold-panel[open] .fold-summary {
@@ -1569,8 +1664,9 @@ button:disabled {
   background: rgba(95, 180, 255, 0.08);
 }
 
-.fold-panel[open] .fold-summary::after {
-  content: "- 收起";
+.fold-panel[open] .fold-summary-indicator {
+  transform: rotate(225deg);
+  border-color: #d9f2ff;
 }
 
 .fold-body {
@@ -2157,6 +2253,39 @@ li + li {
 
 .session-circuit-card[data-state="closed"] {
   border-color: rgba(54, 239, 177, 0.24);
+}
+
+.trace-fold-panel .fold-summary-indicator {
+  margin-left: auto;
+  width: 0.78rem;
+  height: 0.78rem;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease;
+}
+
+.trace-fold-panel .fold-summary-indicator {
+  border-color: #d9f2ff;
+}
+
+
+
+.workspace-tree-summary::after {
+  content: "";
+  margin-left: auto;
+  width: 0.78rem;
+  height: 0.78rem;
+  border-right: 2px solid #d9f2ff;
+  border-bottom: 2px solid #d9f2ff;
+  transform: rotate(45deg);
+  transition: transform 140ms ease;
+}
+
+.workspace-tree-pane[open] .workspace-tree-summary::after {
+  transform: rotate(225deg);
 }
 
 @media (max-width: 1180px) {

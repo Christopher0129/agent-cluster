@@ -15,14 +15,19 @@ import { postJson } from "../src/providers/http-client.mjs";
 import { testModelConnectivity } from "../src/providers/connectivity-test.mjs";
 import { createProviderForModel } from "../src/providers/factory.mjs";
 import { AnthropicMessagesProvider } from "../src/providers/anthropic-messages.mjs";
+import { OpenAIChatProvider } from "../src/providers/openai-chat.mjs";
 import { OpenAIResponsesProvider } from "../src/providers/openai-responses.mjs";
-import { providerSupportsCapability } from "../src/static/provider-catalog.js";
+import {
+  getProviderDefinition,
+  providerSupportsCapability
+} from "../src/static/provider-catalog.js";
 import {
   buildAgentLayout,
   resolveAgentGraphParentId,
   summarizeAgentActivity
 } from "../src/static/agent-graph-layout.js";
 import { runWorkspaceToolLoop } from "../src/workspace/agent-loop.mjs";
+import { readDocumentText } from "../src/workspace/document-reader.mjs";
 import { DelayedJsonProvider, FakeProvider, waitForDelay } from "./helpers/providers.mjs";
 
 function runJsonTests() {
@@ -567,7 +572,208 @@ async function runHierarchicalDelegationConcurrencyTests() {
 
   assert.equal(result.executions.length, 1);
   assert.equal(result.executions[0].output.subordinateCount, 3);
-  assert.equal(concurrency.max, 1);
+  assert.equal(concurrency.max, 3);
+}
+
+async function runGlobalExecutionGateTests() {
+  const concurrency = {
+    current: 0,
+    max: 0
+  };
+  const config = {
+    cluster: {
+      controller: "controller",
+      maxParallel: 2,
+      groupLeaderMaxDelegates: 3,
+      delegateMaxDepth: 1
+    },
+    models: {
+      controller: {
+        id: "controller",
+        label: "Controller",
+        model: "gpt-5.4",
+        provider: "mock"
+      },
+      direct_worker: {
+        id: "direct_worker",
+        label: "Direct Worker",
+        model: "model-direct",
+        provider: "mock",
+        specialties: ["implementation"]
+      },
+      implementation_leader: {
+        id: "implementation_leader",
+        label: "Implementation Leader",
+        model: "gpt-5.3-codex",
+        provider: "mock",
+        specialties: ["implementation", "coding"]
+      }
+    }
+  };
+
+  const providerRegistry = new Map([
+    [
+      "controller",
+      new FakeProvider([
+        JSON.stringify({
+          objective: "Exercise one direct worker and one delegating leader together",
+          strategy: "Run a direct worker while the leader fans out into three child tasks.",
+          tasks: [
+            {
+              id: "direct_task",
+              phase: "implementation",
+              title: "Direct implementation task",
+              assignedWorker: "direct_worker",
+              instructions: "Handle the direct implementation task.",
+              dependsOn: []
+            },
+            {
+              id: "delegated_task",
+              phase: "implementation",
+              title: "Delegated implementation task",
+              assignedWorker: "implementation_leader",
+              delegateCount: 3,
+              instructions: "Split the implementation work into three independent child tasks.",
+              dependsOn: []
+            }
+          ]
+        }),
+        JSON.stringify({
+          finalAnswer: "The global execution gate capped direct and delegated work together.",
+          executiveSummary: ["One direct worker and a delegating leader shared the same concurrency cap."],
+          consensus: ["Top-level and child executions never exceeded the run-wide limit."],
+          disagreements: [],
+          nextActions: []
+        })
+      ])
+    ],
+    [
+      "direct_worker",
+      new DelayedJsonProvider(
+        {
+          summary: "Direct work completed.",
+          keyFindings: ["Direct worker finished its slice."],
+          risks: [],
+          deliverables: [],
+          confidence: "high",
+          followUps: []
+        },
+        120,
+        concurrency
+      )
+    ],
+    [
+      "implementation_leader",
+      new FakeProvider([
+        JSON.stringify({
+          thinkingSummary: "Split into three independent child slices.",
+          delegationSummary: "Each child covers a disjoint implementation slice.",
+          subtasks: [
+            {
+              id: "slice_a",
+              title: "Implementation slice A",
+              instructions: "Handle slice A.",
+              expectedOutput: "Slice A result."
+            },
+            {
+              id: "slice_b",
+              title: "Implementation slice B",
+              instructions: "Handle slice B.",
+              expectedOutput: "Slice B result."
+            },
+            {
+              id: "slice_c",
+              title: "Implementation slice C",
+              instructions: "Handle slice C.",
+              expectedOutput: "Slice C result."
+            }
+          ]
+        }),
+        async ({ signal }) => {
+          concurrency.current += 1;
+          concurrency.max = Math.max(concurrency.max, concurrency.current);
+          try {
+            await waitForDelay(40, signal);
+            return {
+              text: JSON.stringify({
+                summary: "Slice A done.",
+                keyFindings: ["A"],
+                risks: [],
+                deliverables: [],
+                confidence: "high",
+                followUps: []
+              })
+            };
+          } finally {
+            concurrency.current -= 1;
+          }
+        },
+        async ({ signal }) => {
+          concurrency.current += 1;
+          concurrency.max = Math.max(concurrency.max, concurrency.current);
+          try {
+            await waitForDelay(40, signal);
+            return {
+              text: JSON.stringify({
+                summary: "Slice B done.",
+                keyFindings: ["B"],
+                risks: [],
+                deliverables: [],
+                confidence: "high",
+                followUps: []
+              })
+            };
+          } finally {
+            concurrency.current -= 1;
+          }
+        },
+        async ({ signal }) => {
+          concurrency.current += 1;
+          concurrency.max = Math.max(concurrency.max, concurrency.current);
+          try {
+            await waitForDelay(40, signal);
+            return {
+              text: JSON.stringify({
+                summary: "Slice C done.",
+                keyFindings: ["C"],
+                risks: [],
+                deliverables: [],
+                confidence: "high",
+                followUps: []
+              })
+            };
+          } finally {
+            concurrency.current -= 1;
+          }
+        },
+        JSON.stringify({
+          thinkingSummary: "Merged the delegated slices under the shared run cap.",
+          summary: "Delegated work completed.",
+          keyFindings: ["All three child slices completed."],
+          risks: [],
+          deliverables: ["Merged implementation summary"],
+          confidence: "high",
+          followUps: [],
+          verificationStatus: "not_applicable"
+        })
+      ])
+    ]
+  ]);
+
+  const result = await runClusterAnalysis({
+    task: "Run one direct worker and one delegating leader under a shared concurrency cap.",
+    config,
+    providerRegistry
+  });
+
+  const implementationExecutions = result.executions.filter((execution) => execution.phase === "implementation");
+  assert.equal(implementationExecutions.length, 2);
+  assert.equal(implementationExecutions.find((execution) => execution.workerId === "direct_worker")?.status, "completed");
+  assert.equal(
+    implementationExecutions.find((execution) => execution.workerId === "implementation_leader")?.output.subordinateCount,
+    3
+  );
+  assert.equal(concurrency.max, 2);
 }
 
 async function runConfigurableHierarchicalDelegationTests() {
@@ -1643,6 +1849,7 @@ async function runSettingsTests() {
           apiKeyEnv: "OPENAI_API_KEY",
           apiKeyValue: "openai-model-key",
           authStyle: "bearer",
+          thinkingEnabled: true,
           reasoningEffort: "medium",
           webSearch: true,
           specialties: "coding, debugging"
@@ -1674,6 +1881,7 @@ async function runSettingsTests() {
     assert.equal(editable.settings.models.length, 2);
     assert.equal(editable.settings.models[0].apiKeyValue, "moonshot-model-key");
     assert.equal(editable.settings.models[1].apiKeyValue, "openai-model-key");
+    assert.equal(editable.settings.models[1].thinkingEnabled, true);
     assert.equal(editable.settings.models[1].webSearch, true);
     assert.equal(
       editable.settings.secrets.some((entry) => entry.name === "FEISHU_APP_ID" && entry.value === "feishu-app-id"),
@@ -1701,6 +1909,7 @@ async function runSettingsTests() {
     assert.equal(runtime.bot.presetConfigs.feishu.envText, "HTTP_PROXY=http://127.0.0.1:7890");
     assert.equal(runtime.models.worker.role, "controller");
     assert.deepEqual(runtime.models.worker.specialties, ["analysis", "long context reading"]);
+    assert.equal(runtime.models.coder.thinkingEnabled, true);
     assert.equal(runtime.models.coder.reasoning.effort, "medium");
     assert.equal(runtime.models.coder.webSearch, true);
     assert.equal(runtime.models.worker.temperature, 0.2);
@@ -2139,7 +2348,7 @@ async function runBlankClusterSettingFallbackTests() {
 
     const runtime = loadRuntimeConfig(projectDir);
     assert.equal(runtime.cluster.maxParallel, 9);
-    assert.equal(runtime.cluster.subordinateMaxParallel, 4);
+    assert.equal(runtime.cluster.subordinateMaxParallel, 9);
     assert.equal(runtime.cluster.groupLeaderMaxDelegates, 6);
     assert.equal(runtime.cluster.delegateMaxDepth, 2);
   } finally {
@@ -2588,15 +2797,12 @@ async function runArtifactVerificationGuardTests() {
       providerRegistry
     });
 
+    const reportPath = join(workspaceDir, "report.docx");
+    const reportText = await readDocumentText(reportPath);
     assert.equal(result.executions.length, 1);
-    assert.equal(result.executions[0].output.verificationStatus, "failed");
-    assert.deepEqual(result.executions[0].output.verifiedGeneratedFiles, []);
-    assert.equal(
-      result.executions[0].output.risks.includes(
-        "Task expected a concrete file artifact, but no generated file was verified in the workspace."
-      ),
-      true
-    );
+    assert.equal(result.executions[0].output.verificationStatus, "passed");
+    assert.deepEqual(result.executions[0].output.verifiedGeneratedFiles, ["report.docx"]);
+    assert.equal(reportText.includes("The report is ready."), true);
   } finally {
     await rm(projectDir, { recursive: true, force: true });
   }
@@ -2846,7 +3052,7 @@ async function runResearchConcurrencyTests() {
   });
 
   assert.equal(result.executions.length, 3);
-  assert.equal(concurrency.max, 1);
+  assert.equal(concurrency.max, 3);
 }
 
 async function runCustomPhaseConcurrencyTests() {
@@ -3451,6 +3657,95 @@ async function runConnectivityTestTests() {
   }
 }
 
+async function runConnectivityThinkingTests() {
+  let attempt = 0;
+  const server = createServer(async (request, response) => {
+    const chunks = [];
+    for await (const chunk of request) {
+      chunks.push(chunk);
+    }
+
+    const raw = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    attempt += 1;
+    response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+
+    if (attempt === 1) {
+      response.end(
+        JSON.stringify({
+          choices: [
+            {
+              message: {
+                content: `OK:${raw.model}`
+              }
+            }
+          ]
+        })
+      );
+      return;
+    }
+
+    if (attempt === 2) {
+      response.end(
+        JSON.stringify({
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  status: "ok",
+                  usedWebSearch: false,
+                  checks: [`structured:${raw.model}`],
+                  note: "workflow probe ok"
+                })
+              }
+            }
+          ]
+        })
+      );
+      return;
+    }
+
+    response.end(
+      JSON.stringify({
+        choices: [
+          {
+            message: {
+              content: "THINKING_OK",
+              reasoning_content: "Verified with an internal reasoning trace."
+            }
+          }
+        ]
+      })
+    );
+  });
+
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = server.address().port;
+
+  try {
+    const result = await testModelConnectivity({
+      secrets: [{ name: "TEST_GATEWAY_KEY", value: "secret-value" }],
+      model: {
+        id: "kimi_thinking_test",
+        label: "Kimi Thinking Test",
+        provider: "kimi-chat",
+        model: "kimi-k2.5",
+        baseUrl: `http://127.0.0.1:${port}`,
+        apiKeyEnv: "TEST_GATEWAY_KEY",
+        authStyle: "bearer",
+        thinkingEnabled: true
+      }
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(result.degraded, false);
+    assert.equal(result.diagnostics.thinking.enabled, true);
+    assert.equal(result.diagnostics.thinking.verified, true);
+    assert.match(result.summary, /thinking mode/i);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+}
+
 async function runResponsesProviderCompatibilityTests() {
   let capturedBody = null;
   const server = createServer(async (request, response) => {
@@ -3480,6 +3775,8 @@ async function runResponsesProviderCompatibilityTests() {
       baseUrl: `http://127.0.0.1:${port}`,
       apiKeyEnv: "TEST_RESPONSES_KEY",
       authStyle: "bearer",
+      thinkingEnabled: true,
+      reasoning: { effort: "high" },
       webSearch: true,
       maxOutputTokens: 32,
       retryAttempts: 0
@@ -3513,8 +3810,184 @@ async function runResponsesProviderCompatibilityTests() {
       }
     ]);
     assert.deepEqual(capturedBody.tools, [{ type: "web_search" }]);
+    assert.deepEqual(capturedBody.reasoning, { effort: "high" });
     assert.equal("metadata" in capturedBody, false);
   } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+}
+
+async function runOpenAIChatWebSearchProviderCompatibilityTests() {
+  const capturedBodies = [];
+  let attempt = 0;
+  const server = createServer(async (request, response) => {
+    const chunks = [];
+    for await (const chunk of request) {
+      chunks.push(chunk);
+    }
+
+    const parsed = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    capturedBodies.push(parsed);
+    attempt += 1;
+    response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+
+    if (attempt === 1) {
+      response.end(
+        JSON.stringify({
+          choices: [
+            {
+              finish_reason: "tool_calls",
+              message: {
+                role: "assistant",
+                content: "",
+                tool_calls: [
+                  {
+                    id: "call_web_1",
+                    type: "function",
+                    function: {
+                      name: "$web_search",
+                      arguments: '{"query":"Moonshot Kimi web search compatibility"}'
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        })
+      );
+      return;
+    }
+
+    response.end(
+      JSON.stringify({
+        choices: [
+          {
+            finish_reason: "stop",
+            message: {
+              role: "assistant",
+              content: JSON.stringify({
+                status: "ok",
+                usedWebSearch: true,
+                checks: ["structured:kimi-k2.5", "web-search:kimi-k2.5"],
+                note: "workflow probe ok"
+              })
+            }
+          }
+        ]
+      })
+    );
+  });
+
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = server.address().port;
+
+  try {
+    process.env.TEST_KIMI_CHAT_KEY = "kimi-chat-key";
+    const provider = new OpenAIChatProvider({
+      id: "kimi_chat_worker",
+      provider: "kimi-chat",
+      model: "kimi-k2.5",
+      baseUrl: `http://127.0.0.1:${port}`,
+      apiKeyEnv: "TEST_KIMI_CHAT_KEY",
+      authStyle: "bearer",
+      thinkingEnabled: true,
+      webSearch: true,
+      maxOutputTokens: 96,
+      retryAttempts: 0
+    });
+
+    const result = await provider.invoke({
+      instructions: "Use web search once, then return JSON only.",
+      input: "Verify Kimi web search wiring.",
+      purpose: "compatibility_test"
+    });
+
+    assert.equal(result.text.includes('"usedWebSearch":true'), true);
+    assert.deepEqual(capturedBodies[0].tools, [
+      {
+        type: "builtin_function",
+        function: {
+          name: "$web_search"
+        }
+      }
+    ]);
+    assert.deepEqual(capturedBodies[0].thinking, { type: "disabled" });
+    assert.equal(
+      capturedBodies[1].messages.some(
+        (message) =>
+          message.role === "tool" &&
+          message.tool_call_id === "call_web_1" &&
+          message.name === "$web_search"
+      ),
+      true
+    );
+  } finally {
+    delete process.env.TEST_KIMI_CHAT_KEY;
+    await new Promise((resolve) => server.close(resolve));
+  }
+}
+
+async function runAnthropicThinkingProviderCompatibilityTests() {
+  let capturedBody = null;
+  const server = createServer(async (request, response) => {
+    const chunks = [];
+    for await (const chunk of request) {
+      chunks.push(chunk);
+    }
+
+    capturedBody = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+    response.end(
+      JSON.stringify({
+        id: "msg_thinking_test",
+        type: "message",
+        role: "assistant",
+        content: [
+          {
+            type: "thinking",
+            thinking: "Short internal reasoning summary."
+          },
+          {
+            type: "text",
+            text: "THINKING_OK"
+          }
+        ]
+      })
+    );
+  });
+
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = server.address().port;
+
+  try {
+    process.env.TEST_ANTHROPIC_THINKING_KEY = "anthropic-thinking-key";
+    const provider = new AnthropicMessagesProvider({
+      id: "claude_thinking_worker",
+      provider: "claude-chat",
+      model: "claude-sonnet-4-5",
+      baseUrl: `http://127.0.0.1:${port}`,
+      apiKeyEnv: "TEST_ANTHROPIC_THINKING_KEY",
+      authStyle: "api-key",
+      apiKeyHeader: "x-api-key",
+      thinkingEnabled: true,
+      reasoning: { effort: "high" },
+      retryAttempts: 0
+    });
+
+    const result = await provider.invoke({
+      instructions: "Think first, then reply with THINKING_OK.",
+      input: "Compatibility probe.",
+      purpose: "compatibility_test"
+    });
+
+    assert.equal(result.text, "THINKING_OK");
+    assert.deepEqual(capturedBody.thinking, {
+      type: "enabled",
+      budget_tokens: 3072
+    });
+    assert.equal(capturedBody.max_tokens >= 3584, true);
+  } finally {
+    delete process.env.TEST_ANTHROPIC_THINKING_KEY;
     await new Promise((resolve) => server.close(resolve));
   }
 }
@@ -3615,6 +4088,171 @@ async function runClusterCancelRouteTests() {
   }
 }
 
+async function runClusterRouteLogPersistenceTests() {
+  const projectDir = await mkdtemp(join(process.cwd(), ".tmp-cluster-log-route-"));
+  const workspaceDir = join(projectDir, "workspace");
+  let requestCount = 0;
+  const modelServer = createServer(async (request, response) => {
+    const chunks = [];
+    for await (const chunk of request) {
+      chunks.push(chunk);
+    }
+
+    requestCount += 1;
+    response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+
+    if (requestCount === 1) {
+      response.end(
+        JSON.stringify({
+          output_text: JSON.stringify({
+            objective: "Create a note",
+            strategy: "Use one worker to write the note, then synthesize the result.",
+            tasks: [
+              {
+                id: "task_1",
+                phase: "implementation",
+                title: "Write note",
+                assignedWorker: "worker",
+                instructions: "Create notes/hello.txt in the workspace.",
+                expectedOutput: "A concrete notes/hello.txt artifact.",
+                dependsOn: []
+              }
+            ]
+          })
+        })
+      );
+      return;
+    }
+
+    if (requestCount === 2) {
+      response.end(
+        JSON.stringify({
+          output_text: JSON.stringify({
+            action: "write_files",
+            reason: "Create the requested note.",
+            files: [
+              {
+                path: "notes/hello.txt",
+                content: "hello from route log test\n"
+              }
+            ]
+          })
+        })
+      );
+      return;
+    }
+
+    if (requestCount === 3) {
+      response.end(
+        JSON.stringify({
+          output_text: JSON.stringify({
+            action: "final",
+            summary: "The note was written.",
+            keyFindings: ["notes/hello.txt now exists in the workspace."],
+            risks: [],
+            deliverables: ["notes/hello.txt"],
+            generatedFiles: ["notes/hello.txt"],
+            confidence: "high",
+            followUps: [],
+            verificationStatus: "passed"
+          })
+        })
+      );
+      return;
+    }
+
+    response.end(
+      JSON.stringify({
+        output_text: JSON.stringify({
+          finalAnswer: "Route log persistence completed.",
+          executiveSummary: ["The run finished and its log was persisted automatically."],
+          consensus: ["Automatic task logging works for cluster runs."],
+          disagreements: [],
+          nextActions: []
+        })
+      })
+    );
+  });
+
+  await new Promise((resolve) => modelServer.listen(0, "127.0.0.1", resolve));
+  const modelPort = modelServer.address().port;
+
+  try {
+    process.env.TEST_ROUTE_LOG_KEY = "route-log-key";
+    await writeFile(
+      join(projectDir, "cluster.config.json"),
+      `${JSON.stringify(
+        {
+          server: { port: 4040 },
+          cluster: { controller: "controller", maxParallel: 1 },
+          workspace: { dir: "./workspace" },
+          models: {
+            controller: {
+              provider: "openai-responses",
+              model: "gpt-5.4",
+              baseUrl: `http://127.0.0.1:${modelPort}`,
+              apiKeyEnv: "TEST_ROUTE_LOG_KEY",
+              label: "Controller"
+            },
+            worker: {
+              provider: "openai-responses",
+              model: "gpt-5.4-mini",
+              baseUrl: `http://127.0.0.1:${modelPort}`,
+              apiKeyEnv: "TEST_ROUTE_LOG_KEY",
+              label: "Worker"
+            }
+          }
+        },
+        null,
+        2
+      )}\n`,
+      "utf8"
+    );
+
+    const appServer = createAppServer({
+      projectDir,
+      staticAssetLoader: async (assetPath) =>
+        assetPath === "index.html" ? "<!doctype html><html><body>ok</body></html>" : ""
+    });
+    await new Promise((resolve) => appServer.listen(0, "127.0.0.1", resolve));
+    const appPort = appServer.address().port;
+
+    try {
+      const operationId = "cluster_route_log_test";
+      const response = await fetch(`http://127.0.0.1:${appPort}/api/cluster/run`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          task: "Create a note and persist the run log.",
+          operationId
+        })
+      });
+      const payload = await response.json();
+      const logJsonPath = join(projectDir, "task-logs", `${operationId}.json`);
+      const logTextPath = join(projectDir, "task-logs", `${operationId}.log`);
+      const logJson = JSON.parse(await readFile(logJsonPath, "utf8"));
+      const logText = await readFile(logTextPath, "utf8");
+      const noteText = await readFile(join(workspaceDir, "notes", "hello.txt"), "utf8");
+
+      assert.equal(payload.ok, true);
+      assert.equal(payload.log.textPath, `task-logs/${operationId}.log`);
+      assert.equal(logJson.status, "completed");
+      assert.equal(logJson.operationId, operationId);
+      assert.match(logText, /Agent Cluster Task Log/);
+      assert.match(logText, /cluster_done/);
+      assert.match(logText, /Create a note and persist the run log/);
+      assert.equal(noteText, "hello from route log test\n");
+    } finally {
+      await new Promise((resolve) => appServer.close(resolve));
+    }
+  } finally {
+    await new Promise((resolve) => modelServer.close(resolve));
+    await rm(projectDir, { recursive: true, force: true });
+  }
+}
+
 async function runSystemExitRouteTests() {
   const projectDir = await mkdtemp(join(process.cwd(), ".tmp-system-exit-"));
   let exitCode = null;
@@ -3699,12 +4337,21 @@ function runProviderCatalogSupportTests() {
     id: "kimi_coding_worker",
     provider: "kimi-coding",
     model: "k2p5",
-    baseUrl: "https://api.moonshot.cn/v1"
+    baseUrl: "https://api.moonshot.cn/anthropic"
   });
 
   assert.equal(claudeProvider instanceof AnthropicMessagesProvider, true);
   assert.equal(kimiCodingProvider instanceof AnthropicMessagesProvider, true);
+  assert.equal(providerSupportsCapability("openai-responses", "thinking"), true);
+  assert.equal(providerSupportsCapability("claude-chat", "thinking"), true);
+  assert.equal(providerSupportsCapability("kimi-chat", "thinking"), true);
+  assert.equal(providerSupportsCapability("kimi-coding", "thinking"), true);
   assert.equal(providerSupportsCapability("kimi-chat", "webSearch"), true);
+  assert.equal(providerSupportsCapability("kimi-coding", "webSearch"), true);
+  assert.equal(
+    getProviderDefinition("kimi-coding")?.defaultBaseUrl,
+    "https://api.moonshot.cn/anthropic"
+  );
 }
 
 function runAgentGraphLayoutTests() {
@@ -3788,9 +4435,16 @@ function runAgentGraphLayoutTests() {
   });
 }
 
-async function runConnectivityEmptyTextTests() {
+async function runAnthropicConnectivityWebSearchTests() {
+  const capturedBodies = [];
   let attempt = 0;
   const server = createServer(async (request, response) => {
+    const chunks = [];
+    for await (const chunk of request) {
+      chunks.push(chunk);
+    }
+
+    capturedBodies.push(JSON.parse(Buffer.concat(chunks).toString("utf8")));
     attempt += 1;
     response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
 
@@ -3816,8 +4470,8 @@ async function runConnectivityEmptyTextTests() {
             type: "text",
             text: JSON.stringify({
               status: "ok",
-              usedWebSearch: false,
-              checks: ["anthropic-structured:k2p5"],
+              usedWebSearch: true,
+              checks: ["anthropic-structured:kimi-k2.5", "web-search:kimi-k2.5"],
               note: "workflow probe ok"
             })
           }
@@ -3836,17 +4490,104 @@ async function runConnectivityEmptyTextTests() {
         id: "kimi_coding_test",
         label: "Kimi Coding Test",
         provider: "kimi-coding",
-        model: "k2p5",
+        model: "kimi-k2.5",
         baseUrl: `http://127.0.0.1:${port}`,
         apiKeyEnv: "KIMI_CODING_KEY",
         authStyle: "api-key",
-        apiKeyHeader: "x-api-key"
+        apiKeyHeader: "x-api-key",
+        webSearch: true
       }
     });
 
     assert.equal(result.ok, true);
     assert.equal(result.reply.startsWith("[empty text response;"), true);
-    assert.deepEqual(result.diagnostics.workflowProbe.checks, ["anthropic-structured:k2p5"]);
+    assert.equal(result.degraded, false);
+    assert.equal(result.diagnostics.workflowProbe.usedWebSearch, true);
+    assert.equal(result.diagnostics.webSearch.verified, true);
+    assert.deepEqual(result.diagnostics.workflowProbe.checks, [
+      "anthropic-structured:kimi-k2.5",
+      "web-search:kimi-k2.5"
+    ]);
+    assert.deepEqual(capturedBodies[0].tools, [
+      {
+        type: "web_search_20250305",
+        name: "web_search",
+        max_uses: 3
+      }
+    ]);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+}
+
+async function runConnectivityWebSearchProbeDegradedTests() {
+  let attempt = 0;
+  const server = createServer(async (request, response) => {
+    const chunks = [];
+    for await (const chunk of request) {
+      chunks.push(chunk);
+    }
+
+    const raw = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    attempt += 1;
+    response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+
+    if (attempt === 1) {
+      response.end(
+        JSON.stringify({
+          choices: [
+            {
+              message: {
+                content: `OK:${raw.model}`
+              }
+            }
+          ]
+        })
+      );
+      return;
+    }
+
+    response.end(
+      JSON.stringify({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                status: "ok",
+                usedWebSearch: false,
+                checks: [`structured:${raw.model}`],
+                note: "workflow probe could not confirm search"
+              })
+            }
+          }
+        ]
+      })
+    );
+  });
+
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = server.address().port;
+
+  try {
+    const result = await testModelConnectivity({
+      secrets: [{ name: "TEST_GATEWAY_KEY", value: "secret-value" }],
+      model: {
+        id: "kimi_chat_search_probe_test",
+        label: "Kimi Chat Search Probe Test",
+        provider: "kimi-chat",
+        model: "kimi-k2.5",
+        baseUrl: `http://127.0.0.1:${port}`,
+        apiKeyEnv: "TEST_GATEWAY_KEY",
+        authStyle: "bearer",
+        webSearch: true
+      }
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(result.degraded, true);
+    assert.equal(result.diagnostics.webSearch.enabled, true);
+    assert.equal(result.diagnostics.webSearch.used, false);
+    assert.match(result.summary, /did not confirm that web search executed successfully/i);
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }
@@ -3931,6 +4672,7 @@ async function main() {
   await runCodingManagerWorkflowTests();
   await runHierarchicalDelegationTests();
   await runHierarchicalDelegationConcurrencyTests();
+  await runGlobalExecutionGateTests();
   await runConfigurableHierarchicalDelegationTests();
   await runDeepHierarchicalDelegationTests();
   await runUnlimitedSubordinateConcurrencyTests();
@@ -3959,9 +4701,14 @@ async function main() {
   await runHttpNetworkRetryTests();
   await runHttpAbortTests();
   await runConnectivityTestTests();
-  await runConnectivityEmptyTextTests();
+  await runConnectivityThinkingTests();
+  await runAnthropicConnectivityWebSearchTests();
+  await runConnectivityWebSearchProbeDegradedTests();
   await runConnectivityWorkflowDegradedTests();
   await runResponsesProviderCompatibilityTests();
+  await runOpenAIChatWebSearchProviderCompatibilityTests();
+  await runAnthropicThinkingProviderCompatibilityTests();
+  await runClusterRouteLogPersistenceTests();
   await runClusterCancelRouteTests();
   await runSystemExitRouteTests();
   console.log("All smoke tests passed.");
