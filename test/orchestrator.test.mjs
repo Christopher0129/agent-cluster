@@ -516,7 +516,7 @@ test("runClusterAnalysis expands group chat mode into discussion-style collabora
       enabled: true,
       mode: "group_chat",
       speakerStrategy: "phase_priority",
-      maxRounds: 20,
+      maxRounds: 4,
       messageWindow: 40,
       summarizeLongMessages: true,
       includeSystemMessages: true
@@ -602,7 +602,7 @@ test("runClusterAnalysis expands group chat mode into discussion-style collabora
           assert.equal(purpose, "multi_agent_discussion");
           researchDiscussionTurns.push(String(input));
           assert.match(String(input), /Direct reply expected:/);
-          assert.match(String(input), /From Implementation Worker to you/);
+          assert.match(String(input), /Implementation Worker to you/);
           assert.match(String(input), /Understood\. I will wait for your evidence bucket/);
           return {
             text: "Agreed. I will freeze the evidence bucket early and flag any contradiction before the brief is finalized."
@@ -622,7 +622,7 @@ test("runClusterAnalysis expands group chat mode into discussion-style collabora
           assert.equal(purpose, "multi_agent_discussion");
           implementationDiscussionTurns.push(String(input));
           assert.match(String(input), /Direct reply expected:/);
-          assert.match(String(input), /From Research Worker to you/);
+          assert.match(String(input), /Research Worker to you/);
           assert.match(String(input), /fresh evidence bucket first/i);
           return {
             text: "Understood. I will wait for your evidence bucket and challenge any implementation note that conflicts with it."
@@ -652,6 +652,24 @@ test("runClusterAnalysis expands group chat mode into discussion-style collabora
     providerRegistry
   });
 
+  assert.equal(
+    result.multiAgentSession.messages.some(
+      (message) =>
+        message.stage === "multi_agent_chat" &&
+        /Before you lock "Draft the implementation brief", I will send the first concrete handoff from this lane/i.test(
+          message.content
+        )
+    ),
+    true
+  );
+  assert.equal(
+    result.multiAgentSession.messages.some(
+      (message) =>
+        message.stage === "multi_agent_chat" &&
+        /I will keep "Draft the implementation brief" scoped to your handoff/i.test(message.content)
+    ),
+    true
+  );
   assert.equal(
     result.multiAgentSession.messages.some(
       (message) =>
@@ -691,12 +709,182 @@ test("runClusterAnalysis expands group chat mode into discussion-style collabora
     ),
     false
   );
+  assert.equal(
+    result.multiAgentSession.messages.some(
+      (message) =>
+        message.stage === "multi_agent_chat" &&
+        /compare notes before synthesis|Cross-check it against your lane before the final merge|I see your lane\./i.test(
+          message.content
+        )
+    ),
+    false
+  );
   assert.equal(researchDiscussionTurns.length >= 2, true);
   assert.equal(implementationDiscussionTurns.length >= 2, true);
 });
 
+test("runClusterAnalysis respects the configured group chat max rounds for two participants", async () => {
+  const discussionTurns = [];
+  const config = {
+    cluster: {
+      controller: "controller",
+      maxParallel: 2
+    },
+    multiAgent: {
+      enabled: true,
+      mode: "group_chat",
+      speakerStrategy: "phase_priority",
+      maxRounds: 6,
+      messageWindow: 40,
+      summarizeLongMessages: true,
+      includeSystemMessages: true
+    },
+    models: {
+      controller: {
+        id: "controller",
+        label: "Controller",
+        model: "gpt-5.4"
+      },
+      worker_a: {
+        id: "worker_a",
+        label: "Worker A",
+        model: "model-a",
+        provider: "mock",
+        specialties: ["research"]
+      },
+      worker_b: {
+        id: "worker_b",
+        label: "Worker B",
+        model: "model-b",
+        provider: "mock",
+        specialties: ["implementation"]
+      }
+    }
+  };
+
+  const providerRegistry = new Map([
+    [
+      "controller",
+      new FakeProvider([
+        JSON.stringify({
+          objective: "Respect the configured group chat max rounds",
+          strategy: "Let two lanes exchange concrete replies for the full configured cap.",
+          tasks: [
+            {
+              id: "task_1",
+              phase: "research",
+              title: "Source lane",
+              assignedWorker: "worker_a",
+              instructions: "Own the source lane.",
+              dependsOn: []
+            },
+            {
+              id: "task_2",
+              phase: "implementation",
+              title: "Draft lane",
+              assignedWorker: "worker_b",
+              instructions: "Own the draft lane.",
+              dependsOn: []
+            }
+          ]
+        }),
+        JSON.stringify({
+          finalAnswer: "Configured round cap respected.",
+          executiveSummary: ["Two participants used the full configured discussion cap."],
+          consensus: ["The group chat planner should respect the UI round limit directly."],
+          disagreements: [],
+          nextActions: []
+        })
+      ])
+    ],
+    [
+      "worker_a",
+      new FakeProvider([
+        ({ purpose, input }) => {
+          assert.equal(purpose, "multi_agent_discussion");
+          discussionTurns.push(String(input));
+          return {
+            text: "Source lane will lock the evidence shortlist for Draft lane before the draft outline is finalized."
+          };
+        },
+        ({ purpose, input }) => {
+          assert.equal(purpose, "multi_agent_discussion");
+          discussionTurns.push(String(input));
+          assert.match(String(input), /Draft lane/i);
+          return {
+            text: "Source lane confirms the shortlist is locked; Draft lane should mark any missing citation instead of widening scope."
+          };
+        },
+        ({ purpose, input }) => {
+          assert.equal(purpose, "multi_agent_discussion");
+          discussionTurns.push(String(input));
+          assert.match(String(input), /citation gaps/i);
+          return {
+            text: "Source lane will only reopen scope if Draft lane finds a gap tied to the locked shortlist."
+          };
+        },
+        () => ({ text: buildWorkerOutput("Source lane completed.") })
+      ])
+    ],
+    [
+      "worker_b",
+      new FakeProvider([
+        ({ purpose, input }) => {
+          assert.equal(purpose, "multi_agent_discussion");
+          discussionTurns.push(String(input));
+          assert.match(String(input), /lock the evidence shortlist/i);
+          return {
+            text: "Draft lane will draft against that locked shortlist and tag any unsupported claim instead of adding new sources."
+          };
+        },
+        ({ purpose, input }) => {
+          assert.equal(purpose, "multi_agent_discussion");
+          discussionTurns.push(String(input));
+          assert.match(String(input), /missing citation/i);
+          return {
+            text: "Draft lane agrees and will return only citation gaps, not new scope requests, back to Source lane."
+          };
+        },
+        ({ purpose, input }) => {
+          assert.equal(purpose, "multi_agent_discussion");
+          discussionTurns.push(String(input));
+          assert.match(String(input), /reopen scope/i);
+          return {
+            text: "Draft lane is ready to merge once the shortlist stays unchanged through the final outline pass."
+          };
+        },
+        () => ({ text: buildWorkerOutput("Draft lane completed.") })
+      ])
+    ]
+  ]);
+
+  const result = await runClusterAnalysis({
+    task: "Respect the configured group chat max rounds",
+    config,
+    providerRegistry
+  });
+
+  assert.equal(
+    result.multiAgentSession.messages.filter(
+      (message) => message.stage === "multi_agent_chat" && message.sourceStage === "multi_agent_discussion"
+    ).length,
+    6
+  );
+  assert.equal(
+    result.multiAgentSession.messages.some(
+      (message) =>
+        message.stage === "multi_agent_chat" &&
+        message.sourceStage === "multi_agent_discussion_summary" &&
+        /6 coordination turn\(s\)/i.test(message.content)
+    ),
+    true
+  );
+  assert.equal(discussionTurns.length, 6);
+});
+
 test("runClusterAnalysis expands group chat rounds with four participants", async () => {
   const discussionTurns = [];
+  const discussionRewrites = [];
   const config = {
     cluster: {
       controller: "controller",
@@ -706,8 +894,8 @@ test("runClusterAnalysis expands group chat rounds with four participants", asyn
       enabled: true,
       mode: "group_chat",
       speakerStrategy: "phase_priority",
-      maxRounds: 12,
-      messageWindow: 40,
+      maxRounds: 8,
+      messageWindow: 64,
       summarizeLongMessages: true,
       includeSystemMessages: true
     },
@@ -751,19 +939,38 @@ test("runClusterAnalysis expands group chat rounds with four participants", asyn
   class FourParticipantWorkerProvider {
     constructor(label) {
       this.label = label;
+      this.discussionCount = 0;
+      this.rewriteCount = 0;
     }
 
     async invoke({ purpose, input } = {}) {
       if (purpose === "multi_agent_discussion") {
+        this.discussionCount += 1;
         discussionTurns.push(String(input));
         return {
           text: `${this.label} will publish one concrete checkpoint now and flag any overlap before the next handoff.`
         };
       }
 
+      if (purpose === "multi_agent_discussion_rewrite") {
+        this.rewriteCount += 1;
+        discussionRewrites.push(String(input));
+        const promptText = String(input || "");
+        const title = promptText.match(/"title": "([^"]+)"/)?.[1] || this.label;
+        const target = promptText.match(/Suggested target:\n([^\n|]+)/)?.[1]?.trim() || "the next lane";
+        return {
+          text: `${title} is sending its scoped handoff now; ${target} should use that handoff instead of reopening the scope.`
+        };
+      }
+
       return { text: buildWorkerOutput(`${this.label} finished the assigned lane.`) };
     }
   }
+
+  const workerAProvider = new FourParticipantWorkerProvider("Worker A");
+  const workerBProvider = new FourParticipantWorkerProvider("Worker B");
+  const workerCProvider = new FourParticipantWorkerProvider("Worker C");
+  const workerDProvider = new FourParticipantWorkerProvider("Worker D");
 
   const providerRegistry = new Map([
     [
@@ -816,10 +1023,10 @@ test("runClusterAnalysis expands group chat rounds with four participants", asyn
         })
       ])
     ],
-    ["worker_a", new FourParticipantWorkerProvider("Worker A")],
-    ["worker_b", new FourParticipantWorkerProvider("Worker B")],
-    ["worker_c", new FourParticipantWorkerProvider("Worker C")],
-    ["worker_d", new FourParticipantWorkerProvider("Worker D")]
+    ["worker_a", workerAProvider],
+    ["worker_b", workerBProvider],
+    ["worker_c", workerCProvider],
+    ["worker_d", workerDProvider]
   ]);
 
   const result = await runClusterAnalysis({
@@ -829,19 +1036,50 @@ test("runClusterAnalysis expands group chat rounds with four participants", asyn
   });
 
   assert.equal(
-    result.multiAgentSession.messages.filter(
-      (message) => message.stage === "multi_agent_chat" && message.sourceStage === "multi_agent_discussion"
-    ).length,
-    8
+    result.multiAgentSession.messages.some(
+      (message) =>
+        message.stage === "multi_agent_chat" &&
+        message.sourceStage === "multi_agent_discussion_summary" &&
+        /8 coordination turn\(s\)/i.test(message.content)
+    ),
+    true
+  );
+  assert.deepEqual(
+    Array.from(
+      new Set(
+        result.multiAgentSession.messages
+          .filter(
+            (message) =>
+              message.stage === "multi_agent_chat" && message.sourceStage === "multi_agent_discussion"
+          )
+          .map((message) => message.speakerLabel)
+      )
+    ).sort(),
+    [
+      "编码组长 · Worker C",
+      "调研组长 · Worker A",
+      "调研组长 · Worker B",
+      "验证组长 · Worker D"
+    ].sort()
+  );
+  assert.equal(discussionRewrites.length, 8);
+  assert.equal(
+    result.multiAgentSession.messages.some(
+      (message) =>
+        message.stage === "multi_agent_chat" &&
+        message.sourceStage === "multi_agent_discussion" &&
+        /Lane C is sending its scoped handoff now/i.test(message.content)
+    ),
+    true
   );
   assert.equal(
     result.multiAgentSession.messages.some(
       (message) =>
         message.stage === "multi_agent_chat" &&
-        message.sourceStage === "multi_agent_discussion_summary" &&
-        /8 real collaboration messages/i.test(message.content)
+        message.sourceStage === "multi_agent_discussion" &&
+        /publish one concrete checkpoint/i.test(message.content)
     ),
-    true
+    false
   );
   assert.equal(discussionTurns.length, 8);
 });

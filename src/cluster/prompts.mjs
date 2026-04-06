@@ -18,6 +18,22 @@ function buildOutputLanguageInput(locale) {
   return `Requested response language:\n${describeOutputLanguage(locale)}`;
 }
 
+function buildDiscussionAnchors(speakerTask = null, target = null) {
+  const anchors = uniqueStrings(
+    [
+      speakerTask?.title,
+      speakerTask?.expectedOutput,
+      target?.title,
+      target?.task?.title,
+      target?.task?.expectedOutput
+    ]
+      .map((value) => String(value || "").trim())
+      .filter(Boolean)
+  ).slice(0, 4);
+
+  return anchors.length ? anchors.map((anchor) => `- ${anchor}`).join("\n") : "(no explicit anchors)";
+}
+
 function formatWorkers(workers) {
   return workers
     .map(
@@ -393,6 +409,7 @@ export function buildGroupDiscussionTurnRequest({
     .slice(-8)
     .map((line, index) => `${index + 1}. ${String(line).trim()}`)
     .join("\n");
+  const discussionAnchors = buildDiscussionAnchors(speakerTask, target);
 
   return {
     instructions: [
@@ -406,7 +423,9 @@ export function buildGroupDiscussionTurnRequest({
         ? `You are explicitly responding to ${pendingReply.sourceLabel || "a peer"} in this turn. Answer their latest question or concern concretely in the opening sentence before you add any follow-up.`
         : "Advance the discussion by doing at least one of these: expose an overlap, challenge a weak assumption, answer a peer's concern, flag a dependency, or suggest a concrete coordination step.",
       "Every message must contain at least one concrete answer, decision, or coordination action.",
+      "Name at least one concrete anchor when possible: an exact task, artifact, source bucket, date window, risk, or decision tied to the work at hand.",
       "Do not send a question-only message. If you ask a follow-up question, ask at most one short question and only after giving a concrete answer or position.",
+      "Avoid generic promises like 'I will compare notes', 'I will flag overlap', or 'I will keep things aligned' unless you state exactly what will be compared, flagged, or aligned.",
       "Do not simulate tool outputs, do not write fake search snippets, and never start with phrases like 'Search results for query'.",
       "Do not restate the whole task, do not narrate hidden reasoning, and do not invent evidence or tools.",
       target
@@ -444,6 +463,7 @@ export function buildGroupDiscussionTurnRequest({
             pendingReply.content || ""
           ).trim()}`
         : "Direct reply expected:\n(none)",
+      `Concrete anchors:\n${discussionAnchors}`,
       `Participants:\n${participantLines || "(none)"}`,
       `Recent shared discussion:\n${transcriptLines || "(no prior discussion yet)"}`,
       "Return one concise discussion message that helps the group coordinate before execution."
@@ -461,6 +481,7 @@ export function buildGroupDiscussionRewriteRequest({
   draft = "",
   outputLocale = "en-US"
 }) {
+  const discussionAnchors = buildDiscussionAnchors(speakerTask, target);
   return {
     instructions: [
       `You are ${speaker.displayLabel || speaker.label || speaker.id}, rewriting a low-quality live multi-agent discussion message inside a cluster.`,
@@ -469,9 +490,11 @@ export function buildGroupDiscussionRewriteRequest({
       "Rewrite the draft into one concise peer-to-peer collaboration message.",
       "Keep it to 1-3 short sentences, under 120 words.",
       "The rewrite must contain at least one concrete answer, decision, or coordination step.",
+      "Make it specific: mention the exact task, artifact, source bucket, date window, risk, or decision you are referring to.",
       pendingReply
         ? `This turn is a direct reply to ${pendingReply.sourceLabel || "a peer"}. Answer that peer first, then add at most one follow-up question if absolutely necessary.`
         : "If you ask a follow-up question, ask at most one short question and only after giving a concrete answer or position.",
+      "Do not keep vague promises like 'I will compare notes' or 'I will keep things aligned' unless you explicitly name what will be compared or aligned.",
       "Do not output fake tool traces, do not say 'Search results for query', and do not narrate hidden reasoning.",
       "Return plain text only."
     ].join(" "),
@@ -501,6 +524,7 @@ export function buildGroupDiscussionRewriteRequest({
             pendingReply.content || ""
           ).trim()}`
         : "Direct reply expected:\n(none)",
+      `Concrete anchors:\n${discussionAnchors}`,
       `Draft to rewrite:\n${String(draft || "").trim()}`
     ].join("\n\n")
   };

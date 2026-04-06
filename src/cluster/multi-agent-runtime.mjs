@@ -142,38 +142,6 @@ export function createMultiAgentRuntime(rawSettings = {}) {
       return null;
     }
 
-    if (shouldCountAsTurn && turnCount >= settings.maxRounds) {
-      foldedMessageCount += 1;
-      const lastFoldedSummary = messages.findLast(
-        (entry) => entry.kind === "summary" && entry.summaryType === "folded"
-      );
-      if (lastFoldedSummary) {
-        lastFoldedSummary.foldedCount = foldedMessageCount;
-        lastFoldedSummary.content = `Folded ${foldedMessageCount} additional collaboration message(s) after reaching the round cap.`;
-        return null;
-      }
-
-      const foldedSummary = {
-        id: `ma_${String(++nextMessageId).padStart(4, "0")}`,
-        kind: "summary",
-        summaryType: "folded",
-        stage: stage || "multi_agent_session_summary",
-        tone: "warning",
-        phase: safeString(phase),
-        round: turnCount,
-        timestamp: new Date().toISOString(),
-        speakerId: "",
-        speakerLabel: "",
-        targetId: "",
-        targetLabel: "",
-        content: "Folded 1 additional collaboration message after reaching the round cap.",
-        foldedCount: 1
-      };
-      messages.push(foldedSummary);
-      totalMessageCount += 1;
-      return foldedSummary;
-    }
-
     if (shouldCountAsTurn) {
       turnCount += 1;
     }

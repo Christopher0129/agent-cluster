@@ -674,6 +674,36 @@ function extractEventDetailValue(detail, patterns = []) {
   return normalized;
 }
 
+function resolveConversationArtifactContext(stage, payload = {}) {
+  const normalizedStage = safeString(stage || payload.stage);
+  if (normalizedStage === "workspace_write") {
+    const generatedFiles = normalizeWorkspaceArtifactReferences(payload.generatedFiles || []);
+    if (generatedFiles.length) {
+      return generatedFiles[0];
+    }
+    return extractEventDetailValue(safeString(payload.detail), [
+      /^Auto-materialized requested artifact(?: but verification failed)?:\s*(.+)$/i,
+      /^Artifact:\s*(.+)$/i,
+      /^Files:\s*(.+)$/i
+    ]);
+  }
+  if (normalizedStage === "workspace_read") {
+    return normalizeWorkspaceArtifactReferences(payload.paths || [])[0] || "";
+  }
+  if (
+    normalizedStage === "worker_done" ||
+    normalizedStage === "subagent_done" ||
+    normalizedStage === "cluster_done"
+  ) {
+    return (
+      normalizeWorkspaceArtifactReferences(payload.verifiedGeneratedFiles || [])[0] ||
+      normalizeWorkspaceArtifactReferences(payload.generatedFiles || [])[0] ||
+      ""
+    );
+  }
+  return "";
+}
+
 function buildConversationStyleContent(stage, payload = {}, taskTitle = "", locale = "en-US") {
   const normalizedLocale = normalizeRunLocale(locale);
   const snippet = resolveConversationSnippet(stage, payload);
@@ -687,6 +717,41 @@ function buildConversationStyleContent(stage, payload = {}, taskTitle = "", loca
     normalizedLocale === "zh-CN" ? "该子任务" : "this child task",
     normalizedLocale
   );
+
+  const artifactPath = resolveConversationArtifactContext(stage, payload);
+
+  if (stage === "worker_start") {
+    return joinConversationParts([
+      localizeRunText(
+        normalizedLocale,
+        `I'm opening ${taskLabel}. I will publish the first reusable handoff from this lane as soon as it is stable.`,
+        `\u6211\u6b63\u5728\u5c55\u5f00${taskLabel}\u3002\u8fd9\u6761\u4efb\u52a1\u7ebf\u4ea7\u51fa\u7a33\u5b9a\u540e\uff0c\u6211\u4f1a\u7b2c\u4e00\u65f6\u95f4\u53d1\u51fa\u53ef\u590d\u7528\u7684\u4ea4\u4ed8\u6210\u679c\u3002`
+      ),
+      snippet && snippet !== taskTitle
+        ? localizeRunText(normalizedLocale, `Plan: ${snippet}`, `\u8ba1\u5212\uff1a${snippet}`)
+        : ""
+    ]);
+  }
+
+  if (stage === "worker_done") {
+    return joinConversationParts([
+      localizeRunText(
+        normalizedLocale,
+        `Finished ${taskLabel}. The current handoff is ready for downstream use.`,
+        `\u5df2\u5b8c\u6210${taskLabel}\u3002\u5f53\u524d\u4ea4\u4ed8\u7269\u5df2\u53ef\u4f9b\u4e0b\u6e38\u76f4\u63a5\u4f7f\u7528\u3002`
+      ),
+      artifactPath
+        ? localizeRunText(
+            normalizedLocale,
+            `Artifact: ${artifactPath}`,
+            `\u4ea4\u4ed8\u7269\uff1a${artifactPath}`
+          )
+        : "",
+      snippet && snippet !== taskTitle
+        ? localizeRunText(normalizedLocale, `Result: ${snippet}`, `\u7ed3\u679c\uff1a${snippet}`)
+        : ""
+    ]);
+  }
 
   switch (stage) {
     case "planning_start":
@@ -4399,25 +4464,102 @@ export async function runClusterAnalysis({
     );
   }
 
+  function tokenizeDiscussionAnchors(...values) {
+    const stopwords = new Set([
+      "the",
+      "and",
+      "for",
+      "with",
+      "from",
+      "into",
+      "task",
+      "tasks",
+      "lane",
+      "work",
+      "worker",
+      "group",
+      "chat",
+      "agent",
+      "agents",
+      "phase",
+      "top",
+      "level"
+    ]);
+
+    return uniqueArray(
+      values
+        .flatMap((value) => String(value || "").match(/[\p{L}\p{N}_-]+/gu) || [])
+        .map((token) => token.trim().toLowerCase())
+        .filter((token) => {
+          if (!token || stopwords.has(token)) {
+            return false;
+          }
+
+          if (/^\d+$/.test(token)) {
+            return false;
+          }
+
+          if (/^[a-z0-9_-]+$/i.test(token)) {
+            return token.length >= 3;
+          }
+
+          return token.length >= 2;
+        })
+    );
+  }
+
+  function discussionHasConcreteAnchor(content = "", speakerTask = null, targetEntry = null) {
+    const normalized = safeString(content).toLowerCase();
+    if (!normalized) {
+      return false;
+    }
+
+    if (
+      /`[^`]+`|\b[\w./\\-]+\.(?:json|docx|md|txt|csv|tsv|yaml|yml|xml|html|js|mjs|cjs|ts|tsx|jsx|py|pdf|pptx|xlsx)\b|\b\d+(?:[%:/.-]\d+)*\b/i.test(
+        normalized
+      )
+    ) {
+      return true;
+    }
+
+    const anchors = tokenizeDiscussionAnchors(
+      speakerTask?.title,
+      speakerTask?.expectedOutput,
+      targetEntry?.title,
+      targetEntry?.task?.title,
+      targetEntry?.task?.expectedOutput
+    );
+    return anchors.some((anchor) => normalized.includes(anchor));
+  }
+
   function selectDiscussionSpeaker(
     participants = [],
     roundIndex = 0,
     lastSpeakerId = "",
     seed = "",
-    preferredSpeakerId = ""
+    preferredSpeakerId = "",
+    speakerCounts = new Map()
   ) {
     const ordered = sortDiscussionParticipants(participants);
     if (!ordered.length) {
       return null;
     }
 
+    const getSpeakerCount = (participant) =>
+      Number(speakerCounts.get(getDiscussionParticipantAgentId(participant))) || 0;
+
     const normalizedPreferredSpeakerId = safeString(preferredSpeakerId);
     if (normalizedPreferredSpeakerId) {
       const preferred = ordered.find(
         (participant) => getDiscussionParticipantAgentId(participant) === normalizedPreferredSpeakerId
       );
+      const minimumSpeakerCount = ordered.reduce((minimum, participant) => {
+        const count = getSpeakerCount(participant);
+        return minimum === null ? count : Math.min(minimum, count);
+      }, null);
       if (
         preferred &&
+        getSpeakerCount(preferred) <= Number(minimumSpeakerCount ?? 0) &&
         (getDiscussionParticipantAgentId(preferred) !== lastSpeakerId || ordered.length === 1)
       ) {
         return preferred;
@@ -4428,14 +4570,24 @@ export async function runClusterAnalysis({
       (participant) => getDiscussionParticipantAgentId(participant) !== lastSpeakerId
     );
     const pool = filtered.length ? filtered : ordered;
+    const minimumSpeakerCount = pool.reduce((minimum, participant) => {
+      const count = getSpeakerCount(participant);
+      return minimum === null ? count : Math.min(minimum, count);
+    }, null);
+    const balancedPool = pool.filter(
+      (participant) => getSpeakerCount(participant) === Number(minimumSpeakerCount ?? 0)
+    );
+    const selectionPool = balancedPool.length ? balancedPool : pool;
 
     switch (multiAgentRuntime.settings.speakerStrategy) {
       case "random":
-        return pool[hashConversationSeed(`${seed}:${roundIndex}:${pool.length}`) % pool.length];
+        return selectionPool[
+          hashConversationSeed(`${seed}:${roundIndex}:${selectionPool.length}`) % selectionPool.length
+        ];
       case "round_robin":
-        return pool[resolveRoundRobinIndex(pool.length)];
+        return selectionPool[resolveRoundRobinIndex(selectionPool.length)];
       default:
-        return pool[roundIndex % pool.length];
+        return selectionPool[roundIndex % selectionPool.length];
     }
   }
 
@@ -4505,7 +4657,7 @@ export async function runClusterAnalysis({
     }
   }
 
-  function discussionMessageNeedsRewrite(content = "") {
+  function discussionMessageNeedsRewrite(content = "", { speakerTask = null, targetEntry = null } = {}) {
     const normalized = safeString(content).replace(/\s+/g, " ");
     if (!normalized) {
       return true;
@@ -4531,7 +4683,25 @@ export async function runClusterAnalysis({
     const questionLead = /^(?:@\S+\s+)?(?:can you|could you|would you|please|do we|should we|is it|are we|need to|please confirm|\u8bf7|\u8bf7\u786e\u8ba4|\u662f\u5426|\u80fd\u5426|\u6211\u9700\u8981\u786e\u8ba4|\u9700\u8981\u786e\u8ba4)/i.test(
       normalized
     );
-    return (questionCount > 0 && statementCount === 0 && !answerCue) || (questionLead && !answerCue);
+    const genericCoordinationPattern = [
+      /\bcompare notes\b/i,
+      /\bflag any overlap\b/i,
+      /\bpublish one concrete checkpoint\b/i,
+      /\bbefore the next handoff\b/i,
+      /\bbefore the final merge\b/i,
+      /\bcall out contradictions?\b/i,
+      /\bchallenge weak assumptions?\b/i,
+      /\bkeep (?:the group )?aligned\b/i,
+      /\bmy lane may affect yours\b/i,
+      /\bi see your lane\b/i,
+      /\bsurface any mismatch immediately\b/i
+    ].some((pattern) => pattern.test(normalized));
+    const hasConcreteAnchor = discussionHasConcreteAnchor(normalized, speakerTask, targetEntry);
+    return (
+      (questionCount > 0 && statementCount === 0 && !answerCue) ||
+      (questionLead && !answerCue) ||
+      (genericCoordinationPattern && !hasConcreteAnchor)
+    );
   }
 
   function buildDiscussionDependencyOutput({
@@ -4596,12 +4766,13 @@ export async function runClusterAnalysis({
     }
 
     const roundCap = Math.max(1, Number(multiAgentRuntime.settings.maxRounds) || 1);
-    const plannedRounds = Math.min(roundCap, Math.max(4, discussionParticipants.length * 2));
+    const plannedRounds = roundCap;
     const transcript = [];
     const recordedMessages = [];
     let lastSpeakerId = "";
     let lastTargetId = "";
     let pendingReply = null;
+    const speakerCounts = new Map();
 
     for (let roundIndex = 0; roundIndex < plannedRounds; roundIndex += 1) {
       throwIfAborted(signalOverride);
@@ -4611,7 +4782,8 @@ export async function runClusterAnalysis({
         roundIndex,
         lastSpeakerId,
         discussionKey,
-        pendingReply?.targetAgentId || ""
+        pendingReply?.targetAgentId || "",
+        speakerCounts
       );
       if (!speakerEntry?.agent) {
         break;
@@ -4663,7 +4835,12 @@ export async function runClusterAnalysis({
           { signal: signalOverride }
         );
         let content = safeString(response?.text).replace(/\s+/g, " ").trim();
-        if (discussionMessageNeedsRewrite(content)) {
+        if (
+          discussionMessageNeedsRewrite(content, {
+            speakerTask: speakerEntry.task || null,
+            targetEntry
+          })
+        ) {
           const rewritePrompt = buildGroupDiscussionRewriteRequest({
             originalTask,
             clusterPlan,
@@ -4718,6 +4895,7 @@ export async function runClusterAnalysis({
         }
 
         lastSpeakerId = safeString(speakerEntry.agent.runtimeId || speakerEntry.agent.id);
+        speakerCounts.set(lastSpeakerId, (Number(speakerCounts.get(lastSpeakerId)) || 0) + 1);
         lastTargetId = safeString(targetEntry?.agent?.runtimeId || targetEntry?.agent?.id);
         pendingReply = lastTargetId
           ? {
@@ -5020,6 +5198,7 @@ export async function runClusterAnalysis({
   function buildGroupChatSyntheticMessages({ stage, payload, agent, parentAgent, taskTitle, phase }) {
     const messages = [];
     const taskLabel = resolveQuotedTaskTitle(taskTitle, "this task", runLocale);
+    const artifactPath = resolveConversationArtifactContext(stage, payload);
 
     if (stage === "planning_done") {
       const assignments = multiAgentConversationState.topLevelAssignments;
@@ -5073,6 +5252,50 @@ export async function runClusterAnalysis({
     }
 
     if (stage === "worker_start") {
+      const assignment = findTopLevelAssignmentForAgent(agent, phase);
+      if (assignment) {
+        const peerAssignment = pickStrategicTarget(
+          multiAgentConversationState.topLevelAssignments.filter((entry) => entry.id !== assignment.id),
+          taskTitle || payload.detail
+        );
+        if (peerAssignment) {
+          const peerTaskLabel = resolveQuotedTaskTitle(
+            peerAssignment.title,
+            "the peer lane",
+            runLocale
+          );
+          messages.push(
+            createSyntheticMultiAgentMessage({
+              speaker: agent,
+              target: peerAssignment.agent,
+              phase,
+              tone: "neutral",
+              content: localizeRunText(
+                runLocale,
+                `I am opening ${taskLabel}. Before you lock ${peerTaskLabel}, I will send the first concrete handoff from this lane.`,
+                `\u6211\u6b63\u5728\u5c55\u5f00${taskLabel}\u3002\u5728\u4f60\u5b9a\u7a3f${peerTaskLabel}\u4e4b\u524d\uff0c\u6211\u4f1a\u5148\u53d1\u51fa\u8fd9\u6761\u4efb\u52a1\u7ebf\u7684\u7b2c\u4e00\u4e2a\u5177\u4f53\u4ea4\u4ed8\u7269\u3002`
+              )
+            })
+          );
+          messages.push(
+            createSyntheticMultiAgentMessage({
+              speaker: peerAssignment.agent,
+              target: agent,
+              phase: safeString(peerAssignment.phase),
+              tone: "neutral",
+              content: localizeRunText(
+                runLocale,
+                `Received. I will keep ${peerTaskLabel} scoped to your handoff and return only concrete conflicts or missing inputs.`,
+                `\u6536\u5230\u3002\u6211\u4f1a\u8ba9${peerTaskLabel}\u4e25\u683c\u4f9d\u7167\u4f60\u7684\u4ea4\u4ed8\u7269\u63a8\u8fdb\uff0c\u53ea\u56de\u4f20\u5177\u4f53\u51b2\u7a81\u6216\u7f3a\u5931\u8f93\u5165\u3002`
+              )
+            })
+          );
+        }
+      }
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "__legacy_worker_start__") {
       const assignment = findTopLevelAssignmentForAgent(agent, phase);
       if (assignment) {
         const peerAssignment = pickStrategicTarget(
@@ -5180,6 +5403,71 @@ export async function runClusterAnalysis({
     }
 
     if (stage === "subagent_done" || stage === "worker_done") {
+      const siblings = parentAgent
+        ? resolveSiblingAssignments(parentAgent, agent)
+        : multiAgentConversationState.topLevelAssignments.filter(
+            (assignment) => assignment.id !== findTopLevelAssignmentForAgent(agent, phase)?.id
+          );
+      const peerAssignment = pickStrategicTarget(siblings, taskTitle || payload.summary || payload.detail);
+      if (peerAssignment) {
+        const peerTaskLabel = resolveQuotedTaskTitle(
+          peerAssignment.title,
+          "the peer lane",
+          runLocale
+        );
+        messages.push(
+          createSyntheticMultiAgentMessage({
+            speaker: agent,
+            target: peerAssignment.agent,
+            phase,
+            tone: "ok",
+            content: localizeRunText(
+              runLocale,
+              artifactPath
+                ? `My handoff for ${taskLabel} is ready at ${artifactPath}. Use this exact output when you continue ${peerTaskLabel}; if something is missing, send back the exact gap only.`
+                : `My handoff for ${taskLabel} is ready. Use it when you continue ${peerTaskLabel}; if something is missing, send back the exact gap only.`,
+              artifactPath
+                ? `\u6211\u5173\u4e8e${taskLabel}\u7684\u4ea4\u4ed8\u7269\u5df2\u51c6\u5907\u597d\uff0c\u8def\u5f84\u4e3a ${artifactPath}\u3002\u4f60\u7ee7\u7eed\u63a8\u8fdb${peerTaskLabel}\u65f6\u8bf7\u76f4\u63a5\u4f7f\u7528\u8fd9\u4e2a\u8f93\u51fa\uff1b\u5982\u679c\u7f3a\u4ec0\u4e48\uff0c\u53ea\u56de\u6765\u8bf4\u5177\u4f53\u7f3a\u53e3\u3002`
+                : `\u6211\u5173\u4e8e${taskLabel}\u7684\u4ea4\u4ed8\u7269\u5df2\u51c6\u5907\u597d\u3002\u4f60\u7ee7\u7eed\u63a8\u8fdb${peerTaskLabel}\u65f6\u8bf7\u76f4\u63a5\u4f7f\u7528\u5b83\uff1b\u5982\u679c\u7f3a\u4ec0\u4e48\uff0c\u53ea\u56de\u6765\u8bf4\u5177\u4f53\u7f3a\u53e3\u3002`
+            )
+          })
+        );
+        messages.push(
+          createSyntheticMultiAgentMessage({
+            speaker: peerAssignment.agent,
+            target: agent,
+            phase: safeString(peerAssignment.phase),
+            tone: "ok",
+            content: localizeRunText(
+              runLocale,
+              `Received. I will compare ${peerTaskLabel} against your handoff now and raise only concrete mismatches or missing inputs.`,
+              `\u6536\u5230\u3002\u6211\u73b0\u5728\u5c31\u4f1a\u5c06${peerTaskLabel}\u548c\u4f60\u7684\u4ea4\u4ed8\u7269\u5bf9\u9f50\uff0c\u53ea\u63d0\u51fa\u5177\u4f53\u4e0d\u4e00\u81f4\u6216\u7f3a\u5931\u8f93\u5165\u3002`
+            )
+          })
+        );
+      } else if (parentAgent) {
+        messages.push(
+          createSyntheticMultiAgentMessage({
+            speaker: agent,
+            target: parentAgent,
+            phase,
+            tone: "ok",
+            content: localizeRunText(
+              runLocale,
+              artifactPath
+                ? `My handoff for ${taskLabel} is ready at ${artifactPath}. Use it as the current source of truth when you merge the sibling lanes.`
+                : `My handoff for ${taskLabel} is ready. Use it as the current source of truth when you merge the sibling lanes.`,
+              artifactPath
+                ? `\u6211\u5173\u4e8e${taskLabel}\u7684\u4ea4\u4ed8\u7269\u5df2\u51c6\u5907\u597d\uff0c\u8def\u5f84\u4e3a ${artifactPath}\u3002\u4f60\u5408\u5e76\u5144\u5f1f\u4efb\u52a1\u7ebf\u65f6\uff0c\u8bf7\u5148\u4ee5\u5b83\u4f5c\u4e3a\u5f53\u524d\u771f\u5b9e\u57fa\u51c6\u3002`
+                : `\u6211\u5173\u4e8e${taskLabel}\u7684\u4ea4\u4ed8\u7269\u5df2\u51c6\u5907\u597d\u3002\u4f60\u5408\u5e76\u5144\u5f1f\u4efb\u52a1\u7ebf\u65f6\uff0c\u8bf7\u5148\u4ee5\u5b83\u4f5c\u4e3a\u5f53\u524d\u771f\u5b9e\u57fa\u51c6\u3002`
+            )
+          })
+        );
+      }
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "__legacy_worker_done__" || stage === "__legacy_subagent_done__") {
       const siblings = parentAgent
         ? resolveSiblingAssignments(parentAgent, agent)
         : multiAgentConversationState.topLevelAssignments.filter(

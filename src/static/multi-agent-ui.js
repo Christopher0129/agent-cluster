@@ -689,32 +689,6 @@ export function createMultiAgentUi({
     state.session.status = "running";
     state.session.totalMessageCount += 1;
     if (entry.kind === "message") {
-      if (state.session.rounds >= state.settings.maxRounds) {
-        state.session.foldedMessageCount += 1;
-        const foldedEntry = state.session.messages.find((item) => item.summaryType === "folded");
-        if (foldedEntry) {
-          foldedEntry.content = translate("multiAgent.chat.folded", {
-            count: state.session.foldedMessageCount
-          });
-        } else {
-          state.session.messages.push({
-            id: `folded:${entry.id}`,
-            kind: "summary",
-            summaryType: "folded",
-            tone: "warning",
-            phase: "",
-            round: state.session.rounds,
-            timestamp: entry.timestamp,
-            speakerLabel: "",
-            targetLabel: "",
-            content: translate("multiAgent.chat.folded", {
-              count: state.session.foldedMessageCount
-            })
-          });
-        }
-        return;
-      }
-
       state.session.rounds += 1;
       entry.round = state.session.rounds;
     }
