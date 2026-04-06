@@ -174,8 +174,12 @@ export function buildPlanningRequest({
   delegateBranchFactor = 0,
   complexityBudget = null,
   capabilityRoutingPolicySummary = "",
+  multiAgentMode = "group_chat",
   outputLocale = "en-US"
 }) {
+  const normalizedMode = String(multiAgentMode || "").trim().toLowerCase();
+  const workflowModeEnabled = normalizedMode === "workflow";
+
   return {
     instructions: [
       "You are the controller of a multi-model agent cluster.",
@@ -185,6 +189,9 @@ export function buildPlanningRequest({
       "Never infer a different 'actual current date' from background knowledge. Use only the authoritative runtime clock provided below.",
       "Use staged workflow phases when helpful: research -> implementation -> validation -> handoff.",
       "Favor parallel execution unless a dependency is truly necessary.",
+      workflowModeEnabled
+        ? "Nested tool flow mode is enabled: model the plan as a dependency graph. Use explicit dependsOn edges for branches, joins, and nested production/consumption chains instead of forcing unrelated tasks into one queue."
+        : "Only add dependsOn edges when a real dependency exists.",
       Number(complexityBudget?.requestedTotalAgents) > 0
         ? `The user explicitly requested ${complexityBudget.requestedTotalAgents} total agents for the whole run. Treat that as one global cluster-wide total, not as a per-task or per-leader quota.`
         : "Apply the agent budget as a run-wide limit, not a per-task quota.",
@@ -211,6 +218,7 @@ export function buildPlanningRequest({
       buildOutputLanguageInput(outputLocale),
       `Available workers:\n${formatWorkers(workers)}`,
       `Workspace context:\n${formatWorkspaceSummary(workspaceSummary)}`,
+      `Collaboration mode:\n${normalizedMode || "group_chat"}`,
       `Delegation limits:\nmax_depth=${Math.max(0, Number(delegateMaxDepth) || 0)}\nmax_children_per_parent=${Math.max(0, Number(delegateBranchFactor) || 0)}`,
       `Hard limit: no more than ${Math.max(1, Number(maxParallel) || 0)} top-level subtasks unless absolutely necessary.`,
       complexityBudget

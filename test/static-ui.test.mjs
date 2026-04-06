@@ -549,6 +549,54 @@ test("sequential mode still renders handoff-style chat entries", () => {
   assert.match(elements.multiAgentChatroom.innerHTML, /align the priorities before execution/);
 });
 
+test("workflow mode only renders workflow-specific tool-flow messages", () => {
+  const { ui, elements } = createMultiAgentUiHarness({ mode: "workflow" });
+
+  ui.applySession({
+    settings: {
+      enabled: true,
+      mode: "workflow",
+      speakerStrategy: "phase_priority",
+      maxRounds: 16,
+      terminationKeyword: "TERMINATE",
+      messageWindow: 28,
+      summarizeLongMessages: true,
+      includeSystemMessages: true
+    },
+    messages: [
+      {
+        id: "ma_0001",
+        stage: "multi_agent_chat",
+        sourceStage: "subagent_created",
+        timestamp: "2026-04-06T10:00:00.000Z",
+        speakerLabel: "Implementation Leader",
+        targetLabel: "Implementation Child 01",
+        content: "Please take the implementation subtask."
+      },
+      {
+        id: "ma_0002",
+        stage: "multi_agent_chat",
+        sourceStage: "workflow_graph_locked",
+        timestamp: "2026-04-06T10:00:01.000Z",
+        speakerLabel: "Controller",
+        content: "Nested tool flow graph locked: 3 node(s), 2 dependency edge(s), 1 root branch(es)."
+      },
+      {
+        id: "ma_0003",
+        stage: "multi_agent_chat",
+        sourceStage: "workflow_artifact_published",
+        timestamp: "2026-04-06T10:00:02.000Z",
+        speakerLabel: "Implementation Worker",
+        content: "Published workflow artifact reports/report.docx."
+      }
+    ]
+  });
+
+  assert.match(elements.multiAgentChatroom.innerHTML, /Nested tool flow graph locked/);
+  assert.match(elements.multiAgentChatroom.innerHTML, /Published workflow artifact reports\/report\.docx/);
+  assert.doesNotMatch(elements.multiAgentChatroom.innerHTML, /Please take the implementation subtask/);
+});
+
 test("buildChatEntryFromEvent renders subagent assignment and acknowledgement as dialogue", () => {
   const settings = {
     includeSystemMessages: true,

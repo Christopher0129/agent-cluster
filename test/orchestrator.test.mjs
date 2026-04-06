@@ -633,7 +633,7 @@ test("runClusterAnalysis expands group chat mode into discussion-style collabora
   );
 });
 
-test("runClusterAnalysis expands workflow mode into staged handoff messages", async () => {
+test("runClusterAnalysis expands workflow mode into dependency-driven tool-flow messages", async () => {
   const config = {
     cluster: {
       controller: "controller",
@@ -677,7 +677,7 @@ test("runClusterAnalysis expands workflow mode into staged handoff messages", as
       new FakeProvider([
         JSON.stringify({
           objective: "Inspect the staged collaboration",
-          strategy: "Run research first, implementation second, then synthesize.",
+          strategy: "Run a dependency-driven workflow graph and synthesize after the nodes publish their outputs.",
           tasks: [
             {
               id: "task_1",
@@ -698,9 +698,9 @@ test("runClusterAnalysis expands workflow mode into staged handoff messages", as
           ]
         }),
         JSON.stringify({
-          finalAnswer: "Staged workflow collaboration completed.",
-          executiveSummary: ["The workflow emitted handoff-style collaboration messages."],
-          consensus: ["Downstream phases should consume verified upstream outputs only."],
+          finalAnswer: "Dependency-driven workflow collaboration completed.",
+          executiveSummary: ["The workflow emitted node and artifact contract messages."],
+          consensus: ["Downstream nodes should consume declared upstream outputs only."],
           disagreements: [],
           nextActions: []
         })
@@ -717,13 +717,157 @@ test("runClusterAnalysis expands workflow mode into staged handoff messages", as
   });
 
   assert.equal(
-    result.multiAgentSession.messages.some((message) => /Nested tool flow locked|Downstream phases should consume verified outputs/i.test(message.content)),
+    result.multiAgentSession.messages.some(
+      (message) =>
+        message.sourceStage === "workflow_graph_locked" &&
+        /dependency edge|root branch/i.test(message.content)
+    ),
     true
   );
   assert.equal(
-    result.multiAgentSession.messages.some((message) => /handoff pack is ready|consume verified outputs from the previous phase/i.test(message.content)),
+    result.multiAgentSession.messages.some(
+      (message) =>
+        message.sourceStage === "workflow_node_open" &&
+        /Opening workflow node|Opening root workflow node/i.test(message.content)
+    ),
     true
   );
+  assert.equal(
+    result.multiAgentSession.messages.some(
+      (message) =>
+        message.sourceStage === "workflow_node_published" &&
+        /Unlocked downstream nodes|No downstream workflow node remains/i.test(message.content)
+    ),
+    true
+  );
+});
+
+test("runClusterAnalysis lets workflow mode start downstream nodes as soon as declared inputs are ready", async () => {
+  const events = [];
+  const config = {
+    cluster: {
+      controller: "controller",
+      maxParallel: 3
+    },
+    multiAgent: {
+      enabled: true,
+      mode: "workflow",
+      speakerStrategy: "phase_priority",
+      maxRounds: 20,
+      messageWindow: 40,
+      summarizeLongMessages: true,
+      includeSystemMessages: true
+    },
+    models: {
+      controller: {
+        id: "controller",
+        label: "Controller",
+        model: "gpt-5.4"
+      },
+      research_fast: {
+        id: "research_fast",
+        label: "Research Fast",
+        model: "model-r1",
+        provider: "mock",
+        specialties: ["research"]
+      },
+      research_slow: {
+        id: "research_slow",
+        label: "Research Slow",
+        model: "model-r2",
+        provider: "mock",
+        specialties: ["research"]
+      },
+      implementation_worker: {
+        id: "implementation_worker",
+        label: "Implementation Worker",
+        model: "model-i",
+        provider: "mock",
+        specialties: ["implementation"]
+      }
+    }
+  };
+
+  const providerRegistry = new Map([
+    [
+      "controller",
+      new FakeProvider([
+        JSON.stringify({
+          objective: "Inspect workflow overlap",
+          strategy: "Let the implementation node start as soon as its declared input is ready.",
+          tasks: [
+            {
+              id: "task_1",
+              phase: "research",
+              title: "Collect upstream input A",
+              assignedWorker: "research_fast",
+              instructions: "Collect upstream input A.",
+              dependsOn: []
+            },
+            {
+              id: "task_2",
+              phase: "research",
+              title: "Collect upstream input B",
+              assignedWorker: "research_slow",
+              instructions: "Collect upstream input B.",
+              dependsOn: []
+            },
+            {
+              id: "task_3",
+              phase: "implementation",
+              title: "Build the dependent implementation output",
+              assignedWorker: "implementation_worker",
+              instructions: "Build the dependent implementation output.",
+              dependsOn: ["task_1"]
+            }
+          ]
+        }),
+        JSON.stringify({
+          finalAnswer: "Workflow overlap verified.",
+          executiveSummary: ["Implementation started before an unrelated research branch finished."],
+          consensus: ["Workflow mode followed the declared dependency graph."],
+          disagreements: [],
+          nextActions: []
+        })
+      ])
+    ],
+    [
+      "research_fast",
+      new DelayedJsonProvider(JSON.parse(buildWorkerOutput("Collected upstream input A.")), 40)
+    ],
+    [
+      "research_slow",
+      new DelayedJsonProvider(JSON.parse(buildWorkerOutput("Collected upstream input B.")), 240)
+    ],
+    [
+      "implementation_worker",
+      new DelayedJsonProvider(JSON.parse(buildWorkerOutput("Built the dependent implementation output.")), 20)
+    ]
+  ]);
+
+  await runClusterAnalysis({
+    task: "Inspect workflow overlap",
+    config,
+    providerRegistry,
+    onEvent(event) {
+      events.push({
+        stage: event.stage,
+        taskId: event.taskId,
+        phase: event.phase
+      });
+    }
+  });
+
+  const implementationStartIndex = events.findIndex(
+    (event) => event.stage === "worker_start" && event.taskId === "task_3"
+  );
+  const researchPhaseDoneIndex = events.findIndex(
+    (event) => event.stage === "phase_done" && event.phase === "research"
+  );
+
+  assert.notEqual(implementationStartIndex, -1);
+  assert.notEqual(researchPhaseDoneIndex, -1);
+  assert.equal(implementationStartIndex < researchPhaseDoneIndex, true);
 });
 
 test("runClusterAnalysis auto-materializes a requested docx artifact from leader synthesis", async () => {

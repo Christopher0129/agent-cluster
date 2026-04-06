@@ -1944,6 +1944,21 @@ function normalizePlan(
   };
 }
 
+function resolveClosestEarlierPhaseTaskIds(tasks, phase) {
+  const normalizedTasks = Array.isArray(tasks) ? tasks : [];
+  const targetPhaseIndex = phaseIndex(phase);
+  for (let index = targetPhaseIndex - 1; index >= 0; index -= 1) {
+    const phaseTaskIds = normalizedTasks
+      .filter((candidate) => phaseIndex(candidate?.phase) === index)
+      .map((candidate) => safeString(candidate?.id))
+      .filter(Boolean);
+    if (phaseTaskIds.length) {
+      return phaseTaskIds;
+    }
+  }
+  return [];
+}
+
 function applyMultiAgentModeToTasks(tasks, multiAgentConfig = null) {
   const settings = normalizeMultiAgentRuntimeSettings(multiAgentConfig);
   const normalizedTasks = Array.isArray(tasks) ? tasks.map((task) => ({ ...task })) : [];
@@ -1967,24 +1982,26 @@ function applyMultiAgentModeToTasks(tasks, multiAgentConfig = null) {
   }
 
   if (settings.mode === "workflow") {
-    const completedByPreviousPhases = [];
-    let currentPhase = normalizedTasks[0]?.phase || "";
+    const knownTaskIds = new Set(
+      normalizedTasks.map((task) => safeString(task?.id)).filter(Boolean)
+    );
 
     return normalizedTasks.map((task) => {
-      if (task.phase !== currentPhase) {
-        currentPhase = task.phase;
-        completedByPreviousPhases.push(
-          ...normalizedTasks
-            .filter((candidate) => phaseIndex(candidate.phase) < phaseIndex(task.phase))
-            .map((candidate) => candidate.id)
-        );
+      const explicitDependencies = uniqueArray(
+        safeArray(task.dependsOn).filter((dependencyId) => knownTaskIds.has(dependencyId))
+      );
+      if (explicitDependencies.length || phaseIndex(task.phase) <= 0) {
+        return {
+          ...task,
+          dependsOn: explicitDependencies
+        };
       }
 
       return {
         ...task,
         dependsOn: uniqueArray([
-          ...safeArray(task.dependsOn),
-          ...completedByPreviousPhases
+          ...explicitDependencies,
+          ...resolveClosestEarlierPhaseTaskIds(normalizedTasks, task.phase)
         ])
       };
     });
@@ -3824,6 +3841,166 @@ async function executePlan(
   const completedResults = new Map();
   const maxParallel = config.cluster.maxParallel;
   const taskById = new Map(plan.tasks.map((task) => [task.id, task]));
+  const multiAgentSettings = normalizeMultiAgentRuntimeSettings(config?.multiAgent);
+
+  if (multiAgentSettings.mode === "workflow") {
+    const phaseTasksByPhase = new Map(
+      PHASE_ORDER.map((phase) => [phase, plan.tasks.filter((task) => task.phase === phase)])
+    );
+    const startedPhases = new Set();
+    const completedPhases = new Set();
+    const normalizedGlobalCap = normalizeConcurrencyLimit(maxParallel, 1);
+    const globalTaskCap =
+      normalizedGlobalCap === 0 ? Number.POSITIVE_INFINITY : Math.max(1, normalizedGlobalCap);
+
+    function emitWorkflowPhaseStart(phase) {
+      if (startedPhases.has(phase) || !(phaseTasksByPhase.get(phase) || []).length) {
+        return;
+      }
+      startedPhases.add(phase);
+      emitEvent(onEvent, {
+        type: "status",
+        stage: "phase_start",
+        tone: "neutral",
+        phase,
+        detail: localizeRunText(
+          outputLocale,
+          `Entering ${phase} phase.`,
+          `进入${phase}阶段。`
+        )
+      });
+    }
+
+    function emitWorkflowPhaseDoneIfReady(phase) {
+      if (completedPhases.has(phase)) {
+        return;
+      }
+      const phaseTasks = phaseTasksByPhase.get(phase) || [];
+      if (!phaseTasks.length || phaseTasks.some((task) => !completedResults.has(task.id))) {
+        return;
+      }
+
+      completedPhases.add(phase);
+      const phaseResults = phaseTasks
+        .map((task) => completedResults.get(task.id))
+        .filter(Boolean);
+
+      emitEvent(onEvent, {
+        type: "status",
+        stage: "phase_done",
+        tone: "ok",
+        phase,
+        detail: localizeRunText(
+          outputLocale,
+          `Completed ${phase} phase with ${phaseResults.length} task(s).`,
+          `已完成${phase}阶段，共处理 ${phaseResults.length} 个任务。`
+        )
+      });
+
+      if (
+        phase === "validation" &&
+        phaseResults.some((result) => result.output?.verificationStatus === "failed")
+      ) {
+        emitEvent(onEvent, {
+          type: "status",
+          stage: "validation_gate_failed",
+          tone: "warning",
+          detail: localizeRunText(
+            outputLocale,
+            "Validation phase reported failures. Final synthesis will highlight verification risks.",
+            "验证阶段报告了失败项，最终综合会明确标出这些校验风险。"
+          )
+        });
+      }
+    }
+
+    function countRunningTasksForPhase(phase) {
+      let count = 0;
+      for (const taskId of running.keys()) {
+        if (safeString(taskById.get(taskId)?.phase) === safeString(phase)) {
+          count += 1;
+        }
+      }
+      return count;
+    }
+
+    while (completedResults.size < plan.tasks.length) {
+      throwIfAborted(signal);
+
+      for (const task of plan.tasks) {
+        if (
+          running.size >= globalTaskCap ||
+          completedResults.has(task.id) ||
+          running.has(task.id)
+        ) {
+          continue;
+        }
+
+        const phaseCap = resolvePhaseConcurrency(task.phase, maxParallel, config);
+        if (
+          Number.isFinite(phaseCap) &&
+          phaseCap > 0 &&
+          countRunningTasksForPhase(task.phase) >= phaseCap
+        ) {
+          continue;
+        }
+
+        const ready = task.dependsOn.every((dependencyId) => completedResults.has(dependencyId));
+        if (!ready) {
+          continue;
+        }
+
+        if (!canStartTaskForPhase(task, running.keys(), taskById, config)) {
+          continue;
+        }
+
+        pending.delete(task.id);
+        emitWorkflowPhaseStart(task.phase);
+        const promise = executeSingleTask({
+          task,
+          originalTask,
+          plan,
+          completedResults,
+          collaborationDependencies,
+          runGroupDiscussion,
+          providerRegistry,
+          config,
+          executionGate,
+          runAgentBudget,
+          sessionRuntime,
+          parentSpanId,
+          onEvent,
+          signal,
+          outputLocale
+        }).then((result) => ({ taskId: task.id, result }));
+        running.set(task.id, promise);
+      }
+
+      if (!running.size) {
+        const blocked = Array.from(pending.values()).map((task) => ({
+          taskId: task.id,
+          phase: task.phase,
+          dependsOn: task.dependsOn
+        }));
+        throw new Error(
+          `Workflow graph contains unresolved dependencies: ${JSON.stringify(blocked)}`
+        );
+      }
+
+      let settled;
+      try {
+        settled = await Promise.race(running.values());
+      } catch (error) {
+        await Promise.allSettled(running.values());
+        throw error;
+      }
+      running.delete(settled.taskId);
+      completedResults.set(settled.taskId, settled.result);
+      emitWorkflowPhaseDoneIfReady(taskById.get(settled.taskId)?.phase);
+    }
+
+    return plan.tasks.map((task) => completedResults.get(task.id));
+  }
 
   for (const phase of PHASE_ORDER) {
     throwIfAborted(signal);
@@ -4135,6 +4312,13 @@ export async function runClusterAnalysis({
       query: safeString(query),
       sourceStage: safeString(sourceStage)
     };
+  }
+
+  function createWorkflowSyntheticMessage(sourceStage, payload = {}) {
+    return createSyntheticMultiAgentMessage({
+      ...payload,
+      sourceStage
+    });
   }
 
   function buildDiscussionTranscriptLine(entry = {}) {
@@ -4554,6 +4738,63 @@ export async function runClusterAnalysis({
           (assignmentRuntimeId === runtimeId || safeString(assignment?.assignedWorker) === modelId)
         );
       }) || null
+    );
+  }
+
+  function findTopLevelAssignmentByTaskId(taskId = "") {
+    const normalizedTaskId = safeString(taskId);
+    if (!normalizedTaskId) {
+      return null;
+    }
+
+    return (
+      multiAgentConversationState.topLevelAssignments.find(
+        (assignment) => safeString(assignment?.id) === normalizedTaskId
+      ) || null
+    );
+  }
+
+  function resolveWorkflowUpstreamAssignments(taskId = "") {
+    const assignment = findTopLevelAssignmentByTaskId(taskId);
+    return safeArray(assignment?.task?.dependsOn)
+      .map((dependencyId) => findTopLevelAssignmentByTaskId(dependencyId))
+      .filter(Boolean);
+  }
+
+  function resolveWorkflowDownstreamAssignments(taskId = "") {
+    const normalizedTaskId = safeString(taskId);
+    if (!normalizedTaskId) {
+      return [];
+    }
+
+    return multiAgentConversationState.topLevelAssignments.filter((assignment) =>
+      safeArray(assignment?.task?.dependsOn).includes(normalizedTaskId)
+    );
+  }
+
+  function buildWorkflowAssignmentLabels(assignments, locale = "en-US") {
+    return (Array.isArray(assignments) ? assignments : [])
+      .filter(Boolean)
+      .slice(0, 4)
+      .map((assignment) => resolveQuotedTaskTitle(assignment.title, "this node", locale))
+      .join(localizeRunText(locale, ", ", "、"));
+  }
+
+  function buildWorkflowGraphSummary(assignments, locale = "en-US") {
+    const normalizedAssignments = (Array.isArray(assignments) ? assignments : []).filter(Boolean);
+    const nodeCount = normalizedAssignments.length;
+    const edgeCount = normalizedAssignments.reduce(
+      (count, assignment) => count + safeArray(assignment?.task?.dependsOn).length,
+      0
+    );
+    const rootCount = normalizedAssignments.filter(
+      (assignment) => !safeArray(assignment?.task?.dependsOn).length
+    ).length;
+
+    return localizeRunText(
+      locale,
+      `Nested tool flow graph locked: ${nodeCount} node(s), ${edgeCount} dependency edge(s), ${rootCount} root branch(es).`,
+      `嵌套工具流图已锁定：共 ${nodeCount} 个节点、${edgeCount} 条依赖边、${rootCount} 个根分支。`
     );
   }
 
@@ -4993,7 +5234,7 @@ export async function runClusterAnalysis({
     return messages.filter(Boolean);
   }
 
-  function buildWorkflowSyntheticMessages({ stage, payload, agent, parentAgent, taskTitle, phase }) {
+  function buildWorkflowLegacySyntheticMessages({ stage, payload, agent, parentAgent, taskTitle, phase }) {
     const messages = [];
     const taskLabel = resolveQuotedTaskTitle(taskTitle, "this task", runLocale);
     const nextPhaseAssignments = resolveNextPhaseAssignments(phase);
@@ -5189,6 +5430,274 @@ export async function runClusterAnalysis({
     return messages.filter(Boolean);
   }
 
+  function buildWorkflowToolFlowMessages({ stage, payload, agent, parentAgent, taskTitle, phase }) {
+    const messages = [];
+    const taskLabel = resolveQuotedTaskTitle(taskTitle, "this task", runLocale);
+    const artifactPath = resolveConversationArtifactContext(stage, payload);
+    const query = resolveConversationQueryContext(stage, payload);
+    const upstreamAssignments = resolveWorkflowUpstreamAssignments(payload.taskId);
+    const downstreamAssignments = resolveWorkflowDownstreamAssignments(payload.taskId);
+
+    if (stage === "planning_done") {
+      const assignments = multiAgentConversationState.topLevelAssignments;
+      if (assignments.length) {
+        messages.push(
+          createWorkflowSyntheticMessage("workflow_graph_locked", {
+            speaker: activeController,
+            tone: "ok",
+            content: localizeRunText(
+              runLocale,
+              `${buildWorkflowGraphSummary(assignments, runLocale)} ${buildAllocationSummary(assignments, runLocale)}. Unrelated root branches may run in parallel, and downstream nodes unlock as soon as their declared inputs are ready.`,
+              `${buildWorkflowGraphSummary(assignments, runLocale)} ${buildAllocationSummary(assignments, runLocale)}。互不依赖的根分支可以并行运行，下游节点在声明输入就绪后立即解锁。`
+            )
+          })
+        );
+      }
+      const rootAssignments = assignments.filter(
+        (assignment) => !safeArray(assignment?.task?.dependsOn).length
+      );
+      if (rootAssignments.length > 1) {
+        messages.push(
+          createWorkflowSyntheticMessage("workflow_root_branches", {
+            speaker: activeController,
+            tone: "neutral",
+            content: localizeRunText(
+              runLocale,
+              `Root branches opened: ${buildWorkflowAssignmentLabels(rootAssignments, runLocale)}. Keep contracts explicit so sibling branches can join cleanly later.`,
+              `根分支已打开：${buildWorkflowAssignmentLabels(rootAssignments, runLocale)}。请把产物契约写清楚，方便后续分支平滑汇合。`
+            )
+          })
+        );
+      }
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "phase_start") {
+      const currentAssignments = resolveTopLevelAssignmentsByPhase(phase);
+      if (currentAssignments.length) {
+        messages.push(
+          createWorkflowSyntheticMessage("workflow_phase_open", {
+            speaker: activeController,
+            phase,
+            tone: "neutral",
+            content: localizeRunText(
+              runLocale,
+              `${phase} nodes are open: ${buildWorkflowAssignmentLabels(currentAssignments, runLocale)}. Ready nodes can run now; blocked nodes wait only for their declared inputs.`,
+              `${phase} 阶段节点已开放：${buildWorkflowAssignmentLabels(currentAssignments, runLocale)}。已就绪节点立即运行，未就绪节点只等待其声明输入。`
+            )
+          })
+        );
+      }
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "phase_done") {
+      const currentAssignments = resolveTopLevelAssignmentsByPhase(phase);
+      const newlyUnlockedAssignments = uniqueArray(
+        currentAssignments.flatMap((assignment) =>
+          resolveWorkflowDownstreamAssignments(assignment.id).map((candidate) => candidate.id)
+        )
+      )
+        .map((taskId) => findTopLevelAssignmentByTaskId(taskId))
+        .filter(Boolean);
+      messages.push(
+        createWorkflowSyntheticMessage("workflow_phase_checkpoint", {
+          speaker: activeController,
+          phase,
+          tone: "ok",
+          content: localizeRunText(
+            runLocale,
+            newlyUnlockedAssignments.length
+              ? `${phase} nodes completed. Downstream nodes with satisfied inputs: ${buildWorkflowAssignmentLabels(newlyUnlockedAssignments, runLocale)}.`
+              : `${phase} nodes completed. No additional downstream workflow nodes remain to unlock from this checkpoint.`,
+            newlyUnlockedAssignments.length
+              ? `${phase} 阶段节点已完成。已满足输入条件的下游节点：${buildWorkflowAssignmentLabels(newlyUnlockedAssignments, runLocale)}。`
+              : `${phase} 阶段节点已完成。此检查点之后没有新的下游工作流节点需要解锁。`
+          )
+        })
+      );
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "worker_start") {
+      messages.push(
+        createWorkflowSyntheticMessage("workflow_node_open", {
+          speaker: agent,
+          target: pickStrategicTarget(downstreamAssignments, taskTitle || payload.detail)?.agent || null,
+          phase,
+          tone: "neutral",
+          content: localizeRunText(
+            runLocale,
+            upstreamAssignments.length
+              ? `Opening workflow node ${taskLabel}. Bound inputs: ${buildWorkflowAssignmentLabels(upstreamAssignments, runLocale)}. I will consume only these declared inputs and publish a stable output contract.`
+              : `Opening root workflow node ${taskLabel}. I will publish explicit artifacts and interface notes so downstream nodes can bind to the output directly.`,
+            upstreamAssignments.length
+              ? `开始执行工作流节点 ${taskLabel}。已绑定输入：${buildWorkflowAssignmentLabels(upstreamAssignments, runLocale)}。我只消费这些声明输入，并输出稳定契约。`
+              : `开始执行根工作流节点 ${taskLabel}。我会输出明确的产物与接口说明，方便下游节点直接绑定。`
+          )
+        })
+      );
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "subagent_created") {
+      messages.push(
+        createWorkflowSyntheticMessage("workflow_nested_branch_created", {
+          speaker: parentAgent || activeController,
+          target: agent,
+          phase,
+          tone: "neutral",
+          content: localizeRunText(
+            runLocale,
+            `Spawn a nested workflow node for ${taskLabel}. Emit explicit artifact paths, filenames, or JSON fields so sibling nodes can consume your output without reinterpretation.`,
+            `为 ${taskLabel} 派生一个嵌套工作流节点。请输出明确的产物路径、文件名或 JSON 字段，让兄弟节点无需二次解释即可消费你的结果。`
+          )
+        })
+      );
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "subagent_start") {
+      messages.push(
+        createWorkflowSyntheticMessage("workflow_nested_node_open", {
+          speaker: agent,
+          target: parentAgent || activeController,
+          phase,
+          tone: "neutral",
+          content: localizeRunText(
+            runLocale,
+            `Nested node ${taskLabel} is open. I will keep the interface stable and report contract drift immediately.`,
+            `嵌套节点 ${taskLabel} 已启动。我会保持接口稳定，如有契约漂移立即上报。`
+          )
+        })
+      );
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "subagent_done" || stage === "worker_done") {
+      messages.push(
+        createWorkflowSyntheticMessage("workflow_node_published", {
+          speaker: agent,
+          target:
+            pickStrategicTarget(downstreamAssignments, artifactPath || taskTitle || payload.detail)?.agent ||
+            parentAgent ||
+            activeController,
+          phase,
+          tone: "ok",
+          artifactPath,
+          content: localizeRunText(
+            runLocale,
+            downstreamAssignments.length
+              ? artifactPath
+                ? `Published ${taskLabel} at ${artifactPath}. Unlocked downstream nodes: ${buildWorkflowAssignmentLabels(downstreamAssignments, runLocale)}. Consume this exact artifact instead of rescanning the workspace.`
+                : `Published ${taskLabel}. Unlocked downstream nodes: ${buildWorkflowAssignmentLabels(downstreamAssignments, runLocale)}. Consume the declared output contract only.`
+              : artifactPath
+                ? `Published terminal workflow artifact ${artifactPath} for ${taskLabel}. No downstream workflow node remains.`
+                : `Published ${taskLabel}. No downstream workflow node remains.`,
+            downstreamAssignments.length
+              ? artifactPath
+                ? `已在 ${artifactPath} 发布 ${taskLabel}。已解锁下游节点：${buildWorkflowAssignmentLabels(downstreamAssignments, runLocale)}。请直接消费该产物，不要重新扫描整个工作区。`
+                : `已发布 ${taskLabel}。已解锁下游节点：${buildWorkflowAssignmentLabels(downstreamAssignments, runLocale)}。请仅消费声明好的输出契约。`
+              : artifactPath
+                ? `已为 ${taskLabel} 发布终态工作流产物 ${artifactPath}。后续已无下游工作流节点。`
+                : `已发布 ${taskLabel}。后续已无下游工作流节点。`
+          )
+        })
+      );
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "workspace_read") {
+      messages.push(
+        createWorkflowSyntheticMessage("workflow_input_bound", {
+          speaker: agent,
+          target: parentAgent || null,
+          phase,
+          tone: "neutral",
+          artifactPath,
+          content: localizeRunText(
+            runLocale,
+            artifactPath
+              ? `Bound workflow input ${artifactPath} for ${taskLabel}. I am consuming the declared artifact directly instead of rescanning the workspace.`
+              : `Bound the upstream workflow input for ${taskLabel}. I will consume the declared input directly instead of rescanning the workspace.`,
+            artifactPath
+              ? `已为 ${taskLabel} 绑定工作流输入 ${artifactPath}。我会直接消费该声明产物，而不是重新扫描整个工作区。`
+              : `已为 ${taskLabel} 绑定上游工作流输入。我会直接消费声明输入，而不是重新扫描整个工作区。`
+          )
+        })
+      );
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "workspace_write") {
+      const siblingOrDownstreamAssignments = parentAgent
+        ? resolveSiblingAssignments(parentAgent, agent)
+        : downstreamAssignments;
+      messages.push(
+        createWorkflowSyntheticMessage("workflow_artifact_published", {
+          speaker: agent,
+          target:
+            parentAgent ||
+            pickStrategicTarget(siblingOrDownstreamAssignments, artifactPath || payload.detail)?.agent ||
+            null,
+          phase,
+          tone: "ok",
+          artifactPath,
+          content: localizeRunText(
+            runLocale,
+            artifactPath
+              ? `Published workflow artifact ${artifactPath}. Downstream nodes should bind to this exact path as input.`
+              : "Published a workflow artifact bundle. Downstream nodes should bind to the declared output path or fields only.",
+            artifactPath
+              ? `已发布工作流产物 ${artifactPath}。下游节点应将这条精确路径作为输入绑定。`
+              : "已发布工作流产物包。下游节点只应绑定声明过的输出路径或字段。"
+          )
+        })
+      );
+      return messages.filter(Boolean);
+    }
+
+    if (stage === "workspace_web_search") {
+      messages.push(
+        createWorkflowSyntheticMessage("workflow_evidence_published", {
+          speaker: agent,
+          target:
+            parentAgent ||
+            pickStrategicTarget(downstreamAssignments, query || payload.detail)?.agent ||
+            null,
+          phase,
+          tone: "neutral",
+          query,
+          content: localizeRunText(
+            runLocale,
+            query
+              ? `Attached verified web evidence for query ${JSON.stringify(query)}. Downstream nodes should cite the validated evidence bundle instead of repeating the same search.`
+              : "Attached verified web evidence to the current workflow bundle. Downstream nodes should cite the validated evidence bundle instead of repeating the same search.",
+            query
+              ? `已附加查询 ${JSON.stringify(query)} 的联网核验证据。下游节点应引用这份已验证证据包，而不是重复发起相同搜索。`
+              : "已将联网核验证据附加到当前工作流包。下游节点应引用这份已验证证据包，而不是重复发起相同搜索。"
+          )
+        })
+      );
+      messages.push(
+        createWorkflowSyntheticMessage("workflow_evidence_contract", {
+          speaker: parentAgent || activeController,
+          target: agent,
+          phase,
+          tone: "neutral",
+          content: localizeRunText(
+            runLocale,
+            "Keep the evidence bundle append-only unless a later verification step explicitly invalidates it.",
+            "除非后续验证步骤明确判定失效，否则请保持证据包采用追加式更新。"
+          )
+        })
+      );
+      return messages.filter(Boolean);
+    }
+
+    return messages.filter(Boolean);
+  }
+
   function buildExpandedMultiAgentMessages(payload = {}) {
     const stage = safeString(payload.stage);
     const agent = resolveRuntimeAgentFromEvent(payload);
@@ -5214,7 +5723,7 @@ export async function runClusterAnalysis({
       multiAgentRuntime.settings.mode === "group_chat"
         ? buildGroupChatSyntheticMessages({ stage, payload, agent, parentAgent, taskTitle, phase })
         : multiAgentRuntime.settings.mode === "workflow"
-          ? buildWorkflowSyntheticMessages({ stage, payload, agent, parentAgent, taskTitle, phase })
+          ? buildWorkflowToolFlowMessages({ stage, payload, agent, parentAgent, taskTitle, phase })
           : buildSequentialSyntheticMessages({ stage, agent, taskTitle, phase });
 
     const enrichedModeSpecificMessages = modeSpecificMessages.map((message) =>
@@ -5646,6 +6155,7 @@ export async function runClusterAnalysis({
       delegateBranchFactor: resolveEffectiveGroupLeaderMaxDelegates(config, prePlanningBudget),
       complexityBudget: prePlanningBudget,
       capabilityRoutingPolicySummary: summarizeCapabilityRoutingPolicy(capabilityRoutingPolicy),
+      multiAgentMode: config.multiAgent?.mode,
       outputLocale: runLocale
     });
     const planningStage = await invokeControllerStageWithFallback({

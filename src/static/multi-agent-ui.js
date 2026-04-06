@@ -233,6 +233,13 @@ function isGroupDiscussionSourceStage(sourceStage) {
   return normalized === "multi_agent_discussion" || normalized.startsWith("multi_agent_discussion_");
 }
 
+function isWorkflowSourceStage(sourceStage) {
+  return String(sourceStage || "")
+    .trim()
+    .toLowerCase()
+    .startsWith("workflow_");
+}
+
 function shouldRenderChatEntryForMode(entry, settings) {
   if (!entry || !isConversationalStage(entry.stage)) {
     return false;
@@ -242,6 +249,9 @@ function shouldRenderChatEntryForMode(entry, settings) {
     .trim()
     .toLowerCase();
   if (mode !== "group_chat") {
+    if (mode === "workflow") {
+      return entry.stage === "multi_agent_chat" && isWorkflowSourceStage(entry.sourceStage || entry.stage);
+    }
     return true;
   }
 
@@ -454,6 +464,19 @@ function upsertParticipant(session, speakerLabel = "") {
     });
   }
   session.participantCount = session.participants.length;
+}
+
+function rebuildSessionParticipants(session) {
+  session.participants = [];
+  session.participantCount = 0;
+  session.phaseCounts = {};
+
+  for (const entry of Array.isArray(session.messages) ? session.messages : []) {
+    upsertParticipant(session, entry?.speakerLabel || "");
+    if (entry?.phase) {
+      session.phaseCounts[entry.phase] = (session.phaseCounts[entry.phase] || 0) + 1;
+    }
+  }
 }
 
 export function buildChatEntryFromEvent(event, settings) {
@@ -755,6 +778,7 @@ export function createMultiAgentUi({
             .filter((entry) => shouldRenderChatEntryForMode(entry, state.settings))
         : []
     };
+    rebuildSessionParticipants(state.session);
     syncFieldState();
     render();
   }
