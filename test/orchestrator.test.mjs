@@ -43,6 +43,23 @@ class DependentWorkspaceLeaderProvider {
   }
 
   async invoke({ input, purpose, signal } = {}) {
+    if (purpose === "multi_agent_discussion") {
+      const promptText = Array.isArray(input) ? input.join("\n\n") : String(input || "");
+      if (/Your assigned task:\n[\s\S]*?"title": "Write the structured research JSON"/i.test(promptText)) {
+        return {
+          text: "I will write the structured research JSON first and call out the exact path so the downstream report step can consume it directly."
+        };
+      }
+      if (/Your assigned task:\n[\s\S]*?"title": "Build the final report docx"/i.test(promptText)) {
+        return {
+          text: "I depend on research/source.json. Once that file path is confirmed, I will generate reports/report.docx from it."
+        };
+      }
+      return {
+        text: "I will keep the child workflow ordered and surface any artifact dependency before synthesis."
+      };
+    }
+
     if (purpose === "leader_delegation") {
       return {
         text: JSON.stringify({
@@ -560,8 +577,28 @@ test("runClusterAnalysis expands group chat mode into discussion-style collabora
         })
       ])
     ],
-    ["research_worker", new FakeProvider([buildWorkerOutput("Collected fresh evidence.")])],
-    ["implementation_worker", new FakeProvider([buildWorkerOutput("Drafted the implementation brief.")])]
+    [
+      "research_worker",
+      new FakeProvider([
+        "I will share the fresh evidence bucket early so implementation can avoid stale assumptions.",
+        ({ input }) => {
+          assert.match(String(input), /Live group chat aligned/i);
+          assert.match(String(input), /fresh evidence bucket/i);
+          return { text: buildWorkerOutput("Collected fresh evidence.") };
+        }
+      ])
+    ],
+    [
+      "implementation_worker",
+      new FakeProvider([
+        "Understood. I will challenge any implementation note that conflicts with the fresh evidence lane.",
+        ({ input }) => {
+          assert.match(String(input), /Live group chat aligned/i);
+          assert.match(String(input), /fresh evidence bucket/i);
+          return { text: buildWorkerOutput("Drafted the implementation brief.") };
+        }
+      ])
+    ]
   ]);
 
   const result = await runClusterAnalysis({
@@ -571,15 +608,27 @@ test("runClusterAnalysis expands group chat mode into discussion-style collabora
   });
 
   assert.equal(
-    result.multiAgentSession.messages.some((message) => /Parallel discussion lanes are open|share overlaps early/i.test(message.content)),
+    result.multiAgentSession.messages.some(
+      (message) =>
+        message.stage === "multi_agent_chat" &&
+        /share the fresh evidence bucket early/i.test(message.content)
+    ),
     true
   );
   assert.equal(
-    result.multiAgentSession.messages.some((message) => /compare notes before synthesis|cross-check it against your lane/i.test(message.content)),
+    result.multiAgentSession.messages.some(
+      (message) =>
+        message.stage === "multi_agent_chat" &&
+        /challenge any implementation note/i.test(message.content)
+    ),
     true
   );
   assert.equal(
-    result.multiAgentSession.messages.some((message) => /challenge weak assumptions early|flag any contradiction/i.test(message.content)),
+    result.multiAgentSession.messages.some(
+      (message) =>
+        message.stage === "multi_agent_chat" &&
+        /Live group chat completed/i.test(message.content)
+    ),
     true
   );
 });
@@ -1140,6 +1189,22 @@ test("runClusterAnalysis infers dependent delegated child tasks from shared work
     );
     assert.equal(
       result.multiAgentSession.messages.some((message) => /Acknowledged "Write the structured research JSON"/.test(message.content)),
+      true
+    );
+    assert.equal(
+      result.multiAgentSession.messages.some(
+        (message) =>
+          message.stage === "multi_agent_chat" &&
+          /structured research JSON first/i.test(message.content)
+      ),
+      true
+    );
+    assert.equal(
+      result.multiAgentSession.messages.some(
+        (message) =>
+          message.stage === "multi_agent_chat" &&
+          /depend on research\/source\.json/i.test(message.content)
+      ),
       true
     );
     assert.equal(

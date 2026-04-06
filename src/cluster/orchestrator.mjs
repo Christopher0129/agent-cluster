@@ -1,4 +1,5 @@
 import {
+  buildGroupDiscussionTurnRequest,
   buildLeaderDelegationRequest,
   buildLeaderSynthesisRequest,
   buildPlanningRequest,
@@ -2356,6 +2357,8 @@ async function executeSingleTask({
   originalTask,
   plan,
   completedResults,
+  collaborationDependencies = [],
+  runGroupDiscussion = null,
   providerRegistry,
   config,
   executionGate,
@@ -2377,7 +2380,7 @@ async function executeSingleTask({
   let attemptChildAgentReservations = 0;
 
   function buildDependencyOutputs() {
-    return task.dependsOn
+    const dependencyResults = task.dependsOn
       .map((dependencyId) => completedResults.get(dependencyId))
       .filter(Boolean)
       .map((result) => ({
@@ -2386,6 +2389,8 @@ async function executeSingleTask({
         status: result.status,
         output: result.output
       }));
+
+    return [...(Array.isArray(collaborationDependencies) ? collaborationDependencies : []), ...dependencyResults];
   }
 
   function resolveLifecycleStages(agent) {
@@ -3490,6 +3495,44 @@ async function executeSingleTask({
           subordinateAgent: createSubordinateRuntimeAgent(agent, subordinateTask, index)
         };
       });
+      const delegatedDiscussion =
+        delegatedEntries.length >= 2
+          ? await runGroupDiscussion?.({
+              discussionKey: `${agentTask.id}_child_group_chat`,
+              scopeLabel: localizeRunText(
+                runLocale,
+                `${agentTask.title} child coordination`,
+                `${agentTask.title} 的子任务协调`
+              ),
+              participants: [
+                {
+                  id: agentTask.id,
+                  title: agentTask.title,
+                  phase: agentTask.phase,
+                  task: agentTask,
+                  agent
+                },
+                ...delegatedEntries.map((entry) => ({
+                  id: entry.subtask.id,
+                  title: entry.subordinateTask.title,
+                  phase: entry.subordinateTask.phase,
+                  task: entry.subordinateTask,
+                  agent: entry.subordinateAgent
+                }))
+              ],
+              clusterPlan: {
+                ...plan,
+                strategy: delegationPlan.delegationSummary || plan.strategy
+              },
+              parentAgent: agent,
+              parentTask: agentTask,
+              parentSpanId: taskSpanId || inheritedParentSpanId || parentSpanId,
+              signalOverride
+            })
+          : null;
+      const delegatedCollaborationDependencies = delegatedDiscussion?.dependency
+        ? [...dependencyOutputs, delegatedDiscussion.dependency]
+        : dependencyOutputs;
       const completedSubordinateExecutions = new Map();
       const runningSubordinateExecutions = new Map();
       const subordinateBatchAbortController = new AbortController();
@@ -3531,7 +3574,7 @@ async function executeSingleTask({
           );
 
           const childDependencyOutputs = [
-            ...dependencyOutputs,
+            ...delegatedCollaborationDependencies,
             ...entry.subordinateTask.dependsOn
               .map((dependencyId) => completedSubordinateExecutions.get(dependencyId))
               .filter(Boolean)
@@ -3592,7 +3635,7 @@ async function executeSingleTask({
         agent,
         provider,
         agentTask,
-        dependencyOutputs,
+        dependencyOutputs: delegatedCollaborationDependencies,
         subordinateExecutions,
         delegationPlan,
         startedAt,
@@ -3764,6 +3807,8 @@ async function executeSingleTask({
 async function executePlan(
   plan,
   originalTask,
+  collaborationDependencies,
+  runGroupDiscussion,
   config,
   executionGate,
   providerRegistry,
@@ -3827,6 +3872,8 @@ async function executePlan(
           originalTask,
           plan,
           completedResults,
+          collaborationDependencies,
+          runGroupDiscussion,
           providerRegistry,
           config,
           executionGate,
@@ -3975,6 +4022,14 @@ export async function runClusterAnalysis({
           title: safeString(taskItem?.title || taskItem?.id),
           phase: safeString(taskItem?.phase),
           assignedWorker: assignedWorker.id,
+          task: {
+            id: safeString(taskItem?.id),
+            phase: safeString(taskItem?.phase),
+            title: safeString(taskItem?.title || taskItem?.id),
+            instructions: safeString(taskItem?.instructions),
+            expectedOutput: safeString(taskItem?.expectedOutput),
+            dependsOn: safeArray(taskItem?.dependsOn)
+          },
           agent: createLeaderRuntimeAgent(assignedWorker, {
             phase: taskItem?.phase,
             title: taskItem?.title
@@ -4079,6 +4134,368 @@ export async function runClusterAnalysis({
       artifactPath: safeString(artifactPath),
       query: safeString(query),
       sourceStage: safeString(sourceStage)
+    };
+  }
+
+  function buildDiscussionTranscriptLine(entry = {}) {
+    const speakerLabel = safeString(
+      entry?.speakerLabel || entry?.speaker?.displayLabel || entry?.speaker?.label
+    );
+    const targetLabel = safeString(
+      entry?.targetLabel || entry?.target?.displayLabel || entry?.target?.label
+    );
+    const content = safeString(entry?.content);
+    if (!speakerLabel || !content) {
+      return "";
+    }
+
+    return targetLabel ? `${speakerLabel} -> ${targetLabel}: ${content}` : `${speakerLabel}: ${content}`;
+  }
+
+  function recordDirectMultiAgentMessage(message, speakerAgent = null, speakerTask = null) {
+    if (!message || !multiAgentRuntime.isEnabled()) {
+      return null;
+    }
+
+    const recorded =
+      message.kind === "summary"
+        ? multiAgentRuntime.recordSummary(message)
+        : message.kind === "system"
+          ? multiAgentRuntime.recordSystem(message)
+          : multiAgentRuntime.recordMessage(message);
+    if (!recorded) {
+      return null;
+    }
+
+    const eventAgent = speakerAgent || message.speaker || activeController;
+    emitEvent(onEvent, {
+      ...(eventAgent ? buildAgentEventBase(eventAgent, speakerTask) : {}),
+      type: "status",
+      stage: "multi_agent_chat",
+      tone: recorded.tone || "neutral",
+      phase: recorded.phase || "",
+      detail: recorded.content || "",
+      content: recorded.content || "",
+      kind: recorded.kind || "message",
+      summaryType: recorded.summaryType || "",
+      sourceStage: recorded.sourceStage || "multi_agent_chat",
+      taskTitle: recorded.taskTitle || speakerTask?.title || "",
+      artifactPath: recorded.artifactPath || "",
+      query: recorded.query || "",
+      multiAgentMessages: [recorded]
+    });
+
+    return recorded;
+  }
+
+  function sortDiscussionParticipants(participants = []) {
+    return [...(Array.isArray(participants) ? participants : [])]
+      .filter((participant) => participant?.agent && providerRegistry.get(participant.agent.id))
+      .sort((left, right) => {
+        const phaseDelta =
+          phaseIndex(left?.phase || left?.task?.phase) - phaseIndex(right?.phase || right?.task?.phase);
+        if (phaseDelta !== 0) {
+          return phaseDelta;
+        }
+
+        return safeString(left?.title || left?.task?.title).localeCompare(
+          safeString(right?.title || right?.task?.title)
+        );
+      });
+  }
+
+  function selectDiscussionSpeaker(participants = [], roundIndex = 0, lastSpeakerId = "", seed = "") {
+    const ordered = sortDiscussionParticipants(participants);
+    if (!ordered.length) {
+      return null;
+    }
+
+    const filtered = ordered.filter(
+      (participant) => safeString(participant?.agent?.runtimeId || participant?.agent?.id) !== lastSpeakerId
+    );
+    const pool = filtered.length ? filtered : ordered;
+
+    switch (multiAgentRuntime.settings.speakerStrategy) {
+      case "random":
+        return pool[hashConversationSeed(`${seed}:${roundIndex}:${pool.length}`) % pool.length];
+      case "round_robin":
+        return pool[resolveRoundRobinIndex(pool.length)];
+      default:
+        return pool[roundIndex % pool.length];
+    }
+  }
+
+  function dedupeDiscussionParticipants(participants = []) {
+    const seen = new Set();
+    return (Array.isArray(participants) ? participants : []).filter((participant) => {
+      const id = safeString(participant?.id || participant?.agent?.runtimeId || participant?.agent?.id);
+      if (!id || seen.has(id)) {
+        return false;
+      }
+      seen.add(id);
+      return true;
+    });
+  }
+
+  function selectDiscussionTarget(
+    participants = [],
+    speakerEntry = null,
+    roundIndex = 0,
+    lastTargetId = "",
+    seed = ""
+  ) {
+    if (!speakerEntry) {
+      return null;
+    }
+
+    const candidates = sortDiscussionParticipants(participants).filter(
+      (participant) => participant?.id !== speakerEntry?.id
+    );
+    if (!candidates.length) {
+      return null;
+    }
+
+    const dependencyIds = new Set(safeArray(speakerEntry?.task?.dependsOn));
+    const relatedCandidates = dedupeDiscussionParticipants([
+      ...candidates.filter((participant) => dependencyIds.has(participant?.id)),
+      ...candidates.filter((participant) => safeArray(participant?.task?.dependsOn).includes(speakerEntry?.id)),
+      ...candidates.filter(
+        (participant) =>
+          safeString(participant?.phase || participant?.task?.phase) ===
+          safeString(speakerEntry?.phase || speakerEntry?.task?.phase)
+      ),
+      ...candidates
+    ]);
+    const filtered = relatedCandidates.filter(
+      (participant) => safeString(participant?.agent?.runtimeId || participant?.agent?.id) !== lastTargetId
+    );
+    const pool = filtered.length ? filtered : relatedCandidates;
+
+    switch (multiAgentRuntime.settings.speakerStrategy) {
+      case "random":
+        return pool[hashConversationSeed(`${seed}:${roundIndex}:target:${pool.length}`) % pool.length];
+      case "round_robin":
+        return pool[resolveRoundRobinIndex(pool.length)];
+      default:
+        return pool[roundIndex % pool.length];
+    }
+  }
+
+  function buildDiscussionDependencyOutput({
+    discussionKey,
+    scopeLabel,
+    participants,
+    messages
+  }) {
+    const transcript = (Array.isArray(messages) ? messages : [])
+      .map((message) => buildDiscussionTranscriptLine(message))
+      .filter(Boolean)
+      .slice(-6);
+    if (!transcript.length) {
+      return null;
+    }
+
+    return {
+      taskId:
+        safeString(discussionKey).replace(/[^\w-]+/g, "_") || "discussion_group_chat",
+      title: scopeLabel,
+      workerId: "multi_agent_chat",
+      workerLabel: normalizeRunLocale(runLocale) === "zh-CN" ? "动态群聊" : "Dynamic group chat",
+      phase: "",
+      status: "completed",
+      output: {
+        thinkingSummary: "",
+        summary: localizeRunText(
+          runLocale,
+          `Live group chat aligned ${participants.length} participant(s) before execution.`,
+          `动态群聊已在执行前对齐 ${participants.length} 个参与智能体的分工与风险。`
+        ),
+        keyFindings: transcript,
+        risks: [],
+        deliverables: [],
+        confidence: "medium",
+        followUps: [],
+        generatedFiles: [],
+        verifiedGeneratedFiles: [],
+        verificationStatus: "not_applicable",
+        discussionTranscript: transcript
+      }
+    };
+  }
+
+  async function runActualGroupDiscussion({
+    discussionKey,
+    scopeLabel,
+    participants,
+    clusterPlan,
+    parentAgent = activeController,
+    parentTask = null,
+    parentSpanId: discussionParentSpanId = "",
+    signalOverride = signal
+  } = {}) {
+    if (!multiAgentRuntime.isEnabled() || multiAgentRuntime.settings.mode !== "group_chat") {
+      return null;
+    }
+
+    const discussionParticipants = sortDiscussionParticipants(participants);
+    if (discussionParticipants.length < 2) {
+      return null;
+    }
+
+    const roundCap = Math.max(1, Number(multiAgentRuntime.settings.maxRounds) || 1);
+    const plannedRounds = Math.min(
+      discussionParticipants.length,
+      Math.max(1, Math.min(4, roundCap))
+    );
+    const transcript = [];
+    const recordedMessages = [];
+    let lastSpeakerId = "";
+    let lastTargetId = "";
+
+    for (let roundIndex = 0; roundIndex < plannedRounds; roundIndex += 1) {
+      throwIfAborted(signalOverride);
+
+      const speakerEntry = selectDiscussionSpeaker(
+        discussionParticipants,
+        roundIndex,
+        lastSpeakerId,
+        discussionKey
+      );
+      if (!speakerEntry?.agent) {
+        break;
+      }
+
+      const targetEntry = selectDiscussionTarget(
+        discussionParticipants,
+        speakerEntry,
+        roundIndex,
+        lastTargetId,
+        discussionKey
+      );
+      const prompt = buildGroupDiscussionTurnRequest({
+        originalTask,
+        clusterPlan,
+        speaker: speakerEntry.agent,
+        speakerTask: speakerEntry.task || null,
+        participants: discussionParticipants,
+        transcript,
+        target: targetEntry,
+        discussionScope: scopeLabel,
+        outputLocale: runLocale
+      });
+
+      try {
+        const response = await executionGate.run(
+          () =>
+            invokeProviderWithSession({
+              sessionRuntime,
+              provider: providerRegistry.get(speakerEntry.agent.id),
+              agent: speakerEntry.agent,
+              task: speakerEntry.task || null,
+              parentSpanId: discussionParentSpanId,
+              purpose: "multi_agent_discussion",
+              instructions: prompt.instructions,
+              input: prompt.input,
+              signal: signalOverride,
+              buildAgentEventBase
+            }),
+          { signal: signalOverride }
+        );
+        const content = safeString(response?.text).replace(/\s+/g, " ").trim();
+        if (!content) {
+          continue;
+        }
+
+        const recorded = recordDirectMultiAgentMessage(
+          createSyntheticMultiAgentMessage({
+            speaker: speakerEntry.agent,
+            target: targetEntry?.agent || null,
+            phase: safeString(speakerEntry.phase || speakerEntry.task?.phase),
+            tone: "neutral",
+            content,
+            taskTitle: safeString(speakerEntry.title || speakerEntry.task?.title),
+            sourceStage: "multi_agent_discussion"
+          }),
+          speakerEntry.agent,
+          speakerEntry.task || null
+        );
+        if (recorded) {
+          recordedMessages.push(recorded);
+          transcript.push(buildDiscussionTranscriptLine(recorded));
+        }
+
+        lastSpeakerId = safeString(speakerEntry.agent.runtimeId || speakerEntry.agent.id);
+        lastTargetId = safeString(targetEntry?.agent?.runtimeId || targetEntry?.agent?.id);
+
+        if (
+          safeString(multiAgentRuntime.settings.terminationKeyword) &&
+          content.toLowerCase().includes(
+            safeString(multiAgentRuntime.settings.terminationKeyword).toLowerCase()
+          )
+        ) {
+          break;
+        }
+      } catch (error) {
+        if (isAbortError(error)) {
+          throw error;
+        }
+
+        recordDirectMultiAgentMessage(
+          createSyntheticMultiAgentMessage({
+            speaker: parentAgent || activeController,
+            target: null,
+            phase: "",
+            tone: "warning",
+            kind: "system",
+            content: localizeRunText(
+              runLocale,
+              `Live group chat degraded after a provider failure. Execution will continue with the current plan.`,
+              `真实动态群聊因 provider 故障发生降级，后续执行将继续沿用当前计划。`
+            ),
+            taskTitle: scopeLabel,
+            sourceStage: "multi_agent_discussion_fallback"
+          }),
+          parentAgent || activeController,
+          parentTask
+        );
+        break;
+      }
+    }
+
+    if (!recordedMessages.length) {
+      return null;
+    }
+
+    const summaryText = localizeRunText(
+      runLocale,
+      `Live group chat completed ${recordedMessages.length} coordination turn(s) for ${scopeLabel}.`,
+      `围绕 ${scopeLabel} 的动态群聊已完成 ${recordedMessages.length} 轮真实协作发言。`
+    );
+    recordDirectMultiAgentMessage(
+      createSyntheticMultiAgentMessage({
+        speaker: parentAgent || activeController,
+        target: null,
+        phase: "",
+        tone: "ok",
+        kind: "summary",
+        summaryType: "discussion_summary",
+        content: summaryText,
+        taskTitle: scopeLabel,
+        sourceStage: "multi_agent_discussion_summary"
+      }),
+      parentAgent || activeController,
+      parentTask
+    );
+
+    return {
+      summary: summaryText,
+      messages: recordedMessages,
+      dependency: buildDiscussionDependencyOutput({
+        discussionKey,
+        scopeLabel,
+        participants: discussionParticipants,
+        messages: recordedMessages
+      })
     };
   }
   
@@ -5302,13 +5719,33 @@ export async function runClusterAnalysis({
         title: taskItem.title,
         phase: taskItem.phase,
         assignedWorker: taskItem.assignedWorker,
-        delegateCount: taskItem.delegateCount
+        delegateCount: taskItem.delegateCount,
+        instructions: taskItem.instructions,
+        expectedOutput: taskItem.expectedOutput,
+        dependsOn: safeArray(taskItem.dependsOn)
       }))
     });
+
+    const collaborationDependencies = [];
+    const topLevelDiscussion = await runActualGroupDiscussion({
+      discussionKey: "top_level_group_chat",
+      scopeLabel: localizeRunText(runLocale, "top-level task coordination", "顶层任务协调"),
+      participants: multiAgentConversationState.topLevelAssignments,
+      clusterPlan: plan,
+      parentAgent: activeController,
+      parentTask: null,
+      parentSpanId: planningStage.spanId,
+      signalOverride: signal
+    });
+    if (topLevelDiscussion?.dependency) {
+      collaborationDependencies.push(topLevelDiscussion.dependency);
+    }
 
     const executions = await executePlan(
       plan,
       originalTask,
+      collaborationDependencies,
+      runActualGroupDiscussion,
       config,
       executionGate,
       providerRegistry,

@@ -14,10 +14,93 @@ import { createAppState } from "../src/static/app-state.js";
 import { buildAgentLayout } from "../src/static/agent-graph-layout.js";
 import { getRunStateTextForEvent } from "../src/static/cluster-run-ui.js";
 import { formatModelTestRetryStatus } from "../src/static/model-connectivity-service.js";
-import { buildChatEntryFromEvent } from "../src/static/multi-agent-ui.js";
+import { buildChatEntryFromEvent, createMultiAgentUi } from "../src/static/multi-agent-ui.js";
 import { describeOperationEvent } from "../src/static/operation-events.js";
 import { mergeSecretEntries } from "../src/static/secrets-ui.js";
 import { normalizeStringList, renderList } from "../src/static/ui-core.js";
+
+function createMockInput(overrides = {}) {
+  return {
+    value: "",
+    checked: false,
+    disabled: false,
+    addEventListener() {},
+    ...overrides
+  };
+}
+
+function createMultiAgentUiHarness(settings = {}) {
+  const normalizedSettings = {
+    enabled: true,
+    mode: "group_chat",
+    speakerStrategy: "phase_priority",
+    maxRounds: 16,
+    terminationKeyword: "TERMINATE",
+    messageWindow: 28,
+    summarizeLongMessages: true,
+    includeSystemMessages: true,
+    ...settings
+  };
+  const state = { settings: normalizedSettings };
+  const elements = {
+    multiAgentEnabledInput: createMockInput({ checked: normalizedSettings.enabled }),
+    multiAgentModeSelect: createMockInput({ value: normalizedSettings.mode }),
+    multiAgentSpeakerStrategySelect: createMockInput({ value: normalizedSettings.speakerStrategy }),
+    multiAgentMaxRoundsInput: createMockInput({ value: normalizedSettings.maxRounds }),
+    multiAgentTerminationKeywordInput: createMockInput({ value: normalizedSettings.terminationKeyword }),
+    multiAgentMessageWindowInput: createMockInput({ value: normalizedSettings.messageWindow }),
+    multiAgentSummarizeInput: createMockInput({ checked: normalizedSettings.summarizeLongMessages }),
+    multiAgentIncludeSystemInput: createMockInput({ checked: normalizedSettings.includeSystemMessages }),
+    multiAgentSettingsHint: { textContent: "" },
+    multiAgentChatTitle: { textContent: "" },
+    multiAgentChatDescription: { textContent: "" },
+    multiAgentChatStatus: { textContent: "", dataset: {} },
+    multiAgentChatMeta: { textContent: "" },
+    multiAgentChatSummary: { hidden: false, innerHTML: "" },
+    multiAgentChatroom: { innerHTML: "", scrollTop: 0, scrollHeight: 160 }
+  };
+  const translate = (key, values = {}) => {
+    switch (key) {
+      case "multiAgent.chat.copy.disabled":
+        return "Chat disabled.";
+      case "multiAgent.chat.copy.ready":
+        return "Chat ready.";
+      case "multiAgent.chat.empty":
+        return "No collaboration messages yet.";
+      case "multiAgent.chat.title":
+        return "Agent Chatroom";
+      case "multiAgent.chat.target":
+        return `To ${values.target || ""}`;
+      case "multiAgent.meta":
+        return `Participants ${values.participants || 0}`;
+      case "multiAgent.status.disabled":
+        return "Disabled";
+      case "multiAgent.status.ready":
+        return "Ready";
+      case "multiAgent.status.running":
+        return "Running";
+      case "multiAgent.status.completed":
+        return "Completed";
+      case "multiAgent.status.terminated":
+        return "Terminated";
+      default:
+        if (key.startsWith("multiAgent.chat.phase.")) {
+          return key.slice("multiAgent.chat.phase.".length);
+        }
+        return key;
+    }
+  };
+
+  return {
+    state,
+    elements,
+    ui: createMultiAgentUi({
+      state,
+      elements,
+      translate
+    })
+  };
+}
 
 test("getRunStateTextForEvent maps cluster lifecycle stages", () => {
   const translate = (key, values = {}) => `${key}:${JSON.stringify(values)}`;
@@ -391,6 +474,79 @@ test("multi-agent chatroom prioritizes participant count and filters non-convers
   assert.match(styleCss, /\.multi-agent-message-context/);
   assert.match(styleCss, /\.multi-agent-context-chip/);
   assert.match(styleCss, /\.agent-viz-lower \{\s*display: grid;\s*grid-template-columns: minmax\(0, 1fr\);/s);
+});
+
+test("group chat mode only renders real discussion messages in the chatroom", () => {
+  const { ui, elements } = createMultiAgentUiHarness({ mode: "group_chat" });
+
+  ui.updateFromEvent({
+    stage: "subagent_created",
+    timestamp: "2026-04-06T10:00:00.000Z",
+    parentAgentLabel: "Research Leader",
+    agentLabel: "Research Child 01",
+    taskTitle: "Collect fresh evidence",
+    content: "Please take the evidence collection task."
+  });
+  assert.match(elements.multiAgentChatroom.innerHTML, /No collaboration messages yet\./);
+
+  ui.updateFromEvent({
+    stage: "multi_agent_chat",
+    sourceStage: "multi_agent_discussion",
+    timestamp: "2026-04-06T10:00:01.000Z",
+    speakerLabel: "Research Leader",
+    targetLabel: "Validation Leader",
+    content: "Let's compare the evidence streams before execution."
+  });
+  ui.updateFromEvent({
+    stage: "multi_agent_chat",
+    sourceStage: "multi_agent_discussion_summary",
+    timestamp: "2026-04-06T10:00:02.000Z",
+    speakerLabel: "Controller",
+    content: "Consensus: keep two independent evidence branches."
+  });
+
+  assert.match(elements.multiAgentChatroom.innerHTML, /compare the evidence streams/);
+  assert.match(elements.multiAgentChatroom.innerHTML, /Consensus: keep two independent evidence branches/);
+  assert.doesNotMatch(elements.multiAgentChatroom.innerHTML, /Please take the evidence collection task/);
+});
+
+test("sequential mode still renders handoff-style chat entries", () => {
+  const { ui, elements } = createMultiAgentUiHarness({ mode: "sequential" });
+
+  ui.applySession({
+    settings: {
+      enabled: true,
+      mode: "sequential",
+      speakerStrategy: "phase_priority",
+      maxRounds: 16,
+      terminationKeyword: "TERMINATE",
+      messageWindow: 28,
+      summarizeLongMessages: true,
+      includeSystemMessages: true
+    },
+    messages: [
+      {
+        id: "ma_0001",
+        stage: "multi_agent_chat",
+        sourceStage: "subagent_created",
+        timestamp: "2026-04-06T10:00:00.000Z",
+        speakerLabel: "Research Leader",
+        targetLabel: "Research Child 01",
+        content: "Please take the evidence collection task."
+      },
+      {
+        id: "ma_0002",
+        stage: "multi_agent_chat",
+        sourceStage: "multi_agent_discussion",
+        timestamp: "2026-04-06T10:00:01.000Z",
+        speakerLabel: "Research Leader",
+        content: "We should align the priorities before execution."
+      }
+    ]
+  });
+
+  assert.match(elements.multiAgentChatroom.innerHTML, /Please take the evidence collection task/);
+  assert.match(elements.multiAgentChatroom.innerHTML, /align the priorities before execution/);
 });
 
 test("buildChatEntryFromEvent renders subagent assignment and acknowledgement as dialogue", () => {

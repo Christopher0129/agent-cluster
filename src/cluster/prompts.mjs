@@ -356,6 +356,79 @@ export function buildLeaderSynthesisRequest({
   };
 }
 
+export function buildGroupDiscussionTurnRequest({
+  originalTask,
+  clusterPlan,
+  speaker,
+  speakerTask = null,
+  participants = [],
+  transcript = [],
+  target = null,
+  discussionScope = "group_chat",
+  outputLocale = "en-US"
+}) {
+  const participantLines = (Array.isArray(participants) ? participants : [])
+    .map((participant) => {
+      const agentLabel = String(
+        participant?.agent?.displayLabel || participant?.agent?.label || participant?.label || "Unknown agent"
+      ).trim();
+      const phase = String(participant?.phase || participant?.task?.phase || "").trim() || "implementation";
+      const title = String(participant?.title || participant?.task?.title || "").trim() || "Untitled task";
+      return `- ${agentLabel} | phase=${phase} | task=${title}`;
+    })
+    .join("\n");
+  const transcriptLines = (Array.isArray(transcript) ? transcript : [])
+    .filter(Boolean)
+    .slice(-8)
+    .map((line, index) => `${index + 1}. ${String(line).trim()}`)
+    .join("\n");
+
+  return {
+    instructions: [
+      `You are ${speaker.displayLabel || speaker.label || speaker.id}, participating in a live multi-agent discussion inside a cluster.`,
+      buildDateGuard(),
+      buildOutputLanguageInstruction(outputLocale),
+      "This is not the final answer to the user.",
+      "Reply as one collaborating agent speaking to peers in a shared thread.",
+      "Keep the message concise: 1-3 short sentences, under 120 words.",
+      "Advance the discussion by doing at least one of these: expose an overlap, challenge a weak assumption, ask for missing evidence, flag a dependency, or suggest a concrete coordination step.",
+      "Do not restate the whole task, do not narrate hidden reasoning, and do not invent evidence or tools.",
+      target
+        ? `Address ${target.agent?.displayLabel || target.agent?.label || target.label || "the target agent"} directly when useful.`
+        : "Address the most relevant peer directly when useful.",
+      "Return plain text only."
+    ].join(" "),
+    input: [
+      `Overall objective:\n${originalTask}`,
+      `Current local date context:\n${buildDateGuard()}`,
+      buildOutputLanguageInput(outputLocale),
+      `Discussion scope:\n${discussionScope}`,
+      `Cluster strategy:\n${clusterPlan?.strategy || ""}`,
+      speakerTask
+        ? `Your assigned task:\n${JSON.stringify(
+            {
+              id: speakerTask.id,
+              phase: speakerTask.phase,
+              title: speakerTask.title,
+              instructions: speakerTask.instructions,
+              expectedOutput: speakerTask.expectedOutput
+            },
+            null,
+            2
+          )}`
+        : "Your assigned task:\n{}",
+      target
+        ? `Suggested target:\n${target.agent?.displayLabel || target.agent?.label || target.label || "Unknown agent"} | phase=${String(
+            target.phase || target.task?.phase || ""
+          ).trim()} | task=${String(target.title || target.task?.title || "").trim()}`
+        : "Suggested target:\n(none)",
+      `Participants:\n${participantLines || "(none)"}`,
+      `Recent shared discussion:\n${transcriptLines || "(no prior discussion yet)"}`,
+      "Return one concise discussion message that helps the group coordinate before execution."
+    ].join("\n\n")
+  };
+}
+
 export function buildSynthesisRequest({ task, plan, executions, outputLocale = "en-US" }) {
   return {
     instructions: [

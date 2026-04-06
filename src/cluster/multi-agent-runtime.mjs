@@ -311,7 +311,25 @@ export function createMultiAgentRuntime(rawSettings = {}) {
   }
 
   function buildSnapshot() {
-    const visibleMessages = messages.slice(-Math.max(1, settings.messageWindow));
+    const limit = Math.max(1, settings.messageWindow);
+    const recentTail = messages.slice(-limit);
+    const recentChatMessages = messages.filter((entry) => entry.stage === "multi_agent_chat").slice(
+      -Math.min(limit, Math.max(1, Math.ceil(limit / 2)))
+    );
+    const tailIds = new Set(recentTail.map((entry) => entry.id));
+    const preservedChatIds = new Set(recentChatMessages.map((entry) => entry.id));
+    const selected = messages.filter((entry) => preservedChatIds.has(entry.id) || tailIds.has(entry.id));
+
+    while (selected.length > limit) {
+      const removableIndex = selected.findIndex((entry) => !preservedChatIds.has(entry.id));
+      if (removableIndex >= 0) {
+        selected.splice(removableIndex, 1);
+      } else {
+        selected.shift();
+      }
+    }
+
+    const visibleMessages = selected;
     return {
       enabled: settings.enabled,
       settings,

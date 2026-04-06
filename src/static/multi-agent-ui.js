@@ -228,6 +228,26 @@ function isConversationalStage(stage) {
   return CONVERSATIONAL_STAGE_SET.has(String(stage || "").trim());
 }
 
+function isGroupDiscussionSourceStage(sourceStage) {
+  const normalized = String(sourceStage || "").trim().toLowerCase();
+  return normalized === "multi_agent_discussion" || normalized.startsWith("multi_agent_discussion_");
+}
+
+function shouldRenderChatEntryForMode(entry, settings) {
+  if (!entry || !isConversationalStage(entry.stage)) {
+    return false;
+  }
+
+  const mode = String(settings?.mode || DEFAULT_SETTINGS.mode)
+    .trim()
+    .toLowerCase();
+  if (mode !== "group_chat") {
+    return true;
+  }
+
+  return entry.stage === "multi_agent_chat" && isGroupDiscussionSourceStage(entry.sourceStage || entry.stage);
+}
+
 function resolveChatContentFromCandidates(candidates, settings) {
   for (const value of candidates) {
     const normalized = summarizeContent(value, settings);
@@ -635,7 +655,7 @@ export function createMultiAgentUi({
   }
 
   function appendEntry(entry) {
-    if (!entry) {
+    if (!entry || !shouldRenderChatEntryForMode(entry, state.settings)) {
       return;
     }
 
@@ -730,7 +750,9 @@ export function createMultiAgentUi({
       settings: state.settings,
       enabled: state.settings.enabled,
       messages: Array.isArray(session.messages)
-        ? session.messages.map((entry) => normalizeIncomingChatEntry(entry, state.settings)).filter(Boolean)
+        ? session.messages
+            .map((entry) => normalizeIncomingChatEntry(entry, state.settings))
+            .filter((entry) => shouldRenderChatEntryForMode(entry, state.settings))
         : []
     };
     syncFieldState();
@@ -762,8 +784,8 @@ export function createMultiAgentUi({
       return;
     }
 
-    const conversationEntries = state.session.messages.filter(
-      (entry) => entry && isConversationalStage(entry.stage)
+    const conversationEntries = state.session.messages.filter((entry) =>
+      shouldRenderChatEntryForMode(entry, state.settings)
     );
 
     if (!conversationEntries.length) {
