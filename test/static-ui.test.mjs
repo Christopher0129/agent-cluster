@@ -235,7 +235,27 @@ test("sea main relaunches the packaged app hidden on Windows unless show-console
 
   assert.match(seaMain, /const HIDDEN_LAUNCH_ARG = "--sea-hidden-launch";/);
   assert.match(seaMain, /const SHOW_CONSOLE_ARG = "--show-console";/);
+  assert.match(seaMain, /const NO_OPEN_ARG = "--no-open";/);
+  assert.match(seaMain, /const BROWSER_LAUNCH_TIMEOUT_MS = 400;/);
+  assert.match(seaMain, /const APP_STARTUP_LOG_FILE = "app-startup\.log";/);
+  assert.match(seaMain, /const APP_STARTUP_STATUS_FILE = "app-startup-status\.json";/);
+  assert.match(seaMain, /rawArgv:\s*\[\.\.\.argv\]/);
+  assert.match(seaMain, /function getNormalizedLaunchArgs\(/);
+  assert.match(seaMain, /launchArgs:\s*getNormalizedLaunchArgs\(\)/);
+  assert.match(seaMain, /function getStartupStatusPath\(/);
+  assert.match(seaMain, /function writeStartupStatus\(/);
+  assert.match(seaMain, /function recordStartupStage\(/);
+  assert.match(seaMain, /browserLaunch:\s*\{/);
+  assert.match(seaMain, /recordStartupStage\("server_listening"/);
+  assert.match(seaMain, /recordStartupStage\("browser_launch_succeeded"/);
+  assert.match(seaMain, /recordStartupStage\("browser_launch_failed"/);
+  assert.match(seaMain, /function spawnDetached\(/);
+  assert.match(seaMain, /function waitForDetachedLaunch\(/);
+  assert.match(seaMain, /async function openBrowser\(url\)/);
+  assert.match(seaMain, /"explorer\.exe"/);
+  assert.match(seaMain, /"rundll32\.exe"/);
   assert.match(seaMain, /windowsHide: true/);
+  assert.match(seaMain, /void openBrowser\(url\);/);
   assert.match(seaMain, /process\.exit\(0\);/);
 });
 
