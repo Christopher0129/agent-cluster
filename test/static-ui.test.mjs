@@ -365,7 +365,11 @@ test("multi-agent chatroom prioritizes participant count and filters non-convers
   assert.match(multiAgentUiJs, /event\?\.multiAgentMessages/);
   assert.match(multiAgentUiJs, /multiAgentChatSummary\.hidden = true;/);
   assert.match(multiAgentUiJs, /participants: state\.session\.participantCount \|\| 0/);
+  assert.match(multiAgentUiJs, /multiAgent\.chat\.task/);
+  assert.match(multiAgentUiJs, /multi-agent-message-context/);
   assert.match(styleCss, /\.multi-agent-chat-summary\[hidden\]/);
+  assert.match(styleCss, /\.multi-agent-message-context/);
+  assert.match(styleCss, /\.multi-agent-context-chip/);
   assert.match(styleCss, /\.agent-viz-lower \{\s*display: grid;\s*grid-template-columns: minmax\(0, 1fr\);/s);
 });
 
@@ -405,12 +409,42 @@ test("buildChatEntryFromEvent renders subagent assignment and acknowledgement as
   assert.match(started?.content || "", /已接单/);
 });
 
+test("buildChatEntryFromEvent preserves task, artifact, and query metadata for chat rendering", () => {
+  const settings = {
+    includeSystemMessages: true,
+    summarizeLongMessages: true
+  };
+  const entry = buildChatEntryFromEvent(
+    {
+      id: "ma_0001",
+      stage: "multi_agent_chat",
+      sourceStage: "workspace_web_search",
+      timestamp: "2026-04-06T08:00:00.000Z",
+      speakerLabel: "Research Worker",
+      targetLabel: "Validation Worker",
+      content: "Fresh evidence is ready for cross-check.",
+      taskTitle: "Collect fresh policy updates",
+      artifactPath: "reports/policy-brief.md",
+      query: "2026-04-06 policy update"
+    },
+    settings
+  );
+
+  assert.equal(entry?.taskTitle, "Collect fresh policy updates");
+  assert.equal(entry?.artifactPath, "reports/policy-brief.md");
+  assert.equal(entry?.query, "2026-04-06 policy update");
+  assert.equal(entry?.sourceStage, "workspace_web_search");
+});
+
 test("orchestrator publishes richer chat content for collaboration events", async () => {
   const orchestratorJs = await readFile(new URL("../src/cluster/orchestrator.mjs", import.meta.url), "utf8");
 
   assert.match(orchestratorJs, /content:\s*agentTask\.instructions \|\| agentTask\.title \|\| ""/);
   assert.match(orchestratorJs, /summary:\s*result\.output\.summary \|\| ""/);
   assert.match(orchestratorJs, /targetAgentLabel:\s*agent\.parentAgentLabel \|\| ""/);
+  assert.match(orchestratorJs, /artifactPath:\s*safeString\(message\.artifactPath \|\| artifactPath\)/);
+  assert.match(orchestratorJs, /query:\s*safeString\(message\.query \|\| query\)/);
+  assert.match(orchestratorJs, /sourceStage:\s*safeString\(message\.sourceStage \|\| stage\)/);
   assert.match(
     orchestratorJs,
     /content:\s*(?:subtask|entry\.subtask)\.instructions \|\| (?:subtask|entry\.subtask)\.title \|\| ""/

@@ -4055,7 +4055,11 @@ export async function runClusterAnalysis({
     tone = "neutral",
     kind = "message",
     summaryType = "",
-    content = ""
+    content = "",
+    taskTitle = "",
+    artifactPath = "",
+    query = "",
+    sourceStage = ""
   } = {}) {
     const normalizedContent = safeString(content);
     if (!normalizedContent) {
@@ -4070,7 +4074,11 @@ export async function runClusterAnalysis({
       speaker,
       target,
       content: normalizedContent,
-      summaryType: safeString(summaryType)
+      summaryType: safeString(summaryType),
+      taskTitle: safeString(taskTitle),
+      artifactPath: safeString(artifactPath),
+      query: safeString(query),
+      sourceStage: safeString(sourceStage)
     };
   }
   
@@ -4167,6 +4175,36 @@ export async function runClusterAnalysis({
       /^Artifact:\s*(.+)$/i,
       /^Files:\s*(.+)$/i
     ]);
+  }
+
+  function resolveConversationArtifactContext(stage, payload = {}) {
+    const normalizedStage = safeString(stage || payload.stage);
+    if (normalizedStage === "workspace_write") {
+      return resolveWorkspaceArtifactHint(payload);
+    }
+    if (normalizedStage === "workspace_read") {
+      return normalizeWorkspaceArtifactReferences(payload.paths || [])[0] || "";
+    }
+    if (
+      normalizedStage === "worker_done" ||
+      normalizedStage === "subagent_done" ||
+      normalizedStage === "cluster_done"
+    ) {
+      return (
+        normalizeWorkspaceArtifactReferences(payload.verifiedGeneratedFiles || [])[0] ||
+        normalizeWorkspaceArtifactReferences(payload.generatedFiles || [])[0] ||
+        ""
+      );
+    }
+    return "";
+  }
+
+  function resolveConversationQueryContext(stage, payload = {}) {
+    const normalizedStage = safeString(stage || payload.stage);
+    if (normalizedStage !== "workspace_web_search") {
+      return "";
+    }
+    return safeString(payload.query || extractEventDetailValue(safeString(payload.detail)));
   }
 
   function buildSequentialSyntheticMessages({ stage, agent, taskTitle, phase }) {
@@ -4740,6 +4778,8 @@ export async function runClusterAnalysis({
     const parentAgent = resolveParentRuntimeAgent(payload);
     const taskTitle = safeString(payload.taskTitle || payload.taskId);
     const phase = safeString(payload.phase);
+    const artifactPath = resolveConversationArtifactContext(stage, payload);
+    const query = resolveConversationQueryContext(stage, payload);
     const baseMessage = translateClusterEventToMultiAgentMessage(payload);
 
     if (stage === "planning_done") {
@@ -4760,7 +4800,19 @@ export async function runClusterAnalysis({
           ? buildWorkflowSyntheticMessages({ stage, payload, agent, parentAgent, taskTitle, phase })
           : buildSequentialSyntheticMessages({ stage, agent, taskTitle, phase });
 
-    return [...messages, ...modeSpecificMessages].filter(Boolean);
+    const enrichedModeSpecificMessages = modeSpecificMessages.map((message) =>
+      message
+        ? {
+            ...message,
+            taskTitle: safeString(message.taskTitle || taskTitle),
+            artifactPath: safeString(message.artifactPath || artifactPath),
+            query: safeString(message.query || query),
+            sourceStage: safeString(message.sourceStage || stage)
+          }
+        : null
+    );
+
+    return [...messages, ...enrichedModeSpecificMessages].filter(Boolean);
   }
 
   function translateClusterEventToMultiAgentMessage(payload = {}) {
@@ -4771,6 +4823,8 @@ export async function runClusterAnalysis({
     const phase = safeString(payload.phase);
     const tone = safeString(payload.tone || "neutral") || "neutral";
     const content = buildConversationStyleContent(stage, payload, taskTitle, runLocale);
+    const artifactPath = resolveConversationArtifactContext(stage, payload);
+    const query = resolveConversationQueryContext(stage, payload);
 
     switch (stage) {
       case "planning_start":
@@ -4779,6 +4833,10 @@ export async function runClusterAnalysis({
           stage,
           tone,
           speaker: agent,
+          taskTitle,
+          artifactPath,
+          query,
+          sourceStage: stage,
           content:
             content ||
             localizeRunText(
@@ -4793,6 +4851,10 @@ export async function runClusterAnalysis({
           stage,
           tone: "ok",
           speaker: agent,
+          taskTitle,
+          artifactPath,
+          query,
+          sourceStage: stage,
           content:
             content ||
             localizeRunText(
@@ -4809,6 +4871,10 @@ export async function runClusterAnalysis({
           tone,
           phase,
           speaker: agent,
+          taskTitle,
+          artifactPath,
+          query,
+          sourceStage: stage,
           content: content || `${stage === "phase_start" ? "Entering" : "Completed"} ${phase} phase.`
         };
       case "worker_start":
@@ -4831,6 +4897,10 @@ export async function runClusterAnalysis({
           tone,
           phase,
           speaker: agent,
+          taskTitle,
+          artifactPath,
+          query,
+          sourceStage: stage,
           content:
             content ||
             (taskTitle
@@ -4853,6 +4923,10 @@ export async function runClusterAnalysis({
           phase,
           speaker: parentAgent || agent,
           target: agent,
+          taskTitle,
+          artifactPath,
+          query,
+          sourceStage: stage,
           content:
             content ||
             localizeRunText(
@@ -4874,6 +4948,10 @@ export async function runClusterAnalysis({
           phase,
           speaker: agent,
           target: parentAgent || null,
+          taskTitle,
+          artifactPath,
+          query,
+          sourceStage: stage,
           content:
             content ||
             (taskTitle
@@ -4907,6 +4985,10 @@ export async function runClusterAnalysis({
           tone,
           phase,
           speaker: agent,
+          taskTitle,
+          artifactPath,
+          query,
+          sourceStage: stage,
           content:
             content ||
             safeString(payload.finalAnswer) ||

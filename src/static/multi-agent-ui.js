@@ -106,6 +106,9 @@ function createFallbackTranslator() {
       "multiAgent.chat.summary.none": "等待运行后生成会话摘要。",
       "multiAgent.chat.folded": "超过轮次上限的协作消息已折叠 {count} 条。",
       "multiAgent.chat.target": "发送给 {target}",
+      "multiAgent.chat.task": "任务",
+      "multiAgent.chat.artifact": "产物",
+      "multiAgent.chat.query": "搜索",
       "multiAgent.chat.phase.research": "调研",
       "multiAgent.chat.phase.implementation": "实现",
       "multiAgent.chat.phase.validation": "验证",
@@ -134,6 +137,9 @@ function createFallbackTranslator() {
       "multiAgent.chat.summary.none": "The session summary appears here after a run starts.",
       "multiAgent.chat.folded": "{count} collaboration message(s) were folded after reaching the round cap.",
       "multiAgent.chat.target": "To {target}",
+      "multiAgent.chat.task": "Task",
+      "multiAgent.chat.artifact": "Artifact",
+      "multiAgent.chat.query": "Search",
       "multiAgent.chat.phase.research": "Research",
       "multiAgent.chat.phase.implementation": "Implementation",
       "multiAgent.chat.phase.validation": "Validation",
@@ -250,6 +256,37 @@ function joinConversationParts(parts) {
     .map((value) => String(value || "").trim())
     .filter(Boolean)
     .join(" ");
+}
+
+function buildMessageContextItems(entry, settings, translate) {
+  const items = [];
+  const taskTitle = summarizeContent(entry?.taskTitle || "", settings);
+  const artifactPath = summarizeContent(entry?.artifactPath || "", settings);
+  const query = summarizeContent(entry?.query || "", settings);
+
+  if (taskTitle) {
+    items.push({
+      key: "task",
+      label: translate("multiAgent.chat.task"),
+      value: taskTitle
+    });
+  }
+  if (artifactPath) {
+    items.push({
+      key: "artifact",
+      label: translate("multiAgent.chat.artifact"),
+      value: artifactPath
+    });
+  }
+  if (query) {
+    items.push({
+      key: "query",
+      label: translate("multiAgent.chat.query"),
+      value: query
+    });
+  }
+
+  return items;
 }
 
 function resolveQuotedTaskTitle(taskTitle, fallback) {
@@ -425,7 +462,11 @@ export function buildChatEntryFromEvent(event, settings) {
       speakerLabel: String(event.speakerLabel || event.speaker?.displayLabel || event.speaker?.label || "").trim(),
       targetLabel: String(event.targetLabel || event.target?.displayLabel || event.target?.label || "").trim(),
       content,
-      summaryType: String(event.summaryType || "").trim()
+      summaryType: String(event.summaryType || "").trim(),
+      taskTitle: String(event.taskTitle || "").trim(),
+      artifactPath: String(event.artifactPath || "").trim(),
+      query: String(event.query || "").trim(),
+      sourceStage: String(event.sourceStage || event.stage || "").trim()
     };
   }
   if (!isConversationalStage(stage)) {
@@ -469,7 +510,11 @@ export function buildChatEntryFromEvent(event, settings) {
     timestamp: String(event.timestamp || new Date().toISOString()),
     speakerLabel,
     targetLabel,
-    content
+    content,
+    taskTitle: String(event.taskTitle || "").trim(),
+    artifactPath: String(event.artifactPath || "").trim(),
+    query: String(event.query || "").trim(),
+    sourceStage: stage
   };
 }
 
@@ -684,7 +729,9 @@ export function createMultiAgentUi({
       ...session,
       settings: state.settings,
       enabled: state.settings.enabled,
-      messages: Array.isArray(session.messages) ? session.messages : []
+      messages: Array.isArray(session.messages)
+        ? session.messages.map((entry) => normalizeIncomingChatEntry(entry, state.settings)).filter(Boolean)
+        : []
     };
     syncFieldState();
     render();
@@ -735,11 +782,28 @@ export function createMultiAgentUi({
               translate("multiAgent.chat.target", { target: entry.targetLabel })
             )}</span>`
           : "";
+        const contextItems = buildMessageContextItems(entry, state.settings, translate);
+        const contextHtml = contextItems.length
+          ? `
+              <div class="multi-agent-message-context">
+                ${contextItems
+                  .map(
+                    (item) => `
+                      <span class="multi-agent-context-chip" data-context="${escapeHtml(item.key)}">
+                        <span class="multi-agent-context-label">${escapeHtml(item.label)}</span>
+                        <code class="multi-agent-context-value">${escapeHtml(item.value)}</code>
+                      </span>
+                    `
+                  )
+                  .join("")}
+              </div>
+            `
+          : "";
 
         return `
           <article class="multi-agent-message" data-kind="${escapeHtml(displayKind)}" data-tone="${escapeHtml(
             entry.tone || "neutral"
-          )}">
+          )}" data-source-stage="${escapeHtml(entry.sourceStage || entry.stage || "")}">
             <div class="multi-agent-message-head">
               <div class="multi-agent-message-meta">
                 <strong>${escapeHtml(entry.speakerLabel || translate("multiAgent.chat.title"))}</strong>
@@ -750,6 +814,7 @@ export function createMultiAgentUi({
                 String(entry.timestamp || "").slice(11, 19) || "--:--:--"
               )}</span>
             </div>
+            ${contextHtml}
             <p>${escapeHtml(entry.content)}</p>
           </article>
         `;

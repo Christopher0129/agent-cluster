@@ -122,7 +122,11 @@ export function createMultiAgentRuntime(rawSettings = {}) {
     speaker = null,
     target = null,
     content = "",
-    summaryType = ""
+    summaryType = "",
+    taskTitle = "",
+    artifactPath = "",
+    query = "",
+    sourceStage = ""
   }) {
     if (!settings.enabled) {
       return null;
@@ -186,6 +190,7 @@ export function createMultiAgentRuntime(rawSettings = {}) {
       kind,
       summaryType: safeString(summaryType),
       stage: safeString(stage),
+      sourceStage: safeString(sourceStage || stage),
       tone: safeString(tone) || "neutral",
       phase: normalizedPhase,
       round: turnCount,
@@ -194,7 +199,10 @@ export function createMultiAgentRuntime(rawSettings = {}) {
       speakerLabel: speakerEntry?.label || "",
       targetId: targetEntry?.id || "",
       targetLabel: targetEntry?.label || "",
-      content: normalizedContent
+      content: normalizedContent,
+      taskTitle: safeString(taskTitle),
+      artifactPath: safeString(artifactPath),
+      query: safeString(query)
     };
 
     totalMessageCount += 1;
@@ -234,7 +242,11 @@ export function createMultiAgentRuntime(rawSettings = {}) {
       speaker: payload.speaker || null,
       target: payload.target || null,
       content: payload.content || payload.detail || "",
-      summaryType: payload.summaryType || ""
+      summaryType: payload.summaryType || "",
+      taskTitle: payload.taskTitle || "",
+      artifactPath: payload.artifactPath || "",
+      query: payload.query || "",
+      sourceStage: payload.sourceStage || payload.stage || ""
     });
   }
 
@@ -247,7 +259,11 @@ export function createMultiAgentRuntime(rawSettings = {}) {
       speaker: payload.speaker || null,
       target: payload.target || null,
       content: payload.content || payload.detail || "",
-      summaryType: payload.summaryType || ""
+      summaryType: payload.summaryType || "",
+      taskTitle: payload.taskTitle || "",
+      artifactPath: payload.artifactPath || "",
+      query: payload.query || "",
+      sourceStage: payload.sourceStage || payload.stage || ""
     });
   }
 
@@ -265,7 +281,11 @@ export function createMultiAgentRuntime(rawSettings = {}) {
       speaker: payload.speaker || null,
       target: payload.target || null,
       content: nextSummary,
-      summaryType: payload.summaryType || "summary"
+      summaryType: payload.summaryType || "summary",
+      taskTitle: payload.taskTitle || "",
+      artifactPath: payload.artifactPath || "",
+      query: payload.query || "",
+      sourceStage: payload.sourceStage || payload.stage || ""
     });
   }
 

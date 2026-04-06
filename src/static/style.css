@@ -638,6 +638,45 @@ body::after {
   overflow-wrap: anywhere;
 }
 
+.multi-agent-message-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: flex-start;
+}
+
+.multi-agent-context-chip {
+  display: inline-flex;
+  gap: 0.38rem;
+  align-items: center;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0.35rem 0.55rem;
+  border-radius: 12px;
+  border: 1px solid rgba(95, 180, 255, 0.14);
+  background: rgba(95, 180, 255, 0.08);
+}
+
+.multi-agent-context-label {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.multi-agent-context-value {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.74rem;
+  line-height: 1.5;
+  font-family: Consolas, "SFMono-Regular", "Liberation Mono", monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .agent-viz-inspector::-webkit-scrollbar,
 .scheme-connectivity-results::-webkit-scrollbar,
 .multi-agent-chatroom::-webkit-scrollbar,

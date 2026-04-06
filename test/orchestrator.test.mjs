@@ -1056,8 +1056,8 @@ test("runClusterAnalysis infers dependent delegated child tasks from shared work
         enabled: true,
         mode: "group_chat",
         speakerStrategy: "phase_priority",
-        maxRounds: 12,
-        messageWindow: 20,
+        maxRounds: 40,
+        messageWindow: 60,
         summarizeLongMessages: true,
         includeSystemMessages: true
       },
@@ -1140,6 +1140,15 @@ test("runClusterAnalysis infers dependent delegated child tasks from shared work
     );
     assert.equal(
       result.multiAgentSession.messages.some((message) => /Acknowledged "Write the structured research JSON"/.test(message.content)),
+      true
+    );
+    assert.equal(
+      result.multiAgentSession.messages.some(
+        (message) =>
+          message.stage === "workspace_write" &&
+          message.artifactPath === "reports/report.docx" &&
+          message.sourceStage === "workspace_write"
+      ),
       true
     );
     assert.equal(result.workspaceCleanup?.removedFiles.includes("research/source.json"), true);

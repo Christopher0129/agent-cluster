@@ -1076,6 +1076,7 @@ export async function runWorkspaceToolLoop({
           ...buildRuntimeWorkerIdentity(worker),
           taskId: task.id,
           taskTitle: task.title,
+          paths,
           detail: `Read ${paths.length} workspace file(s).`
         });
       }
@@ -1304,6 +1305,7 @@ export async function runWorkspaceToolLoop({
           ...buildRuntimeWorkerIdentity(worker),
           taskId: task.id,
           taskTitle: task.title,
+          query,
           detail: query,
           sourceCount: result.sources.length
         });
