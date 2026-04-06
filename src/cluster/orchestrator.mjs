@@ -4532,6 +4532,21 @@ export async function runClusterAnalysis({
     return anchors.some((anchor) => normalized.includes(anchor));
   }
 
+  function discussionMessageRequestsReply(content = "", targetEntry = null) {
+    const normalized = safeString(content).replace(/\s+/g, " ");
+    if (!normalized || !targetEntry) {
+      return false;
+    }
+
+    if (/[?？]/.test(normalized)) {
+      return true;
+    }
+
+    return /(?:\bplease\b|\bcan you\b|\bcould you\b|\bwould you\b|\bconfirm\b|\bclarify\b|\bverify\b|\bcheck\b|\btell me\b|\banswer\b|\breply\b|\brespond\b|\bsend back\b|\breturn\b)|(?:\b(?:if|once|when|before|after)\s+you\b[^.?!。！？]{0,120}\b(?:send|return|mark|flag|use|check|confirm|clarify|verify|review|compare|tell|answer|reply|respond)\b)|(?:\bsend\s+(?:it|them|that|those|the\s+\w+)\b)|(?:请|确认|说明|核实|检查|告诉我|回复|回答)/i.test(
+      normalized
+    );
+  }
+
   function selectDiscussionSpeaker(
     participants = [],
     roundIndex = 0,
@@ -4553,13 +4568,8 @@ export async function runClusterAnalysis({
       const preferred = ordered.find(
         (participant) => getDiscussionParticipantAgentId(participant) === normalizedPreferredSpeakerId
       );
-      const minimumSpeakerCount = ordered.reduce((minimum, participant) => {
-        const count = getSpeakerCount(participant);
-        return minimum === null ? count : Math.min(minimum, count);
-      }, null);
       if (
         preferred &&
-        getSpeakerCount(preferred) <= Number(minimumSpeakerCount ?? 0) &&
         (getDiscussionParticipantAgentId(preferred) !== lastSpeakerId || ordered.length === 1)
       ) {
         return preferred;
@@ -4897,7 +4907,7 @@ export async function runClusterAnalysis({
         lastSpeakerId = safeString(speakerEntry.agent.runtimeId || speakerEntry.agent.id);
         speakerCounts.set(lastSpeakerId, (Number(speakerCounts.get(lastSpeakerId)) || 0) + 1);
         lastTargetId = safeString(targetEntry?.agent?.runtimeId || targetEntry?.agent?.id);
-        pendingReply = lastTargetId
+        pendingReply = lastTargetId && discussionMessageRequestsReply(content, targetEntry)
           ? {
               sourceAgentId: lastSpeakerId,
               sourceLabel: getDiscussionParticipantLabel(speakerEntry),

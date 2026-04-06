@@ -595,17 +595,18 @@ test("runClusterAnalysis expands group chat mode into discussion-style collabora
           assert.match(String(input), /Draft to rewrite:/);
           assert.match(String(input), /Search results for query:/);
           return {
-            text: "I will publish the fresh evidence bucket first so implementation can build on one stable source of truth."
+            text: "I will publish the fresh evidence bucket first so implementation can build on one stable source of truth. Implementation Worker, confirm whether your brief can stay scoped to that bucket."
           };
         },
         ({ purpose, input }) => {
           assert.equal(purpose, "multi_agent_discussion");
           researchDiscussionTurns.push(String(input));
           assert.match(String(input), /Direct reply expected:/);
+          assert.match(String(input), /Reply obligation:/);
           assert.match(String(input), /Implementation Worker to you/);
-          assert.match(String(input), /Understood\. I will wait for your evidence bucket/);
+          assert.match(String(input), /send it with the exact source note/i);
           return {
-            text: "Agreed. I will freeze the evidence bucket early and flag any contradiction before the brief is finalized."
+            text: "Agreed. I will freeze the evidence bucket early. Once you see a contradiction, tell me the exact source note before you widen the brief."
           };
         },
         ({ input }) => {
@@ -622,17 +623,19 @@ test("runClusterAnalysis expands group chat mode into discussion-style collabora
           assert.equal(purpose, "multi_agent_discussion");
           implementationDiscussionTurns.push(String(input));
           assert.match(String(input), /Direct reply expected:/);
+          assert.match(String(input), /Reply obligation:/);
           assert.match(String(input), /Research Worker to you/);
           assert.match(String(input), /fresh evidence bucket first/i);
           return {
-            text: "Understood. I will wait for your evidence bucket and challenge any implementation note that conflicts with it."
+            text: "Understood. I will wait for your evidence bucket and challenge any implementation note that conflicts with it. If you see a contradiction, send it with the exact source note."
           };
         },
         ({ purpose, input }) => {
           assert.equal(purpose, "multi_agent_discussion");
           implementationDiscussionTurns.push(String(input));
           assert.match(String(input), /Direct reply expected:/);
-          assert.match(String(input), /freeze the evidence bucket early/i);
+          assert.match(String(input), /Reply obligation:/);
+          assert.match(String(input), /tell me the exact source note/i);
           return {
             text: "Once your bucket is frozen, I will bind the implementation brief to it and surface any mismatch immediately."
           };
@@ -804,20 +807,22 @@ test("runClusterAnalysis respects the configured group chat max rounds for two p
           assert.equal(purpose, "multi_agent_discussion");
           discussionTurns.push(String(input));
           return {
-            text: "Source lane will lock the evidence shortlist for Draft lane before the draft outline is finalized."
+            text: "Source lane will lock the evidence shortlist for Draft lane before the draft outline is finalized. Draft lane, confirm you can draft against that shortlist only."
           };
         },
         ({ purpose, input }) => {
           assert.equal(purpose, "multi_agent_discussion");
           discussionTurns.push(String(input));
+          assert.match(String(input), /Reply obligation:/);
           assert.match(String(input), /Draft lane/i);
           return {
-            text: "Source lane confirms the shortlist is locked; Draft lane should mark any missing citation instead of widening scope."
+            text: "Source lane confirms the shortlist is locked; Draft lane should mark any missing citation instead of widening scope. If you hit citation gaps, tell me before you reopen scope."
           };
         },
         ({ purpose, input }) => {
           assert.equal(purpose, "multi_agent_discussion");
           discussionTurns.push(String(input));
+          assert.match(String(input), /Reply obligation:/);
           assert.match(String(input), /citation gaps/i);
           return {
             text: "Source lane will only reopen scope if Draft lane finds a gap tied to the locked shortlist."
@@ -832,22 +837,25 @@ test("runClusterAnalysis respects the configured group chat max rounds for two p
         ({ purpose, input }) => {
           assert.equal(purpose, "multi_agent_discussion");
           discussionTurns.push(String(input));
+          assert.match(String(input), /Reply obligation:/);
           assert.match(String(input), /lock the evidence shortlist/i);
           return {
-            text: "Draft lane will draft against that locked shortlist and tag any unsupported claim instead of adding new sources."
+            text: "Draft lane will draft against that locked shortlist and tag any unsupported claim instead of adding new sources. Source lane, send back only the missing citation bucket if one appears."
           };
         },
         ({ purpose, input }) => {
           assert.equal(purpose, "multi_agent_discussion");
           discussionTurns.push(String(input));
+          assert.match(String(input), /Reply obligation:/);
           assert.match(String(input), /missing citation/i);
           return {
-            text: "Draft lane agrees and will return only citation gaps, not new scope requests, back to Source lane."
+            text: "Draft lane agrees and will return only citation gaps, not new scope requests, back to Source lane. Source lane, confirm whether any gap is enough to reopen scope."
           };
         },
         ({ purpose, input }) => {
           assert.equal(purpose, "multi_agent_discussion");
           discussionTurns.push(String(input));
+          assert.match(String(input), /Reply obligation:/);
           assert.match(String(input), /reopen scope/i);
           return {
             text: "Draft lane is ready to merge once the shortlist stays unchanged through the final outline pass."

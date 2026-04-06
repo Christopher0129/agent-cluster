@@ -34,6 +34,30 @@ function buildDiscussionAnchors(speakerTask = null, target = null) {
   return anchors.length ? anchors.map((anchor) => `- ${anchor}`).join("\n") : "(no explicit anchors)";
 }
 
+function extractDiscussionReplyFocus(content = "") {
+  const normalized = String(content || "").replace(/\s+/g, " ").trim();
+  if (!normalized) {
+    return "(none)";
+  }
+
+  const sentences = normalized
+    .split(/(?<=[.?!。！？])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+  const prioritized =
+    sentences.find((sentence) => /[?？]/.test(sentence)) ||
+    sentences.find(
+      (sentence) =>
+        /\b(?:please|confirm|clarify|explain|verify|check|send|return|tell|answer|respond|use|mark|flag|compare)\b/i.test(
+          sentence
+        ) || /(?:请|确认|说明|核实|检查|回复|回答|发送|返回|标记|指出|对比|使用)/.test(sentence)
+    ) ||
+    sentences[0] ||
+    normalized;
+
+  return prioritized.length <= 220 ? prioritized : `${prioritized.slice(0, 217)}...`;
+}
+
 function formatWorkers(workers) {
   return workers
     .map(
@@ -420,7 +444,7 @@ export function buildGroupDiscussionTurnRequest({
       "Reply as one collaborating agent speaking to peers in a shared thread.",
       "Keep the message concise: 1-3 short sentences, under 120 words.",
       pendingReply
-        ? `You are explicitly responding to ${pendingReply.sourceLabel || "a peer"} in this turn. Answer their latest question or concern concretely in the opening sentence before you add any follow-up.`
+        ? `You are explicitly responding to ${pendingReply.sourceLabel || "a peer"} in this turn. Answer their latest question or concern concretely in the opening sentence before you add any follow-up. Treat the reply obligation below as mandatory.`
         : "Advance the discussion by doing at least one of these: expose an overlap, challenge a weak assumption, answer a peer's concern, flag a dependency, or suggest a concrete coordination step.",
       "Every message must contain at least one concrete answer, decision, or coordination action.",
       "Name at least one concrete anchor when possible: an exact task, artifact, source bucket, date window, risk, or decision tied to the work at hand.",
@@ -463,6 +487,9 @@ export function buildGroupDiscussionTurnRequest({
             pendingReply.content || ""
           ).trim()}`
         : "Direct reply expected:\n(none)",
+      pendingReply
+        ? `Reply obligation:\n${extractDiscussionReplyFocus(pendingReply.content || "")}`
+        : "Reply obligation:\n(none)",
       `Concrete anchors:\n${discussionAnchors}`,
       `Participants:\n${participantLines || "(none)"}`,
       `Recent shared discussion:\n${transcriptLines || "(no prior discussion yet)"}`,
@@ -492,7 +519,7 @@ export function buildGroupDiscussionRewriteRequest({
       "The rewrite must contain at least one concrete answer, decision, or coordination step.",
       "Make it specific: mention the exact task, artifact, source bucket, date window, risk, or decision you are referring to.",
       pendingReply
-        ? `This turn is a direct reply to ${pendingReply.sourceLabel || "a peer"}. Answer that peer first, then add at most one follow-up question if absolutely necessary.`
+        ? `This turn is a direct reply to ${pendingReply.sourceLabel || "a peer"}. Answer that peer first, and treat the reply obligation below as mandatory. Add at most one follow-up question only if absolutely necessary.`
         : "If you ask a follow-up question, ask at most one short question and only after giving a concrete answer or position.",
       "Do not keep vague promises like 'I will compare notes' or 'I will keep things aligned' unless you explicitly name what will be compared or aligned.",
       "Do not output fake tool traces, do not say 'Search results for query', and do not narrate hidden reasoning.",
@@ -524,6 +551,9 @@ export function buildGroupDiscussionRewriteRequest({
             pendingReply.content || ""
           ).trim()}`
         : "Direct reply expected:\n(none)",
+      pendingReply
+        ? `Reply obligation:\n${extractDiscussionReplyFocus(pendingReply.content || "")}`
+        : "Reply obligation:\n(none)",
       `Concrete anchors:\n${discussionAnchors}`,
       `Draft to rewrite:\n${String(draft || "").trim()}`
     ].join("\n\n")
