@@ -372,6 +372,9 @@ export function buildGroupDiscussionTurnRequest({
   participants = [],
   transcript = [],
   target = null,
+  pendingReply = null,
+  roundIndex = 0,
+  plannedRounds = 0,
   discussionScope = "group_chat",
   outputLocale = "en-US"
 }) {
@@ -399,7 +402,12 @@ export function buildGroupDiscussionTurnRequest({
       "This is not the final answer to the user.",
       "Reply as one collaborating agent speaking to peers in a shared thread.",
       "Keep the message concise: 1-3 short sentences, under 120 words.",
-      "Advance the discussion by doing at least one of these: expose an overlap, challenge a weak assumption, ask for missing evidence, flag a dependency, or suggest a concrete coordination step.",
+      pendingReply
+        ? `You are explicitly responding to ${pendingReply.sourceLabel || "a peer"} in this turn. Answer their latest question or concern concretely in the opening sentence before you add any follow-up.`
+        : "Advance the discussion by doing at least one of these: expose an overlap, challenge a weak assumption, answer a peer's concern, flag a dependency, or suggest a concrete coordination step.",
+      "Every message must contain at least one concrete answer, decision, or coordination action.",
+      "Do not send a question-only message. If you ask a follow-up question, ask at most one short question and only after giving a concrete answer or position.",
+      "Do not simulate tool outputs, do not write fake search snippets, and never start with phrases like 'Search results for query'.",
       "Do not restate the whole task, do not narrate hidden reasoning, and do not invent evidence or tools.",
       target
         ? `Address ${target.agent?.displayLabel || target.agent?.label || target.label || "the target agent"} directly when useful.`
@@ -410,6 +418,7 @@ export function buildGroupDiscussionTurnRequest({
       `Overall objective:\n${originalTask}`,
       `Current local date context:\n${buildDateGuard()}`,
       buildOutputLanguageInput(outputLocale),
+      `Round context:\nturn ${Math.max(1, Number(roundIndex) + 1)} of ${Math.max(1, Number(plannedRounds) || 1)}`,
       `Discussion scope:\n${discussionScope}`,
       `Cluster strategy:\n${clusterPlan?.strategy || ""}`,
       speakerTask
@@ -430,9 +439,69 @@ export function buildGroupDiscussionTurnRequest({
             target.phase || target.task?.phase || ""
           ).trim()} | task=${String(target.title || target.task?.title || "").trim()}`
         : "Suggested target:\n(none)",
+      pendingReply
+        ? `Direct reply expected:\nFrom ${pendingReply.sourceLabel || "Unknown agent"} to you.\nTheir latest message:\n${String(
+            pendingReply.content || ""
+          ).trim()}`
+        : "Direct reply expected:\n(none)",
       `Participants:\n${participantLines || "(none)"}`,
       `Recent shared discussion:\n${transcriptLines || "(no prior discussion yet)"}`,
       "Return one concise discussion message that helps the group coordinate before execution."
+    ].join("\n\n")
+  };
+}
+
+export function buildGroupDiscussionRewriteRequest({
+  originalTask,
+  clusterPlan,
+  speaker,
+  speakerTask = null,
+  target = null,
+  pendingReply = null,
+  draft = "",
+  outputLocale = "en-US"
+}) {
+  return {
+    instructions: [
+      `You are ${speaker.displayLabel || speaker.label || speaker.id}, rewriting a low-quality live multi-agent discussion message inside a cluster.`,
+      buildDateGuard(),
+      buildOutputLanguageInstruction(outputLocale),
+      "Rewrite the draft into one concise peer-to-peer collaboration message.",
+      "Keep it to 1-3 short sentences, under 120 words.",
+      "The rewrite must contain at least one concrete answer, decision, or coordination step.",
+      pendingReply
+        ? `This turn is a direct reply to ${pendingReply.sourceLabel || "a peer"}. Answer that peer first, then add at most one follow-up question if absolutely necessary.`
+        : "If you ask a follow-up question, ask at most one short question and only after giving a concrete answer or position.",
+      "Do not output fake tool traces, do not say 'Search results for query', and do not narrate hidden reasoning.",
+      "Return plain text only."
+    ].join(" "),
+    input: [
+      `Overall objective:\n${originalTask}`,
+      `Current local date context:\n${buildDateGuard()}`,
+      buildOutputLanguageInput(outputLocale),
+      `Cluster strategy:\n${clusterPlan?.strategy || ""}`,
+      speakerTask
+        ? `Your assigned task:\n${JSON.stringify(
+            {
+              id: speakerTask.id,
+              phase: speakerTask.phase,
+              title: speakerTask.title,
+              instructions: speakerTask.instructions,
+              expectedOutput: speakerTask.expectedOutput
+            },
+            null,
+            2
+          )}`
+        : "Your assigned task:\n{}",
+      target
+        ? `Suggested target:\n${target.agent?.displayLabel || target.agent?.label || target.label || "Unknown agent"}`
+        : "Suggested target:\n(none)",
+      pendingReply
+        ? `Direct reply expected:\nFrom ${pendingReply.sourceLabel || "Unknown agent"} to you.\nTheir latest message:\n${String(
+            pendingReply.content || ""
+          ).trim()}`
+        : "Direct reply expected:\n(none)",
+      `Draft to rewrite:\n${String(draft || "").trim()}`
     ].join("\n\n")
   };
 }

@@ -505,6 +505,8 @@ test("runClusterAnalysis localizes multi-agent session messages when outputLocal
 });
 
 test("runClusterAnalysis expands group chat mode into discussion-style collaboration messages", async () => {
+  const researchDiscussionTurns = [];
+  const implementationDiscussionTurns = [];
   const config = {
     cluster: {
       controller: "controller",
@@ -580,7 +582,32 @@ test("runClusterAnalysis expands group chat mode into discussion-style collabora
     [
       "research_worker",
       new FakeProvider([
-        "I will share the fresh evidence bucket early so implementation can avoid stale assumptions.",
+        ({ purpose, input }) => {
+          assert.equal(purpose, "multi_agent_discussion");
+          researchDiscussionTurns.push(String(input));
+          assert.match(String(input), /Direct reply expected:\n\(none\)/);
+          return {
+            text: "Search results for query: fresh evidence lane?"
+          };
+        },
+        ({ purpose, input }) => {
+          assert.equal(purpose, "multi_agent_discussion_rewrite");
+          assert.match(String(input), /Draft to rewrite:/);
+          assert.match(String(input), /Search results for query:/);
+          return {
+            text: "I will publish the fresh evidence bucket first so implementation can build on one stable source of truth."
+          };
+        },
+        ({ purpose, input }) => {
+          assert.equal(purpose, "multi_agent_discussion");
+          researchDiscussionTurns.push(String(input));
+          assert.match(String(input), /Direct reply expected:/);
+          assert.match(String(input), /From Implementation Worker to you/);
+          assert.match(String(input), /Understood\. I will wait for your evidence bucket/);
+          return {
+            text: "Agreed. I will freeze the evidence bucket early and flag any contradiction before the brief is finalized."
+          };
+        },
         ({ input }) => {
           assert.match(String(input), /Live group chat aligned/i);
           assert.match(String(input), /fresh evidence bucket/i);
@@ -591,7 +618,25 @@ test("runClusterAnalysis expands group chat mode into discussion-style collabora
     [
       "implementation_worker",
       new FakeProvider([
-        "Understood. I will challenge any implementation note that conflicts with the fresh evidence lane.",
+        ({ purpose, input }) => {
+          assert.equal(purpose, "multi_agent_discussion");
+          implementationDiscussionTurns.push(String(input));
+          assert.match(String(input), /Direct reply expected:/);
+          assert.match(String(input), /From Research Worker to you/);
+          assert.match(String(input), /fresh evidence bucket first/i);
+          return {
+            text: "Understood. I will wait for your evidence bucket and challenge any implementation note that conflicts with it."
+          };
+        },
+        ({ purpose, input }) => {
+          assert.equal(purpose, "multi_agent_discussion");
+          implementationDiscussionTurns.push(String(input));
+          assert.match(String(input), /Direct reply expected:/);
+          assert.match(String(input), /freeze the evidence bucket early/i);
+          return {
+            text: "Once your bucket is frozen, I will bind the implementation brief to it and surface any mismatch immediately."
+          };
+        },
         ({ input }) => {
           assert.match(String(input), /Live group chat aligned/i);
           assert.match(String(input), /fresh evidence bucket/i);
@@ -611,7 +656,7 @@ test("runClusterAnalysis expands group chat mode into discussion-style collabora
     result.multiAgentSession.messages.some(
       (message) =>
         message.stage === "multi_agent_chat" &&
-        /share the fresh evidence bucket early/i.test(message.content)
+        /publish the fresh evidence bucket first/i.test(message.content)
     ),
     true
   );
@@ -631,6 +676,174 @@ test("runClusterAnalysis expands group chat mode into discussion-style collabora
     ),
     true
   );
+  assert.equal(
+    result.multiAgentSession.messages.filter(
+      (message) => message.stage === "multi_agent_chat" && message.sourceStage === "multi_agent_discussion"
+    ).length >= 4,
+    true
+  );
+  assert.equal(
+    result.multiAgentSession.messages.some(
+      (message) =>
+        message.stage === "multi_agent_chat" &&
+        message.sourceStage === "multi_agent_discussion" &&
+        /^Search results for query:/i.test(message.content)
+    ),
+    false
+  );
+  assert.equal(researchDiscussionTurns.length >= 2, true);
+  assert.equal(implementationDiscussionTurns.length >= 2, true);
+});
+
+test("runClusterAnalysis expands group chat rounds with four participants", async () => {
+  const discussionTurns = [];
+  const config = {
+    cluster: {
+      controller: "controller",
+      maxParallel: 4
+    },
+    multiAgent: {
+      enabled: true,
+      mode: "group_chat",
+      speakerStrategy: "phase_priority",
+      maxRounds: 12,
+      messageWindow: 40,
+      summarizeLongMessages: true,
+      includeSystemMessages: true
+    },
+    models: {
+      controller: {
+        id: "controller",
+        label: "Controller",
+        model: "gpt-5.4"
+      },
+      worker_a: {
+        id: "worker_a",
+        label: "Worker A",
+        model: "model-a",
+        provider: "mock",
+        specialties: ["research"]
+      },
+      worker_b: {
+        id: "worker_b",
+        label: "Worker B",
+        model: "model-b",
+        provider: "mock",
+        specialties: ["research"]
+      },
+      worker_c: {
+        id: "worker_c",
+        label: "Worker C",
+        model: "model-c",
+        provider: "mock",
+        specialties: ["implementation"]
+      },
+      worker_d: {
+        id: "worker_d",
+        label: "Worker D",
+        model: "model-d",
+        provider: "mock",
+        specialties: ["validation"]
+      }
+    }
+  };
+
+  class FourParticipantWorkerProvider {
+    constructor(label) {
+      this.label = label;
+    }
+
+    async invoke({ purpose, input } = {}) {
+      if (purpose === "multi_agent_discussion") {
+        discussionTurns.push(String(input));
+        return {
+          text: `${this.label} will publish one concrete checkpoint now and flag any overlap before the next handoff.`
+        };
+      }
+
+      return { text: buildWorkerOutput(`${this.label} finished the assigned lane.`) };
+    }
+  }
+
+  const providerRegistry = new Map([
+    [
+      "controller",
+      new FakeProvider([
+        JSON.stringify({
+          objective: "Exercise the four-participant chat expansion",
+          strategy: "Use four parallel lanes and then synthesize them.",
+          tasks: [
+            {
+              id: "task_1",
+              phase: "research",
+              title: "Lane A",
+              assignedWorker: "worker_a",
+              instructions: "Handle lane A.",
+              dependsOn: []
+            },
+            {
+              id: "task_2",
+              phase: "research",
+              title: "Lane B",
+              assignedWorker: "worker_b",
+              instructions: "Handle lane B.",
+              dependsOn: []
+            },
+            {
+              id: "task_3",
+              phase: "implementation",
+              title: "Lane C",
+              assignedWorker: "worker_c",
+              instructions: "Handle lane C.",
+              dependsOn: []
+            },
+            {
+              id: "task_4",
+              phase: "validation",
+              title: "Lane D",
+              assignedWorker: "worker_d",
+              instructions: "Handle lane D.",
+              dependsOn: []
+            }
+          ]
+        }),
+        JSON.stringify({
+          finalAnswer: "Expanded discussion completed.",
+          executiveSummary: ["Four participants exchanged more than the old four-turn cap."],
+          consensus: ["The chat should scale discussion turns with participant count."],
+          disagreements: [],
+          nextActions: []
+        })
+      ])
+    ],
+    ["worker_a", new FourParticipantWorkerProvider("Worker A")],
+    ["worker_b", new FourParticipantWorkerProvider("Worker B")],
+    ["worker_c", new FourParticipantWorkerProvider("Worker C")],
+    ["worker_d", new FourParticipantWorkerProvider("Worker D")]
+  ]);
+
+  const result = await runClusterAnalysis({
+    task: "Exercise the four-participant chat expansion",
+    config,
+    providerRegistry
+  });
+
+  assert.equal(
+    result.multiAgentSession.messages.filter(
+      (message) => message.stage === "multi_agent_chat" && message.sourceStage === "multi_agent_discussion"
+    ).length,
+    8
+  );
+  assert.equal(
+    result.multiAgentSession.messages.some(
+      (message) =>
+        message.stage === "multi_agent_chat" &&
+        message.sourceStage === "multi_agent_discussion_summary" &&
+        /8 real collaboration messages/i.test(message.content)
+    ),
+    true
+  );
+  assert.equal(discussionTurns.length, 8);
 });
 
 test("runClusterAnalysis expands workflow mode into dependency-driven tool-flow messages", async () => {

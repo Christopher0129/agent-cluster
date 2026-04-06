@@ -1,4 +1,5 @@
 import {
+  buildGroupDiscussionRewriteRequest,
   buildGroupDiscussionTurnRequest,
   buildLeaderDelegationRequest,
   buildLeaderSynthesisRequest,
@@ -4388,14 +4389,43 @@ export async function runClusterAnalysis({
       });
   }
 
-  function selectDiscussionSpeaker(participants = [], roundIndex = 0, lastSpeakerId = "", seed = "") {
+  function getDiscussionParticipantAgentId(participant = null) {
+    return safeString(participant?.agent?.runtimeId || participant?.agent?.id || participant?.id);
+  }
+
+  function getDiscussionParticipantLabel(participant = null) {
+    return safeString(
+      participant?.agent?.displayLabel || participant?.agent?.label || participant?.label || participant?.id
+    );
+  }
+
+  function selectDiscussionSpeaker(
+    participants = [],
+    roundIndex = 0,
+    lastSpeakerId = "",
+    seed = "",
+    preferredSpeakerId = ""
+  ) {
     const ordered = sortDiscussionParticipants(participants);
     if (!ordered.length) {
       return null;
     }
 
+    const normalizedPreferredSpeakerId = safeString(preferredSpeakerId);
+    if (normalizedPreferredSpeakerId) {
+      const preferred = ordered.find(
+        (participant) => getDiscussionParticipantAgentId(participant) === normalizedPreferredSpeakerId
+      );
+      if (
+        preferred &&
+        (getDiscussionParticipantAgentId(preferred) !== lastSpeakerId || ordered.length === 1)
+      ) {
+        return preferred;
+      }
+    }
+
     const filtered = ordered.filter(
-      (participant) => safeString(participant?.agent?.runtimeId || participant?.agent?.id) !== lastSpeakerId
+      (participant) => getDiscussionParticipantAgentId(participant) !== lastSpeakerId
     );
     const pool = filtered.length ? filtered : ordered;
 
@@ -4426,7 +4456,8 @@ export async function runClusterAnalysis({
     speakerEntry = null,
     roundIndex = 0,
     lastTargetId = "",
-    seed = ""
+    seed = "",
+    preferredTargetId = ""
   ) {
     if (!speakerEntry) {
       return null;
@@ -4450,8 +4481,17 @@ export async function runClusterAnalysis({
       ),
       ...candidates
     ]);
+    const normalizedPreferredTargetId = safeString(preferredTargetId);
+    if (normalizedPreferredTargetId) {
+      const preferred = relatedCandidates.find(
+        (participant) => getDiscussionParticipantAgentId(participant) === normalizedPreferredTargetId
+      );
+      if (preferred) {
+        return preferred;
+      }
+    }
     const filtered = relatedCandidates.filter(
-      (participant) => safeString(participant?.agent?.runtimeId || participant?.agent?.id) !== lastTargetId
+      (participant) => getDiscussionParticipantAgentId(participant) !== lastTargetId
     );
     const pool = filtered.length ? filtered : relatedCandidates;
 
@@ -4463,6 +4503,35 @@ export async function runClusterAnalysis({
       default:
         return pool[roundIndex % pool.length];
     }
+  }
+
+  function discussionMessageNeedsRewrite(content = "") {
+    const normalized = safeString(content).replace(/\s+/g, " ");
+    if (!normalized) {
+      return true;
+    }
+
+    if (/^Search results for query\s*:/i.test(normalized)) {
+      return true;
+    }
+
+    if (
+      /<\|tool_calls_section_begin\|>|<\|tool_call_begin\|>|<\|tool_call_argument_begin\|>|<\|tool_call_end\|>|<\|tool_calls_section_end\|>/i.test(
+        normalized
+      )
+    ) {
+      return true;
+    }
+
+    const questionCount = (normalized.match(/[?？]/g) || []).length;
+    const statementCount = (normalized.match(/[.。!！；;]/g) || []).length;
+    const answerCue = /(我会|我建议|建议|结论|我的判断|可以|应当|应该|先|需要|会先|answer|recommend|should|will|need|my position|concretely)/i.test(
+      normalized
+    );
+    const questionLead = /^(?:@\S+\s+)?(?:can you|could you|would you|please|do we|should we|is it|are we|need to|please confirm|\u8bf7|\u8bf7\u786e\u8ba4|\u662f\u5426|\u80fd\u5426|\u6211\u9700\u8981\u786e\u8ba4|\u9700\u8981\u786e\u8ba4)/i.test(
+      normalized
+    );
+    return (questionCount > 0 && statementCount === 0 && !answerCue) || (questionLead && !answerCue);
   }
 
   function buildDiscussionDependencyOutput({
@@ -4527,14 +4596,12 @@ export async function runClusterAnalysis({
     }
 
     const roundCap = Math.max(1, Number(multiAgentRuntime.settings.maxRounds) || 1);
-    const plannedRounds = Math.min(
-      discussionParticipants.length,
-      Math.max(1, Math.min(4, roundCap))
-    );
+    const plannedRounds = Math.min(roundCap, Math.max(4, discussionParticipants.length * 2));
     const transcript = [];
     const recordedMessages = [];
     let lastSpeakerId = "";
     let lastTargetId = "";
+    let pendingReply = null;
 
     for (let roundIndex = 0; roundIndex < plannedRounds; roundIndex += 1) {
       throwIfAborted(signalOverride);
@@ -4543,18 +4610,25 @@ export async function runClusterAnalysis({
         discussionParticipants,
         roundIndex,
         lastSpeakerId,
-        discussionKey
+        discussionKey,
+        pendingReply?.targetAgentId || ""
       );
       if (!speakerEntry?.agent) {
         break;
       }
 
+      const expectedReply =
+        pendingReply &&
+        getDiscussionParticipantAgentId(speakerEntry) === safeString(pendingReply.targetAgentId)
+          ? pendingReply
+          : null;
       const targetEntry = selectDiscussionTarget(
         discussionParticipants,
         speakerEntry,
         roundIndex,
         lastTargetId,
-        discussionKey
+        discussionKey,
+        expectedReply?.sourceAgentId || ""
       );
       const prompt = buildGroupDiscussionTurnRequest({
         originalTask,
@@ -4564,6 +4638,9 @@ export async function runClusterAnalysis({
         participants: discussionParticipants,
         transcript,
         target: targetEntry,
+        pendingReply: expectedReply,
+        roundIndex,
+        plannedRounds,
         discussionScope: scopeLabel,
         outputLocale: runLocale
       });
@@ -4585,7 +4662,39 @@ export async function runClusterAnalysis({
             }),
           { signal: signalOverride }
         );
-        const content = safeString(response?.text).replace(/\s+/g, " ").trim();
+        let content = safeString(response?.text).replace(/\s+/g, " ").trim();
+        if (discussionMessageNeedsRewrite(content)) {
+          const rewritePrompt = buildGroupDiscussionRewriteRequest({
+            originalTask,
+            clusterPlan,
+            speaker: speakerEntry.agent,
+            speakerTask: speakerEntry.task || null,
+            target: targetEntry,
+            pendingReply: expectedReply,
+            draft: content,
+            outputLocale: runLocale
+          });
+          const rewriteResponse = await executionGate.run(
+            () =>
+              invokeProviderWithSession({
+                sessionRuntime,
+                provider: providerRegistry.get(speakerEntry.agent.id),
+                agent: speakerEntry.agent,
+                task: speakerEntry.task || null,
+                parentSpanId: discussionParentSpanId,
+                purpose: "multi_agent_discussion_rewrite",
+                instructions: rewritePrompt.instructions,
+                input: rewritePrompt.input,
+                signal: signalOverride,
+                buildAgentEventBase
+              }),
+            { signal: signalOverride }
+          );
+          const rewritten = safeString(rewriteResponse?.text).replace(/\s+/g, " ").trim();
+          if (rewritten) {
+            content = rewritten;
+          }
+        }
         if (!content) {
           continue;
         }
@@ -4610,6 +4719,15 @@ export async function runClusterAnalysis({
 
         lastSpeakerId = safeString(speakerEntry.agent.runtimeId || speakerEntry.agent.id);
         lastTargetId = safeString(targetEntry?.agent?.runtimeId || targetEntry?.agent?.id);
+        pendingReply = lastTargetId
+          ? {
+              sourceAgentId: lastSpeakerId,
+              sourceLabel: getDiscussionParticipantLabel(speakerEntry),
+              targetAgentId: lastTargetId,
+              targetLabel: getDiscussionParticipantLabel(targetEntry),
+              content
+            }
+          : null;
 
         if (
           safeString(multiAgentRuntime.settings.terminationKeyword) &&
