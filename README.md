@@ -14,7 +14,7 @@ Desktop-first multi-model agent cluster runtime for controller-led orchestration
 
 <p>
   <img alt="Node.js" src="https://img.shields.io/badge/Node.js-20%2B-2f6b3b" />
-  <img alt="License" src="https://img.shields.io/badge/License-GPL--2.0--only-1f2937" />
+  <img alt="License" src="https://img.shields.io/badge/License-MIT-1f2937" />
   <img alt="Desktop" src="https://img.shields.io/badge/Desktop-Windows-0f4c81" />
   <img alt="Runtime" src="https://img.shields.io/badge/Runtime-Local--First-7a4b2a" />
   <img alt="Observability" src="https://img.shields.io/badge/Observability-Trace%20%2B%20Call%20Chain-5b3f8c" />
@@ -200,5 +200,5 @@ git rm --cached cluster.config.json runtime.settings.json dist/runtime.settings.
 ## Attribution and License
 
 - Author: 想画世界送给你
-- License: `GPL-2.0-only`
+- License: `MIT`
 - Full text: [LICENSE](./LICENSE)

@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Zero-dependency multi-model agent cluster orchestrator",
   "author": "想画世界送给你",
-  "license": "GPL-2.0-only",
+  "license": "MIT",
   "scripts": {
     "start": "node src/server.mjs",
     "dev": "node --watch src/server.mjs",

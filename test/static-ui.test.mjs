@@ -944,7 +944,7 @@ test("package metadata declares author and GPL license", async () => {
     await readFile(new URL("../package.json", import.meta.url), "utf8")
   );
 
-  assert.equal(packageJson.license, "GPL-2.0-only");
+  assert.equal(packageJson.license, "MIT");
   assert.equal(typeof packageJson.author, "string");
   assert.equal(packageJson.author.length > 0, true);
 });
