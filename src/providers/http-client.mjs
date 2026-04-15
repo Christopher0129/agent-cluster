@@ -361,7 +361,7 @@ async function postJsonOnce(url, body, modelConfig, hooks = {}) {
       );
       error.status = response.status;
       error.retryAfterMs = parseRetryAfterMs(response.headers.get("retry-after"));
-      error.retryable = response.ok ? true : undefined;
+      error.retryable = isRetryableStatus(response.status);
       throw error;
     }
 
@@ -376,6 +376,7 @@ async function postJsonOnce(url, body, modelConfig, hooks = {}) {
       const error = new Error(buildErrorMessage(response, url, responseText, parsedBody, modelConfig));
       error.status = response.status;
       error.retryAfterMs = parseRetryAfterMs(response.headers.get("retry-after"));
+      error.retryable = isRetryableStatus(response.status);
       throw error;
     }
 

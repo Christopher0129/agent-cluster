@@ -52,7 +52,14 @@ export async function readRequestBody(request) {
     chunks.push(chunk);
   }
   const raw = Buffer.concat(chunks).toString("utf8");
-  return raw ? JSON.parse(raw) : {};
+  if (!raw) {
+    return {};
+  }
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    throw new Error(`Invalid JSON in request body: ${error.message}`);
+  }
 }
 
 export function resolveOperationId(body, fallbackPrefix, randomUuid) {
@@ -67,7 +74,8 @@ export function resolveServerUrl(request) {
 
 export async function serveStaticFile(response, assetPath, staticAssetLoader) {
   const body = await staticAssetLoader(assetPath);
-  const extension = assetPath.slice(assetPath.lastIndexOf("."));
+  const dotIndex = assetPath.lastIndexOf(".");
+  const extension = dotIndex >= 0 ? assetPath.slice(dotIndex) : "";
   response.writeHead(200, {
     "Content-Type": MIME_TYPES[extension] || "application/octet-stream",
     "Cache-Control": "no-store"
