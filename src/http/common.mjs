@@ -10,9 +10,14 @@ export function resolveStaticAssetPath(urlPathname) {
     return "";
   }
 
-  const relativePath = decodeURIComponent(String(urlPathname).slice("/assets/".length))
-    .replaceAll("\\", "/")
-    .trim();
+  let relativePath;
+  try {
+    relativePath = decodeURIComponent(String(urlPathname).slice("/assets/".length))
+      .replaceAll("\\", "/")
+      .trim();
+  } catch {
+    return "";
+  }
   if (!relativePath || relativePath.startsWith("/")) {
     return "";
   }
@@ -47,8 +52,14 @@ export function sendText(response, statusCode, body) {
 }
 
 export async function readRequestBody(request) {
+  const MAX_BODY_BYTES = 10 * 1024 * 1024; // 10 MB
   const chunks = [];
+  let totalBytes = 0;
   for await (const chunk of request) {
+    totalBytes += chunk.length;
+    if (totalBytes > MAX_BODY_BYTES) {
+      throw new Error("Request body too large.");
+    }
     chunks.push(chunk);
   }
   const raw = Buffer.concat(chunks).toString("utf8");

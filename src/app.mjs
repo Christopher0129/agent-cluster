@@ -318,6 +318,7 @@ export function resolveRuntimePort({ projectDir, runtimeConfigOptions = {} }) {
   try {
     return loadRuntimeConfig(projectDir, runtimeConfigOptions).server.port;
   } catch {
-    return Number(process.env.PORT || 4040);
+    const port = Number(process.env.PORT);
+    return Number.isFinite(port) && port >= 1 && port <= 65535 ? Math.floor(port) : 4040;
   }
 }
